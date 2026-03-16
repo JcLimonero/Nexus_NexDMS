@@ -55,20 +55,22 @@ cp apps/api/.env.example apps/api/.env
 
 ### 4. Levantar todos los servicios
 ```bash
-docker compose up -d
+docker-compose up -d
 ```
+
+La API ejecuta migraciones automáticamente al arrancar. La primera vez puede tardar un poco más (build + migrations).
 
 ### 5. Verificar que todo está corriendo
 ```bash
-docker compose ps
+docker-compose ps
 ```
 
 ### 6. URLs de desarrollo
 
-| Servicio  | URL                     |
-|-----------|-------------------------|
-| API       | http://localhost:3000   |
-| Swagger   | http://localhost:3000/api|
+| Servicio  | URL                       |
+|-----------|---------------------------|
+| API       | http://localhost:3000     |
+| Swagger   | http://localhost:3000/api/docs |
 | Web       | http://localhost:4200   |
 | PWA       | http://localhost:4201   |
 | Admin     | http://localhost:4202   |
@@ -84,25 +86,25 @@ docker compose ps
 
 ```bash
 # Ver logs de un servicio
-docker compose logs -f api
+docker-compose logs -f api
 
 # Ejecutar migrations
-docker compose exec api npm run migration:run
+docker-compose exec api npm run migration:run
 
 # Generar una migration
-docker compose exec api npm run migration:generate -- src/database/migrations/NombreMigration
+docker-compose exec api npm run migration:generate -- src/database/migrations/NombreMigration
 
 # Acceder a PostgreSQL
-docker compose exec postgres psql -U nexdms -d nexdms
+docker-compose exec postgres psql -U nexdms -d nexdms
 
 # Rebuild de un servicio
-docker compose up -d --build api
+docker-compose up -d --build api
 
 # Parar todo
-docker compose down
+docker-compose down
 
 # Parar y eliminar volúmenes (⚠️ borra los datos)
-docker compose down -v
+docker-compose down -v
 ```
 
 ---
@@ -120,7 +122,7 @@ cd /opt/nexdms
 git clone https://github.com/JcLimonero/Nexus_NexDMS.git .
 cp apps/api/.env.example apps/api/.env.prod
 # Editar .env.prod con valores de producción
-docker compose -f docker-compose.prod.yml up -d
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Secrets de GitHub Actions requeridos

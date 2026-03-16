@@ -1,0 +1,50 @@
+---
+description: Convención de nombres en inglés para entidades TypeORM (tablas, columnas, enums)
+globs: "**/*.entity.ts,**/migrations/*.ts,**/dto/*.ts"
+alwaysApply: false
+---
+
+# TypeORM: Nombres en Inglés
+
+Todos los nombres de tablas, columnas, enums y referencias en entidades TypeORM deben estar en **inglés**.
+
+## Tablas
+
+| Español (evitar) | Inglés (usar) |
+|------------------|---------------|
+| marcas           | brands        |
+| sucursales       | branches      |
+| sucursal_config  | branch_config |
+
+## Columnas (convención general)
+
+| Español (evitar) | Inglés (usar) |
+|------------------|---------------|
+| sucursal_id      | branch_id     |
+| marca_id         | brand_id      |
+| nombre           | name / first_name / last_name |
+| apellido         | last_name     |
+| razon_social     | legal_name    |
+| regimen_fiscal   | tax_regime    |
+| cp_fiscal        | tax_postal_code |
+| direccion        | address       |
+| ciudad           | city          |
+| estado           | state         |
+| telefono_*       | *_phone (counter_phone, parts_phone, etc.) |
+| es_principal     | is_primary    |
+| activo           | is_active     |
+| ultimo_login     | last_login_at |
+| banco_nombre     | bank_name     |
+| banco_clabe      | bank_clabe    |
+| banco_cuenta     | bank_account  |
+| banco_titular    | bank_holder   |
+
+## Enums en inglés
+
+**Role:** ADMIN, MANAGER, WAREHOUSE, CASHIER, MECHANIC, SELLER
+
+**Scope:** GLOBAL, BRAND, BRANCH
+
+## Propiedades en entidades TypeScript
+
+Usar camelCase en propiedades: `branchId`, `brandId`, `firstName`, `lastName`, `role`, `phone`, `isActive`, `lastLoginAt`.

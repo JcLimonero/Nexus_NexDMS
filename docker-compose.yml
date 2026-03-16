@@ -1,11 +1,9 @@
-version: '3.9'
-
 services:
 
   # ─── Base de datos ────────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
-    container_name: nexdms_postgres
+    container_name: nexDMS_postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: nexdms
@@ -15,19 +13,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - '5432:5432'
+      - '5433:5432'   # 5433 en host para evitar conflicto con Colima default (5432)
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U nexdms']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - nexdms_net
+      - nexDMS_net
 
   # ─── Redis ────────────────────────────────────────────────────
   redis:
     image: redis:7-alpine
-    container_name: nexdms_redis
+    container_name: nexDMS_redis
     restart: unless-stopped
     command: redis-server --requirepass ${REDIS_PASSWORD:-nexdms_dev}
     volumes:
@@ -40,7 +38,7 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - nexdms_net
+      - nexDMS_net
 
   # ─── NestJS API ───────────────────────────────────────────────
   api:
@@ -48,7 +46,7 @@ services:
       context: ./apps/api
       dockerfile: Dockerfile
       target: development
-    container_name: nexdms_api
+    container_name: nexDMS_api
     restart: unless-stopped
     env_file:
       - ./apps/api/.env
@@ -67,17 +65,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: npm run start:dev
+    command: sh -c "npm run build && npm run migration:run && npm run start:dev"
     networks:
-      - nexdms_net
+      - nexDMS_net
 
   # ─── Angular Web (operadores) ──────────────────────────────────
+  # Perfil "frontend": activar cuando web/pwa/admin estén creados
   web:
+    profiles:
+      - frontend
     build:
       context: ./apps/web
       dockerfile: Dockerfile
       target: development
-    container_name: nexdms_web
+    container_name: nexDMS_web
     restart: unless-stopped
     volumes:
       - ./apps/web:/app
@@ -88,15 +89,17 @@ services:
       - CHOKIDAR_USEPOLLING=true
     command: npm run start -- --host 0.0.0.0 --poll 1000
     networks:
-      - nexdms_net
+      - nexDMS_net
 
   # ─── Angular PWA Mecánico ─────────────────────────────────────
   pwa:
+    profiles:
+      - frontend
     build:
       context: ./apps/pwa
       dockerfile: Dockerfile
       target: development
-    container_name: nexdms_pwa
+    container_name: nexDMS_pwa
     restart: unless-stopped
     volumes:
       - ./apps/pwa:/app
@@ -107,15 +110,17 @@ services:
       - CHOKIDAR_USEPOLLING=true
     command: npm run start -- --host 0.0.0.0 --poll 1000
     networks:
-      - nexdms_net
+      - nexDMS_net
 
   # ─── Angular Admin (superadmin Nexus Q Tech) ──────────────────
   admin:
+    profiles:
+      - frontend
     build:
       context: ./apps/admin
       dockerfile: Dockerfile
       target: development
-    container_name: nexdms_admin
+    container_name: nexDMS_admin
     restart: unless-stopped
     volumes:
       - ./apps/admin:/app
@@ -126,12 +131,14 @@ services:
       - CHOKIDAR_USEPOLLING=true
     command: npm run start -- --host 0.0.0.0 --poll 1000
     networks:
-      - nexdms_net
+      - nexDMS_net
 
   # ─── Nginx reverse proxy ──────────────────────────────────────
   nginx:
+    profiles:
+      - frontend
     image: nginx:alpine
-    container_name: nexdms_nginx
+    container_name: nexDMS_nginx
     restart: unless-stopped
     ports:
       - '80:80'
@@ -143,12 +150,12 @@ services:
       - pwa
       - admin
     networks:
-      - nexdms_net
+      - nexDMS_net
 
 volumes:
   postgres_data:
   redis_data:
 
 networks:
-  nexdms_net:
+  nexDMS_net:
     driver: bridge

@@ -22,7 +22,7 @@ if [ $? -ne 0 ]; then
   curl -s -X POST "https://api.resend.com/emails" \
     -H "Authorization: Bearer $RESEND_API_KEY" \
     -H "Content-Type: application/json" \
-    -d "{\"from\":\"backup@nexdms.com\",\"to\":\"$OPS_EMAIL\",\"subject\":\"[NexDMS] FALLO de backup ${DATE}\",\"html\":\"<p>El backup diario falló. Revisar el contenedor nexdms_backup.</p>\"}"
+    -d "{\"from\":\"backup@nexdms.com\",\"to\":\"$OPS_EMAIL\",\"subject\":\"[NexDMS] FALLO de backup ${DATE}\",\"html\":\"<p>El backup diario falló. Revisar el contenedor nexDMS_backup.</p>\"}"
   exit 1
 fi
 
