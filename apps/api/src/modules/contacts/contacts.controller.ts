@@ -11,7 +11,9 @@ import {
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { ContactsService } from './contacts.service';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { UpdateContactDto } from './dto/update-contact.dto';
@@ -19,7 +21,7 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Contacts')
 @ApiBearerAuth()
-@UseGuards(AuthGuard)
+@UseGuards(AuthGuard, RolesGuard)
 @Controller('clients/:clientId/contacts')
 export class ContactsController {
   constructor(private readonly contactsService: ContactsService) {}
@@ -54,6 +56,7 @@ export class ContactsController {
   }
 
   @Post()
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
   create(
     @CurrentUser() user: UserPayload,
     @Param('clientId', ParseUUIDPipe) clientId: string,
@@ -63,6 +66,7 @@ export class ContactsController {
   }
 
   @Patch(':contactId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
   update(
     @CurrentUser() user: UserPayload,
     @Param('clientId', ParseUUIDPipe) clientId: string,
@@ -73,6 +77,7 @@ export class ContactsController {
   }
 
   @Delete(':contactId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
   async remove(
     @CurrentUser() user: UserPayload,
     @Param('clientId', ParseUUIDPipe) clientId: string,

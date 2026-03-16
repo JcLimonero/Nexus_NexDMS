@@ -9,6 +9,7 @@ import { BrandsModule } from './modules/brands/brands.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
+import { CustomerVehiclesModule } from './modules/customer-vehicles/customer-vehicles.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -26,6 +27,7 @@ import { UsersModule } from './modules/users/users.module';
     BranchesModule,
     ClientsModule,
     ContactsModule,
+    CustomerVehiclesModule,
     UsersModule,
   ],
   controllers: [AppController],

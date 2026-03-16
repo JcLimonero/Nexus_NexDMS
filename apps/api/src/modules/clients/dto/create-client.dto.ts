@@ -18,9 +18,10 @@ export class CreateClientDto {
   @IsBoolean()
   isCompany?: boolean;
 
+  @IsOptional()
   @IsString()
   @MaxLength(200)
-  name: string;
+  firstName?: string;
 
   @IsOptional()
   @IsString()
@@ -30,7 +31,7 @@ export class CreateClientDto {
   @IsOptional()
   @IsString()
   @MaxLength(300)
-  legalName?: string;
+  companyName?: string;
 
   @IsString()
   @MaxLength(20)

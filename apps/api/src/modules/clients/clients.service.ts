@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { Contact } from '../contacts/entities/contact.entity';
+import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { FilterClientsDto } from './dto/filter-clients.dto';
@@ -13,7 +14,7 @@ import {
 } from '../../shared/data-quality/data-quality.types';
 
 const CLIENT_QUALITY_WEIGHTS: Record<string, number> = {
-  name: 10,
+  firstName: 10,
   phone: 10,
   email: 10,
   rfc: 25,
@@ -25,7 +26,7 @@ const CLIENT_QUALITY_WEIGHTS: Record<string, number> = {
 };
 
 const CLIENT_QUALITY_FIELD_LABELS: Record<string, string> = {
-  name: 'nombre',
+  firstName: 'nombre',
   phone: 'teléfono',
   email: 'email',
   rfc: 'RFC',
@@ -43,12 +44,20 @@ export class ClientsService {
     private readonly clientRepo: Repository<Client>,
     @InjectRepository(Contact)
     private readonly contactRepo: Repository<Contact>,
+    @InjectRepository(CustomerVehicle)
+    private readonly vehicleRepo: Repository<CustomerVehicle>,
   ) {}
 
   async findAll(
     user: UserPayload,
     filters: FilterClientsDto,
-  ): Promise<{ data: Client[]; meta: { total: number } }> {
+  ): Promise<{
+    data: Client[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+
     const qb = this.clientRepo
       .createQueryBuilder('c')
       .where('c.tenant_id = :tenantId', { tenantId: user.tenantId })
@@ -57,7 +66,7 @@ export class ClientsService {
     if (filters.search?.trim()) {
       const term = `%${filters.search.trim()}%`;
       qb.andWhere(
-        '(c.name ILIKE :term OR c.last_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
+        '(c.first_name ILIKE :term OR c.last_name ILIKE :term OR c.company_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
         { term },
       );
     }
@@ -66,18 +75,23 @@ export class ClientsService {
         clientType: filters.clientType,
       });
     }
-    if (filters.isCompany !== undefined) {
-      qb.andWhere('c.is_company = :isCompany', {
-        isCompany: filters.isCompany,
-      });
-    }
 
     const [data, total] = await qb
-      .orderBy('c.name', 'ASC')
+      .orderBy('c.first_name', 'ASC')
       .addOrderBy('c.last_name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
       .getManyAndCount();
 
-    return { data, meta: { total } };
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(user: UserPayload, id: string): Promise<Client> {
@@ -93,15 +107,24 @@ export class ClientsService {
   async getDataQualityScore(
     user: UserPayload,
     client: Client,
-    vehicleCount = 0,
+    vehicleCount?: number,
   ): Promise<DataQualityScore> {
+    const count =
+      vehicleCount ??
+      (await this.vehicleRepo.count({
+        where: { ownerId: client.id, tenantId: user.tenantId },
+      }));
     const missingFields: string[] = [];
     let score = 0;
 
-    if (client.name?.trim()) {
-      score += CLIENT_QUALITY_WEIGHTS.name;
+    const hasName =
+      client.firstName?.trim() ||
+      client.lastName?.trim() ||
+      client.companyName?.trim();
+    if (hasName) {
+      score += CLIENT_QUALITY_WEIGHTS.firstName;
     } else {
-      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.name);
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.firstName);
     }
     if (client.phone?.trim()) {
       score += CLIENT_QUALITY_WEIGHTS.phone;
@@ -128,7 +151,7 @@ export class ClientsService {
     } else {
       missingFields.push(CLIENT_QUALITY_FIELD_LABELS.taxPostalCode);
     }
-    if (vehicleCount > 0) {
+    if (count > 0) {
       score += CLIENT_QUALITY_WEIGHTS.hasVehicle;
     } else {
       missingFields.push(CLIENT_QUALITY_FIELD_LABELS.hasVehicle);
@@ -163,10 +186,10 @@ export class ClientsService {
       .where('c.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('c.deleted_at IS NULL')
       .andWhere(
-        '(c.name ILIKE :term OR c.last_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
+        '(c.first_name ILIKE :term OR c.last_name ILIKE :term OR c.company_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
         { term },
       )
-      .orderBy('c.name', 'ASC')
+      .orderBy('c.first_name', 'ASC')
       .take(limit)
       .getMany();
   }
@@ -202,7 +225,17 @@ export class ClientsService {
   ): Promise<Contact[]> {
     return this.contactRepo.find({
       where: { clientId, tenantId: user.tenantId },
-      order: { name: 'ASC', lastName: 'ASC' },
+      order: { firstName: 'ASC', lastName: 'ASC' },
+    });
+  }
+
+  async getVehiclesForClient(
+    user: UserPayload,
+    clientId: string,
+  ): Promise<CustomerVehicle[]> {
+    return this.vehicleRepo.find({
+      where: { ownerId: clientId, tenantId: user.tenantId },
+      order: { year: 'DESC', make: 'ASC' },
     });
   }
 }

@@ -1,5 +1,6 @@
-import { IsBoolean, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
 import { ClientTypeEnum } from '../entities/client.entity';
 
 export class FilterClientsDto {
@@ -13,7 +14,13 @@ export class FilterClientsDto {
   clientType?: ClientTypeEnum;
 
   @IsOptional()
-  @Transform(({ value }) => value === 'true' || value === true)
-  @IsBoolean()
-  isCompany?: boolean;
+  @Type(() => Number)
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @Min(1)
+  @Max(100)
+  limit?: number;
 }

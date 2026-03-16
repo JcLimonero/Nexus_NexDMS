@@ -21,8 +21,8 @@ export class Contact {
   @Column({ name: 'client_id', type: 'uuid' })
   clientId: string;
 
-  @Column({ name: 'name', type: 'varchar', length: 200 })
-  name: string;
+  @Column({ name: 'first_name', type: 'varchar', length: 200 })
+  firstName: string;
 
   @Column({ name: 'last_name', type: 'varchar', length: 200, nullable: true })
   lastName: string | null;

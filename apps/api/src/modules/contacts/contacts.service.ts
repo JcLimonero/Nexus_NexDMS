@@ -12,13 +12,13 @@ import {
 } from '../../shared/data-quality/data-quality.types';
 
 const CONTACT_QUALITY_WEIGHTS: Record<string, number> = {
-  name: 30,
+  firstName: 30,
   phone: 40,
   email: 30,
 };
 
 const CONTACT_QUALITY_FIELD_LABELS: Record<string, string> = {
-  name: 'nombre',
+  firstName: 'nombre',
   phone: 'teléfono',
   email: 'email',
 };
@@ -38,7 +38,7 @@ export class ContactsService {
   ): Promise<Contact[]> {
     return this.contactRepo.find({
       where: { clientId, tenantId: user.tenantId },
-      order: { name: 'ASC', lastName: 'ASC' },
+      order: { firstName: 'ASC', lastName: 'ASC' },
     });
   }
 
@@ -63,10 +63,10 @@ export class ContactsService {
     const missingFields: string[] = [];
     let score = 0;
 
-    if (contact.name?.trim()) {
-      score += CONTACT_QUALITY_WEIGHTS.name;
+    if (contact.firstName?.trim()) {
+      score += CONTACT_QUALITY_WEIGHTS.firstName;
     } else {
-      missingFields.push(CONTACT_QUALITY_FIELD_LABELS.name);
+      missingFields.push(CONTACT_QUALITY_FIELD_LABELS.firstName);
     }
     if (contact.phone?.trim()) {
       score += CONTACT_QUALITY_WEIGHTS.phone;
@@ -93,10 +93,16 @@ export class ContactsService {
   ): Promise<Contact> {
     await this.assertClientExists(user, clientId);
     const contact = this.contactRepo.create({
-      ...dto,
+      firstName: dto.firstName,
+      lastName: dto.lastName ?? null,
+      phone: dto.phone,
+      email: dto.email ?? null,
+      position: dto.position ?? null,
+      department: dto.department ?? null,
+      isAuthorized: dto.isAuthorized ?? true,
+      notes: dto.notes ?? null,
       clientId,
       tenantId: user.tenantId,
-      isAuthorized: dto.isAuthorized ?? true,
     });
     return this.contactRepo.save(contact);
   }

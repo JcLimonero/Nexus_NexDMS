@@ -9,9 +9,8 @@ import {
 } from 'typeorm';
 
 export enum ClientTypeEnum {
-  PUBLIC = 'PUBLIC',
-  WHOLESALE = 'WHOLESALE',
-  COMPANY = 'COMPANY',
+  INDIVIDUAL = 'INDIVIDUAL',
+  BUSINESS = 'BUSINESS',
 }
 
 @Entity('clients')
@@ -32,14 +31,14 @@ export class Client {
   @Column({ name: 'is_company', type: 'boolean', default: false })
   isCompany: boolean;
 
-  @Column({ name: 'name', type: 'varchar', length: 200 })
-  name: string;
+  @Column({ name: 'first_name', type: 'varchar', length: 200, nullable: true })
+  firstName: string | null;
 
   @Column({ name: 'last_name', type: 'varchar', length: 200, nullable: true })
   lastName: string | null;
 
-  @Column({ name: 'legal_name', type: 'varchar', length: 300, nullable: true })
-  legalName: string | null;
+  @Column({ name: 'company_name', type: 'varchar', length: 300, nullable: true })
+  companyName: string | null;
 
   @Column({ name: 'rfc', type: 'varchar', length: 13, nullable: true })
   rfc: string | null;
