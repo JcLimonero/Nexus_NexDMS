@@ -2,7 +2,6 @@ import { forwardRef, Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import Redis from 'ioredis';
 import { getJwtConfig } from '../../config/jwt.config';
 import { UsersModule } from '../users/users.module';
 import { AuthController } from './auth.controller';
@@ -20,15 +19,7 @@ import { JwtStrategy } from './strategies/jwt.strategy';
     forwardRef(() => UsersModule),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    {
-      provide: 'REDIS_CLIENT',
-      useFactory: (config: ConfigService) => new Redis(config.getOrThrow('REDIS_URL')),
-      inject: [ConfigService],
-    },
-  ],
+  providers: [AuthService, JwtStrategy],
   exports: [AuthService, JwtModule],
 })
 export class AuthModule {}

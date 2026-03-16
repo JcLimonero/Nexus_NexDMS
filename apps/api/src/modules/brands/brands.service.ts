@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Brand } from './entities/brand.entity';
 import { CreateBrandDto } from './dto/create-brand.dto';
+import { FilterBrandsDto } from './dto/filter-brands.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
@@ -13,11 +14,32 @@ export class BrandsService {
     private readonly brandRepo: Repository<Brand>,
   ) {}
 
-  async findAll(user: UserPayload): Promise<Brand[]> {
-    return this.brandRepo.find({
+  async findAll(
+    user: UserPayload,
+    filters: FilterBrandsDto,
+  ): Promise<{
+    data: Brand[];
+    meta: { total: number; page: number; limit: number; totalPages: number };
+  }> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+
+    const [data, total] = await this.brandRepo.findAndCount({
       where: { tenantId: user.tenantId },
       order: { name: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(user: UserPayload, id: string): Promise<Brand> {

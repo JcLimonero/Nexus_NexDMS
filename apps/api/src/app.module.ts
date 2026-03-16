@@ -12,10 +12,48 @@ import { ContactsModule } from './modules/contacts/contacts.module';
 import { CustomerVehiclesModule } from './modules/customer-vehicles/customer-vehicles.module';
 import { PartCategoriesModule } from './modules/part-categories/part-categories.module';
 import { PartsModule } from './modules/parts/parts.module';
+import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { StockLocationsModule } from './modules/stock-locations/stock-locations.module';
 import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { CashRegisterModule } from './modules/cash-register/cash-register.module';
+import { SalesModule } from './modules/sales/sales.module';
+import { WarehouseTransfersModule } from './modules/warehouse-transfers/warehouse-transfers.module';
 import { UsersModule } from './modules/users/users.module';
+import { GlobalModelsModule } from './modules/global-models/global-models.module';
+import { UnitLocationsModule } from './modules/unit-locations/unit-locations.module';
+import { CatalogUnitsModule } from './modules/catalog-units/catalog-units.module';
+import { UnitReservationsModule } from './modules/unit-reservations/unit-reservations.module';
+import { UnitSalesModule } from './modules/unit-sales/unit-sales.module';
+import { QuotationsModule } from './modules/quotations/quotations.module';
+import { AppointmentsModule } from './modules/appointments/appointments.module';
+import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
+import { WarrantiesModule } from './modules/warranties/warranties.module';
+import { CommissionsModule } from './modules/commissions/commissions.module';
+import { BranchPrintersModule } from './modules/branch-printers/branch-printers.module';
+import { CfdiLogModule } from './modules/cfdi-log/cfdi-log.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
+import { PriceListsModule } from './modules/price-lists/price-lists.module';
+import { IdempotencyModule } from './common/idempotency/idempotency.module';
+import { RedisThrottlerStorage } from './common/throttler/redis-throttler.storage';
+import {
+  getThrottlerKey,
+  getThrottlerTracker,
+} from './common/throttler/throttler-tracker.util';
+import { RedisModule } from './common/redis/redis.module';
+import { StorageModule } from './common/storage/storage.module';
+import { QueuesModule } from './queues/queues.module';
+import { EventsModule } from './events/events.module';
+import { seconds, ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
+import { AuditInterceptor } from './common/audit/audit.interceptor';
+import { SuperadminAuditModule } from './modules/superadmin-audit/superadmin-audit.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { CfdiModule } from './modules/cfdi/cfdi.module';
+import { CronModule } from './modules/cron/cron.module';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
@@ -24,6 +62,25 @@ import { UsersModule } from './modules/users/users.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: getDatabaseConfig,
+    }),
+    RedisModule,
+    IdempotencyModule,
+    StorageModule,
+    QueuesModule,
+    EventsModule,
+    ThrottlerModule.forRootAsync({
+      imports: [],
+      inject: ['REDIS_CLIENT'],
+      useFactory: (redis: { increment: unknown }) => ({
+        throttlers: [
+          { name: 'short', ttl: seconds(1), limit: 3 },
+          { name: 'medium', ttl: seconds(60), limit: 10 },
+          { name: 'long', ttl: seconds(60), limit: 100 },
+        ],
+        storage: new RedisThrottlerStorage(redis as never),
+        getTracker: getThrottlerTracker,
+        generateKey: getThrottlerKey,
+      }),
     }),
     AuthModule,
     TenantsModule,
@@ -34,11 +91,39 @@ import { UsersModule } from './modules/users/users.module';
     CustomerVehiclesModule,
     PartCategoriesModule,
     PartsModule,
+    PurchaseOrdersModule,
     StockLocationsModule,
     StockMovementsModule,
+    SuppliersModule,
     UsersModule,
+    CashRegisterModule,
+    SalesModule,
+    WarehouseTransfersModule,
+    GlobalModelsModule,
+    UnitLocationsModule,
+    CatalogUnitsModule,
+    UnitReservationsModule,
+    UnitSalesModule,
+    QuotationsModule,
+    AppointmentsModule,
+    ServiceOrdersModule,
+    WarrantiesModule,
+    CommissionsModule,
+    BranchPrintersModule,
+    CfdiLogModule,
+    AuditLogModule,
+    PriceListsModule,
+    SuperadminAuditModule,
+    NotificationsModule,
+    CfdiModule,
+    CronModule,
+    HealthModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

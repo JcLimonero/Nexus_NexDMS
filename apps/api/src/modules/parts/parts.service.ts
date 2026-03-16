@@ -20,15 +20,20 @@ export class PartsService {
     private readonly partRepo: Repository<Part>,
   ) {}
 
-  private applyScope(qb: ReturnType<Repository<Part>['createQueryBuilder']>, user: UserPayload) {
+  private applyScope(
+    qb: ReturnType<Repository<Part>['createQueryBuilder']>,
+    user: UserPayload,
+  ) {
     switch (user.scope) {
       case ScopeEnum.BRANCH:
         qb.andWhere('p.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
         if (!user.brandId) return;
-        qb.innerJoin('branches', 'b', 'b.id = p.branch_id')
-          .andWhere('b.brand_id = :brandId', { brandId: user.brandId });
+        qb.innerJoin('branches', 'b', 'b.id = p.branch_id').andWhere(
+          'b.brand_id = :brandId',
+          { brandId: user.brandId },
+        );
         break;
       case ScopeEnum.GLOBAL:
         break;
@@ -116,7 +121,12 @@ export class PartsService {
   }
 
   private generateSku(vehicleType: PartVehicleTypeEnum): string {
-    const prefix = vehicleType === PartVehicleTypeEnum.MOTORCYCLE ? 'M' : vehicleType === PartVehicleTypeEnum.CAR ? 'C' : 'B';
+    const prefix =
+      vehicleType === PartVehicleTypeEnum.MOTORCYCLE
+        ? 'M'
+        : vehicleType === PartVehicleTypeEnum.CAR
+          ? 'C'
+          : 'B';
     return `${prefix}-${Date.now()}`;
   }
 
@@ -135,9 +145,15 @@ export class PartsService {
     return this.partRepo.save(part);
   }
 
-  async update(user: UserPayload, id: string, dto: UpdatePartDto): Promise<Part> {
+  async update(
+    user: UserPayload,
+    id: string,
+    dto: UpdatePartDto,
+  ): Promise<Part> {
     const part = await this.findOne(user, id);
-    const { stockQuantity, ...rest } = dto as UpdatePartDto & { stockQuantity?: number };
+    const { stockQuantity, ...rest } = dto as UpdatePartDto & {
+      stockQuantity?: number;
+    };
     if (stockQuantity !== undefined) {
       throw new BadRequestException(
         'stock_quantity no se puede modificar directamente. Use ajustes.',
@@ -157,11 +173,7 @@ export class PartsService {
     await this.partRepo.softRemove(part);
   }
 
-  async scan(
-    user: UserPayload,
-    code: string,
-    branchId: string,
-  ): Promise<Part> {
+  async scan(user: UserPayload, code: string, branchId: string): Promise<Part> {
     if (!code?.trim()) {
       throw new BadRequestException('Código requerido');
     }

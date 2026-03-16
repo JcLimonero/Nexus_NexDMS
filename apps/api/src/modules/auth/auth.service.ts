@@ -1,7 +1,4 @@
-import {
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -49,6 +46,9 @@ export class AuthService {
     const passwordValid = await bcrypt.compare(dto.password, user.passwordHash);
     if (!passwordValid) {
       user.loginAttempts += 1;
+      if (user.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        user.blockedUntil = new Date(Date.now() + 15 * 60 * 1000);
+      }
       await this.usersService.save(user);
       throw new UnauthorizedException('Credenciales inválidas');
     }
@@ -73,6 +73,7 @@ export class AuthService {
     }
 
     user.loginAttempts = 0;
+    user.blockedUntil = null;
     user.lastLoginAt = now;
     await this.usersService.save(user);
 
@@ -149,9 +150,18 @@ export class AuthService {
     await this.redis.del(`${REFRESH_KEY_PREFIX}${userId}`);
   }
 
-  async changePassword(user: UserPayload, dto: ChangePasswordDto): Promise<void> {
-    const dbUser = await this.usersService.findOneOrFail(user.sub, user.tenantId);
-    const valid = await bcrypt.compare(dto.currentPassword, dbUser.passwordHash);
+  async changePassword(
+    user: UserPayload,
+    dto: ChangePasswordDto,
+  ): Promise<void> {
+    const dbUser = await this.usersService.findOneOrFail(
+      user.sub,
+      user.tenantId,
+    );
+    const valid = await bcrypt.compare(
+      dto.currentPassword,
+      dbUser.passwordHash,
+    );
     if (!valid) {
       throw new UnauthorizedException('Contraseña actual incorrecta');
     }
@@ -161,7 +171,10 @@ export class AuthService {
   }
 
   async getMe(user: UserPayload) {
-    const dbUser = await this.usersService.findOneOrFail(user.sub, user.tenantId);
+    const dbUser = await this.usersService.findOneOrFail(
+      user.sub,
+      user.tenantId,
+    );
     return {
       id: dbUser.id,
       tenantId: dbUser.tenantId,

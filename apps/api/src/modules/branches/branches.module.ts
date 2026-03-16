@@ -7,10 +7,7 @@ import { BranchesService } from './branches.service';
 import { SharedModule } from '../../shared/shared.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Branch, BranchConfig]),
-    SharedModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Branch, BranchConfig]), SharedModule],
   controllers: [BranchesController],
   providers: [BranchesService],
   exports: [TypeOrmModule, BranchesService],

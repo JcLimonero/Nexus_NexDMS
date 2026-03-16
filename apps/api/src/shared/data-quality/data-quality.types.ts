@@ -6,7 +6,10 @@ export interface DataQualityScore {
   missingFields: string[];
 }
 
-export const DATA_QUALITY_LEVELS: Record<DataQualityLevel, { min: number; max: number }> = {
+export const DATA_QUALITY_LEVELS: Record<
+  DataQualityLevel,
+  { min: number; max: number }
+> = {
   basic: { min: 0, max: 39 },
   partial: { min: 40, max: 69 },
   operational: { min: 70, max: 89 },

@@ -1,0 +1,75 @@
+import {
+  IsArray,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  QuotationTypeEnum,
+  QuotationPriceListEnum,
+} from '../entities/quotation.entity';
+
+export class CreateQuotationItemDto {
+  @IsOptional()
+  @IsUUID()
+  partId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  catalogUnitId?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+
+  @IsNumber()
+  @Min(0)
+  unitPrice: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discount?: number;
+}
+
+export class CreateQuotationDto {
+  @IsOptional()
+  @IsUUID()
+  clientId?: string;
+
+  @IsUUID()
+  branchId: string;
+
+  @IsEnum(QuotationTypeEnum)
+  type: QuotationTypeEnum;
+
+  @IsEnum(QuotationPriceListEnum)
+  priceList: QuotationPriceListEnum;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountPct?: number;
+
+  @IsOptional()
+  @IsString()
+  conditions?: string;
+
+  @IsOptional()
+  @IsString()
+  validityDate?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuotationItemDto)
+  items: CreateQuotationItemDto[];
+}

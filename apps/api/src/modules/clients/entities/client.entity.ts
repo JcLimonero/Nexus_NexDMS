@@ -37,7 +37,12 @@ export class Client {
   @Column({ name: 'last_name', type: 'varchar', length: 200, nullable: true })
   lastName: string | null;
 
-  @Column({ name: 'company_name', type: 'varchar', length: 300, nullable: true })
+  @Column({
+    name: 'company_name',
+    type: 'varchar',
+    length: 300,
+    nullable: true,
+  })
   companyName: string | null;
 
   @Column({ name: 'rfc', type: 'varchar', length: 13, nullable: true })
@@ -49,7 +54,12 @@ export class Client {
   @Column({ name: 'tax_regime', type: 'varchar', length: 10, nullable: true })
   taxRegime: string | null;
 
-  @Column({ name: 'tax_postal_code', type: 'varchar', length: 10, nullable: true })
+  @Column({
+    name: 'tax_postal_code',
+    type: 'varchar',
+    length: 10,
+    nullable: true,
+  })
   taxPostalCode: string | null;
 
   @Column({ name: 'phone', type: 'varchar', length: 20 })
@@ -70,7 +80,13 @@ export class Client {
   @Column({ name: 'state', type: 'varchar', length: 100, nullable: true })
   state: string | null;
 
-  @Column({ name: 'fixed_discount', type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({
+    name: 'fixed_discount',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 0,
+  })
   fixedDiscount: number;
 
   @Column({ name: 'notes', type: 'text', nullable: true })

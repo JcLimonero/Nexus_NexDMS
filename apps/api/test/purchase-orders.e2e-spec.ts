@@ -1,0 +1,105 @@
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication } from '@nestjs/common';
+import request from 'supertest';
+import { App } from 'supertest/types';
+import { AppModule } from '../src/app.module';
+import { PurchaseOrdersService } from '../src/modules/purchase-orders/purchase-orders.service';
+import { AuthGuard } from '../src/common/guards/auth.guard';
+import { ScopeEnum } from '../src/modules/users/entities/user.entity';
+
+const mockUserPayload = {
+  sub: 'user-123',
+  tenantId: 'tenant-1',
+  branchId: 'branch-1',
+  brandId: null,
+  role: 'WAREHOUSE',
+  scope: ScopeEnum.BRANCH,
+};
+
+describe('PurchaseOrdersController (e2e)', () => {
+  let app: INestApplication<App>;
+
+  const mockFindAllResponse = {
+    data: [],
+    meta: {
+      total: 0,
+      page: 1,
+      limit: 20,
+      totalPages: 0,
+    },
+  };
+
+  beforeAll(async () => {
+    const mockPurchaseOrdersService = {
+      findAll: jest.fn().mockResolvedValue(mockFindAllResponse),
+      findOne: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      send: jest.fn(),
+      receive: jest.fn(),
+      cancel: jest.fn(),
+    };
+
+    const mockAuthGuard = {
+      canActivate: jest.fn((context) => {
+        const request = context.switchToHttp().getRequest();
+        request.user = mockUserPayload;
+        return true;
+      }),
+    };
+
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    })
+      .overrideProvider(PurchaseOrdersService)
+      .useValue(mockPurchaseOrdersService)
+      .overrideGuard(AuthGuard)
+      .useValue(mockAuthGuard)
+      .overrideProvider('REDIS_CLIENT')
+      .useValue({
+        setex: jest.fn().mockResolvedValue('OK'),
+        get: jest.fn().mockResolvedValue(null),
+        del: jest.fn().mockResolvedValue(1),
+      })
+      .compile();
+
+    app = moduleFixture.createNestApplication();
+    await app.init();
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  describe('GET /purchase-orders', () => {
+    it('debe retornar 200 con data y meta (CRUD listado)', () => {
+      return request(app.getHttpServer())
+        .get('/purchase-orders')
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('data');
+          expect(res.body).toHaveProperty('meta');
+          expect(res.body.meta).toMatchObject({
+            total: 0,
+            page: 1,
+            limit: 20,
+            totalPages: 0,
+          });
+        });
+    });
+
+    it('debe aceptar query params de filtrado', () => {
+      return request(app.getHttpServer())
+        .get('/purchase-orders?page=2&limit=10&status=SENT')
+        .expect(200);
+    });
+  });
+
+  describe('GET /purchase-orders/:id', () => {
+    it('debe retornar 400 para id inválido (no UUID)', () => {
+      return request(app.getHttpServer())
+        .get('/purchase-orders/invalid-id')
+        .expect(400);
+    });
+  });
+});

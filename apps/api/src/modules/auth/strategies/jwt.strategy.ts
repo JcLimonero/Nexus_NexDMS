@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  async validate(payload: UserPayload): Promise<UserPayload> {
+  validate(payload: UserPayload): UserPayload {
     if (!payload.sub || !payload.tenantId) {
       throw new UnauthorizedException();
     }

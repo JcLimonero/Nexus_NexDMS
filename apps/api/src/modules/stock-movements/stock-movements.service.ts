@@ -53,10 +53,7 @@ export class StockMovementsService {
       });
     }
 
-    return qb
-      .orderBy('sm.created_at', 'DESC')
-      .take(100)
-      .getMany();
+    return qb.orderBy('sm.created_at', 'DESC').take(100).getMany();
   }
 
   async createAdjustment(

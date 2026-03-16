@@ -45,10 +45,7 @@ export class ContactsController {
       clientId,
       contactId,
     );
-    const dataQuality = await this.contactsService.getDataQualityScore(
-      user,
-      contact,
-    );
+    const dataQuality = this.contactsService.getDataQualityScore(user, contact);
     return {
       ...contact,
       dataQuality,

@@ -53,11 +53,6 @@ export class CustomerVehiclesController {
     @Param('vehicleId', ParseUUIDPipe) vehicleId: string,
     @Body() dto: UpdateCustomerVehicleDto,
   ) {
-    return this.customerVehiclesService.update(
-      user,
-      clientId,
-      vehicleId,
-      dto,
-    );
+    return this.customerVehiclesService.update(user, clientId, vehicleId, dto);
   }
 }

@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -16,6 +17,7 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { BrandsService } from './brands.service';
 import { CreateBrandDto } from './dto/create-brand.dto';
+import { FilterBrandsDto } from './dto/filter-brands.dto';
 import { UpdateBrandDto } from './dto/update-brand.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
@@ -27,8 +29,8 @@ export class BrandsController {
   constructor(private readonly brandsService: BrandsService) {}
 
   @Get()
-  findAll(@CurrentUser() user: UserPayload) {
-    return this.brandsService.findAll(user);
+  findAll(@CurrentUser() user: UserPayload, @Query() filters: FilterBrandsDto) {
+    return this.brandsService.findAll(user, filters);
   }
 
   @Get(':id')

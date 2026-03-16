@@ -49,7 +49,12 @@ export class CustomerVehicle {
   @Column({ name: 'vin', type: 'varchar', length: 100, nullable: true })
   vin: string | null;
 
-  @Column({ name: 'engine_number', type: 'varchar', length: 100, nullable: true })
+  @Column({
+    name: 'engine_number',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
   engineNumber: string | null;
 
   @Column({ name: 'mileage', type: 'int', default: 0 })

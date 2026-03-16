@@ -5,9 +5,13 @@ import {
   Param,
   Patch,
   Post,
+  Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -15,8 +19,10 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { BranchesService } from './branches.service';
 import { CreateBranchDto } from './dto/create-branch.dto';
+import { FilterBranchesDto } from './dto/filter-branches.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { UpdateBranchConfigDto } from './dto/update-branch-config.dto';
+import { LogoFileValidationPipe } from '../../common/validators/file.validator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Branches')
@@ -27,8 +33,11 @@ export class BranchesController {
   constructor(private readonly branchesService: BranchesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: UserPayload) {
-    return this.branchesService.findAll(user);
+  findAll(
+    @CurrentUser() user: UserPayload,
+    @Query() filters: FilterBranchesDto,
+  ) {
+    return this.branchesService.findAll(user, filters);
   }
 
   @Get(':id')
@@ -72,5 +81,25 @@ export class BranchesController {
     @Body() dto: UpdateBranchConfigDto,
   ) {
     return this.branchesService.updateConfig(user, id, dto);
+  }
+
+  @Post(':id/logo')
+  @Roles('ADMIN', 'MANAGER')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  async uploadLogo(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile(LogoFileValidationPipe) file: Express.Multer.File,
+  ) {
+    return this.branchesService.uploadLogo(user, id, file);
   }
 }

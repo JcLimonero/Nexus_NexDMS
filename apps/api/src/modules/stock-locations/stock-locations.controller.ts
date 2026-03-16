@@ -36,7 +36,10 @@ export class StockLocationsController {
 
   @Post()
   @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE', 'MANAGER')
-  create(@CurrentUser() user: UserPayload, @Body() dto: CreateStockLocationDto) {
+  create(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: CreateStockLocationDto,
+  ) {
     return this.stockLocationsService.create(user, dto);
   }
 

@@ -6,9 +6,7 @@ import { CustomerVehiclesController } from './customer-vehicles.controller';
 import { CustomerVehiclesService } from './customer-vehicles.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([CustomerVehicle, Client]),
-  ],
+  imports: [TypeOrmModule.forFeature([CustomerVehicle, Client])],
   controllers: [CustomerVehiclesController],
   providers: [CustomerVehiclesService],
   exports: [TypeOrmModule, CustomerVehiclesService],

@@ -55,10 +55,20 @@ export class Branch {
   @Column({ name: 'parts_phone', type: 'varchar', length: 20, nullable: true })
   partsPhone: string | null;
 
-  @Column({ name: 'appointments_phone', type: 'varchar', length: 20, nullable: true })
+  @Column({
+    name: 'appointments_phone',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
   appointmentsPhone: string | null;
 
-  @Column({ name: 'aftersales_phone', type: 'varchar', length: 20, nullable: true })
+  @Column({
+    name: 'aftersales_phone',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
   aftersalesPhone: string | null;
 
   @Column({ name: 'email', length: 200 })
@@ -70,16 +80,38 @@ export class Branch {
   @Column({ name: 'logo_key', type: 'varchar', length: 500, nullable: true })
   logoKey: string | null;
 
-  @Column({ name: 'facturaapi_org_id', type: 'varchar', length: 200, nullable: true })
+  @Column({
+    name: 'facturaapi_org_id',
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
   facturaapiOrgId: string | null;
 
-  @Column({ name: 'timezone', type: 'varchar', length: 50, default: 'America/Mexico_City' })
+  @Column({
+    name: 'timezone',
+    type: 'varchar',
+    length: 50,
+    default: 'America/Mexico_City',
+  })
   timezone: string;
 
-  @Column({ name: 'tax_rate', type: 'decimal', precision: 4, scale: 2, default: 0.16 })
+  @Column({
+    name: 'tax_rate',
+    type: 'decimal',
+    precision: 4,
+    scale: 2,
+    default: 0.16,
+  })
   taxRate: number;
 
-  @Column({ name: 'max_discount_pct', type: 'decimal', precision: 5, scale: 2, default: 10 })
+  @Column({
+    name: 'max_discount_pct',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 10,
+  })
   maxDiscountPct: number;
 
   @Column({ name: 'quotation_validity_days', type: 'int', default: 15 })

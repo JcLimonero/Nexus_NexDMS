@@ -1,4 +1,11 @@
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Min } from 'class-validator';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Min,
+} from 'class-validator';
 import { StockMovementTypeEnum } from '../entities/stock-movement.entity';
 
 export class CreateAdjustmentDto {
@@ -8,8 +15,13 @@ export class CreateAdjustmentDto {
   @IsUUID()
   branchId: string;
 
-  @IsIn([StockMovementTypeEnum.ADJUSTMENT_IN, StockMovementTypeEnum.ADJUSTMENT_OUT])
-  type: StockMovementTypeEnum.ADJUSTMENT_IN | StockMovementTypeEnum.ADJUSTMENT_OUT;
+  @IsIn([
+    StockMovementTypeEnum.ADJUSTMENT_IN,
+    StockMovementTypeEnum.ADJUSTMENT_OUT,
+  ])
+  type:
+    | StockMovementTypeEnum.ADJUSTMENT_IN
+    | StockMovementTypeEnum.ADJUSTMENT_OUT;
 
   @IsInt()
   @Min(1)

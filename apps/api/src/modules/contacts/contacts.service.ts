@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { IsNull, Repository } from 'typeorm';
 import { Contact } from './entities/contact.entity';
 import { Client } from '../clients/entities/client.entity';
 import { CreateContactDto } from './dto/create-contact.dto';
@@ -37,7 +37,11 @@ export class ContactsService {
     clientId: string,
   ): Promise<Contact[]> {
     return this.contactRepo.find({
-      where: { clientId, tenantId: user.tenantId },
+      where: {
+        clientId,
+        tenantId: user.tenantId,
+        deletedAt: IsNull(),
+      },
       order: { firstName: 'ASC', lastName: 'ASC' },
     });
   }
@@ -48,7 +52,12 @@ export class ContactsService {
     contactId: string,
   ): Promise<Contact> {
     const contact = await this.contactRepo.findOne({
-      where: { id: contactId, clientId, tenantId: user.tenantId },
+      where: {
+        id: contactId,
+        clientId,
+        tenantId: user.tenantId,
+        deletedAt: IsNull(),
+      },
     });
     if (!contact) {
       throw new NotFoundException(`Contacto ${contactId} no encontrado`);
@@ -56,10 +65,7 @@ export class ContactsService {
     return contact;
   }
 
-  async getDataQualityScore(
-    user: UserPayload,
-    contact: Contact,
-  ): Promise<DataQualityScore> {
+  getDataQualityScore(_user: UserPayload, contact: Contact): DataQualityScore {
     const missingFields: string[] = [];
     let score = 0;
 
@@ -123,8 +129,8 @@ export class ContactsService {
     clientId: string,
     contactId: string,
   ): Promise<void> {
-    const contact = await this.findOne(user, clientId, contactId);
-    await this.contactRepo.remove(contact);
+    await this.findOne(user, clientId, contactId);
+    await this.contactRepo.softDelete(contactId);
   }
 
   private async assertClientExists(

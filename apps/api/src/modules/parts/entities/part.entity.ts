@@ -53,10 +53,20 @@ export class Part {
   @Column({ name: 'vehicle_type', type: 'enum', enum: PartVehicleTypeEnum })
   vehicleType: PartVehicleTypeEnum;
 
-  @Column({ name: 'compatible_makes', type: 'varchar', length: 200, nullable: true })
+  @Column({
+    name: 'compatible_makes',
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
   compatibleMakes: string | null;
 
-  @Column({ name: 'unit_of_measure', type: 'varchar', length: 50, default: 'PIECE' })
+  @Column({
+    name: 'unit_of_measure',
+    type: 'varchar',
+    length: 50,
+    default: 'PIECE',
+  })
   unitOfMeasure: string;
 
   @Column({ name: 'purchase_price', type: 'decimal', precision: 12, scale: 2 })
@@ -71,7 +81,13 @@ export class Part {
   @Column({ name: 'business_price', type: 'decimal', precision: 12, scale: 2 })
   businessPrice: number;
 
-  @Column({ name: 'max_discount_pct', type: 'decimal', precision: 5, scale: 2, default: 10 })
+  @Column({
+    name: 'max_discount_pct',
+    type: 'decimal',
+    precision: 5,
+    scale: 2,
+    default: 10,
+  })
   maxDiscountPct: number;
 
   @Column({ name: 'stock_quantity', type: 'int', default: 0 })

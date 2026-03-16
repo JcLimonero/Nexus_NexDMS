@@ -13,7 +13,7 @@ export class TenantsService {
     private readonly tenantRepo: Repository<Tenant>,
   ) {}
 
-  async findAll(user: UserPayload): Promise<Tenant[]> {
+  async findAll(_user: UserPayload): Promise<Tenant[]> {
     return this.tenantRepo.find({
       order: { name: 'ASC' },
     });

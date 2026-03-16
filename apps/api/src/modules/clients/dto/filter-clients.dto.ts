@@ -6,7 +6,9 @@ import { ClientTypeEnum } from '../entities/client.entity';
 export class FilterClientsDto {
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim() : undefined,
+  )
   search?: string;
 
   @IsOptional()

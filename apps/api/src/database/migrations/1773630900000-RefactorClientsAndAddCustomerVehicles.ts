@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RefactorClientsAndAddCustomerVehicles1773630900000
-  implements MigrationInterface
-{
+export class RefactorClientsAndAddCustomerVehicles1773630900000 implements MigrationInterface {
   name = 'RefactorClientsAndAddCustomerVehicles1773630900000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -86,7 +84,9 @@ export class RefactorClientsAndAddCustomerVehicles1773630900000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "public"."IDX_customer_vehicles_plate"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_customer_vehicles_plate"`,
+    );
     await queryRunner.query(`DROP INDEX "public"."IDX_customer_vehicles_vin"`);
     await queryRunner.query(
       `DROP INDEX "public"."IDX_customer_vehicles_owner_id"`,

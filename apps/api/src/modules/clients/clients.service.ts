@@ -174,11 +174,7 @@ export class ClientsService {
     };
   }
 
-  async search(
-    user: UserPayload,
-    q: string,
-    limit = 8,
-  ): Promise<Client[]> {
+  async search(user: UserPayload, q: string, limit = 8): Promise<Client[]> {
     if (!q?.trim()) return [];
     const term = `%${q.trim()}%`;
     return this.clientRepo

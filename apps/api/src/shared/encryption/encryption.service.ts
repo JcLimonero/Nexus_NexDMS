@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as crypto from 'crypto';
 
@@ -9,9 +9,9 @@ export class EncryptionService {
   constructor(private readonly config: ConfigService) {
     const keyHex = this.config.get<string>('ENCRYPTION_KEY')?.trim();
     if (!keyHex || keyHex.length !== 64 || !/^[0-9a-fA-F]+$/.test(keyHex)) {
-      throw new Error(
+      throw new BadRequestException(
         'ENCRYPTION_KEY debe ser 64 caracteres hexadecimales (32 bytes). ' +
-          'Generar con: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"',
+          "Generar con: node -e \"console.log(require('crypto').randomBytes(32).toString('hex'))\"",
       );
     }
     this.key = Buffer.from(keyHex, 'hex');
@@ -30,7 +30,7 @@ export class EncryptionService {
   decrypt(encrypted: string): string {
     const [ivHex, dataHex] = encrypted.split(':');
     if (!ivHex || !dataHex) {
-      throw new Error('Formato de dato cifrado inválido');
+      throw new BadRequestException('Formato de dato cifrado inválido');
     }
     const decipher = crypto.createDecipheriv(
       'aes-256-cbc',

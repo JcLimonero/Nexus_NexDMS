@@ -6,9 +6,7 @@ import { StockMovementsController } from './stock-movements.controller';
 import { StockMovementsService } from './stock-movements.service';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([StockMovement, Part]),
-  ],
+  imports: [TypeOrmModule.forFeature([StockMovement, Part])],
   controllers: [StockMovementsController],
   providers: [StockMovementsService],
   exports: [TypeOrmModule, StockMovementsService],

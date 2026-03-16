@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
@@ -8,10 +9,13 @@ import { Repository } from 'typeorm';
 import { Branch } from './entities/branch.entity';
 import { BranchConfig } from './entities/branch-config.entity';
 import { CreateBranchDto } from './dto/create-branch.dto';
+import { FilterBranchesDto } from './dto/filter-branches.dto';
 import { UpdateBranchDto } from './dto/update-branch.dto';
 import { UpdateBranchConfigDto } from './dto/update-branch-config.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import type { PaginatedResponse } from '../../common/dto/paginated-response.dto';
+import { StorageService } from '../../common/storage/storage.service';
 import { EncryptionService } from '../../shared/encryption/encryption.service';
 
 const SENSITIVE_PLACEHOLDER = '••••••••';
@@ -38,9 +42,16 @@ export class BranchesService {
     @InjectRepository(BranchConfig)
     private readonly configRepo: Repository<BranchConfig>,
     private readonly encryptionService: EncryptionService,
+    private readonly storageService: StorageService,
   ) {}
 
-  async findAll(user: UserPayload): Promise<Branch[]> {
+  async findAll(
+    user: UserPayload,
+    filters: FilterBranchesDto,
+  ): Promise<PaginatedResponse<Branch>> {
+    const page = filters.page ?? 1;
+    const limit = filters.limit ?? 20;
+
     const qb = this.branchRepo
       .createQueryBuilder('b')
       .where('b.tenant_id = :tenantId', { tenantId: user.tenantId });
@@ -51,7 +62,7 @@ export class BranchesService {
         break;
       case ScopeEnum.BRAND:
         if (!user.brandId) {
-          return [];
+          return { data: [], meta: { total: 0, page, limit, totalPages: 0 } };
         }
         qb.andWhere('b.brand_id = :brandId', { brandId: user.brandId });
         break;
@@ -59,7 +70,21 @@ export class BranchesService {
         break;
     }
 
-    return qb.orderBy('b.name', 'ASC').getMany();
+    const [data, total] = await qb
+      .orderBy('b.name', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
   }
 
   async findOne(user: UserPayload, id: string): Promise<Branch> {
@@ -84,9 +109,7 @@ export class BranchesService {
       isActive: dto.isActive ?? true,
     });
     const saved = await this.branchRepo.save(branch);
-    await this.configRepo.save(
-      this.configRepo.create({ branchId: saved.id }),
-    );
+    await this.configRepo.save(this.configRepo.create({ branchId: saved.id }));
     return saved;
   }
 
@@ -95,10 +118,7 @@ export class BranchesService {
     id: string,
     dto: UpdateBranchDto,
   ): Promise<Branch> {
-    if (
-      user.role === 'MANAGER' &&
-      user.scope === ScopeEnum.BRANCH
-    ) {
+    if (user.role === 'MANAGER' && user.scope === ScopeEnum.BRANCH) {
       throw new ForbiddenException(
         'Los MANAGER con scope BRANCH no pueden editar sucursales',
       );
@@ -108,13 +128,18 @@ export class BranchesService {
     return this.branchRepo.save(branch);
   }
 
-  async getConfig(user: UserPayload, branchId: string): Promise<BranchConfigSafe> {
+  async getConfig(
+    user: UserPayload,
+    branchId: string,
+  ): Promise<BranchConfigSafe> {
     await this.assertInScope(user, branchId);
     const config = await this.configRepo.findOne({
       where: { branchId },
     });
     if (!config) {
-      throw new NotFoundException(`Configuración de sucursal ${branchId} no encontrada`);
+      throw new NotFoundException(
+        `Configuración de sucursal ${branchId} no encontrada`,
+      );
     }
     return this.maskSensitiveConfig(config);
   }
@@ -129,7 +154,9 @@ export class BranchesService {
       where: { branchId },
     });
     if (!config) {
-      throw new NotFoundException(`Configuración de sucursal ${branchId} no encontrada`);
+      throw new NotFoundException(
+        `Configuración de sucursal ${branchId} no encontrada`,
+      );
     }
     const updates = Object.fromEntries(
       Object.entries(dto).filter(([, v]) => v !== undefined),
@@ -137,21 +164,27 @@ export class BranchesService {
 
     if (updates.whatsappToken !== undefined) {
       if (updates.whatsappToken !== SENSITIVE_PLACEHOLDER) {
-        updates.whatsappToken = this.encryptionService.encrypt(updates.whatsappToken);
+        updates.whatsappToken = this.encryptionService.encrypt(
+          updates.whatsappToken as string,
+        );
       } else {
         delete updates.whatsappToken;
       }
     }
     if (updates.whatsappPhoneId !== undefined) {
       if (updates.whatsappPhoneId !== SENSITIVE_PLACEHOLDER) {
-        updates.whatsappPhoneId = this.encryptionService.encrypt(updates.whatsappPhoneId);
+        updates.whatsappPhoneId = this.encryptionService.encrypt(
+          updates.whatsappPhoneId as string,
+        );
       } else {
         delete updates.whatsappPhoneId;
       }
     }
     if (updates.facturaapiApiKey !== undefined) {
       if (updates.facturaapiApiKey !== SENSITIVE_PLACEHOLDER) {
-        updates.facturaapiApiKey = this.encryptionService.encrypt(updates.facturaapiApiKey);
+        updates.facturaapiApiKey = this.encryptionService.encrypt(
+          updates.facturaapiApiKey as string,
+        );
       } else {
         delete updates.facturaapiApiKey;
       }
@@ -162,7 +195,10 @@ export class BranchesService {
     return this.maskSensitiveConfig(saved);
   }
 
-  private async assertInScope(user: UserPayload, branchId: string): Promise<void> {
+  private async assertInScope(
+    user: UserPayload,
+    branchId: string,
+  ): Promise<void> {
     const branch = await this.branchRepo.findOne({
       where: { id: branchId, tenantId: user.tenantId },
     });
@@ -183,6 +219,28 @@ export class BranchesService {
       case ScopeEnum.GLOBAL:
         break;
     }
+  }
+
+  async uploadLogo(
+    user: UserPayload,
+    branchId: string,
+    file: Express.Multer.File,
+  ): Promise<Branch> {
+    const branch = await this.findOne(user, branchId);
+    const ext =
+      file.mimetype === 'image/png'
+        ? 'png'
+        : file.mimetype === 'image/webp'
+          ? 'webp'
+          : 'jpg';
+    const key = `branches/${branchId}/logo.${ext}`;
+    const buffer = (file as Express.Multer.File & { buffer?: Buffer }).buffer;
+    if (!buffer) {
+      throw new BadRequestException('No se pudo leer el archivo');
+    }
+    await this.storageService.upload(buffer, key, file.mimetype);
+    branch.logoKey = key;
+    return this.branchRepo.save(branch);
   }
 
   private maskSensitiveConfig(config: BranchConfig): BranchConfigSafe {

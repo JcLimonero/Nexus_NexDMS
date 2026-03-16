@@ -1,3 +1,4 @@
+import { config } from 'dotenv';
 import { join } from 'path';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
@@ -12,6 +13,7 @@ export const getDatabaseConfig = (
   autoLoadEntities: true,
   migrations: [__dirname + '/../database/migrations/**/*.js'],
   migrationsRun: false,
+  subscribers: [__dirname + '/../database/subscribers/**/*.js'],
   ssl:
     configService.get('NODE_ENV') === 'production'
       ? { rejectUnauthorized: false }
@@ -23,7 +25,7 @@ export const getDatabaseConfig = (
 // Requiere: npm run build && npm run migration:run
 // Busca .env en apps/api (relativo al compilado en dist/config/)
 const envPath = join(__dirname, '..', '..', '.env');
-require('dotenv').config({ path: envPath });
+config({ path: envPath });
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl || typeof databaseUrl !== 'string') {

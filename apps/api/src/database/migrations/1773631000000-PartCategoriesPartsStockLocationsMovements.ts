@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class PartCategoriesPartsStockLocationsMovements1773631000000
-  implements MigrationInterface
-{
+export class PartCategoriesPartsStockLocationsMovements1773631000000 implements MigrationInterface {
   name = 'PartCategoriesPartsStockLocationsMovements1773631000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -93,9 +91,7 @@ export class PartCategoriesPartsStockLocationsMovements1773631000000
     await queryRunner.query(
       `CREATE INDEX "IDX_parts_branch_id" ON "parts" ("branch_id")`,
     );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_parts_sku" ON "parts" ("sku")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_parts_sku" ON "parts" ("sku")`);
     await queryRunner.query(
       `CREATE INDEX "IDX_parts_barcode" ON "parts" ("barcode")`,
     );
@@ -145,12 +141,22 @@ export class PartCategoriesPartsStockLocationsMovements1773631000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "public"."IDX_stock_movements_created_at"`);
-    await queryRunner.query(`DROP INDEX "public"."IDX_stock_movements_branch_id"`);
-    await queryRunner.query(`DROP INDEX "public"."IDX_stock_movements_part_id"`);
-    await queryRunner.query(`DROP INDEX "public"."IDX_stock_movements_tenant_id"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_stock_movements_created_at"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_stock_movements_branch_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_stock_movements_part_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_stock_movements_tenant_id"`,
+    );
     await queryRunner.query(`DROP TABLE "stock_movements"`);
-    await queryRunner.query(`DROP TYPE "public"."stock_movements_movement_type_enum"`);
+    await queryRunner.query(
+      `DROP TYPE "public"."stock_movements_movement_type_enum"`,
+    );
 
     await queryRunner.query(`DROP INDEX "public"."IDX_parts_location_id"`);
     await queryRunner.query(`DROP INDEX "public"."IDX_parts_vehicle_type"`);
@@ -161,11 +167,17 @@ export class PartCategoriesPartsStockLocationsMovements1773631000000
     await queryRunner.query(`DROP TABLE "parts"`);
     await queryRunner.query(`DROP TYPE "public"."parts_vehicle_type_enum"`);
 
-    await queryRunner.query(`DROP INDEX "public"."IDX_stock_locations_branch_id"`);
-    await queryRunner.query(`DROP INDEX "public"."IDX_stock_locations_tenant_id"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_stock_locations_branch_id"`,
+    );
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_stock_locations_tenant_id"`,
+    );
     await queryRunner.query(`DROP TABLE "stock_locations"`);
 
-    await queryRunner.query(`DROP INDEX "public"."IDX_part_categories_tenant_id"`);
+    await queryRunner.query(
+      `DROP INDEX "public"."IDX_part_categories_tenant_id"`,
+    );
     await queryRunner.query(`DROP TABLE "part_categories"`);
   }
 }

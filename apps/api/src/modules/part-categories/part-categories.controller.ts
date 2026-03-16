@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -15,6 +16,7 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { PartCategoriesService } from './part-categories.service';
 import { CreatePartCategoryDto } from './dto/create-part-category.dto';
+import { FilterPartCategoriesDto } from './dto/filter-part-categories.dto';
 import { UpdatePartCategoryDto } from './dto/update-part-category.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
@@ -26,8 +28,11 @@ export class PartCategoriesController {
   constructor(private readonly partCategoriesService: PartCategoriesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: UserPayload) {
-    return this.partCategoriesService.findAll(user);
+  findAll(
+    @CurrentUser() user: UserPayload,
+    @Query() filters: FilterPartCategoriesDto,
+  ) {
+    return this.partCategoriesService.findAll(user, filters);
   }
 
   @Post()

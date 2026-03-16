@@ -29,7 +29,10 @@ export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Get()
-  findAll(@CurrentUser() user: UserPayload, @Query() filters: FilterClientsDto) {
+  findAll(
+    @CurrentUser() user: UserPayload,
+    @Query() filters: FilterClientsDto,
+  ) {
     return this.clientsService.findAll(user, filters);
   }
 

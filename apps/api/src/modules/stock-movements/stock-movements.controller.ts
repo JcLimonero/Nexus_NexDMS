@@ -1,11 +1,4 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Post,
-  Query,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -21,9 +14,7 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('stock-movements')
 export class StockMovementsController {
-  constructor(
-    private readonly stockMovementsService: StockMovementsService,
-  ) {}
+  constructor(private readonly stockMovementsService: StockMovementsService) {}
 
   @Get()
   findAll(
