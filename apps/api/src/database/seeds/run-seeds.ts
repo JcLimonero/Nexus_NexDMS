@@ -7,9 +7,10 @@ import {
   TenantPlanEnum,
 } from '../../modules/tenants/entities/tenant.entity';
 import {
-  Brand,
-  BrandTypeEnum,
-} from '../../modules/brands/entities/brand.entity';
+  LegalEntity,
+  LegalEntityTypeEnum,
+} from '../../modules/legal-entities/entities/legal-entity.entity';
+import { UserBranch } from '../../modules/legal-entities/entities/user-branch.entity';
 import { Branch } from '../../modules/branches/entities/branch.entity';
 import { BranchConfig } from '../../modules/branches/entities/branch-config.entity';
 import {
@@ -17,6 +18,7 @@ import {
   RoleEnum,
   ScopeEnum,
 } from '../../modules/users/entities/user.entity';
+import { UserRole } from '../../modules/users/entities/user-role.entity';
 
 const envPath = join(__dirname, '..', '..', '..', '.env');
 config({ path: envPath });
@@ -34,17 +36,27 @@ async function runSeeds() {
     type: 'postgres',
     url: databaseUrl,
     synchronize: false,
-    entities: [Tenant, Brand, Branch, BranchConfig, User],
+    entities: [
+      Tenant,
+      LegalEntity,
+      UserBranch,
+      Branch,
+      BranchConfig,
+      User,
+      UserRole,
+    ],
     logging: process.env.NODE_ENV === 'development',
   });
 
   await ds.initialize();
 
   const tenantRepo = ds.getRepository(Tenant);
-  const brandRepo = ds.getRepository(Brand);
+  const legalEntityRepo = ds.getRepository(LegalEntity);
+  const userBranchRepo = ds.getRepository(UserBranch);
   const branchRepo = ds.getRepository(Branch);
   const configRepo = ds.getRepository(BranchConfig);
   const userRepo = ds.getRepository(User);
+  const userRoleRepo = ds.getRepository(UserRole);
 
   let tenant = await tenantRepo.findOne({ where: { slug: 'demo' } });
   if (tenant) {
@@ -61,17 +73,17 @@ async function runSeeds() {
   });
   tenant = await tenantRepo.save(tenant);
 
-  const brand = brandRepo.create({
+  const legalEntity = legalEntityRepo.create({
     tenantId: tenant.id,
     name: 'Demo',
-    type: BrandTypeEnum.BOTH,
+    type: LegalEntityTypeEnum.BOTH,
     isActive: true,
   });
-  const savedBrand = await brandRepo.save(brand);
+  const savedLegalEntity = await legalEntityRepo.save(legalEntity);
 
   const branch = branchRepo.create({
     tenantId: tenant.id,
-    brandId: savedBrand.id,
+    legalEntityId: savedLegalEntity.id,
     name: 'Sucursal Central',
     slug: 'central',
     rfc: 'DEM123456ABC',
@@ -98,21 +110,33 @@ async function runSeeds() {
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, BCRYPT_ROUNDS);
   const admin = userRepo.create({
     tenantId: tenant.id,
-    branchId: savedBranch.id,
-    brandId: savedBrand.id,
     firstName: 'Admin',
     lastName: 'Demo',
     email: 'admin@demo.local',
     passwordHash,
-    role: RoleEnum.ADMIN,
     scope: ScopeEnum.GLOBAL,
     isActive: true,
   });
-  await userRepo.save(admin);
+  const savedAdmin = await userRepo.save(admin);
+
+  await userRoleRepo.save(
+    userRoleRepo.create({
+      userId: savedAdmin.id,
+      role: RoleEnum.ADMIN,
+    }),
+  );
+
+  await userBranchRepo.save(
+    userBranchRepo.create({
+      userId: savedAdmin.id,
+      branchId: savedBranch.id,
+      isDefault: true,
+    }),
+  );
 
   console.log('Seeds completados:');
   console.log('  - Tenant: demo');
-  console.log('  - Brand: Demo');
+  console.log('  - Legal Entity: Demo');
   console.log('  - Branch: Sucursal Central');
   console.log('  - Usuario: admin@demo.local / ' + DEMO_PASSWORD);
 

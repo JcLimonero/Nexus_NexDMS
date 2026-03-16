@@ -10,6 +10,8 @@ import { ServiceOrderFolioSeq } from './entities/service-order-folio-seq.entity'
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
+import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
+import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
 import { CfdiModule } from '../cfdi/cfdi.module';
 
 @Module({
@@ -23,6 +25,8 @@ import { CfdiModule } from '../cfdi/cfdi.module';
       Branch,
       Part,
       StockMovement,
+      CatalogUnit,
+      CustomerVehicle,
     ]),
     CfdiModule,
   ],

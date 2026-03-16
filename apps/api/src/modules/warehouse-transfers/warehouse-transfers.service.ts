@@ -50,11 +50,11 @@ export class WarehouseTransfersService {
         );
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.andWhere(
-          `(EXISTS (SELECT 1 FROM branches b WHERE b.id = wt.origin_branch_id AND b.brand_id = :brandId)
-           OR EXISTS (SELECT 1 FROM branches b2 WHERE b2.id = wt.destination_branch_id AND b2.brand_id = :brandId))`,
-          { brandId: user.brandId },
+          `(EXISTS (SELECT 1 FROM branches b WHERE b.id = wt.origin_branch_id AND b.legal_entity_id = :legalEntityId)
+           OR EXISTS (SELECT 1 FROM branches b2 WHERE b2.id = wt.destination_branch_id AND b2.legal_entity_id = :legalEntityId))`,
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -79,7 +79,7 @@ export class WarehouseTransfersService {
 
   private assertCanWrite(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'WAREHOUSE'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo WAREHOUSE y ADMIN pueden crear o modificar transferencias',
       );
@@ -88,21 +88,21 @@ export class WarehouseTransfersService {
 
   private canApprove(user: UserPayload, transfer: WarehouseTransfer): boolean {
     if (
-      ['SUPERADMIN', 'ADMIN'].includes(user.role) &&
+      ['SUPERADMIN', 'ADMIN'].some((r) => user.roles?.includes(r)) &&
       user.scope === ScopeEnum.GLOBAL
     ) {
       return true;
     }
     if (transfer.type === WarehouseTransferTypeEnum.INTRA_BRAND) {
       return (
-        user.role === 'MANAGER' &&
+        user.roles?.includes('MANAGER') &&
         user.scope === ScopeEnum.BRAND &&
-        !!user.brandId
+        !!user.legalEntityId
       );
     }
     if (transfer.type === WarehouseTransferTypeEnum.INTER_BRAND) {
       return (
-        (user.role === 'MANAGER' || user.role === 'ADMIN') &&
+        (user.roles?.includes('MANAGER') || user.roles?.includes('ADMIN')) &&
         user.scope === ScopeEnum.GLOBAL
       );
     }

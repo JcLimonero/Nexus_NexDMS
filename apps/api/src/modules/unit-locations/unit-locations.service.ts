@@ -30,10 +30,10 @@ export class UnitLocationsService {
         qb.andWhere('ul.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin(Branch, 'b', 'b.id = ul.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -43,7 +43,7 @@ export class UnitLocationsService {
 
   private assertCanWrite(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo WAREHOUSE, MANAGER y ADMIN pueden gestionar ubicaciones de unidades',
       );

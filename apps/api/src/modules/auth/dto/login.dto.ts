@@ -3,11 +3,17 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MinLength,
 } from 'class-validator';
 
 export class LoginDto {
+  @ApiProperty({ example: 'tenant-uuid', required: false })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
   @ApiProperty({ example: 'admin@demo.local' })
   @IsEmail()
   email: string;

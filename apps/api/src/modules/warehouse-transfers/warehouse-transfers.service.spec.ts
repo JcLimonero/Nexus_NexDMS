@@ -28,8 +28,8 @@ describe('WarehouseTransfersService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: 'brand-1',
-    role: 'WAREHOUSE',
+    legalEntityId: 'legal-entity-1',
+    roles: ['WAREHOUSE'],
     scope: ScopeEnum.BRAND,
   };
 
@@ -113,7 +113,7 @@ describe('WarehouseTransfersService', () => {
 
   describe('create', () => {
     it('debe lanzar ForbiddenException cuando el rol no puede crear transferencias', async () => {
-      const userCashier = { ...mockUser, role: 'CASHIER' };
+      const userCashier = { ...mockUser, roles: ['CASHIER'] };
       const dto: CreateWarehouseTransferDto = {
         originBranchId: 'branch-1',
         destinationBranchId: 'branch-2',

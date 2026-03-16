@@ -61,10 +61,12 @@ export class BranchesService {
         qb.andWhere('b.id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) {
+        if (!user.legalEntityId) {
           return { data: [], meta: { total: 0, page, limit, totalPages: 0 } };
         }
-        qb.andWhere('b.brand_id = :brandId', { brandId: user.brandId });
+        qb.andWhere('b.legal_entity_id = :legalEntityId', {
+          legalEntityId: user.legalEntityId,
+        });
         break;
       case ScopeEnum.GLOBAL:
         break;
@@ -118,7 +120,7 @@ export class BranchesService {
     id: string,
     dto: UpdateBranchDto,
   ): Promise<Branch> {
-    if (user.role === 'MANAGER' && user.scope === ScopeEnum.BRANCH) {
+    if (user.roles?.includes('MANAGER') && user.scope === ScopeEnum.BRANCH) {
       throw new ForbiddenException(
         'Los MANAGER con scope BRANCH no pueden editar sucursales',
       );
@@ -212,7 +214,7 @@ export class BranchesService {
         }
         break;
       case ScopeEnum.BRAND:
-        if (user.brandId && branch.brandId !== user.brandId) {
+        if (user.legalEntityId && branch.legalEntityId !== user.legalEntityId) {
           throw new NotFoundException(`Sucursal ${branchId} no encontrada`);
         }
         break;

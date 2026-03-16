@@ -105,7 +105,7 @@ export class GlobalModelsService {
   }
 
   private assertSuperadmin(user: UserPayload) {
-    if (user.role !== 'SUPERADMIN') {
+    if (!user.roles?.includes('SUPERADMIN')) {
       throw new ForbiddenException(
         'Solo SUPERADMIN puede modificar el catálogo global',
       );

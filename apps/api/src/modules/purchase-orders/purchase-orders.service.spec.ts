@@ -27,8 +27,8 @@ describe('PurchaseOrdersService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'WAREHOUSE',
+    legalEntityId: 'legal-entity-1',
+    roles: ['WAREHOUSE'],
     scope: ScopeEnum.BRANCH,
   };
 
@@ -188,7 +188,7 @@ describe('PurchaseOrdersService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede crear órdenes', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
 
       await expect(service.create(userMechanic, createDto)).rejects.toThrow(
         'Solo WAREHOUSE y ADMIN pueden crear o modificar órdenes de compra',
@@ -243,7 +243,7 @@ describe('PurchaseOrdersService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede recibir', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
       orderRepo.findOne.mockResolvedValue(mockOrder);
       itemRepo.find.mockResolvedValue([mockItem]);
 

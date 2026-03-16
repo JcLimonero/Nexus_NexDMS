@@ -37,10 +37,10 @@ export class CommissionsService {
         qb.andWhere('cp.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cp.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -53,7 +53,7 @@ export class CommissionsService {
     dto: CreateCommissionPeriodDto,
   ): Promise<CommissionPeriod> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden crear períodos de comisión',
       );
@@ -97,7 +97,7 @@ export class CommissionsService {
     dto: CreateCommissionDetailDto,
   ): Promise<CommissionDetail> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden crear detalles de comisión',
       );
@@ -210,7 +210,7 @@ export class CommissionsService {
     id: string,
   ): Promise<CommissionPeriod> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden aprobar períodos',
       );
@@ -230,7 +230,7 @@ export class CommissionsService {
 
   async markAsPaid(user: UserPayload, id: string): Promise<CommissionPeriod> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden marcar como pagado',
       );
@@ -252,7 +252,7 @@ export class CommissionsService {
     id: string,
   ): Promise<CommissionPeriod> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden enviar a revisión',
       );

@@ -5,15 +5,15 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator';
-import { BrandTypeEnum } from '../entities/brand.entity';
+import { LegalEntityTypeEnum } from '../entities/legal-entity.entity';
 
-export class CreateBrandDto {
+export class CreateLegalEntityDto {
   @IsString()
   @MaxLength(100)
   name: string;
 
-  @IsEnum(BrandTypeEnum)
-  type: BrandTypeEnum;
+  @IsEnum(LegalEntityTypeEnum)
+  type: LegalEntityTypeEnum;
 
   @IsOptional()
   @IsString()

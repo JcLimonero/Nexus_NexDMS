@@ -41,10 +41,10 @@ export class UnitReservationsService {
         qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -54,7 +54,7 @@ export class UnitReservationsService {
 
   private assertCanReserve(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo SELLER, MANAGER y ADMIN pueden crear apartados',
       );
@@ -63,7 +63,7 @@ export class UnitReservationsService {
 
   private assertCanRelease(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo MANAGER y ADMIN pueden liberar apartados',
       );

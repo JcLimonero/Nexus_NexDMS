@@ -48,4 +48,13 @@ export class CreateServiceOrderDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  nextServiceDate?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  nextServiceMileage?: number;
 }

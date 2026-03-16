@@ -32,7 +32,7 @@ export class UnitSalesController {
   constructor(private readonly unitSalesService: UnitSalesService) {}
 
   @Get()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')
   findAll(
     @CurrentUser() user: UserPayload,
     @Query() filters: FilterUnitSalesDto,
@@ -78,7 +78,7 @@ export class UnitSalesController {
   }
 
   @Get(':id/payment-plan')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')
   getPaymentPlan(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -87,7 +87,7 @@ export class UnitSalesController {
   }
 
   @Get(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')
   findOne(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

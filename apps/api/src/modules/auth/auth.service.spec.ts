@@ -13,7 +13,7 @@ import * as bcrypt from 'bcrypt';
 import { UsersService } from '../users/users.service';
 import { LoginDto } from './dto/login.dto';
 import type { UserPayload } from './strategies/jwt.strategy';
-import { User } from '../users/entities/user.entity';
+import { User, RoleEnum } from '../users/entities/user.entity';
 import { ScopeEnum } from '../users/entities/user.entity';
 
 describe('AuthService', () => {
@@ -25,19 +25,22 @@ describe('AuthService', () => {
   const mockUser: Partial<User> = {
     id: 'user-123',
     tenantId: 'tenant-1',
-    branchId: 'branch-1',
-    brandId: null,
     firstName: 'Test',
     lastName: 'User',
     email: 'test@example.com',
     passwordHash: '$2b$12$hashedpassword',
-    role: 'ADMIN' as User['role'],
     scope: ScopeEnum.BRANCH,
     isActive: true,
     loginAttempts: 0,
     blockedUntil: null,
     totpEnabled: false,
     totpSecret: null,
+    roles: [{ role: RoleEnum.ADMIN }] as User['roles'],
+  };
+
+  const mockDefaultBranch = {
+    branchId: 'branch-1',
+    legalEntityId: 'legal-entity-1',
   };
 
   beforeEach(async () => {
@@ -56,6 +59,11 @@ describe('AuthService', () => {
             findByEmail: jest.fn(),
             findOneOrFail: jest.fn(),
             save: jest.fn(),
+            getDefaultBranchForUser: jest
+              .fn()
+              .mockResolvedValue(mockDefaultBranch),
+            getBranchesForUser: jest.fn().mockResolvedValue([]),
+            getRoleNames: jest.fn().mockReturnValue(['ADMIN']),
           },
         },
         {
@@ -181,6 +189,9 @@ describe('AuthService', () => {
       });
       redisMock.get.mockResolvedValue('stored-refresh-token');
       usersService.findOneOrFail.mockResolvedValue(mockUser as User);
+      usersService.getDefaultBranchForUser = jest
+        .fn()
+        .mockResolvedValue(mockDefaultBranch);
 
       const result = await service.refresh('valid-refresh-token');
 
@@ -214,11 +225,14 @@ describe('AuthService', () => {
         sub: 'user-123',
         tenantId: 'tenant-1',
         branchId: 'branch-1',
-        brandId: null,
-        role: 'ADMIN',
+        legalEntityId: 'legal-entity-1',
+        roles: ['ADMIN'],
         scope: ScopeEnum.BRANCH,
       };
       usersService.findOneOrFail.mockResolvedValue(mockUser as User);
+      usersService.getDefaultBranchForUser = jest
+        .fn()
+        .mockResolvedValue(mockDefaultBranch);
 
       const result = await service.getMe(userPayload as UserPayload);
 

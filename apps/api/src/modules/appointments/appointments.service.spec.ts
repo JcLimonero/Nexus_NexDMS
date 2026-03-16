@@ -27,8 +27,8 @@ describe('AppointmentsService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'CASHIER',
+    legalEntityId: 'legal-entity-1',
+    roles: ['CASHIER'],
     scope: ScopeEnum.BRANCH,
   };
 
@@ -95,7 +95,7 @@ describe('AppointmentsService', () => {
 
   describe('create', () => {
     it('debe lanzar ForbiddenException cuando el rol no puede crear citas', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
       const dto: CreateAppointmentDto = {
         branchId: 'branch-1',
         origin: AppointmentOriginEnum.INTERNAL,

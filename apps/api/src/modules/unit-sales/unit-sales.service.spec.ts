@@ -26,8 +26,8 @@ describe('UnitSalesService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'SELLER',
+    legalEntityId: 'legal-entity-1',
+    roles: ['SELLER'],
     scope: ScopeEnum.BRANCH,
   };
 
@@ -158,7 +158,7 @@ describe('UnitSalesService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede crear ventas', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
 
       await expect(service.create(userMechanic, createDto)).rejects.toThrow(
         'Solo SELLER, MANAGER y ADMIN pueden gestionar ventas de unidades',
@@ -202,7 +202,7 @@ describe('UnitSalesService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede completar', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
 
       await expect(service.complete(userMechanic, 'sale-1')).rejects.toThrow(
         'Solo SELLER, MANAGER y ADMIN pueden gestionar ventas de unidades',

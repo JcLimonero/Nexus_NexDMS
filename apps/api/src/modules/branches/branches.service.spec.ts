@@ -19,15 +19,15 @@ describe('BranchesService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'ADMIN',
+    legalEntityId: 'legal-entity-1',
+    roles: ['ADMIN'],
     scope: ScopeEnum.GLOBAL,
   };
 
   const mockBranch = {
     id: 'branch-1',
     tenantId: 'tenant-1',
-    brandId: 'brand-1',
+    legalEntityId: 'legal-entity-1',
     name: 'Sucursal Norte',
     slug: 'norte',
   };
@@ -106,8 +106,12 @@ describe('BranchesService', () => {
       );
     });
 
-    it('debe retornar array vacío para BRAND sin brandId', async () => {
-      const userBrand = { ...mockUser, scope: ScopeEnum.BRAND, brandId: null };
+    it('debe retornar array vacío para BRAND sin legalEntityId', async () => {
+      const userBrand = {
+        ...mockUser,
+        scope: ScopeEnum.BRAND,
+        legalEntityId: null,
+      };
       const filters = { page: 1, limit: 20 };
       const result = await service.findAll(userBrand, filters);
       expect(result).toEqual({
@@ -142,7 +146,7 @@ describe('BranchesService', () => {
   describe('create', () => {
     it('debe crear sucursal y config', async () => {
       const dto: CreateBranchDto = {
-        brandId: 'brand-1',
+        legalEntityId: 'legal-entity-1',
         name: 'Nueva Sucursal',
         slug: 'nueva',
         rfc: 'RFC123456789',
@@ -173,7 +177,7 @@ describe('BranchesService', () => {
     it('debe lanzar ForbiddenException cuando MANAGER BRANCH intenta editar', async () => {
       const userManager = {
         ...mockUser,
-        role: 'MANAGER',
+        roles: ['MANAGER'],
         scope: ScopeEnum.BRANCH,
       };
       branchRepo.findOne.mockResolvedValue(mockBranch);

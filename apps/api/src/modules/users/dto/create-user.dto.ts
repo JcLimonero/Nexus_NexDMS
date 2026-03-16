@@ -1,4 +1,6 @@
 import {
+  ArrayMinSize,
+  IsArray,
   IsEmail,
   IsEnum,
   IsOptional,
@@ -22,16 +24,16 @@ export class CreateUserDto {
   @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   password: string;
 
-  @IsEnum(RoleEnum)
-  role: RoleEnum;
+  @IsArray()
+  @ArrayMinSize(1, { message: 'Debe asignar al menos un rol al usuario' })
+  @IsEnum(RoleEnum, { each: true })
+  roles: RoleEnum[];
 
   @IsEnum(ScopeEnum)
   scope: ScopeEnum;
 
-  @IsUUID()
-  branchId: string;
-
+  @IsArray()
+  @IsUUID('4', { each: true })
   @IsOptional()
-  @IsUUID()
-  brandId?: string;
+  branchIds?: string[];
 }

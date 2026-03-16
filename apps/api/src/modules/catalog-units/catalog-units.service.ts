@@ -38,10 +38,10 @@ export class CatalogUnitsService {
         qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -51,7 +51,7 @@ export class CatalogUnitsService {
 
   private assertCanWrite(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo WAREHOUSE, SELLER, MANAGER y ADMIN pueden gestionar catálogo de unidades',
       );

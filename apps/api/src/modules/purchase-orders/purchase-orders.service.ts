@@ -49,10 +49,10 @@ export class PurchaseOrdersService {
         qb.andWhere('po.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = po.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -77,7 +77,7 @@ export class PurchaseOrdersService {
 
   private assertCanWrite(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'WAREHOUSE'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo WAREHOUSE y ADMIN pueden crear o modificar órdenes de compra',
       );

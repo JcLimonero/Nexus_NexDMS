@@ -33,10 +33,10 @@ export class BranchPrintersService {
         qb.andWhere('bp.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = bp.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -49,7 +49,7 @@ export class BranchPrintersService {
     dto: CreateBranchPrinterDto,
   ): Promise<BranchPrinter> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden configurar impresoras',
       );

@@ -27,7 +27,7 @@ export class CommissionsController {
   constructor(private readonly commissionsService: CommissionsService) {}
 
   @Get('periods')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'EXECUTIVE')
   findAllPeriods(
     @CurrentUser() user: UserPayload,
     @Query() filters: FilterCommissionPeriodsDto,
@@ -36,7 +36,7 @@ export class CommissionsController {
   }
 
   @Get('periods/:id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'EXECUTIVE')
   findOnePeriod(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

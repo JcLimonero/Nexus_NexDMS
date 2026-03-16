@@ -38,7 +38,7 @@ export class ServiceOrdersController {
   constructor(private readonly serviceOrdersService: ServiceOrdersService) {}
 
   @Get()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'AUDITOR')
   findAll(
     @CurrentUser() user: UserPayload,
     @Query() filters: FilterServiceOrdersDto,
@@ -47,7 +47,7 @@ export class ServiceOrdersController {
   }
 
   @Get(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'AUDITOR')
   findOne(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

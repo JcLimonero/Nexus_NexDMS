@@ -11,6 +11,8 @@ import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
+import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
+import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { ServiceOrderStatusEnum } from './entities/service-order.entity';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
@@ -25,8 +27,8 @@ describe('ServiceOrdersService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'CASHIER',
+    legalEntityId: 'legal-entity-1',
+    roles: ['CASHIER'],
     scope: ScopeEnum.BRANCH,
   };
 
@@ -54,6 +56,7 @@ describe('ServiceOrdersService', () => {
     create: jest.fn(),
     save: jest.fn(),
     findOne: jest.fn(),
+    update: jest.fn(),
     query: jest.fn().mockResolvedValue([{ last_value: 1 }]),
   };
 
@@ -97,6 +100,14 @@ describe('ServiceOrdersService', () => {
           useValue: { create: jest.fn(), save: jest.fn() },
         },
         {
+          provide: getRepositoryToken(CatalogUnit),
+          useValue: { findOne: jest.fn(), update: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(CustomerVehicle),
+          useValue: { findOne: jest.fn() },
+        },
+        {
           provide: DataSource,
           useValue: {
             transaction: mockTransaction,
@@ -125,7 +136,7 @@ describe('ServiceOrdersService', () => {
 
   describe('create', () => {
     it('debe lanzar ForbiddenException cuando el rol no puede crear OS', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
       const dto: CreateServiceOrderDto = {
         branchId: 'branch-1',
         ownerId: 'client-1',

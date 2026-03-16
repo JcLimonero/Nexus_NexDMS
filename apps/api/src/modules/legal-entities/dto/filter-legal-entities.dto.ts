@@ -1,7 +1,7 @@
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 
-export class FilterBrandsDto {
+export class FilterLegalEntitiesDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
@@ -14,4 +14,8 @@ export class FilterBrandsDto {
   @Min(1)
   @Max(100)
   limit?: number = 20;
+
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  isActive?: boolean;
 }

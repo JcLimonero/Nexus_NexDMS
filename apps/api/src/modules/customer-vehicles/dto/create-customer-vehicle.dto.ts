@@ -1,4 +1,5 @@
 import {
+  IsDateString,
   IsEnum,
   IsInt,
   IsOptional,
@@ -57,4 +58,18 @@ export class CreateCustomerVehicleDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  insuranceCompany?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  insurancePolicyNumber?: string;
+
+  @IsOptional()
+  @IsDateString()
+  insuranceExpirationDate?: string;
 }

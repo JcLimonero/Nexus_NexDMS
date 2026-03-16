@@ -4,9 +4,11 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { UserRole } from './user-role.entity';
 
 export enum RoleEnum {
   SUPERADMIN = 'SUPERADMIN',
@@ -16,6 +18,15 @@ export enum RoleEnum {
   CASHIER = 'CASHIER',
   MECHANIC = 'MECHANIC',
   SELLER = 'SELLER',
+  EXECUTIVE = 'EXECUTIVE',
+  LEGAL_ENTITY_MANAGER = 'LEGAL_ENTITY_MANAGER',
+  ADMIN_MANAGER = 'ADMIN_MANAGER',
+  PARTS_MANAGER = 'PARTS_MANAGER',
+  AFTERSALES_MANAGER = 'AFTERSALES_MANAGER',
+  IT_MANAGER = 'IT_MANAGER',
+  AML_OFFICER = 'AML_OFFICER',
+  DOCUMENT_VALIDATOR = 'DOCUMENT_VALIDATOR',
+  AUDITOR = 'AUDITOR',
 }
 
 export enum ScopeEnum {
@@ -27,20 +38,12 @@ export enum ScopeEnum {
 @Entity('users')
 @Index(['tenantId', 'email'], { unique: true })
 @Index(['tenantId'])
-@Index(['branchId'])
-@Index(['brandId'])
 export class User {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
-
-  @Column({ name: 'branch_id', type: 'uuid' })
-  branchId: string;
-
-  @Column({ name: 'brand_id', type: 'uuid', nullable: true })
-  brandId: string | null;
 
   @Column({ name: 'first_name', length: 200 })
   firstName: string;
@@ -53,9 +56,6 @@ export class User {
 
   @Column({ name: 'password_hash', length: 500 })
   passwordHash: string;
-
-  @Column({ name: 'role', type: 'enum', enum: RoleEnum })
-  role: RoleEnum;
 
   @Column({ name: 'scope', type: 'enum', enum: ScopeEnum })
   scope: ScopeEnum;
@@ -98,4 +98,7 @@ export class User {
 
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date | null;
+
+  @OneToMany(() => UserRole, (ur) => ur.user)
+  roles?: UserRole[];
 }

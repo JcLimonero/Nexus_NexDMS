@@ -40,10 +40,10 @@ export class AppointmentsService {
         qb.andWhere('a.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = a.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -56,7 +56,7 @@ export class AppointmentsService {
     dto: CreateAppointmentDto,
   ): Promise<Appointment> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo CASHIER y ADMIN pueden crear citas internas',
       );
@@ -165,7 +165,7 @@ export class AppointmentsService {
 
     this.applyScope(qb, user);
 
-    if (user.role === 'MECHANIC') {
+    if (user.roles?.includes('MECHANIC')) {
       qb.andWhere('a.mechanic_id = :mechanicId', { mechanicId: user.sub });
     } else if (filters.mechanicId) {
       qb.andWhere('a.mechanic_id = :mechanicId', {

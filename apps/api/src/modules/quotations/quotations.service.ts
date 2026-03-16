@@ -47,10 +47,10 @@ export class QuotationsService {
         qb.andWhere('q.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = q.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -103,7 +103,7 @@ export class QuotationsService {
 
   async create(user: UserPayload, dto: CreateQuotationDto): Promise<Quotation> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo CASHIER, SELLER y ADMIN pueden crear cotizaciones',
       );
@@ -362,7 +362,7 @@ export class QuotationsService {
 
   async approve(user: UserPayload, id: string): Promise<Quotation> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo GERENTE o ADMIN pueden aprobar cotizaciones',
       );
@@ -386,7 +386,7 @@ export class QuotationsService {
     _reason?: string,
   ): Promise<Quotation> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo GERENTE o ADMIN pueden rechazar cotizaciones',
       );

@@ -29,8 +29,8 @@ describe('SalesService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'CASHIER',
+    legalEntityId: 'legal-entity-1',
+    roles: ['CASHIER'],
     scope: ScopeEnum.BRANCH,
   };
 
@@ -238,7 +238,7 @@ describe('SalesService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede crear ventas', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
 
       await expect(service.create(userMechanic, createDto)).rejects.toThrow(
         'Solo CASHIER, SELLER y ADMIN pueden crear ventas',

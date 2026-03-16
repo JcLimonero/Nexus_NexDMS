@@ -28,10 +28,10 @@ export class PriceListsService {
         qb.andWhere('pl.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = pl.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -48,7 +48,7 @@ export class PriceListsService {
         'No tienes acceso a crear listas de precios en esta sucursal',
       );
     }
-    if (user.scope === ScopeEnum.BRAND && user.brandId) {
+    if (user.scope === ScopeEnum.BRAND && user.legalEntityId) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- getRawOne retorna any
       const branch = await this.repo.manager
         .createQueryBuilder()
@@ -56,7 +56,9 @@ export class PriceListsService {
         .from('branches', 'b')
         .where('b.id = :branchId', { branchId })
         .andWhere('b.tenant_id = :tenantId', { tenantId: user.tenantId })
-        .andWhere('b.brand_id = :brandId', { brandId: user.brandId })
+        .andWhere('b.legal_entity_id = :legalEntityId', {
+          legalEntityId: user.legalEntityId,
+        })
         .getRawOne();
       if (!branch) {
         throw new ForbiddenException(

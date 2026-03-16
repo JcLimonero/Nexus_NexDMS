@@ -15,6 +15,8 @@ import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
+import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
+import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
 import { StockMovementTypeEnum } from '../stock-movements/entities/stock-movement.entity';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { FilterServiceOrdersDto } from './dto/filter-service-orders.dto';
@@ -74,6 +76,10 @@ export class ServiceOrdersService {
     private readonly partEntityRepo: Repository<Part>,
     @InjectRepository(StockMovement)
     private readonly movementRepo: Repository<StockMovement>,
+    @InjectRepository(CatalogUnit)
+    private readonly catalogUnitRepo: Repository<CatalogUnit>,
+    @InjectRepository(CustomerVehicle)
+    private readonly customerVehicleRepo: Repository<CustomerVehicle>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
   ) {}
@@ -87,10 +93,10 @@ export class ServiceOrdersService {
         qb.andWhere('so.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = so.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -120,7 +126,7 @@ export class ServiceOrdersService {
     dto: CreateServiceOrderDto,
   ): Promise<ServiceOrder> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo CASHIER y ADMIN pueden crear órdenes de servicio',
       );
@@ -170,6 +176,24 @@ export class ServiceOrdersService {
           deliveredAt: null,
         });
         const saved = await em.save(so);
+        const vehicle = await em.findOne(CustomerVehicle, {
+          where: { id: dto.vehicleId },
+        });
+        if (
+          vehicle?.catalogUnitId &&
+          (dto.nextServiceDate || dto.nextServiceMileage != null)
+        ) {
+          const update: Partial<CatalogUnit> = {};
+          if (dto.nextServiceDate) {
+            update.nextServiceDate = new Date(dto.nextServiceDate);
+          }
+          if (dto.nextServiceMileage != null) {
+            update.nextServiceMileage = dto.nextServiceMileage;
+          }
+          if (Object.keys(update).length > 0) {
+            await em.update(CatalogUnit, vehicle.catalogUnitId, update);
+          }
+        }
         return saved.id;
       })
       .then((id) => this.findOne(user, id));
@@ -195,7 +219,7 @@ export class ServiceOrdersService {
 
     this.applyScope(qb, user);
 
-    if (user.role === 'MECHANIC') {
+    if (user.roles?.includes('MECHANIC')) {
       qb.andWhere('so.mechanic_id = :mechanicId', { mechanicId: user.sub });
     } else if (filters.mechanicId) {
       qb.andWhere('so.mechanic_id = :mechanicId', {
@@ -301,7 +325,7 @@ export class ServiceOrdersService {
   ): Promise<ServiceOrder> {
     const so = await this.findOne(user, id);
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException('Sin permisos para cambiar estatus');
     }
 
@@ -542,7 +566,7 @@ export class ServiceOrdersService {
   async startTime(user: UserPayload, id: string): Promise<ServiceOrderTime> {
     await this.findOne(user, id);
     const allowed = ['SUPERADMIN', 'ADMIN', 'MECHANIC'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException('Solo MECANICO puede registrar tiempo');
     }
     const active = await this.timeRepo.findOne({
@@ -627,12 +651,23 @@ export class ServiceOrdersService {
     if (laborCost < 0) {
       throw new BadRequestException('Debe registrar costo de mano de obra');
     }
+    const deliveredAt = new Date();
     await this.soRepo.update(id, {
       status: ServiceOrderStatusEnum.DELIVERED,
       paymentMethod: dto.paymentMethod,
       cfdiUuid: dto.cfdiUuid ?? null,
-      deliveredAt: new Date(),
+      deliveredAt,
     });
+    const vehicle = await this.customerVehicleRepo.findOne({
+      where: { id: so.vehicleId },
+    });
+    if (vehicle?.catalogUnitId) {
+      const update: Partial<CatalogUnit> = {
+        lastServiceDate: deliveredAt,
+        lastServiceMileage: so.kmOut ?? so.kmIn,
+      };
+      await this.catalogUnitRepo.update(vehicle.catalogUnitId, update);
+    }
     try {
       await this.cfdiService.generarIngreso('ServiceOrder', id);
     } catch (e) {
@@ -651,7 +686,7 @@ export class ServiceOrdersService {
     }
 
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException('Sin permisos para cancelar');
     }
 

@@ -45,6 +45,19 @@ export class CustomerVehiclesController {
     return this.customerVehiclesService.create(user, clientId, dto);
   }
 
+  @Get(':vehicleId/service-history')
+  getServiceHistory(
+    @CurrentUser() user: UserPayload,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+    @Param('vehicleId', ParseUUIDPipe) vehicleId: string,
+  ) {
+    return this.customerVehiclesService.getServiceHistory(
+      user,
+      clientId,
+      vehicleId,
+    );
+  }
+
   @Patch(':vehicleId')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
   update(

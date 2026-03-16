@@ -8,8 +8,8 @@ export interface UserPayload {
   sub: string;
   tenantId: string;
   branchId: string;
-  brandId: string | null;
-  role: string;
+  legalEntityId: string;
+  roles: string[];
   scope: ScopeEnum;
 }
 

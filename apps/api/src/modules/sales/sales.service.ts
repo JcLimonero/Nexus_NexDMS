@@ -63,10 +63,10 @@ export class SalesService {
         qb.andWhere('s.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = s.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -76,7 +76,7 @@ export class SalesService {
 
   private assertCanWrite(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'CASHIER', 'SELLER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo CASHIER, SELLER y ADMIN pueden crear ventas',
       );
@@ -411,7 +411,7 @@ export class SalesService {
     _dto?: CancelSaleDto,
   ): Promise<Sale> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo ADMIN o MANAGER pueden cancelar ventas',
       );

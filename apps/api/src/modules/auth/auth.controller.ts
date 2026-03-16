@@ -14,6 +14,8 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { SwitchBranchDto } from './dto/switch-branch.dto';
+import { SwitchLegalEntityDto } from './dto/switch-legal-entity.dto';
 import type { UserPayload } from './strategies/jwt.strategy';
 
 @ApiTags('Auth')
@@ -65,5 +67,24 @@ export class AuthController {
   @ApiBearerAuth()
   me(@CurrentUser() user: UserPayload) {
     return this.authService.getMe(user);
+  }
+
+  @Post('switch-branch')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(200)
+  switchBranch(@CurrentUser() user: UserPayload, @Body() dto: SwitchBranchDto) {
+    return this.authService.switchBranch(user, dto.branchId);
+  }
+
+  @Post('switch-legal-entity')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @HttpCode(200)
+  switchLegalEntity(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: SwitchLegalEntityDto,
+  ) {
+    return this.authService.switchLegalEntity(user, dto.legalEntityId);
   }
 }

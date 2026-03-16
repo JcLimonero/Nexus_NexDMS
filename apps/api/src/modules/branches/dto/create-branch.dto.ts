@@ -12,7 +12,7 @@ import {
 
 export class CreateBranchDto {
   @IsUUID()
-  brandId: string;
+  legalEntityId: string;
 
   @IsString()
   @MaxLength(200)

@@ -15,22 +15,25 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
-import { BrandsService } from './brands.service';
-import { CreateBrandDto } from './dto/create-brand.dto';
-import { FilterBrandsDto } from './dto/filter-brands.dto';
-import { UpdateBrandDto } from './dto/update-brand.dto';
+import { LegalEntitiesService } from './legal-entities.service';
+import { CreateLegalEntityDto } from './dto/create-legal-entity.dto';
+import { FilterLegalEntitiesDto } from './dto/filter-legal-entities.dto';
+import { UpdateLegalEntityDto } from './dto/update-legal-entity.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
-@ApiTags('Brands')
+@ApiTags('Legal Entities')
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
-@Controller('brands')
-export class BrandsController {
-  constructor(private readonly brandsService: BrandsService) {}
+@Controller('legal-entities')
+export class LegalEntitiesController {
+  constructor(private readonly legalEntitiesService: LegalEntitiesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: UserPayload, @Query() filters: FilterBrandsDto) {
-    return this.brandsService.findAll(user, filters);
+  findAll(
+    @CurrentUser() user: UserPayload,
+    @Query() filters: FilterLegalEntitiesDto,
+  ) {
+    return this.legalEntitiesService.findAll(user, filters);
   }
 
   @Get(':id')
@@ -38,13 +41,13 @@ export class BrandsController {
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.brandsService.findOne(user, id);
+    return this.legalEntitiesService.findOne(user, id);
   }
 
   @Post()
   @Roles('ADMIN')
-  create(@CurrentUser() user: UserPayload, @Body() dto: CreateBrandDto) {
-    return this.brandsService.create(user, dto);
+  create(@CurrentUser() user: UserPayload, @Body() dto: CreateLegalEntityDto) {
+    return this.legalEntitiesService.create(user, dto);
   }
 
   @Patch(':id')
@@ -52,9 +55,9 @@ export class BrandsController {
   update(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: UpdateBrandDto,
+    @Body() dto: UpdateLegalEntityDto,
   ) {
-    return this.brandsService.update(user, id, dto);
+    return this.legalEntitiesService.update(user, id, dto);
   }
 
   @Delete(':id')
@@ -63,6 +66,6 @@ export class BrandsController {
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
   ) {
-    return this.brandsService.deactivate(user, id);
+    return this.legalEntitiesService.deactivate(user, id);
   }
 }

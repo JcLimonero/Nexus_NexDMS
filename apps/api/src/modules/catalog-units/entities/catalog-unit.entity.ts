@@ -110,6 +110,18 @@ export class CatalogUnit {
   @Column({ name: 'acquisition_date', type: 'date', nullable: true })
   acquisitionDate: Date | null;
 
+  @Column({ name: 'last_service_date', type: 'date', nullable: true })
+  lastServiceDate: Date | null;
+
+  @Column({ name: 'last_service_mileage', type: 'int', nullable: true })
+  lastServiceMileage: number | null;
+
+  @Column({ name: 'next_service_date', type: 'date', nullable: true })
+  nextServiceDate: Date | null;
+
+  @Column({ name: 'next_service_mileage', type: 'int', nullable: true })
+  nextServiceMileage: number | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

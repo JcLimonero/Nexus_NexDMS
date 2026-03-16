@@ -10,7 +10,7 @@ import {
 @Entity('branches')
 @Index(['tenantId', 'slug'], { unique: true })
 @Index(['tenantId'])
-@Index(['brandId'])
+@Index(['legalEntityId'])
 @Index(['slug'])
 export class Branch {
   @PrimaryGeneratedColumn('uuid')
@@ -19,8 +19,8 @@ export class Branch {
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
 
-  @Column({ name: 'brand_id', type: 'uuid' })
-  brandId: string;
+  @Column({ name: 'legal_entity_id', type: 'uuid' })
+  legalEntityId: string;
 
   @Column({ name: 'name', length: 200 })
   name: string;

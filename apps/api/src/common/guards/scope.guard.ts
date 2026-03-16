@@ -20,12 +20,12 @@ export class ScopeGuard implements CanActivate {
 
     switch (user.scope) {
       case ScopeEnum.BRANCH:
-        qb.andWhere('e.branch_id = :bid', { bid: user.branchId });
+        qb.andWhere('e.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
         qb.innerJoin('branches', 's', 's.id = e.branch_id').andWhere(
-          's.brand_id = :bid',
-          { bid: user.brandId },
+          's.legal_entity_id = :lid',
+          { lid: user.legalEntityId },
         );
         break;
       // GLOBAL: sin filtro adicional

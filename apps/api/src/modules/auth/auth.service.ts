@@ -7,7 +7,7 @@ import type { Redis } from 'ioredis';
 import { Inject } from '@nestjs/common';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
-import { UserPayload } from './strategies/jwt.strategy';
+import type { UserPayload } from './strategies/jwt.strategy';
 import { UsersService } from '../users/users.service';
 
 const REFRESH_KEY_PREFIX = 'refresh:';
@@ -25,13 +25,23 @@ export class AuthService {
   ) {}
 
   async login(dto: LoginDto) {
-    const user = await this.usersService.findByEmail('', dto.email);
+    const user = await this.usersService.findByEmail(
+      dto.tenantId ?? '',
+      dto.email,
+    );
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
     if (!user.isActive) {
       throw new UnauthorizedException('Usuario inactivo');
+    }
+
+    const roles = this.usersService.getRoleNames(user);
+    if (roles.length === 0) {
+      throw new UnauthorizedException(
+        'Usuario sin roles asignados. Contacte al administrador.',
+      );
     }
 
     const now = new Date();
@@ -77,12 +87,20 @@ export class AuthService {
     user.lastLoginAt = now;
     await this.usersService.save(user);
 
+    const defaultBranch = await this.usersService.getDefaultBranchForUser(
+      user.id,
+    );
+    if (!defaultBranch) {
+      throw new UnauthorizedException(
+        'Usuario sin sucursales asignadas. Contacte al administrador.',
+      );
+    }
     const payload: UserPayload = {
       sub: user.id,
       tenantId: user.tenantId,
-      branchId: user.branchId,
-      brandId: user.brandId,
-      role: user.role,
+      branchId: defaultBranch.branchId,
+      legalEntityId: defaultBranch.legalEntityId,
+      roles,
       scope: user.scope,
     };
 
@@ -108,7 +126,7 @@ export class AuthService {
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
-        role: user.role,
+        roles,
         scope: user.scope,
       },
     };
@@ -130,12 +148,19 @@ export class AuthService {
         throw new UnauthorizedException('Session expired');
       }
       const user = await this.usersService.findOneOrFail(userId, tenantId);
+      const defaultBranch = await this.usersService.getDefaultBranchForUser(
+        user.id,
+      );
+      if (!defaultBranch) {
+        throw new UnauthorizedException('Usuario sin sucursales asignadas');
+      }
+      const roles = this.usersService.getRoleNames(user);
       const accessPayload: UserPayload = {
         sub: user.id,
         tenantId: user.tenantId,
-        branchId: user.branchId,
-        brandId: user.brandId,
-        role: user.role,
+        branchId: defaultBranch.branchId,
+        legalEntityId: defaultBranch.legalEntityId,
+        roles,
         scope: user.scope,
       };
       const accessToken = this.jwtService.sign(accessPayload);
@@ -170,21 +195,92 @@ export class AuthService {
     await this.usersService.save(dbUser);
   }
 
+  async switchBranch(user: UserPayload, branchId: string) {
+    const canAccess = await this.usersService.canAccessBranch(
+      user.sub,
+      branchId,
+    );
+    if (!canAccess) {
+      throw new UnauthorizedException('No tiene acceso a esta sucursal');
+    }
+    const dbUser = await this.usersService.findOneOrFail(
+      user.sub,
+      user.tenantId,
+    );
+    const branches = await this.usersService.getBranchesForUser(user.sub);
+    const selected = branches.find((b) => b.branchId === branchId);
+    if (!selected) {
+      throw new UnauthorizedException('Sucursal no encontrada');
+    }
+    const roles = this.usersService.getRoleNames(dbUser);
+    const payload: UserPayload = {
+      sub: dbUser.id,
+      tenantId: selected.tenantId,
+      branchId: selected.branchId,
+      legalEntityId: selected.legalEntityId,
+      roles,
+      scope: dbUser.scope,
+    };
+    const accessToken = this.jwtService.sign(payload);
+    return { accessToken };
+  }
+
+  async switchLegalEntity(user: UserPayload, legalEntityId: string) {
+    const branches = await this.usersService.getBranchesForUser(user.sub);
+    const selected = branches.find((b) => b.legalEntityId === legalEntityId);
+    if (!selected) {
+      throw new UnauthorizedException('No tiene acceso a esta entidad legal');
+    }
+    const dbUser = await this.usersService.findOneOrFail(
+      user.sub,
+      user.tenantId,
+    );
+    const roles = this.usersService.getRoleNames(dbUser);
+    const payload: UserPayload = {
+      sub: dbUser.id,
+      tenantId: selected.tenantId,
+      branchId: selected.branchId,
+      legalEntityId: selected.legalEntityId,
+      roles,
+      scope: dbUser.scope,
+    };
+    const accessToken = this.jwtService.sign(payload);
+    return { accessToken };
+  }
+
   async getMe(user: UserPayload) {
     const dbUser = await this.usersService.findOneOrFail(
       user.sub,
       user.tenantId,
     );
+    const defaultBranch = await this.usersService.getDefaultBranchForUser(
+      dbUser.id,
+    );
+    const branches = await this.usersService.getBranchesForUser(dbUser.id);
+    const legalEntities = branches.reduce(
+      (acc, b) => {
+        if (!acc.find((le) => le.id === b.legalEntityId)) {
+          acc.push({
+            id: b.legalEntityId,
+            name: b.legalEntityName,
+          });
+        }
+        return acc;
+      },
+      [] as Array<{ id: string; name: string }>,
+    );
     return {
       id: dbUser.id,
       tenantId: dbUser.tenantId,
-      branchId: dbUser.branchId,
-      brandId: dbUser.brandId,
+      branchId: defaultBranch?.branchId ?? null,
+      legalEntityId: defaultBranch?.legalEntityId ?? null,
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       email: dbUser.email,
-      role: dbUser.role,
+      roles: this.usersService.getRoleNames(dbUser),
       scope: dbUser.scope,
+      branches,
+      legalEntities,
     };
   }
 }

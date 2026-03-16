@@ -30,13 +30,29 @@ export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Get()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'SELLER',
+    'AUDITOR',
+    'EXECUTIVE',
+  )
   findAll(@CurrentUser() user: UserPayload, @Query() filters: FilterSalesDto) {
     return this.salesService.findAll(user, filters);
   }
 
   @Get(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'SELLER',
+    'AUDITOR',
+    'EXECUTIVE',
+  )
   findOne(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

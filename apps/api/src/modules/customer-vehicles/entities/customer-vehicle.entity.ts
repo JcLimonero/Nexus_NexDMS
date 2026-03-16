@@ -4,9 +4,12 @@ import {
   DeleteDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { CatalogUnit } from '../../catalog-units/entities/catalog-unit.entity';
 
 export enum VehicleTypeEnum {
   MOTORCYCLE = 'MOTORCYCLE',
@@ -66,6 +69,32 @@ export class CustomerVehicle {
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes: string | null;
 
+  @Column({
+    name: 'insurance_company',
+    type: 'varchar',
+    length: 200,
+    nullable: true,
+  })
+  insuranceCompany: string | null;
+
+  @Column({
+    name: 'insurance_policy_number',
+    type: 'varchar',
+    length: 100,
+    nullable: true,
+  })
+  insurancePolicyNumber: string | null;
+
+  @Column({
+    name: 'insurance_expiration_date',
+    type: 'date',
+    nullable: true,
+  })
+  insuranceExpirationDate: Date | null;
+
+  @Column({ name: 'catalog_unit_id', type: 'uuid', nullable: true })
+  catalogUnitId: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -74,4 +103,8 @@ export class CustomerVehicle {
 
   @DeleteDateColumn({ name: 'deleted_at' })
   deletedAt: Date | null;
+
+  @ManyToOne(() => CatalogUnit, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'catalog_unit_id' })
+  catalogUnit?: CatalogUnit;
 }

@@ -5,7 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getDatabaseConfig } from './config/database.config';
 import { AuthModule } from './modules/auth/auth.module';
-import { BrandsModule } from './modules/brands/brands.module';
+import { LegalEntitiesModule } from './modules/legal-entities/legal-entities.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
@@ -54,6 +54,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { CfdiModule } from './modules/cfdi/cfdi.module';
 import { CronModule } from './modules/cron/cron.module';
 import { HealthModule } from './modules/health/health.module';
+import { DocumentsModule } from './modules/documents/documents.module';
 
 @Module({
   imports: [
@@ -84,7 +85,7 @@ import { HealthModule } from './modules/health/health.module';
     }),
     AuthModule,
     TenantsModule,
-    BrandsModule,
+    LegalEntitiesModule,
     BranchesModule,
     ClientsModule,
     ContactsModule,
@@ -118,6 +119,7 @@ import { HealthModule } from './modules/health/health.module';
     CfdiModule,
     CronModule,
     HealthModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [

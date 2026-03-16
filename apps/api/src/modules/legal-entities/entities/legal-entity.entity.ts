@@ -7,15 +7,15 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export enum BrandTypeEnum {
+export enum LegalEntityTypeEnum {
   MOTO = 'MOTO',
   AUTO = 'AUTO',
   BOTH = 'BOTH',
 }
 
-@Entity('brands')
+@Entity('legal_entities')
 @Index(['tenantId'])
-export class Brand {
+export class LegalEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
@@ -25,8 +25,8 @@ export class Brand {
   @Column({ name: 'name', length: 100 })
   name: string;
 
-  @Column({ name: 'type', type: 'enum', enum: BrandTypeEnum })
-  type: BrandTypeEnum;
+  @Column({ name: 'type', type: 'enum', enum: LegalEntityTypeEnum })
+  type: LegalEntityTypeEnum;
 
   @Column({ name: 'logo_key', type: 'varchar', length: 500, nullable: true })
   logoKey: string | null;

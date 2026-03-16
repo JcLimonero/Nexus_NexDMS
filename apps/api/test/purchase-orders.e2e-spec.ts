@@ -11,8 +11,8 @@ const mockUserPayload = {
   sub: 'user-123',
   tenantId: 'tenant-1',
   branchId: 'branch-1',
-  brandId: null,
-  role: 'WAREHOUSE',
+  legalEntityId: 'legal-entity-1',
+  roles: ['WAREHOUSE'],
   scope: ScopeEnum.BRANCH,
 };
 

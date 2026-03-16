@@ -33,10 +33,10 @@ export class CashRegisterService {
         qb.andWhere('cs.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.BRAND:
-        if (!user.brandId) return;
+        if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cs.branch_id').andWhere(
-          'b.brand_id = :brandId',
-          { brandId: user.brandId },
+          'b.legal_entity_id = :legalEntityId',
+          { legalEntityId: user.legalEntityId },
         );
         break;
       case ScopeEnum.GLOBAL:
@@ -46,7 +46,7 @@ export class CashRegisterService {
 
   private assertCanWrite(user: UserPayload) {
     const allowed = ['SUPERADMIN', 'ADMIN', 'CASHIER'];
-    if (!allowed.includes(user.role)) {
+    if (!allowed.some((r) => user.roles?.includes(r))) {
       throw new ForbiddenException(
         'Solo CASHIER y ADMIN pueden abrir o cerrar caja',
       );
@@ -81,11 +81,11 @@ export class CashRegisterService {
     if (user.scope === ScopeEnum.BRANCH && user.branchId !== branchId) {
       throw new ForbiddenException('No tiene acceso a esta sucursal');
     }
-    if (user.scope === ScopeEnum.BRAND && user.brandId) {
+    if (user.scope === ScopeEnum.BRAND && user.legalEntityId) {
       const branch = await this.branchRepo.findOne({
         where: { id: branchId, tenantId: user.tenantId },
       });
-      if (!branch || branch.brandId !== user.brandId) {
+      if (!branch || branch.legalEntityId !== user.legalEntityId) {
         throw new ForbiddenException('No tiene acceso a esta sucursal');
       }
     }

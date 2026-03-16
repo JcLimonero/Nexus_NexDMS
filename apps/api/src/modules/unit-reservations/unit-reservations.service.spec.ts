@@ -18,8 +18,8 @@ describe('UnitReservationsService', () => {
     sub: 'user-123',
     tenantId: 'tenant-1',
     branchId: 'branch-1',
-    brandId: null,
-    role: 'SELLER',
+    legalEntityId: 'legal-entity-1',
+    roles: ['SELLER'],
     scope: ScopeEnum.BRANCH,
   };
 
@@ -136,7 +136,7 @@ describe('UnitReservationsService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede crear apartados', async () => {
-      const userMechanic = { ...mockUser, role: 'MECHANIC' };
+      const userMechanic = { ...mockUser, roles: ['MECHANIC'] };
 
       await expect(service.create(userMechanic, createDto)).rejects.toThrow(
         'Solo SELLER, MANAGER y ADMIN pueden crear apartados',
@@ -156,7 +156,7 @@ describe('UnitReservationsService', () => {
     });
 
     it('debe lanzar BadRequestException cuando el apartado no está activo', async () => {
-      const userManager = { ...mockUser, role: 'MANAGER' };
+      const userManager = { ...mockUser, roles: ['MANAGER'] };
       mockQueryBuilder.getOne.mockResolvedValue({
         ...mockReservation,
         status: UnitReservationStatusEnum.RELEASED,
@@ -168,7 +168,7 @@ describe('UnitReservationsService', () => {
     });
 
     it('debe lanzar ForbiddenException cuando el rol no puede liberar', async () => {
-      const userSeller = { ...mockUser, role: 'SELLER' };
+      const userSeller = { ...mockUser, roles: ['SELLER'] };
 
       await expect(
         service.release(userSeller, 'res-1', 'Motivo'),
