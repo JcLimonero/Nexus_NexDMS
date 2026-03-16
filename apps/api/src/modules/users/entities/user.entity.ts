@@ -9,6 +9,7 @@ import {
 } from 'typeorm';
 
 export enum RoleEnum {
+  SUPERADMIN = 'SUPERADMIN',
   ADMIN = 'ADMIN',
   MANAGER = 'MANAGER',
   WAREHOUSE = 'WAREHOUSE',

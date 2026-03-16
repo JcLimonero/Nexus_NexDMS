@@ -1,0 +1,208 @@
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Client } from './entities/client.entity';
+import { Contact } from '../contacts/entities/contact.entity';
+import { CreateClientDto } from './dto/create-client.dto';
+import { UpdateClientDto } from './dto/update-client.dto';
+import { FilterClientsDto } from './dto/filter-clients.dto';
+import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import {
+  DataQualityScore,
+  getLevelFromScore,
+} from '../../shared/data-quality/data-quality.types';
+
+const CLIENT_QUALITY_WEIGHTS: Record<string, number> = {
+  name: 10,
+  phone: 10,
+  email: 10,
+  rfc: 25,
+  taxRegime: 10,
+  taxPostalCode: 5,
+  hasVehicle: 15,
+  address: 10,
+  curp: 5,
+};
+
+const CLIENT_QUALITY_FIELD_LABELS: Record<string, string> = {
+  name: 'nombre',
+  phone: 'teléfono',
+  email: 'email',
+  rfc: 'RFC',
+  taxRegime: 'régimen fiscal',
+  taxPostalCode: 'CP fiscal',
+  hasVehicle: 'vehículo registrado',
+  address: 'dirección',
+  curp: 'CURP',
+};
+
+@Injectable()
+export class ClientsService {
+  constructor(
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
+    @InjectRepository(Contact)
+    private readonly contactRepo: Repository<Contact>,
+  ) {}
+
+  async findAll(
+    user: UserPayload,
+    filters: FilterClientsDto,
+  ): Promise<{ data: Client[]; meta: { total: number } }> {
+    const qb = this.clientRepo
+      .createQueryBuilder('c')
+      .where('c.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('c.deleted_at IS NULL');
+
+    if (filters.search?.trim()) {
+      const term = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        '(c.name ILIKE :term OR c.last_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
+        { term },
+      );
+    }
+    if (filters.clientType) {
+      qb.andWhere('c.client_type = :clientType', {
+        clientType: filters.clientType,
+      });
+    }
+    if (filters.isCompany !== undefined) {
+      qb.andWhere('c.is_company = :isCompany', {
+        isCompany: filters.isCompany,
+      });
+    }
+
+    const [data, total] = await qb
+      .orderBy('c.name', 'ASC')
+      .addOrderBy('c.last_name', 'ASC')
+      .getManyAndCount();
+
+    return { data, meta: { total } };
+  }
+
+  async findOne(user: UserPayload, id: string): Promise<Client> {
+    const client = await this.clientRepo.findOne({
+      where: { id, tenantId: user.tenantId },
+    });
+    if (!client) {
+      throw new NotFoundException(`Cliente ${id} no encontrado`);
+    }
+    return client;
+  }
+
+  async getDataQualityScore(
+    user: UserPayload,
+    client: Client,
+    vehicleCount = 0,
+  ): Promise<DataQualityScore> {
+    const missingFields: string[] = [];
+    let score = 0;
+
+    if (client.name?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.name;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.name);
+    }
+    if (client.phone?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.phone;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.phone);
+    }
+    if (client.email?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.email;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.email);
+    }
+    if (client.rfc?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.rfc;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.rfc);
+    }
+    if (client.taxRegime?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.taxRegime;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.taxRegime);
+    }
+    if (client.taxPostalCode?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.taxPostalCode;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.taxPostalCode);
+    }
+    if (vehicleCount > 0) {
+      score += CLIENT_QUALITY_WEIGHTS.hasVehicle;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.hasVehicle);
+    }
+    if (client.address?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.address;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.address);
+    }
+    if (client.curp?.trim()) {
+      score += CLIENT_QUALITY_WEIGHTS.curp;
+    } else {
+      missingFields.push(CLIENT_QUALITY_FIELD_LABELS.curp);
+    }
+
+    return {
+      score,
+      level: getLevelFromScore(score),
+      missingFields,
+    };
+  }
+
+  async search(
+    user: UserPayload,
+    q: string,
+    limit = 8,
+  ): Promise<Client[]> {
+    if (!q?.trim()) return [];
+    const term = `%${q.trim()}%`;
+    return this.clientRepo
+      .createQueryBuilder('c')
+      .where('c.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('c.deleted_at IS NULL')
+      .andWhere(
+        '(c.name ILIKE :term OR c.last_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
+        { term },
+      )
+      .orderBy('c.name', 'ASC')
+      .take(limit)
+      .getMany();
+  }
+
+  async create(user: UserPayload, dto: CreateClientDto): Promise<Client> {
+    const client = this.clientRepo.create({
+      ...dto,
+      tenantId: user.tenantId,
+      isCompany: dto.isCompany ?? false,
+      fixedDiscount: dto.fixedDiscount ?? 0,
+    });
+    return this.clientRepo.save(client);
+  }
+
+  async update(
+    user: UserPayload,
+    id: string,
+    dto: UpdateClientDto,
+  ): Promise<Client> {
+    const client = await this.findOne(user, id);
+    Object.assign(client, dto);
+    return this.clientRepo.save(client);
+  }
+
+  async remove(user: UserPayload, id: string): Promise<void> {
+    const client = await this.findOne(user, id);
+    await this.clientRepo.softRemove(client);
+  }
+
+  async getContactsForClient(
+    user: UserPayload,
+    clientId: string,
+  ): Promise<Contact[]> {
+    return this.contactRepo.find({
+      where: { clientId, tenantId: user.tenantId },
+      order: { name: 'ASC', lastName: 'ASC' },
+    });
+  }
+}

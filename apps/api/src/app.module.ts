@@ -7,6 +7,8 @@ import { getDatabaseConfig } from './config/database.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { BrandsModule } from './modules/brands/brands.module';
 import { BranchesModule } from './modules/branches/branches.module';
+import { ClientsModule } from './modules/clients/clients.module';
+import { ContactsModule } from './modules/contacts/contacts.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -22,6 +24,8 @@ import { UsersModule } from './modules/users/users.module';
     TenantsModule,
     BrandsModule,
     BranchesModule,
+    ClientsModule,
+    ContactsModule,
     UsersModule,
   ],
   controllers: [AppController],
