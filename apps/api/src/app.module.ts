@@ -10,6 +10,10 @@ import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { CustomerVehiclesModule } from './modules/customer-vehicles/customer-vehicles.module';
+import { PartCategoriesModule } from './modules/part-categories/part-categories.module';
+import { PartsModule } from './modules/parts/parts.module';
+import { StockLocationsModule } from './modules/stock-locations/stock-locations.module';
+import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { UsersModule } from './modules/users/users.module';
 
@@ -28,6 +32,10 @@ import { UsersModule } from './modules/users/users.module';
     ClientsModule,
     ContactsModule,
     CustomerVehiclesModule,
+    PartCategoriesModule,
+    PartsModule,
+    StockLocationsModule,
+    StockMovementsModule,
     UsersModule,
   ],
   controllers: [AppController],
