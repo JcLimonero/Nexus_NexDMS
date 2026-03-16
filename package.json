@@ -1,0 +1,14 @@
+{
+  "name": "nexdms",
+  "private": true,
+  "scripts": {
+    "api:dev": "cd apps/api && npm run start:dev",
+    "api:build": "cd apps/api && npm run build",
+    "api:migration:generate": "cd apps/api && npm run build && npm run migration:generate --",
+    "api:migration:run": "cd apps/api && npm run migration:run",
+    "api:migration:revert": "cd apps/api && npm run migration:revert",
+    "web:dev": "cd apps/web && npm start",
+    "pwa:dev": "cd apps/pwa && npm start",
+    "admin:dev": "cd apps/admin && npm start"
+  }
+}
