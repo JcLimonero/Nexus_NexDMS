@@ -1,0 +1,128 @@
+version: '3.9'
+
+services:
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexdms_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: nexdms
+      POSTGRES_USER: nexdms
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nexdms']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexdms_net
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexdms_redis
+    restart: always
+    command: redis-server --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    networks:
+      - nexdms_net
+
+  api:
+    build:
+      context: ./apps/api
+      dockerfile: Dockerfile
+      target: production
+    container_name: nexdms_api
+    restart: always
+    env_file:
+      - ./apps/api/.env.prod
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://nexdms:${POSTGRES_PASSWORD}@postgres:5432/nexdms
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nexdms_net
+
+  web:
+    build:
+      context: ./apps/web
+      dockerfile: Dockerfile
+      target: production
+    container_name: nexdms_web
+    restart: always
+    networks:
+      - nexdms_net
+
+  pwa:
+    build:
+      context: ./apps/pwa
+      dockerfile: Dockerfile
+      target: production
+    container_name: nexdms_pwa
+    restart: always
+    networks:
+      - nexdms_net
+
+  admin:
+    build:
+      context: ./apps/admin
+      dockerfile: Dockerfile
+      target: production
+    container_name: nexdms_admin
+    restart: always
+    networks:
+      - nexdms_net
+
+  nginx:
+    image: nginx:alpine
+    container_name: nexdms_nginx
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - certbot_www:/var/www/certbot:ro
+    depends_on:
+      - api
+      - web
+      - pwa
+      - admin
+    networks:
+      - nexdms_net
+
+  # Backup automático de PostgreSQL
+  backup:
+    image: postgres:15-alpine
+    container_name: nexdms_backup
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      B2_KEY_ID: ${B2_KEY_ID}
+      B2_APP_KEY: ${B2_APP_KEY}
+      B2_BUCKET_BACKUP: ${B2_BUCKET_BACKUP}
+    volumes:
+      - ./scripts/backup.sh:/backup.sh:ro
+    entrypoint: ['crond', '-f', '-d', '8']
+    depends_on:
+      - postgres
+    networks:
+      - nexdms_net
+
+volumes:
+  postgres_data:
+  redis_data:
+  certbot_www:
+
+networks:
+  nexdms_net:
+    driver: bridge
