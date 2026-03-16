@@ -18,7 +18,7 @@ describe('AuthController (e2e)', () => {
       lastName: 'User',
       email: 'test@example.com',
       roles: ['ADMIN'],
-      scope: 'BRANCH',
+      scope: 'SUCURSAL',
       legalEntityId: 'legal-entity-1',
     },
   };

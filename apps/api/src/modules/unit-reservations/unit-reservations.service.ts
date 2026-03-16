@@ -37,10 +37,10 @@ export class UnitReservationsService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',

@@ -14,9 +14,13 @@ import { Branch } from '../branches/entities/branch.entity';
 import { UnitLocation } from '../unit-locations/entities/unit-location.entity';
 import { CreateCatalogUnitDto } from './dto/create-catalog-unit.dto';
 import { UpdateCatalogUnitDto } from './dto/update-catalog-unit.dto';
-import { FilterCatalogUnitsDto } from './dto/filter-catalog-units.dto';
+import {
+  FilterCatalogUnitsDto,
+  SearchScopeType,
+} from './dto/filter-catalog-units.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class CatalogUnitsService {
@@ -27,24 +31,46 @@ export class CatalogUnitsService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(UnitLocation)
     private readonly locationRepo: Repository<UnitLocation>,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
     qb: ReturnType<Repository<CatalogUnit>['createQueryBuilder']>,
     user: UserPayload,
+    searchScope?: SearchScopeType,
   ) {
+    const useGroup = searchScope === 'group';
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
-        qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
+      case ScopeEnum.SUCURSAL:
+        if (useGroup && user.legalEntityId) {
+          qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
+            'b.legal_entity_id = :legalEntityId',
+            { legalEntityId: user.legalEntityId },
+          );
+        } else {
+          qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
+        }
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
-        qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
-          'b.legal_entity_id = :legalEntityId',
-          { legalEntityId: user.legalEntityId },
-        );
+        if (useGroup) {
+          qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
+            'b.legal_entity_id = :legalEntityId',
+            { legalEntityId: user.legalEntityId },
+          );
+        } else {
+          qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
+        }
         break;
       case ScopeEnum.GLOBAL:
+        if (useGroup && user.legalEntityId) {
+          qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
+            'b.legal_entity_id = :legalEntityId',
+            { legalEntityId: user.legalEntityId },
+          );
+        } else {
+          qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
+        }
         break;
     }
   }
@@ -73,12 +99,13 @@ export class CatalogUnitsService {
       .where('cu.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('cu.deleted_at IS NULL');
 
-    this.applyScope(qb, user);
-
-    if (filters.vehicleType) {
-      qb.andWhere('cu.vehicle_type = :vehicleType', {
-        vehicleType: filters.vehicleType,
-      });
+    if (filters.branchId) {
+      await this.branchesService.assertBranchInScope(user, filters.branchId);
+      qb.andWhere('cu.branch_id = :branchId', { branchId: filters.branchId });
+    } else if (filters.searchScope === 'group') {
+      this.applyScope(qb, user, 'group');
+    } else {
+      this.applyScope(qb, user, 'local');
     }
     if (filters.brand?.trim()) {
       qb.andWhere('cu.brand ILIKE :brand', {
@@ -88,8 +115,10 @@ export class CatalogUnitsService {
     if (filters.status) {
       qb.andWhere('cu.status = :status', { status: filters.status });
     }
-    if (filters.branchId) {
-      qb.andWhere('cu.branch_id = :branchId', { branchId: filters.branchId });
+    if (filters.vehicleType) {
+      qb.andWhere('cu.vehicle_type = :vehicleType', {
+        vehicleType: filters.vehicleType,
+      });
     }
     if (filters.search?.trim()) {
       const term = `%${filters.search.trim()}%`;
@@ -168,12 +197,7 @@ export class CatalogUnitsService {
   ): Promise<CatalogUnit> {
     this.assertCanWrite(user);
 
-    const branch = await this.branchRepo.findOne({
-      where: { id: dto.branchId, tenantId: user.tenantId },
-    });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
-    }
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
 
     const existing = await this.unitRepo.findOne({
       where: { serialNumber: dto.serialNumber },

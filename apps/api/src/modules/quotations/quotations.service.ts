@@ -21,6 +21,7 @@ import { FilterQuotationsDto } from './dto/filter-quotations.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class QuotationsService {
@@ -36,6 +37,7 @@ export class QuotationsService {
     @InjectRepository(CatalogUnit)
     private readonly catalogUnitRepo: Repository<CatalogUnit>,
     private readonly dataSource: DataSource,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
@@ -43,10 +45,10 @@ export class QuotationsService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('q.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = q.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -113,15 +115,13 @@ export class QuotationsService {
       throw new BadRequestException('Debe incluir al menos un ítem');
     }
 
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
     const branch = await this.branchRepo.findOne({
       where: { id: dto.branchId, tenantId: user.tenantId },
     });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
-    }
 
-    const taxRate = Number(branch.taxRate) || 0.16;
-    const maxDiscountPct = Number(branch.maxDiscountPct) || 10;
+    const taxRate = Number(branch?.taxRate) || 0.16;
+    const maxDiscountPct = Number(branch?.maxDiscountPct) || 10;
     const discountPct = dto.discountPct ?? 0;
 
     let status = QuotationStatusEnum.DRAFT;
@@ -202,7 +202,7 @@ export class QuotationsService {
     let validityDate: Date | null = null;
     if (dto.validityDate) {
       validityDate = new Date(dto.validityDate);
-    } else if (branch.quotationValidityDays) {
+    } else if (branch?.quotationValidityDays) {
       const d = new Date();
       d.setDate(d.getDate() + branch.quotationValidityDays);
       validityDate = d;

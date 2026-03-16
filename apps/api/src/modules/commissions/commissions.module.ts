@@ -5,10 +5,12 @@ import { CommissionsService } from './commissions.service';
 import { CommissionPeriod } from './entities/commission-period.entity';
 import { CommissionDetail } from './entities/commission-detail.entity';
 import { Branch } from '../branches/entities/branch.entity';
+import { BranchesModule } from '../branches/branches.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([CommissionPeriod, CommissionDetail, Branch]),
+    BranchesModule,
   ],
   controllers: [CommissionsController],
   providers: [CommissionsService],

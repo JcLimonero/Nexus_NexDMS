@@ -15,6 +15,7 @@ import { AuthorizeWarrantyDto } from './dto/authorize-warranty.dto';
 import { ResolveWarrantyDto } from './dto/resolve-warranty.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class WarrantiesService {
@@ -24,6 +25,7 @@ export class WarrantiesService {
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
     private readonly dataSource: DataSource,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
@@ -31,10 +33,10 @@ export class WarrantiesService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('w.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = w.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -54,12 +56,7 @@ export class WarrantiesService {
       );
     }
 
-    const branch = await this.branchRepo.findOne({
-      where: { id: dto.branchId, tenantId: user.tenantId },
-    });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
-    }
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
 
     if (!dto.unitSaleId && !dto.serviceOrderId) {
       throw new BadRequestException('Debe indicar unitSaleId o serviceOrderId');

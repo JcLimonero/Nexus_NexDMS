@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Appointment } from './entities/appointment.entity';
 import {
   AppointmentStatusEnum,
@@ -19,6 +20,11 @@ import { FilterAppointmentsDto } from './dto/filter-appointments.dto';
 import { UpdateAppointmentDto } from './dto/update-appointment.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
+import { UserAvailabilityService } from '../user-availability/user-availability.service';
+import { ServiceTypesService } from '../service-types/service-types.service';
+import { ServiceTypeCategoryEnum } from '../service-types/entities/service-type.entity';
+import { MantenimientoSinRefaccionesEvent } from '../../events/domain-events';
 
 @Injectable()
 export class AppointmentsService {
@@ -29,6 +35,10 @@ export class AppointmentsService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(Client)
     private readonly clientRepo: Repository<Client>,
+    private readonly branchesService: BranchesService,
+    private readonly userAvailabilityService: UserAvailabilityService,
+    private readonly serviceTypesService: ServiceTypesService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private applyScope(
@@ -36,10 +46,10 @@ export class AppointmentsService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('a.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = a.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -62,12 +72,7 @@ export class AppointmentsService {
       );
     }
 
-    const branch = await this.branchRepo.findOne({
-      where: { id: dto.branchId, tenantId: user.tenantId },
-    });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
-    }
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
 
     let clientName = dto.clientName ?? '';
     let clientPhone = dto.clientPhone ?? '';
@@ -96,6 +101,27 @@ export class AppointmentsService {
       throw new BadRequestException('Fecha/hora inválida');
     }
 
+    let durationMin = dto.durationMin ?? 60;
+
+    if (dto.serviceTypeId) {
+      const serviceType = await this.serviceTypesService.findOne(
+        dto.serviceTypeId,
+        user.tenantId,
+      );
+      durationMin = serviceType.durationMin;
+      if (
+        serviceType.schedulableDays &&
+        serviceType.schedulableDays.length > 0
+      ) {
+        const dayOfWeek = scheduledAt.getDay();
+        if (!serviceType.schedulableDays.includes(dayOfWeek)) {
+          throw new BadRequestException(
+            `El tipo de servicio ${serviceType.name} no se agenda en este día de la semana`,
+          );
+        }
+      }
+    }
+
     const appointment = this.appointmentRepo.create({
       tenantId: user.tenantId,
       branchId: dto.branchId,
@@ -105,13 +131,44 @@ export class AppointmentsService {
       origin: AppointmentOriginEnum.INTERNAL,
       status: AppointmentStatusEnum.SCHEDULED,
       serviceType: dto.serviceType,
+      serviceTypeId: dto.serviceTypeId ?? null,
       clientName,
       clientPhone,
       notes: dto.notes ?? null,
       scheduledAt,
-      durationMin: dto.durationMin ?? 60,
+      durationMin,
     });
-    return this.appointmentRepo.save(appointment);
+    const saved = await this.appointmentRepo.save(appointment);
+
+    if (dto.serviceTypeId) {
+      const serviceType = await this.serviceTypesService.findOne(
+        dto.serviceTypeId,
+        user.tenantId,
+      );
+      if (serviceType.category === ServiceTypeCategoryEnum.MAINTENANCE) {
+        const availability =
+          await this.serviceTypesService.checkPartsAvailability(
+            dto.serviceTypeId,
+            dto.branchId,
+            user.tenantId,
+          );
+        if (!availability.available) {
+          this.eventEmitter.emit(
+            'mantenimiento.sin_refacciones',
+            new MantenimientoSinRefaccionesEvent(
+              saved.id,
+              dto.branchId,
+              user.tenantId,
+              serviceType.name,
+              scheduledAt,
+              availability.missingParts,
+            ),
+          );
+        }
+      }
+    }
+
+    return saved;
   }
 
   async createPublic(dto: CreatePublicAppointmentDto): Promise<Appointment> {
@@ -323,58 +380,15 @@ export class AppointmentsService {
     date: string,
     mechanicId?: string,
     durationMin?: number,
+    serviceTypeId?: string,
   ): Promise<{ start: string; end: string }[]> {
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
-
-    const qb = this.appointmentRepo
-      .createQueryBuilder('a')
-      .where('a.branch_id = :branchId', { branchId })
-      .andWhere('a.scheduled_at >= :dayStart', { dayStart })
-      .andWhere('a.scheduled_at <= :dayEnd', { dayEnd })
-      .andWhere('a.status NOT IN (:...statuses)', {
-        statuses: [
-          AppointmentStatusEnum.CANCELLED,
-          AppointmentStatusEnum.NO_SHOW,
-        ],
-      });
-    if (mechanicId) {
-      qb.andWhere('(a.mechanic_id = :mechanicId OR a.mechanic_id IS NULL)', {
-        mechanicId,
-      });
-    }
-    const appointments = await qb.getMany();
-
-    const duration = durationMin ?? 60;
-    const slots: { start: string; end: string }[] = [];
-    const workStart = 9;
-    const workEnd = 18;
-    for (let h = workStart; h < workEnd; h++) {
-      for (let m = 0; m < 60; m += 30) {
-        const slotStart = new Date(dayStart);
-        slotStart.setHours(h, m, 0, 0);
-        const slotEnd = new Date(slotStart);
-        slotEnd.setMinutes(slotEnd.getMinutes() + duration);
-        if (slotEnd.getHours() > workEnd) continue;
-        const overlaps = appointments.some((apt) => {
-          const aptStart = new Date(apt.scheduledAt);
-          const aptEnd = new Date(aptStart);
-          aptEnd.setMinutes(aptEnd.getMinutes() + (apt.durationMin ?? 60));
-          return (
-            (slotStart < aptEnd && slotEnd > aptStart) ||
-            (slotStart <= aptStart && slotEnd > aptStart)
-          );
-        });
-        if (!overlaps) {
-          slots.push({
-            start: slotStart.toISOString(),
-            end: slotEnd.toISOString(),
-          });
-        }
-      }
-    }
-    return slots;
+    const slots = await this.userAvailabilityService.getAvailableSlots(
+      branchId,
+      date,
+      mechanicId,
+      durationMin,
+      serviceTypeId,
+    );
+    return slots.map(({ start, end }) => ({ start, end }));
   }
 }

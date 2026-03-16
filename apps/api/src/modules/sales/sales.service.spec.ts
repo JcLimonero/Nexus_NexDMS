@@ -31,7 +31,7 @@ describe('SalesService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['CASHIER'],
-    scope: ScopeEnum.BRANCH,
+    scope: ScopeEnum.SUCURSAL,
   };
 
   const mockCashSession = {

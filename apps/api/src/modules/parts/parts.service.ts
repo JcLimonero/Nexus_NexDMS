@@ -8,34 +8,63 @@ import { Repository } from 'typeorm';
 import { Part } from './entities/part.entity';
 import { CreatePartDto } from './dto/create-part.dto';
 import { UpdatePartDto } from './dto/update-part.dto';
-import { FilterPartsDto } from './dto/filter-parts.dto';
+import { FilterPartsDto, SearchScopeType } from './dto/filter-parts.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { PartVehicleTypeEnum } from './entities/part.entity';
+import { BranchesService } from '../branches/branches.service';
+import { PartCategory } from '../part-categories/entities/part-category.entity';
+import { StockLocation } from '../stock-locations/entities/stock-location.entity';
 
 @Injectable()
 export class PartsService {
   constructor(
     @InjectRepository(Part)
     private readonly partRepo: Repository<Part>,
+    @InjectRepository(PartCategory)
+    private readonly partCategoryRepo: Repository<PartCategory>,
+    @InjectRepository(StockLocation)
+    private readonly stockLocationRepo: Repository<StockLocation>,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
     qb: ReturnType<Repository<Part>['createQueryBuilder']>,
     user: UserPayload,
+    searchScope?: SearchScopeType,
   ) {
+    const useGroup = searchScope === 'group';
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
-        qb.andWhere('p.branch_id = :branchId', { branchId: user.branchId });
+      case ScopeEnum.SUCURSAL:
+        if (useGroup && user.legalEntityId) {
+          qb.innerJoin('branches', 'b', 'b.id = p.branch_id').andWhere(
+            'b.legal_entity_id = :legalEntityId',
+            { legalEntityId: user.legalEntityId },
+          );
+        } else {
+          qb.andWhere('p.branch_id = :branchId', { branchId: user.branchId });
+        }
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
-        qb.innerJoin('branches', 'b', 'b.id = p.branch_id').andWhere(
-          'b.legal_entity_id = :legalEntityId',
-          { legalEntityId: user.legalEntityId },
-        );
+        if (useGroup) {
+          qb.innerJoin('branches', 'b', 'b.id = p.branch_id').andWhere(
+            'b.legal_entity_id = :legalEntityId',
+            { legalEntityId: user.legalEntityId },
+          );
+        } else {
+          qb.andWhere('p.branch_id = :branchId', { branchId: user.branchId });
+        }
         break;
       case ScopeEnum.GLOBAL:
+        if (useGroup && user.legalEntityId) {
+          qb.innerJoin('branches', 'b', 'b.id = p.branch_id').andWhere(
+            'b.legal_entity_id = :legalEntityId',
+            { legalEntityId: user.legalEntityId },
+          );
+        } else {
+          qb.andWhere('p.branch_id = :branchId', { branchId: user.branchId });
+        }
         break;
     }
   }
@@ -55,7 +84,14 @@ export class PartsService {
       .where('p.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('p.deleted_at IS NULL');
 
-    this.applyScope(qb, user);
+    if (filters.branchId) {
+      await this.branchesService.assertBranchInScope(user, filters.branchId);
+      qb.andWhere('p.branch_id = :branchId', { branchId: filters.branchId });
+    } else if (filters.searchScope === 'group') {
+      this.applyScope(qb, user, 'group');
+    } else {
+      this.applyScope(qb, user, 'local');
+    }
 
     if (filters.search?.trim()) {
       const term = `%${filters.search.trim()}%`;
@@ -73,11 +109,6 @@ export class PartsService {
       qb.andWhere('(p.vehicle_type = :vehicleType OR p.vehicle_type = :both)', {
         vehicleType: filters.vehicleType,
         both: PartVehicleTypeEnum.BOTH,
-      });
-    }
-    if (filters.branchId) {
-      qb.andWhere('p.branch_id = :branchId', {
-        branchId: filters.branchId,
       });
     }
     if (filters.onlyAlerts) {
@@ -131,6 +162,34 @@ export class PartsService {
   }
 
   async create(user: UserPayload, dto: CreatePartDto): Promise<Part> {
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
+
+    if (dto.categoryId) {
+      const cat = await this.partCategoryRepo.findOne({
+        where: { id: dto.categoryId, tenantId: user.tenantId },
+      });
+      if (!cat) {
+        throw new NotFoundException(
+          `Categoría ${dto.categoryId} no encontrada`,
+        );
+      }
+    }
+
+    if (dto.locationId) {
+      const loc = await this.stockLocationRepo.findOne({
+        where: {
+          id: dto.locationId,
+          branchId: dto.branchId,
+          tenantId: user.tenantId,
+        },
+      });
+      if (!loc) {
+        throw new NotFoundException(
+          `Ubicación ${dto.locationId} no encontrada o no pertenece a la sucursal`,
+        );
+      }
+    }
+
     const sku = dto.sku ?? this.generateSku(dto.vehicleType);
     const part = this.partRepo.create({
       ...dto,
@@ -180,6 +239,7 @@ export class PartsService {
     if (!branchId?.trim()) {
       throw new BadRequestException('branchId requerido');
     }
+    await this.branchesService.assertBranchInScope(user, branchId);
     const term = code.trim();
     const part = await this.partRepo
       .createQueryBuilder('p')
@@ -207,10 +267,26 @@ export class PartsService {
   async updateLocation(
     user: UserPayload,
     id: string,
-    locationId: string,
+    locationId: string | null,
   ): Promise<Part> {
     const part = await this.findOne(user, id);
-    part.locationId = locationId;
+
+    if (locationId) {
+      const loc = await this.stockLocationRepo.findOne({
+        where: {
+          id: locationId,
+          branchId: part.branchId,
+          tenantId: user.tenantId,
+        },
+      });
+      if (!loc) {
+        throw new NotFoundException(
+          `Ubicación ${locationId} no encontrada o no pertenece a la sucursal de la parte`,
+        );
+      }
+    }
+
+    part.locationId = locationId ?? null;
     return this.partRepo.save(part);
   }
 }

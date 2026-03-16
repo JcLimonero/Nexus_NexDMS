@@ -13,6 +13,8 @@ import { CatalogUnit } from '../../catalog-units/entities/catalog-unit.entity';
 import { Client } from '../../clients/entities/client.entity';
 import { UnitReservation } from '../../unit-reservations/entities/unit-reservation.entity';
 import { PaymentPlan } from './payment-plan.entity';
+import { UnitSaleAccessory } from '../../unit-accessories/entities/unit-sale-accessory.entity';
+import { UnitSaleExtra } from '../../unit-sale-extras/entities/unit-sale-extra.entity';
 
 export enum UnitSaleFinancingTypeEnum {
   CASH = 'CASH',
@@ -128,4 +130,10 @@ export class UnitSale {
 
   @OneToMany(() => PaymentPlan, (p) => p.unitSale)
   paymentPlans?: PaymentPlan[];
+
+  @OneToMany(() => UnitSaleAccessory, (sa) => sa.unitSale)
+  accessories?: UnitSaleAccessory[];
+
+  @OneToMany(() => UnitSaleExtra, (e) => e.unitSale)
+  extras?: UnitSaleExtra[];
 }

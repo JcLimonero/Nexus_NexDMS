@@ -21,6 +21,7 @@ import { Part } from '../parts/entities/part.entity';
 import { Supplier } from '../suppliers/entities/supplier.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { StockMovementTypeEnum } from '../stock-movements/entities/stock-movement.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -38,6 +39,7 @@ export class PurchaseOrdersService {
     @InjectRepository(Supplier)
     private readonly supplierRepo: Repository<Supplier>,
     private readonly dataSource: DataSource,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
@@ -45,10 +47,10 @@ export class PurchaseOrdersService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('po.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = po.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -182,6 +184,8 @@ export class PurchaseOrdersService {
       throw new BadRequestException('Debe incluir al menos una línea');
     }
 
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
+
     const [branch, supplier] = await Promise.all([
       this.branchRepo.findOne({
         where: { id: dto.branchId, tenantId: user.tenantId },
@@ -190,14 +194,11 @@ export class PurchaseOrdersService {
         where: { id: dto.supplierId, tenantId: user.tenantId },
       }),
     ]);
-    if (!branch) {
-      throw new NotFoundException(`Sucursal ${dto.branchId} no encontrada`);
-    }
     if (!supplier) {
       throw new NotFoundException(`Proveedor ${dto.supplierId} no encontrado`);
     }
 
-    const taxRate = Number(branch.taxRate) || 0.16;
+    const taxRate = Number(branch?.taxRate) || 0.16;
 
     const partIds = [...new Set(dto.lines.map((l) => l.partId))];
     const parts = await this.partRepo.find({

@@ -106,10 +106,10 @@ describe('BranchesService', () => {
       );
     });
 
-    it('debe retornar array vacío para BRAND sin legalEntityId', async () => {
+    it('debe retornar array vacío para LEGAL_ENTITY sin legalEntityId', async () => {
       const userBrand = {
         ...mockUser,
-        scope: ScopeEnum.BRAND,
+        scope: ScopeEnum.LEGAL_ENTITY,
         legalEntityId: null,
       };
       const filters = { page: 1, limit: 20 };
@@ -174,11 +174,11 @@ describe('BranchesService', () => {
   });
 
   describe('update', () => {
-    it('debe lanzar ForbiddenException cuando MANAGER BRANCH intenta editar', async () => {
+    it('debe lanzar ForbiddenException cuando MANAGER SUCURSAL intenta editar', async () => {
       const userManager = {
         ...mockUser,
         roles: ['MANAGER'],
-        scope: ScopeEnum.BRANCH,
+        scope: ScopeEnum.SUCURSAL,
       };
       branchRepo.findOne.mockResolvedValue(mockBranch);
       mockQueryBuilder.getOne.mockResolvedValue(mockBranch);
@@ -189,7 +189,7 @@ describe('BranchesService', () => {
       await expect(
         service.update(userManager, 'branch-1', { name: 'Otro' }),
       ).rejects.toThrow(
-        'Los MANAGER con scope BRANCH no pueden editar sucursales',
+        'Los MANAGER con scope SUCURSAL no pueden editar sucursales',
       );
     });
   });

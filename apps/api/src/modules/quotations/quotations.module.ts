@@ -8,6 +8,7 @@ import { QuotationFolioSeq } from './entities/quotation-folio-seq.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
+import { BranchesModule } from '../branches/branches.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
       Part,
       CatalogUnit,
     ]),
+    BranchesModule,
   ],
   controllers: [QuotationsController],
   providers: [QuotationsService],

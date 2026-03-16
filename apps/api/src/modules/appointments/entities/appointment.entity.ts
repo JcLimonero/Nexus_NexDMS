@@ -12,6 +12,7 @@ import { Branch } from '../../branches/entities/branch.entity';
 import { Client } from '../../clients/entities/client.entity';
 import { CustomerVehicle } from '../../customer-vehicles/entities/customer-vehicle.entity';
 import { User } from '../../users/entities/user.entity';
+import { ServiceType } from '../../service-types/entities/service-type.entity';
 
 export enum AppointmentOriginEnum {
   INTERNAL = 'INTERNAL',
@@ -61,6 +62,9 @@ export class Appointment {
   @Column({ name: 'service_type', type: 'varchar', length: 200 })
   serviceType: string;
 
+  @Column({ name: 'service_type_id', type: 'uuid', nullable: true })
+  serviceTypeId: string | null;
+
   @Column({ name: 'client_name', type: 'varchar', length: 200 })
   clientName: string;
 
@@ -100,4 +104,8 @@ export class Appointment {
   @ManyToOne(() => User, { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'mechanic_id' })
   mechanic?: User;
+
+  @ManyToOne(() => ServiceType, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'service_type_id' })
+  serviceTypeRelation?: ServiceType;
 }

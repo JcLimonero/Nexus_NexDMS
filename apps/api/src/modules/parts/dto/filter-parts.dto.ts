@@ -1,6 +1,8 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   IsUUID,
@@ -9,6 +11,9 @@ import {
 } from 'class-validator';
 import { Transform, Type } from 'class-transformer';
 import { PartVehicleTypeEnum } from '../entities/part.entity';
+
+/** local = solo agencia actual; group = todas las agencias del grupo (razón social) */
+export type SearchScopeType = 'local' | 'group';
 
 export class FilterPartsDto {
   @IsOptional()
@@ -25,6 +30,15 @@ export class FilterPartsDto {
   @IsOptional()
   @IsEnum(PartVehicleTypeEnum)
   vehicleType?: PartVehicleTypeEnum;
+
+  @ApiPropertyOptional({
+    enum: ['local', 'group'],
+    description:
+      'local = solo agencia actual; group = todas las agencias del grupo (razón social)',
+  })
+  @IsOptional()
+  @IsIn(['local', 'group'])
+  searchScope?: SearchScopeType;
 
   @IsOptional()
   @IsUUID()

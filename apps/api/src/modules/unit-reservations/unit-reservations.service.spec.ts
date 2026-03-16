@@ -20,7 +20,7 @@ describe('UnitReservationsService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['SELLER'],
-    scope: ScopeEnum.BRANCH,
+    scope: ScopeEnum.SUCURSAL,
   };
 
   const createDto: CreateUnitReservationDto = {

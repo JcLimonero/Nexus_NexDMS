@@ -1,9 +1,13 @@
-import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsEnum, IsIn, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   CatalogUnitVehicleTypeEnum,
   CatalogUnitStatusEnum,
 } from '../entities/catalog-unit.entity';
+
+/** local = solo agencia actual; group = todas las agencias del grupo (razón social) */
+export type SearchScopeType = 'local' | 'group';
 
 export class FilterCatalogUnitsDto {
   @IsOptional()
@@ -17,6 +21,15 @@ export class FilterCatalogUnitsDto {
   @IsOptional()
   @IsEnum(CatalogUnitStatusEnum)
   status?: CatalogUnitStatusEnum;
+
+  @ApiPropertyOptional({
+    enum: ['local', 'group'],
+    description:
+      'local = solo agencia actual; group = todas las agencias del grupo (razón social)',
+  })
+  @IsOptional()
+  @IsIn(['local', 'group'])
+  searchScope?: SearchScopeType;
 
   @IsOptional()
   @IsUUID()

@@ -25,10 +25,10 @@ export class LegalEntityAndUserBranches1773645000000 implements MigrationInterfa
       `CREATE INDEX "IDX_legal_entities_tenant_id" ON "legal_entities" ("tenant_id")`,
     );
 
-    // 2. Migrate data from brands to legal_entities
+    // 2. Migrate data from brands to legal_entities (cast type between enum types)
     await queryRunner.query(
       `INSERT INTO "legal_entities" (id, tenant_id, name, type, logo_key, is_active, created_at, updated_at)
-       SELECT id, tenant_id, name, type, logo_key, is_active, created_at, updated_at FROM "brands"`,
+       SELECT id, tenant_id, name, type::text::"public"."legal_entities_type_enum", logo_key, is_active, created_at, updated_at FROM "brands"`,
     );
 
     // 3. Add legal_entity_id to branches
@@ -138,7 +138,8 @@ export class LegalEntityAndUserBranches1773645000000 implements MigrationInterfa
       )`,
     );
     await queryRunner.query(
-      `INSERT INTO "brands" SELECT * FROM "legal_entities"`,
+      `INSERT INTO "brands" (id, tenant_id, name, type, logo_key, is_active, created_at, updated_at)
+       SELECT id, tenant_id, name, type::text::"public"."brands_type_enum", logo_key, is_active, created_at, updated_at FROM "legal_entities"`,
     );
     await queryRunner.query(
       `CREATE INDEX "IDX_33bb5b1b1a3a7e8b9787cd8778" ON "brands" ("tenant_id")`,

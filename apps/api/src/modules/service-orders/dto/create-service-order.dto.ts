@@ -32,6 +32,10 @@ export class CreateServiceOrderDto {
 
   @IsOptional()
   @IsUUID()
+  serviceTypeId?: string;
+
+  @IsOptional()
+  @IsUUID()
   quotationId?: string;
 
   @IsString()

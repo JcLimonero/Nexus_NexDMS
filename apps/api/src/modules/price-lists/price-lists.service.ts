@@ -24,10 +24,10 @@ export class PriceListsService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('pl.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = pl.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -43,12 +43,12 @@ export class PriceListsService {
     user: UserPayload,
     branchId: string,
   ): Promise<void> {
-    if (user.scope === ScopeEnum.BRANCH && user.branchId !== branchId) {
+    if (user.scope === ScopeEnum.SUCURSAL && user.branchId !== branchId) {
       throw new ForbiddenException(
         'No tienes acceso a crear listas de precios en esta sucursal',
       );
     }
-    if (user.scope === ScopeEnum.BRAND && user.legalEntityId) {
+    if (user.scope === ScopeEnum.LEGAL_ENTITY && user.legalEntityId) {
       // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment -- getRawOne retorna any
       const branch = await this.repo.manager
         .createQueryBuilder()

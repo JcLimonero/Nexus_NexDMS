@@ -11,6 +11,7 @@ import { CreateAdjustmentDto } from './dto/create-adjustment.dto';
 import { FilterStockMovementsDto } from './dto/filter-stock-movements.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { StockMovementTypeEnum } from './entities/stock-movement.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class StockMovementsService {
@@ -19,12 +20,17 @@ export class StockMovementsService {
     private readonly movementRepo: Repository<StockMovement>,
     @InjectRepository(Part)
     private readonly partRepo: Repository<Part>,
+    private readonly branchesService: BranchesService,
   ) {}
 
   async findAll(
     user: UserPayload,
     filters: FilterStockMovementsDto,
   ): Promise<StockMovement[]> {
+    if (filters.branchId) {
+      await this.branchesService.assertBranchInScope(user, filters.branchId);
+    }
+
     const qb = this.movementRepo
       .createQueryBuilder('sm')
       .where('sm.tenant_id = :tenantId', { tenantId: user.tenantId });
@@ -68,6 +74,7 @@ export class StockMovementsService {
         'Tipo debe ser ADJUSTMENT_IN o ADJUSTMENT_OUT',
       );
     }
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
 
     return this.partRepo.manager.transaction(async (em) => {
       const part = await em

@@ -31,8 +31,8 @@ export enum RoleEnum {
 
 export enum ScopeEnum {
   GLOBAL = 'GLOBAL',
-  BRAND = 'BRAND',
-  BRANCH = 'BRANCH',
+  LEGAL_ENTITY = 'LEGAL_ENTITY', // Razón social
+  SUCURSAL = 'SUCURSAL',
 }
 
 @Entity('users')

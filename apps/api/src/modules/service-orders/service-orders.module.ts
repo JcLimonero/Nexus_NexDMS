@@ -4,31 +4,45 @@ import { ServiceOrdersController } from './service-orders.controller';
 import { ServiceOrdersService } from './service-orders.service';
 import { ServiceOrder } from './entities/service-order.entity';
 import { ReceptionChecklist } from './entities/reception-checklist.entity';
+import { ReceptionPhoto } from './entities/reception-photo.entity';
 import { ServiceOrderPart } from './entities/service-order-part.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
+import { ServiceOrderUpdate } from './entities/service-order-update.entity';
+import { ServiceOrderFinding } from './entities/service-order-finding.entity';
 import { ServiceOrderFolioSeq } from './entities/service-order-folio-seq.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
+import { Client } from '../clients/entities/client.entity';
+import { Appointment } from '../appointments/entities/appointment.entity';
 import { CfdiModule } from '../cfdi/cfdi.module';
+import { BranchesModule } from '../branches/branches.module';
+import { MechanicChecklistModule } from '../mechanic-checklist/mechanic-checklist.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       ServiceOrder,
       ReceptionChecklist,
+      ReceptionPhoto,
       ServiceOrderPart,
       ServiceOrderTime,
+      ServiceOrderUpdate,
+      ServiceOrderFinding,
       ServiceOrderFolioSeq,
       Branch,
       Part,
       StockMovement,
       CatalogUnit,
       CustomerVehicle,
+      Client,
+      Appointment,
     ]),
     CfdiModule,
+    BranchesModule,
+    MechanicChecklistModule,
   ],
   controllers: [ServiceOrdersController],
   providers: [ServiceOrdersService],

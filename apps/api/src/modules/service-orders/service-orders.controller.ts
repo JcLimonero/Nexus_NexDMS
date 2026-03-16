@@ -9,8 +9,10 @@ import {
   Query,
   UseGuards,
   UseInterceptors,
+  UploadedFile,
   NotFoundException,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ServiceOrdersService } from './service-orders.service';
@@ -20,7 +22,13 @@ import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { AddPartDto } from './dto/add-part.dto';
 import { CreateChecklistDto } from './dto/create-checklist.dto';
+import { UploadReceptionPhotoDto } from './dto/upload-reception-photo.dto';
+import { UpdatePartNotesDto } from './dto/update-part-notes.dto';
+import { CreateUpdateDto } from './dto/create-update.dto';
+import { CreateFindingDto } from './dto/create-finding.dto';
+import { SaveSafetyChecklistDto } from '../mechanic-checklist/dto/save-safety-checklist.dto';
 import { AssignMechanicDto } from './dto/assign-mechanic.dto';
+import { MechanicChecklistService } from '../mechanic-checklist/mechanic-checklist.service';
 import { DeliverServiceOrderDto } from './dto/deliver-service-order.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -35,7 +43,10 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('service-orders')
 export class ServiceOrdersController {
-  constructor(private readonly serviceOrdersService: ServiceOrdersService) {}
+  constructor(
+    private readonly serviceOrdersService: ServiceOrdersService,
+    private readonly mechanicChecklistService: MechanicChecklistService,
+  ) {}
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'AUDITOR')
@@ -134,6 +145,99 @@ export class ServiceOrdersController {
       throw new NotFoundException('No existe checklist para esta OS');
     }
     return so.checklist;
+  }
+
+  @Post(':id/checklist/photos')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadReceptionPhoto(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UploadReceptionPhotoDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new NotFoundException('Archivo requerido');
+    }
+    return this.serviceOrdersService.uploadReceptionPhoto(
+      user,
+      id,
+      dto.angle,
+      file,
+    );
+  }
+
+  @Patch(':id/parts/:partId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  updatePartNotes(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('partId', ParseUUIDPipe) partId: string,
+    @Body() dto: UpdatePartNotesDto,
+  ) {
+    return this.serviceOrdersService.updatePartNotes(user, id, partId, dto);
+  }
+
+  @Post(':id/updates')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  addUpdate(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateUpdateDto,
+  ) {
+    return this.serviceOrdersService.addUpdate(user, id, dto);
+  }
+
+  @Get(':id/updates')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getUpdates(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.serviceOrdersService.getUpdates(user, id);
+  }
+
+  @Post(':id/findings')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @UseInterceptors(FileInterceptor('file'))
+  createFinding(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateFindingDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) {
+      throw new NotFoundException('Archivo requerido para el hallazgo');
+    }
+    return this.serviceOrdersService.createFinding(user, id, dto, file);
+  }
+
+  @Get(':id/findings')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getFindings(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.serviceOrdersService.getFindings(user, id);
+  }
+
+  @Post(':id/safety-checklist')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  saveSafetyChecklist(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: SaveSafetyChecklistDto,
+  ) {
+    return this.mechanicChecklistService.saveSafetyChecklist(user, id, dto);
+  }
+
+  @Get(':id/safety-checklist')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getSafetyChecklist(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.mechanicChecklistService.getSafetyChecklist(user, id);
   }
 
   @Post(':id/time/start')

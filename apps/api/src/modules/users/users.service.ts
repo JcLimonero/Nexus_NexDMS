@@ -7,7 +7,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, IsNull, Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User } from './entities/user.entity';
+import { User, RoleEnum } from './entities/user.entity';
 import { UserRole } from './entities/user-role.entity';
 import { UserBranch } from '../legal-entities/entities/user-branch.entity';
 import { Branch } from '../branches/entities/branch.entity';
@@ -191,5 +191,22 @@ export class UsersService {
       where: { userId, branchId },
     });
     return !!ub;
+  }
+
+  async getUsersByRoleInBranch(
+    branchId: string,
+    roles: RoleEnum[],
+  ): Promise<User[]> {
+    const users = await this.userRepo
+      .createQueryBuilder('u')
+      .innerJoinAndSelect('u.roles', 'ur')
+      .innerJoin(UserBranch, 'ub', 'ub.user_id = u.id')
+      .where('ub.branch_id = :branchId', { branchId })
+      .andWhere('ur.role IN (:...roles)', { roles })
+      .andWhere('u.deleted_at IS NULL')
+      .andWhere('u.is_active = :isActive', { isActive: true })
+      .select(['u.id', 'u.email', 'u.firstName', 'u.lastName'])
+      .getMany();
+    return users;
   }
 }

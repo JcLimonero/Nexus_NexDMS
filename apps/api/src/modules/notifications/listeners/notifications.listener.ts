@@ -1,7 +1,9 @@
 import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
+import { Repository } from 'typeorm';
 import {
   CitaAgendadaEvent,
   CitaRecordatorioEvent,
@@ -11,14 +13,25 @@ import {
   PagoCreditoVencidoEvent,
   VentaConfirmadaEvent,
   CotizacionEnviadaEvent,
+  MantenimientoSinRefaccionesEvent,
+  ServicioProximoVencimientoEvent,
+  ServicioHallazgoCotizacionEvent,
 } from '../../../events/domain-events';
 import { NotificationChannelEnum } from '../entities/notification-log.entity';
+import { UsersService } from '../../users/users.service';
+import { RoleEnum } from '../../users/entities/user.entity';
+import { StorageService } from '../../../common/storage/storage.service';
+import { ServiceOrderFinding } from '../../service-orders/entities/service-order-finding.entity';
 
 @Injectable()
 export class NotificationsListener {
   constructor(
     @InjectQueue('notifications')
     private readonly notificationsQueue: Queue,
+    private readonly usersService: UsersService,
+    private readonly storageService: StorageService,
+    @InjectRepository(ServiceOrderFinding)
+    private readonly findingRepo: Repository<ServiceOrderFinding>,
   ) {}
 
   @OnEvent('cita.agendada')
@@ -150,6 +163,122 @@ export class NotificationsListener {
       subject: 'Alerta de stock mínimo',
       html: `<p>Partes con stock bajo: ${partsList}</p>`,
     });
+  }
+
+  @OnEvent('mantenimiento.sin_refacciones')
+  async onMantenimientoSinRefacciones(
+    event: MantenimientoSinRefaccionesEvent,
+  ): Promise<void> {
+    const users = await this.usersService.getUsersByRoleInBranch(
+      event.branchId,
+      [RoleEnum.PARTS_MANAGER, RoleEnum.MANAGER, RoleEnum.AFTERSALES_MANAGER],
+    );
+    const emails = [...new Set(users.map((u) => u.email).filter(Boolean))];
+    const partsList = event.missingParts
+      .map(
+        (p) =>
+          `${p.partName}: requerido ${p.required}, disponible ${p.available}`,
+      )
+      .join('; ');
+    for (const email of emails) {
+      if (email) {
+        await this.notificationsQueue.add('send', {
+          channel: NotificationChannelEnum.EMAIL,
+          templateKey: 'mantenimiento_sin_refacciones',
+          referenceType: 'Appointment',
+          referenceId: event.appointmentId,
+          recipient: email,
+          tenantId: event.tenantId,
+          branchId: event.branchId,
+          subject: `Cita de mantenimiento sin refacciones: ${event.serviceTypeName}`,
+          html: `<p>Cita programada para ${event.scheduledAt.toISOString()}. Partes faltantes: ${partsList}</p>`,
+        });
+      }
+    }
+  }
+
+  @OnEvent('servicio.proximo_vencimiento')
+  async onServicioProximoVencimiento(
+    event: ServicioProximoVencimientoEvent,
+  ): Promise<void> {
+    const channels: Array<{
+      channel: NotificationChannelEnum;
+      recipient: string;
+    }> = [];
+    if (event.client?.phone) {
+      channels.push({
+        channel: NotificationChannelEnum.WHATSAPP,
+        recipient: event.client.phone,
+      });
+    }
+    if (event.client?.email) {
+      channels.push({
+        channel: NotificationChannelEnum.EMAIL,
+        recipient: event.client.email,
+      });
+    }
+    for (const ch of channels) {
+      await this.notificationsQueue.add('send', {
+        channel: ch.channel,
+        templateKey: 'servicio_proximo_vencimiento',
+        referenceType: 'CustomerVehicle',
+        referenceId: event.vehicleId,
+        recipient: ch.recipient,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        templateParams: {
+          name: event.client?.name ?? 'Cliente',
+          vehicleMake: event.vehicle.make,
+          vehicleModel: event.vehicle.model,
+          serviceTypeName: event.serviceTypeName,
+        },
+      });
+    }
+  }
+
+  @OnEvent('servicio.hallazgo_cotizacion')
+  async onServicioHallazgoCotizacion(
+    event: ServicioHallazgoCotizacionEvent,
+  ): Promise<void> {
+    const expiresIn = 48 * 60 * 60; // 48 horas
+    const signedUrl = await this.storageService.getSignedUrl(
+      event.mediaKey,
+      expiresIn,
+    );
+    const message = `Hay un hallazgo en su unidad que requiere cotización: ${event.description}. Ver evidencia: ${signedUrl}`;
+    let sent = false;
+    if (event.client?.phone) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.WHATSAPP,
+        templateKey: 'hallazgo_cotizacion',
+        referenceType: 'ServiceOrderFinding',
+        referenceId: event.findingId,
+        recipient: event.client.phone,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        text: message,
+      });
+      sent = true;
+    }
+    if (event.client?.email) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'hallazgo_cotizacion',
+        referenceType: 'ServiceOrderFinding',
+        referenceId: event.findingId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: 'Hallazgo que requiere cotización',
+        html: `<p>${message}</p>`,
+      });
+      sent = true;
+    }
+    if (sent) {
+      await this.findingRepo.update(event.findingId, {
+        clientNotifiedAt: new Date(),
+      });
+    }
   }
 
   @OnEvent('pago.credito_vencido')

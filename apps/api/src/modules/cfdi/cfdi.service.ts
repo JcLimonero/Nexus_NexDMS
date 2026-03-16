@@ -16,6 +16,11 @@ import { BranchConfig } from '../branches/entities/branch-config.entity';
 import { Sale } from '../sales/entities/sale.entity';
 import { ServiceOrder } from '../service-orders/entities/service-order.entity';
 import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
+import {
+  UnitSaleExtra,
+  UnitSaleExtraStatusEnum,
+  UnitSaleExtraTypeEnum,
+} from '../unit-sale-extras/entities/unit-sale-extra.entity';
 import { Client } from '../clients/entities/client.entity';
 import { StorageService } from '../../common/storage/storage.service';
 import { EncryptionService } from '../../shared/encryption/encryption.service';
@@ -60,10 +65,10 @@ export class CfdiService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('c.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = c.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -135,6 +140,7 @@ export class CfdiService {
       quantity: number;
       unitPrice: number;
       discount?: number;
+      productKey?: string;
     }> = [];
     let referenceNumber: string;
 
@@ -205,7 +211,14 @@ export class CfdiService {
     } else {
       const us = await this.unitSaleRepo.findOne({
         where: { id: referenceId },
-        relations: ['client', 'catalogUnit', 'catalogUnit.branch'],
+        relations: [
+          'client',
+          'catalogUnit',
+          'catalogUnit.branch',
+          'accessories',
+          'accessories.accessory',
+          'extras',
+        ],
       });
       if (!us) throw new NotFoundException('Venta de unidad no encontrada');
       if (us.cfdiUuid) {
@@ -224,13 +237,43 @@ export class CfdiService {
         };
         clientEntity = us.client;
       }
-      const unit = `${cu.brand} ${cu.model} ${cu.year}`.trim() || 'Unidad';
+      const unitDesc = `${cu.brand} ${cu.model} ${cu.year}`.trim() || 'Unidad';
       items.push({
-        description: unit,
+        description: unitDesc,
         quantity: 1,
-        unitPrice: Number(us.finalPrice),
+        unitPrice: Number(us.listPrice),
         discount: 0,
+        productKey: '84111506',
       });
+      for (const acc of us.accessories ?? []) {
+        const accEntity = acc.accessory;
+        items.push({
+          description: accEntity?.name ?? `Accesorio ${acc.accessoryId}`,
+          quantity: acc.quantity,
+          unitPrice: Number(acc.unitPrice),
+          discount: 0,
+          productKey: accEntity?.satProductKey ?? '84111506',
+        });
+      }
+      const activeExtras = (us.extras ?? []).filter(
+        (e) => e.status !== UnitSaleExtraStatusEnum.CANCELLED,
+      );
+      for (const ext of activeExtras) {
+        const typeLabel =
+          ext.type === UnitSaleExtraTypeEnum.INSURANCE
+            ? 'Seguro'
+            : 'Trámite de placas';
+        const desc = ext.providerName
+          ? `${typeLabel} - ${ext.providerName}`
+          : typeLabel;
+        items.push({
+          description: desc,
+          quantity: 1,
+          unitPrice: Number(ext.cost),
+          discount: 0,
+          productKey: '80141600',
+        });
+      }
     }
 
     const branchEntity = await this.branchRepo.findOne({
@@ -246,14 +289,14 @@ export class CfdiService {
     const facturapiItems: FacturapiItem[] = items.map((it) => ({
       product: {
         description: it.description,
-        product_key: '84111506',
+        product_key: it.productKey ?? '84111506',
         unit_key: 'E48',
         unit_name: 'Servicio',
         price: it.unitPrice,
         tax_included: true,
       },
       quantity: it.quantity,
-      discount: it.discount,
+      discount: it.discount ?? 0,
     }));
 
     const payload: FacturapiInvoicePayload = {

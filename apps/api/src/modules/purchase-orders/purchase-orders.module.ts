@@ -9,6 +9,7 @@ import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { Supplier } from '../suppliers/entities/supplier.entity';
+import { BranchesModule } from '../branches/branches.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { Supplier } from '../suppliers/entities/supplier.entity';
       StockMovement,
       Supplier,
     ]),
+    BranchesModule,
   ],
   controllers: [PurchaseOrdersController],
   providers: [PurchaseOrdersService],

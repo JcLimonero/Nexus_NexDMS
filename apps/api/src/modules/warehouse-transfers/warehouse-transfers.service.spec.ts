@@ -30,7 +30,7 @@ describe('WarehouseTransfersService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['WAREHOUSE'],
-    scope: ScopeEnum.BRAND,
+    scope: ScopeEnum.LEGAL_ENTITY,
   };
 
   const mockTransfer = {

@@ -9,6 +9,8 @@ import { PaymentPlanInstallment } from './entities/payment-plan-installment.enti
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { Client } from '../clients/entities/client.entity';
 import { UnitReservation } from '../unit-reservations/entities/unit-reservation.entity';
+import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.entity';
+import { UnitAccessoriesService } from '../unit-accessories/unit-accessories.service';
 import { CreateUnitSaleDto } from './dto/create-unit-sale.dto';
 import {
   UnitSaleStatusEnum,
@@ -28,7 +30,7 @@ describe('UnitSalesService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['SELLER'],
-    scope: ScopeEnum.BRANCH,
+    scope: ScopeEnum.SUCURSAL,
   };
 
   const createDto: CreateUnitSaleDto = {
@@ -102,6 +104,10 @@ describe('UnitSalesService', () => {
           useValue: { findOne: jest.fn() },
         },
         {
+          provide: getRepositoryToken(UnitSaleExtra),
+          useValue: { find: jest.fn().mockResolvedValue([]), save: jest.fn() },
+        },
+        {
           provide: DataSource,
           useValue: {
             transaction: mockTransaction,
@@ -112,6 +118,13 @@ describe('UnitSalesService', () => {
           provide: CfdiService,
           useValue: {
             generarIngreso: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: UnitAccessoriesService,
+          useValue: {
+            getSaleAccessories: jest.fn().mockResolvedValue([]),
+            addAccessoryToSale: jest.fn(),
           },
         },
       ],

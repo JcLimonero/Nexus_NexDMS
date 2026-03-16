@@ -35,6 +35,9 @@ import { FilterUnitSalesDto } from './dto/filter-unit-sales.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { CfdiService } from '../cfdi/cfdi.service';
+import { UnitAccessoriesService } from '../unit-accessories/unit-accessories.service';
+import { UnitSaleAccessory } from '../unit-accessories/entities/unit-sale-accessory.entity';
+import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.entity';
 
 @Injectable()
 export class UnitSalesService {
@@ -53,8 +56,11 @@ export class UnitSalesService {
     private readonly clientRepo: Repository<Client>,
     @InjectRepository(UnitReservation)
     private readonly reservationRepo: Repository<UnitReservation>,
+    @InjectRepository(UnitSaleExtra)
+    private readonly saleExtraRepo: Repository<UnitSaleExtra>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
+    private readonly unitAccessoriesService: UnitAccessoriesService,
   ) {}
 
   private async generateFolio(
@@ -79,10 +85,10 @@ export class UnitSalesService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('cu.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cu.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -211,6 +217,7 @@ export class UnitSalesService {
 
       const folio = await this.generateFolio(user.tenantId, em);
 
+      let accessoriesTotal = 0;
       const sale = em.create(UnitSale, {
         catalogUnitId: dto.catalogUnitId,
         clientId: dto.clientId,
@@ -229,8 +236,55 @@ export class UnitSalesService {
         notes: dto.notes ?? null,
         tenantId: user.tenantId,
       });
+      const savedSale = await em.save(UnitSale, sale);
 
-      return em.save(UnitSale, sale);
+      if (dto.accessories?.length) {
+        const compatible =
+          await this.unitAccessoriesService.getCompatibleAccessories(
+            user,
+            dto.catalogUnitId,
+          );
+        const compatibleIds = new Set(compatible.map((a) => a.id));
+        for (const item of dto.accessories) {
+          if (!compatibleIds.has(item.accessoryId)) {
+            throw new BadRequestException(
+              `Accesorio ${item.accessoryId} no es compatible con la unidad`,
+            );
+          }
+          const accessory = compatible.find((a) => a.id === item.accessoryId);
+          if (accessory) {
+            const lineTotal = Number(accessory.price) * item.quantity;
+            accessoriesTotal += lineTotal;
+            await em.save(UnitSaleAccessory, {
+              unitSaleId: savedSale.id,
+              accessoryId: item.accessoryId,
+              quantity: item.quantity,
+              unitPrice: accessory.price,
+            });
+          }
+        }
+        savedSale.finalPrice = Number(unit.listPrice) + accessoriesTotal;
+        await em.save(UnitSale, savedSale);
+      }
+
+      if (dto.extras?.length) {
+        for (const item of dto.extras) {
+          await em.save(UnitSaleExtra, {
+            unitSaleId: savedSale.id,
+            type: item.type,
+            providerName: item.providerName ?? null,
+            providerReference: item.providerReference ?? null,
+            cost: item.cost,
+            notes: item.notes ?? null,
+            extraData: item.extraData ?? null,
+          });
+        }
+        const extrasTotal = dto.extras.reduce((s, e) => s + e.cost, 0);
+        savedSale.finalPrice = Number(savedSale.finalPrice) + extrasTotal;
+        await em.save(UnitSale, savedSale);
+      }
+
+      return savedSale;
     });
   }
 
@@ -385,6 +439,89 @@ export class UnitSalesService {
       where: { id: saved.id },
       relations: ['installments'],
     });
+  }
+
+  async addAccessory(
+    user: UserPayload,
+    saleId: string,
+    accessoryId: string,
+    quantity: number,
+  ): Promise<UnitSaleAccessory> {
+    this.assertCanWrite(user);
+    const sale = await this.findOne(user, saleId);
+    if (sale.status !== UnitSaleStatusEnum.IN_PROGRESS) {
+      throw new BadRequestException(
+        'Solo se pueden agregar accesorios a ventas en proceso',
+      );
+    }
+    const compatible =
+      await this.unitAccessoriesService.getCompatibleAccessories(
+        user,
+        sale.catalogUnitId,
+      );
+    if (!compatible.some((a) => a.id === accessoryId)) {
+      throw new BadRequestException(
+        'El accesorio no es compatible con la unidad de esta venta',
+      );
+    }
+    const line = await this.unitAccessoriesService.addAccessoryToSale(
+      user,
+      saleId,
+      accessoryId,
+      quantity,
+    );
+    const accessories =
+      await this.unitAccessoriesService.getSaleAccessories(saleId);
+    const accessoriesTotal = accessories.reduce(
+      (sum, a) => sum + Number(a.unitPrice) * a.quantity,
+      0,
+    );
+    const unit = await this.catalogUnitRepo.findOne({
+      where: { id: sale.catalogUnitId },
+    });
+    const basePrice = unit ? Number(unit.listPrice) : Number(sale.listPrice);
+    sale.finalPrice = basePrice + accessoriesTotal;
+    await this.saleRepo.save(sale);
+    return line;
+  }
+
+  async removeAccessory(
+    user: UserPayload,
+    saleId: string,
+    unitSaleAccessoryId: string,
+  ): Promise<void> {
+    this.assertCanWrite(user);
+    const sale = await this.findOne(user, saleId);
+    if (sale.status !== UnitSaleStatusEnum.IN_PROGRESS) {
+      throw new BadRequestException(
+        'Solo se pueden quitar accesorios de ventas en proceso',
+      );
+    }
+    await this.unitAccessoriesService.removeAccessoryFromSale(
+      user,
+      saleId,
+      unitSaleAccessoryId,
+    );
+    const accessories =
+      await this.unitAccessoriesService.getSaleAccessories(saleId);
+    const accessoriesTotal = accessories.reduce(
+      (sum, a) => sum + Number(a.unitPrice) * a.quantity,
+      0,
+    );
+    const unit = await this.catalogUnitRepo.findOne({
+      where: { id: sale.catalogUnitId },
+    });
+    const basePrice = unit ? Number(unit.listPrice) : Number(sale.listPrice);
+    sale.finalPrice = basePrice + accessoriesTotal;
+    await this.saleRepo.save(sale);
+  }
+
+  async getAccessories(
+    user: UserPayload,
+    saleId: string,
+  ): Promise<UnitSaleAccessory[]> {
+    await this.findOne(user, saleId);
+    return this.unitAccessoriesService.getSaleAccessories(saleId);
   }
 
   async getPaymentPlan(

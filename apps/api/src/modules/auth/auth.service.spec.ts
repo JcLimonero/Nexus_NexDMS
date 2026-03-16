@@ -29,7 +29,7 @@ describe('AuthService', () => {
     lastName: 'User',
     email: 'test@example.com',
     passwordHash: '$2b$12$hashedpassword',
-    scope: ScopeEnum.BRANCH,
+    scope: ScopeEnum.SUCURSAL,
     isActive: true,
     loginAttempts: 0,
     blockedUntil: null,
@@ -227,7 +227,7 @@ describe('AuthService', () => {
         branchId: 'branch-1',
         legalEntityId: 'legal-entity-1',
         roles: ['ADMIN'],
-        scope: ScopeEnum.BRANCH,
+        scope: ScopeEnum.SUCURSAL,
       };
       usersService.findOneOrFail.mockResolvedValue(mockUser as User);
       usersService.getDefaultBranchForUser = jest

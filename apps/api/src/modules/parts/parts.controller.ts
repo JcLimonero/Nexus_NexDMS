@@ -79,7 +79,7 @@ export class PartsController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdatePartLocationDto,
   ) {
-    return this.partsService.updateLocation(user, id, dto.locationId);
+    return this.partsService.updateLocation(user, id, dto.locationId ?? null);
   }
 
   @Delete(':id')

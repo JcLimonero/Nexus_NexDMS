@@ -43,13 +43,13 @@ export class WarehouseTransfersService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere(
           '(wt.origin_branch_id = :branchId OR wt.destination_branch_id = :branchId)',
           { branchId: user.branchId },
         );
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.andWhere(
           `(EXISTS (SELECT 1 FROM branches b WHERE b.id = wt.origin_branch_id AND b.legal_entity_id = :legalEntityId)
@@ -96,7 +96,7 @@ export class WarehouseTransfersService {
     if (transfer.type === WarehouseTransferTypeEnum.INTRA_BRAND) {
       return (
         user.roles?.includes('MANAGER') &&
-        user.scope === ScopeEnum.BRAND &&
+        user.scope === ScopeEnum.LEGAL_ENTITY &&
         !!user.legalEntityId
       );
     }
@@ -352,7 +352,7 @@ export class WarehouseTransfersService {
     if (!canApprove) {
       throw new ForbiddenException(
         transfer.type === WarehouseTransferTypeEnum.INTRA_BRAND
-          ? 'INTRA_BRAND requiere aprobación de MANAGER con scope BRAND'
+          ? 'INTRA_BRAND requiere aprobación de MANAGER con scope LEGAL_ENTITY'
           : 'INTER_BRAND requiere aprobación de MANAGER/ADMIN con scope GLOBAL',
       );
     }

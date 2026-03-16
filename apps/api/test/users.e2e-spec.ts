@@ -14,7 +14,7 @@ const mockUserPayload = {
   branchId: 'branch-1',
   legalEntityId: 'legal-entity-1',
   roles: ['ADMIN'],
-  scope: ScopeEnum.BRANCH,
+  scope: ScopeEnum.SUCURSAL,
 };
 
 const validCreateUserBody = {
@@ -23,7 +23,7 @@ const validCreateUserBody = {
   email: 'juan.perez@test.com',
   password: 'password123',
   roles: ['ADMIN'],
-  scope: ScopeEnum.BRANCH,
+  scope: ScopeEnum.SUCURSAL,
   branchIds: ['550e8400-e29b-41d4-a716-446655440000'],
 };
 
@@ -33,7 +33,7 @@ const mockCreatedUser = {
   firstName: 'Juan',
   lastName: 'Pérez',
   email: 'juan.perez@test.com',
-  scope: ScopeEnum.BRANCH,
+  scope: ScopeEnum.SUCURSAL,
   isActive: true,
 };
 

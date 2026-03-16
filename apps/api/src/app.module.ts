@@ -55,6 +55,13 @@ import { CfdiModule } from './modules/cfdi/cfdi.module';
 import { CronModule } from './modules/cron/cron.module';
 import { HealthModule } from './modules/health/health.module';
 import { DocumentsModule } from './modules/documents/documents.module';
+import { UserAvailabilityModule } from './modules/user-availability/user-availability.module';
+import { ServiceTypesModule } from './modules/service-types/service-types.module';
+import { MechanicChecklistModule } from './modules/mechanic-checklist/mechanic-checklist.module';
+import { BranchRampsModule } from './modules/branch-ramps/branch-ramps.module';
+import { ServicePlanningModule } from './modules/service-planning/service-planning.module';
+import { UnitAccessoriesModule } from './modules/unit-accessories/unit-accessories.module';
+import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extras.module';
 
 @Module({
   imports: [
@@ -107,6 +114,13 @@ import { DocumentsModule } from './modules/documents/documents.module';
     UnitSalesModule,
     QuotationsModule,
     AppointmentsModule,
+    UserAvailabilityModule,
+    ServiceTypesModule,
+    MechanicChecklistModule,
+    BranchRampsModule,
+    ServicePlanningModule,
+    UnitAccessoriesModule,
+    UnitSaleExtrasModule,
     ServiceOrdersModule,
     WarrantiesModule,
     CommissionsModule,

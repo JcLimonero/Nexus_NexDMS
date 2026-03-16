@@ -14,6 +14,7 @@ import { CreateBranchPrinterDto } from './dto/create-branch-printer.dto';
 import { UpdateBranchPrinterDto } from './dto/update-branch-printer.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class BranchPrintersService {
@@ -22,6 +23,7 @@ export class BranchPrintersService {
     private readonly printerRepo: Repository<BranchPrinter>,
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
@@ -29,10 +31,10 @@ export class BranchPrintersService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('bp.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = bp.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -55,12 +57,7 @@ export class BranchPrintersService {
       );
     }
 
-    const branch = await this.branchRepo.findOne({
-      where: { id: dto.branchId, tenantId: user.tenantId },
-    });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
-    }
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
 
     if (dto.isDefault) {
       const existing = await this.printerRepo.findOne({

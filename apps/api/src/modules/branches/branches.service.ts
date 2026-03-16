@@ -57,10 +57,10 @@ export class BranchesService {
       .where('b.tenant_id = :tenantId', { tenantId: user.tenantId });
 
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('b.id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) {
           return { data: [], meta: { total: 0, page, limit, totalPages: 0 } };
         }
@@ -120,9 +120,9 @@ export class BranchesService {
     id: string,
     dto: UpdateBranchDto,
   ): Promise<Branch> {
-    if (user.roles?.includes('MANAGER') && user.scope === ScopeEnum.BRANCH) {
+    if (user.roles?.includes('MANAGER') && user.scope === ScopeEnum.SUCURSAL) {
       throw new ForbiddenException(
-        'Los MANAGER con scope BRANCH no pueden editar sucursales',
+        'Los MANAGER con scope SUCURSAL no pueden editar sucursales',
       );
     }
     const branch = await this.findOne(user, id);
@@ -197,6 +197,13 @@ export class BranchesService {
     return this.maskSensitiveConfig(saved);
   }
 
+  async assertBranchInScope(
+    user: UserPayload,
+    branchId: string,
+  ): Promise<void> {
+    await this.assertInScope(user, branchId);
+  }
+
   private async assertInScope(
     user: UserPayload,
     branchId: string,
@@ -208,12 +215,12 @@ export class BranchesService {
       throw new NotFoundException(`Sucursal ${branchId} no encontrada`);
     }
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         if (branch.id !== user.branchId) {
           throw new NotFoundException(`Sucursal ${branchId} no encontrada`);
         }
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (user.legalEntityId && branch.legalEntityId !== user.legalEntityId) {
           throw new NotFoundException(`Sucursal ${branchId} no encontrada`);
         }

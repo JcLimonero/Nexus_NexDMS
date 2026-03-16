@@ -31,6 +31,10 @@ export class CreateAppointmentDto {
   serviceType: string;
 
   @IsOptional()
+  @IsUUID()
+  serviceTypeId?: string;
+
+  @IsOptional()
   @IsString()
   clientName?: string;
 

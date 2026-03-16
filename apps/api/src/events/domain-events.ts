@@ -86,3 +86,51 @@ export class CotizacionEnviadaEvent {
     public readonly client: { email?: string; phone?: string },
   ) {}
 }
+
+export class MantenimientoSinRefaccionesEvent {
+  constructor(
+    public readonly appointmentId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly serviceTypeName: string,
+    public readonly scheduledAt: Date,
+    public readonly missingParts: Array<{
+      partId: string;
+      partName: string;
+      required: number;
+      available: number;
+    }>,
+  ) {}
+}
+
+export class ServicioHallazgoCotizacionEvent {
+  constructor(
+    public readonly serviceOrderId: string,
+    public readonly findingId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly description: string,
+    public readonly mediaKey: string,
+    public readonly mediaType: 'PHOTO' | 'VIDEO',
+    public readonly client: { email?: string; phone?: string },
+  ) {}
+}
+
+export class ServicioProximoVencimientoEvent {
+  constructor(
+    public readonly vehicleId: string,
+    public readonly clientId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly serviceTypeName: string,
+    public readonly nextDueDate: Date | null,
+    public readonly nextDueKm: number | null,
+    public readonly client: { email?: string; phone?: string; name?: string },
+    public readonly vehicle: {
+      make: string;
+      model: string;
+      year: number;
+      plate?: string;
+    },
+  ) {}
+}

@@ -4,9 +4,11 @@ import {
   Entity,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   OneToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { ReceptionPhoto } from './reception-photo.entity';
 import { User } from '../../users/entities/user.entity';
 import { ServiceOrder } from './service-order.entity';
 
@@ -66,4 +68,7 @@ export class ReceptionChecklist {
   @ManyToOne(() => User, { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'user_id' })
   user?: User;
+
+  @OneToMany(() => ReceptionPhoto, (p) => p.receptionChecklist)
+  photos?: ReceptionPhoto[];
 }

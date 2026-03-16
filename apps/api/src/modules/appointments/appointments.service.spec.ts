@@ -12,16 +12,20 @@ import {
 } from './entities/appointment.entity';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
+import { UserAvailabilityService } from '../user-availability/user-availability.service';
+import { ServiceTypesService } from '../service-types/service-types.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('AppointmentsService', () => {
   let service: AppointmentsService;
+  let module: TestingModule;
   let appointmentRepo: {
     create: jest.Mock;
     save: jest.Mock;
     findOne: jest.Mock;
     createQueryBuilder: jest.Mock;
   };
-  let branchRepo: { findOne: jest.Mock };
 
   const mockUser: UserPayload = {
     sub: 'user-123',
@@ -29,13 +33,7 @@ describe('AppointmentsService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['CASHIER'],
-    scope: ScopeEnum.BRANCH,
-  };
-
-  const mockBranch = {
-    id: 'branch-1',
-    tenantId: 'tenant-1',
-    slug: 'norte',
+    scope: ScopeEnum.SUCURSAL,
   };
 
   const mockAppointment = {
@@ -59,7 +57,7 @@ describe('AppointmentsService', () => {
   };
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         AppointmentsService,
         {
@@ -79,12 +77,37 @@ describe('AppointmentsService', () => {
           provide: getRepositoryToken(Client),
           useValue: { findOne: jest.fn() },
         },
+        {
+          provide: BranchesService,
+          useValue: {
+            assertBranchInScope: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: UserAvailabilityService,
+          useValue: {
+            getAvailableSlots: jest.fn().mockResolvedValue([]),
+            getMechanicsForBranch: jest.fn().mockResolvedValue([]),
+          },
+        },
+        {
+          provide: ServiceTypesService,
+          useValue: {
+            findOne: jest.fn(),
+            checkPartsAvailability: jest
+              .fn()
+              .mockResolvedValue({ available: true, missingParts: [] }),
+          },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get<AppointmentsService>(AppointmentsService);
     appointmentRepo = module.get(getRepositoryToken(Appointment));
-    branchRepo = module.get(getRepositoryToken(Branch));
 
     jest.clearAllMocks();
   });
@@ -114,7 +137,10 @@ describe('AppointmentsService', () => {
     });
 
     it('debe lanzar NotFoundException cuando la sucursal no existe', async () => {
-      branchRepo.findOne.mockResolvedValue(null);
+      const branchesService = module.get(BranchesService);
+      (branchesService.assertBranchInScope as jest.Mock).mockRejectedValue(
+        new NotFoundException('Sucursal branch-99 no encontrada'),
+      );
       const dto: CreateAppointmentDto = {
         branchId: 'branch-99',
         origin: AppointmentOriginEnum.INTERNAL,
@@ -128,12 +154,11 @@ describe('AppointmentsService', () => {
         NotFoundException,
       );
       await expect(service.create(mockUser, dto)).rejects.toThrow(
-        'Sucursal no encontrada',
+        'Sucursal branch-99 no encontrada',
       );
     });
 
     it('debe crear cita cuando los datos son válidos', async () => {
-      branchRepo.findOne.mockResolvedValue(mockBranch);
       const dto: CreateAppointmentDto = {
         branchId: 'branch-1',
         origin: AppointmentOriginEnum.INTERNAL,

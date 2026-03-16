@@ -29,10 +29,10 @@ export class CashRegisterService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('cs.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cs.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -78,10 +78,10 @@ export class CashRegisterService {
     user: UserPayload,
     branchId: string,
   ): Promise<void> {
-    if (user.scope === ScopeEnum.BRANCH && user.branchId !== branchId) {
+    if (user.scope === ScopeEnum.SUCURSAL && user.branchId !== branchId) {
       throw new ForbiddenException('No tiene acceso a esta sucursal');
     }
-    if (user.scope === ScopeEnum.BRAND && user.legalEntityId) {
+    if (user.scope === ScopeEnum.LEGAL_ENTITY && user.legalEntityId) {
       const branch = await this.branchRepo.findOne({
         where: { id: branchId, tenantId: user.tenantId },
       });

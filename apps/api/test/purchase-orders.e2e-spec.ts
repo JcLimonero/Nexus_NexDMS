@@ -13,7 +13,7 @@ const mockUserPayload = {
   branchId: 'branch-1',
   legalEntityId: 'legal-entity-1',
   roles: ['WAREHOUSE'],
-  scope: ScopeEnum.BRANCH,
+  scope: ScopeEnum.SUCURSAL,
 };
 
 describe('PurchaseOrdersController (e2e)', () => {

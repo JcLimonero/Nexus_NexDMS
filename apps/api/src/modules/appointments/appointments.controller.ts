@@ -72,12 +72,14 @@ export class AppointmentsController {
     @Query('date') date: string,
     @Query('mechanicId') mechanicId?: string,
     @Query('durationMin') durationMin?: number,
+    @Query('serviceTypeId') serviceTypeId?: string,
   ) {
     return this.appointmentsService.getAvailability(
       branchId,
       date,
       mechanicId,
-      durationMin,
+      durationMin ? Number(durationMin) : undefined,
+      serviceTypeId,
     );
   }
 

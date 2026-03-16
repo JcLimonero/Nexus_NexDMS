@@ -6,22 +6,30 @@ import { ServiceOrdersService } from './service-orders.service';
 import { CfdiService } from '../cfdi/cfdi.service';
 import { ServiceOrder } from './entities/service-order.entity';
 import { ReceptionChecklist } from './entities/reception-checklist.entity';
+import { ReceptionPhoto } from './entities/reception-photo.entity';
 import { ServiceOrderPart } from './entities/service-order-part.entity';
+import { ServiceOrderUpdate } from './entities/service-order-update.entity';
+import { ServiceOrderFinding } from './entities/service-order-finding.entity';
+import { Client } from '../clients/entities/client.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
+import { Appointment } from '../appointments/entities/appointment.entity';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { ServiceOrderStatusEnum } from './entities/service-order.entity';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
+import { StorageService } from '../../common/storage/storage.service';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 describe('ServiceOrdersService', () => {
   let service: ServiceOrdersService;
+  let module: TestingModule;
   let soRepo: any;
-  let branchRepo: any;
 
   const mockUser: UserPayload = {
     sub: 'user-123',
@@ -29,7 +37,7 @@ describe('ServiceOrdersService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['CASHIER'],
-    scope: ScopeEnum.BRANCH,
+    scope: ScopeEnum.SUCURSAL,
   };
 
   const mockServiceOrder = {
@@ -63,7 +71,7 @@ describe('ServiceOrdersService', () => {
   beforeEach(async () => {
     const mockTransaction = jest.fn((cb) => cb(mockEntityManager));
 
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         ServiceOrdersService,
         {
@@ -78,6 +86,10 @@ describe('ServiceOrdersService', () => {
         {
           provide: getRepositoryToken(ReceptionChecklist),
           useValue: { create: jest.fn(), save: jest.fn(), findOne: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(ReceptionPhoto),
+          useValue: { create: jest.fn(), save: jest.fn(), find: jest.fn() },
         },
         {
           provide: getRepositoryToken(ServiceOrderPart),
@@ -108,6 +120,22 @@ describe('ServiceOrdersService', () => {
           useValue: { findOne: jest.fn() },
         },
         {
+          provide: getRepositoryToken(Appointment),
+          useValue: { findOne: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(ServiceOrderUpdate),
+          useValue: { create: jest.fn(), save: jest.fn(), find: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(ServiceOrderFinding),
+          useValue: { create: jest.fn(), save: jest.fn(), find: jest.fn() },
+        },
+        {
+          provide: getRepositoryToken(Client),
+          useValue: { findOne: jest.fn() },
+        },
+        {
           provide: DataSource,
           useValue: {
             transaction: mockTransaction,
@@ -120,12 +148,28 @@ describe('ServiceOrdersService', () => {
             generarIngreso: jest.fn().mockResolvedValue(undefined),
           },
         },
+        {
+          provide: BranchesService,
+          useValue: {
+            assertBranchInScope: jest.fn().mockResolvedValue(undefined),
+          },
+        },
+        {
+          provide: StorageService,
+          useValue: {
+            upload: jest.fn().mockResolvedValue('key'),
+            getSignedUrl: jest.fn().mockResolvedValue('https://signed.url'),
+          },
+        },
+        {
+          provide: EventEmitter2,
+          useValue: { emit: jest.fn() },
+        },
       ],
     }).compile();
 
     service = module.get<ServiceOrdersService>(ServiceOrdersService);
     soRepo = module.get(getRepositoryToken(ServiceOrder));
-    branchRepo = module.get(getRepositoryToken(Branch));
 
     jest.clearAllMocks();
   });
@@ -154,7 +198,10 @@ describe('ServiceOrdersService', () => {
     });
 
     it('debe lanzar NotFoundException cuando la sucursal no existe', async () => {
-      branchRepo.findOne.mockResolvedValue(null);
+      const branchesService = module.get(BranchesService);
+      (branchesService.assertBranchInScope as jest.Mock).mockRejectedValue(
+        new NotFoundException('Sucursal branch-99 no encontrada'),
+      );
       const dto: CreateServiceOrderDto = {
         branchId: 'branch-99',
         ownerId: 'client-1',
@@ -167,7 +214,7 @@ describe('ServiceOrdersService', () => {
         NotFoundException,
       );
       await expect(service.create(mockUser, dto)).rejects.toThrow(
-        'Sucursal no encontrada',
+        'Sucursal branch-99 no encontrada',
       );
     });
   });

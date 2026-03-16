@@ -14,9 +14,11 @@ import { ReceivePurchaseOrderDto } from './dto/receive-purchase-order.dto';
 import { PurchaseOrderStatusEnum } from './entities/purchase-order.entity';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
 
 describe('PurchaseOrdersService', () => {
   let service: PurchaseOrdersService;
+  let module: TestingModule;
   let orderRepo: any;
   let itemRepo: any;
   let branchRepo: any;
@@ -29,7 +31,7 @@ describe('PurchaseOrdersService', () => {
     branchId: 'branch-1',
     legalEntityId: 'legal-entity-1',
     roles: ['WAREHOUSE'],
-    scope: ScopeEnum.BRANCH,
+    scope: ScopeEnum.SUCURSAL,
   };
 
   const mockBranch = {
@@ -79,7 +81,7 @@ describe('PurchaseOrdersService', () => {
   beforeEach(async () => {
     const mockTransaction = jest.fn((cb) => cb(mockEntityManager));
 
-    const module: TestingModule = await Test.createTestingModule({
+    module = await Test.createTestingModule({
       providers: [
         PurchaseOrdersService,
         {
@@ -133,6 +135,12 @@ describe('PurchaseOrdersService', () => {
             manager: mockEntityManager,
           },
         },
+        {
+          provide: BranchesService,
+          useValue: {
+            assertBranchInScope: jest.fn().mockResolvedValue(undefined),
+          },
+        },
       ],
     }).compile();
 
@@ -160,7 +168,10 @@ describe('PurchaseOrdersService', () => {
     });
 
     it('debe lanzar NotFoundException cuando la sucursal no existe', async () => {
-      branchRepo.findOne.mockResolvedValue(null);
+      const branchesService = module.get(BranchesService);
+      (branchesService.assertBranchInScope as jest.Mock).mockRejectedValue(
+        new NotFoundException('Sucursal branch-1 no encontrada'),
+      );
       supplierRepo.findOne.mockResolvedValue(mockSupplier);
 
       await expect(service.create(mockUser, createDto)).rejects.toThrow(

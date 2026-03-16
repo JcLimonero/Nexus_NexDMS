@@ -17,9 +17,12 @@ import { CustomerVehicle } from '../../customer-vehicles/entities/customer-vehic
 import { User } from '../../users/entities/user.entity';
 import { Appointment } from '../../appointments/entities/appointment.entity';
 import { Quotation } from '../../quotations/entities/quotation.entity';
+import { ServiceType } from '../../service-types/entities/service-type.entity';
 import { ReceptionChecklist } from './reception-checklist.entity';
 import { ServiceOrderPart } from './service-order-part.entity';
 import { ServiceOrderTime } from './service-order-time.entity';
+import { ServiceOrderUpdate } from './service-order-update.entity';
+import { ServiceOrderFinding } from './service-order-finding.entity';
 
 export enum ServiceOrderStatusEnum {
   RECEIVED = 'RECEIVED',
@@ -87,6 +90,9 @@ export class ServiceOrder {
 
   @Column({ name: 'appointment_id', type: 'uuid', nullable: true })
   appointmentId: string | null;
+
+  @Column({ name: 'service_type_id', type: 'uuid', nullable: true })
+  serviceTypeId: string | null;
 
   @Column({ name: 'quotation_id', type: 'uuid', nullable: true })
   quotationId: string | null;
@@ -199,6 +205,10 @@ export class ServiceOrder {
   @JoinColumn({ name: 'appointment_id' })
   appointment?: Appointment;
 
+  @ManyToOne(() => ServiceType, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'service_type_id' })
+  serviceTypeRelation?: ServiceType;
+
   @ManyToOne(() => Quotation, { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'quotation_id' })
   quotation?: Quotation;
@@ -211,4 +221,10 @@ export class ServiceOrder {
 
   @OneToMany(() => ServiceOrderTime, (t) => t.serviceOrder)
   timeEntries?: ServiceOrderTime[];
+
+  @OneToMany(() => ServiceOrderUpdate, (u) => u.serviceOrder)
+  updates?: ServiceOrderUpdate[];
+
+  @OneToMany(() => ServiceOrderFinding, (f) => f.serviceOrder)
+  findings?: ServiceOrderFinding[];
 }

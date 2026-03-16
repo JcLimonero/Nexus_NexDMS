@@ -16,6 +16,7 @@ import { CreateCommissionDetailDto } from './dto/create-commission-detail.dto';
 import { FilterCommissionPeriodsDto } from './dto/filter-commissions.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import { BranchesService } from '../branches/branches.service';
 
 @Injectable()
 export class CommissionsService {
@@ -26,6 +27,7 @@ export class CommissionsService {
     private readonly detailRepo: Repository<CommissionDetail>,
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
+    private readonly branchesService: BranchesService,
   ) {}
 
   private applyScope(
@@ -33,10 +35,10 @@ export class CommissionsService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('cp.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = cp.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -59,12 +61,7 @@ export class CommissionsService {
       );
     }
 
-    const branch = await this.branchRepo.findOne({
-      where: { id: dto.branchId, tenantId: user.tenantId },
-    });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
-    }
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
 
     const periodDate = new Date(dto.periodDate);
     const existing = await this.periodRepo.findOne({

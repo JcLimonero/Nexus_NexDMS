@@ -6,14 +6,20 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DataSource, EntityManager, IsNull, Repository } from 'typeorm';
 import { ServiceOrder } from './entities/service-order.entity';
 import { ServiceOrderStatusEnum } from './entities/service-order.entity';
 import { ReceptionChecklist } from './entities/reception-checklist.entity';
+import { ReceptionPhoto } from './entities/reception-photo.entity';
 import { ServiceOrderPart } from './entities/service-order-part.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
+import { ServiceOrderUpdate } from './entities/service-order-update.entity';
+import { ServiceOrderFinding } from './entities/service-order-finding.entity';
+import { ServiceOrderFindingMediaTypeEnum } from './entities/service-order-finding.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
+import { Appointment } from '../appointments/entities/appointment.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
@@ -24,10 +30,17 @@ import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { AddPartDto } from './dto/add-part.dto';
 import { CreateChecklistDto } from './dto/create-checklist.dto';
+import { CreateUpdateDto } from './dto/create-update.dto';
+import { CreateFindingDto } from './dto/create-finding.dto';
+import { UpdatePartNotesDto } from './dto/update-part-notes.dto';
 import { DeliverServiceOrderDto } from './dto/deliver-service-order.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { CfdiService } from '../cfdi/cfdi.service';
+import { BranchesService } from '../branches/branches.service';
+import { StorageService } from '../../common/storage/storage.service';
+import { Client } from '../clients/entities/client.entity';
+import { ServicioHallazgoCotizacionEvent } from '../../events/domain-events';
 
 const STATUS_TRANSITIONS: Record<
   ServiceOrderStatusEnum,
@@ -66,6 +79,8 @@ export class ServiceOrdersService {
     private readonly soRepo: Repository<ServiceOrder>,
     @InjectRepository(ReceptionChecklist)
     private readonly checklistRepo: Repository<ReceptionChecklist>,
+    @InjectRepository(ReceptionPhoto)
+    private readonly receptionPhotoRepo: Repository<ReceptionPhoto>,
     @InjectRepository(ServiceOrderPart)
     private readonly partRepo: Repository<ServiceOrderPart>,
     @InjectRepository(ServiceOrderTime)
@@ -80,8 +95,19 @@ export class ServiceOrdersService {
     private readonly catalogUnitRepo: Repository<CatalogUnit>,
     @InjectRepository(CustomerVehicle)
     private readonly customerVehicleRepo: Repository<CustomerVehicle>,
+    @InjectRepository(Appointment)
+    private readonly appointmentRepo: Repository<Appointment>,
+    @InjectRepository(ServiceOrderUpdate)
+    private readonly updateRepo: Repository<ServiceOrderUpdate>,
+    @InjectRepository(ServiceOrderFinding)
+    private readonly findingRepo: Repository<ServiceOrderFinding>,
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
+    private readonly branchesService: BranchesService,
+    private readonly storageService: StorageService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   private applyScope(
@@ -89,10 +115,10 @@ export class ServiceOrdersService {
     user: UserPayload,
   ) {
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('so.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
         qb.innerJoin('branches', 'b', 'b.id = so.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
@@ -132,11 +158,16 @@ export class ServiceOrdersService {
       );
     }
 
-    const branch = await this.branchRepo.findOne({
-      where: { id: dto.branchId, tenantId: user.tenantId },
-    });
-    if (!branch) {
-      throw new NotFoundException('Sucursal no encontrada');
+    await this.branchesService.assertBranchInScope(user, dto.branchId);
+
+    let serviceTypeId = dto.serviceTypeId ?? null;
+    if (dto.appointmentId && !serviceTypeId) {
+      const appointment = await this.appointmentRepo.findOne({
+        where: { id: dto.appointmentId, tenantId: user.tenantId },
+      });
+      if (appointment?.serviceTypeId) {
+        serviceTypeId = appointment.serviceTypeId;
+      }
     }
 
     return this.dataSource
@@ -156,6 +187,7 @@ export class ServiceOrdersService {
           userId: user.sub,
           mechanicId: dto.mechanicId ?? null,
           appointmentId: dto.appointmentId ?? null,
+          serviceTypeId,
           quotationId: dto.quotationId ?? null,
           folio,
           status: ServiceOrderStatusEnum.RECEIVED,
@@ -276,6 +308,7 @@ export class ServiceOrdersService {
         'mechanic',
         'branch',
         'checklist',
+        'checklist.photos',
         'parts',
         'parts.part',
         'timeEntries',
@@ -422,6 +455,7 @@ export class ServiceOrdersService {
           quantity: dto.quantity,
           unitPrice,
           subtotal,
+          notes: dto.notes ?? null,
         });
         await em.save(sop);
 
@@ -534,6 +568,203 @@ export class ServiceOrdersService {
         });
       })
       .then(() => this.findOne(user, id));
+  }
+
+  async uploadReceptionPhoto(
+    user: UserPayload,
+    id: string,
+    angle: string,
+    file: Express.Multer.File,
+  ): Promise<ReceptionPhoto> {
+    await this.findOne(user, id);
+    const checklist = await this.checklistRepo.findOne({
+      where: { serviceOrderId: id },
+    });
+    if (!checklist) {
+      throw new NotFoundException('No existe checklist para esta OS');
+    }
+    const validAngles = [
+      'FRONT',
+      'REAR',
+      'LEFT_SIDE',
+      'RIGHT_SIDE',
+      'INTERIOR',
+      'DASHBOARD',
+      'TRUNK',
+      'ENGINE',
+      'WHEELS',
+      'OTHER',
+    ];
+    if (!validAngles.includes(angle)) {
+      throw new BadRequestException(
+        `Ángulo inválido. Use: ${validAngles.join(', ')}`,
+      );
+    }
+    const buffer = (file as Express.Multer.File & { buffer?: Buffer }).buffer;
+    if (!buffer) {
+      throw new BadRequestException('No se pudo leer el archivo');
+    }
+    const maxSize = 10 * 1024 * 1024; // 10 MB
+    if (buffer.length > maxSize) {
+      throw new BadRequestException(
+        `Tamaño máximo: 10MB. Recibido: ${(buffer.length / 1024 / 1024).toFixed(2)}MB`,
+      );
+    }
+    const allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Tipo inválido. Use: image/jpeg, image/png, image/webp',
+      );
+    }
+    const ext =
+      file.mimetype === 'image/webp'
+        ? 'webp'
+        : (file.mimetype.split('/')[1] ?? 'jpg');
+    const key = `service-orders/${id}/reception/${angle}_${Date.now()}.${ext}`;
+    await this.storageService.upload(buffer, key, file.mimetype);
+    const photo = this.receptionPhotoRepo.create({
+      receptionChecklistId: checklist.id,
+      angle,
+      storageKey: key,
+      mimeType: file.mimetype,
+    });
+    return this.receptionPhotoRepo.save(photo);
+  }
+
+  async updatePartNotes(
+    user: UserPayload,
+    id: string,
+    partId: string,
+    dto: UpdatePartNotesDto,
+  ): Promise<ServiceOrder> {
+    const so = await this.findOne(user, id);
+    if (
+      so.status === ServiceOrderStatusEnum.DELIVERED ||
+      so.status === ServiceOrderStatusEnum.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'No se puede editar una OS entregada o cancelada',
+      );
+    }
+    const part = await this.partRepo.findOne({
+      where: { id: partId, serviceOrderId: id },
+    });
+    if (!part) {
+      throw new NotFoundException('Parte no encontrada en la OS');
+    }
+    await this.partRepo.update(partId, { notes: dto.notes ?? null });
+    return this.findOne(user, id);
+  }
+
+  async addUpdate(
+    user: UserPayload,
+    id: string,
+    dto: CreateUpdateDto,
+  ): Promise<ServiceOrderUpdate> {
+    await this.findOne(user, id);
+    const update = this.updateRepo.create({
+      serviceOrderId: id,
+      userId: user.sub,
+      message: dto.message,
+      status: dto.status ?? null,
+    });
+    return this.updateRepo.save(update);
+  }
+
+  async getUpdates(
+    user: UserPayload,
+    id: string,
+  ): Promise<ServiceOrderUpdate[]> {
+    await this.findOne(user, id);
+    return this.updateRepo.find({
+      where: { serviceOrderId: id },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async createFinding(
+    user: UserPayload,
+    id: string,
+    dto: CreateFindingDto,
+    file: Express.Multer.File,
+  ): Promise<ServiceOrderFinding> {
+    const so = await this.findOne(user, id);
+    const buffer = (file as Express.Multer.File & { buffer?: Buffer }).buffer;
+    if (!buffer) {
+      throw new BadRequestException('Archivo requerido');
+    }
+    const photoMimes = ['image/jpeg', 'image/png', 'image/webp'];
+    const videoMimes = ['video/mp4'];
+    const allowedMimes = [...photoMimes, ...videoMimes];
+    if (!allowedMimes.includes(file.mimetype)) {
+      throw new BadRequestException(
+        'Tipo inválido. Use: image/jpeg, image/png, image/webp o video/mp4',
+      );
+    }
+    const mediaType = photoMimes.includes(file.mimetype)
+      ? ServiceOrderFindingMediaTypeEnum.PHOTO
+      : ServiceOrderFindingMediaTypeEnum.VIDEO;
+    const maxPhotoSize = 10 * 1024 * 1024; // 10 MB
+    const maxVideoSize = 50 * 1024 * 1024; // 50 MB
+    const maxSize =
+      mediaType === ServiceOrderFindingMediaTypeEnum.PHOTO
+        ? maxPhotoSize
+        : maxVideoSize;
+    if (buffer.length > maxSize) {
+      throw new BadRequestException(
+        `Tamaño máximo: ${maxSize / 1024 / 1024}MB`,
+      );
+    }
+    const ext =
+      file.mimetype === 'video/mp4'
+        ? 'mp4'
+        : (file.mimetype.split('/')[1] ?? 'jpg');
+    const key = `service-orders/${id}/findings/${Date.now()}.${ext}`;
+    await this.storageService.upload(buffer, key, file.mimetype);
+    const finding = this.findingRepo.create({
+      serviceOrderId: id,
+      userId: user.sub,
+      description: dto.description,
+      requiresQuotation: dto.requiresQuotation ?? true,
+      mediaType,
+      mediaKey: key,
+    });
+    const saved = await this.findingRepo.save(finding);
+    if (saved.requiresQuotation && saved.mediaKey) {
+      const client = await this.clientRepo.findOne({
+        where: { id: so.ownerId },
+      });
+      this.eventEmitter.emit(
+        'servicio.hallazgo_cotizacion',
+        new ServicioHallazgoCotizacionEvent(
+          id,
+          saved.id,
+          so.branchId,
+          so.tenantId,
+          saved.description,
+          saved.mediaKey,
+          saved.mediaType,
+          {
+            email: client?.email ?? undefined,
+            phone: client?.phone ?? undefined,
+          },
+        ),
+      );
+    }
+    return saved;
+  }
+
+  async getFindings(
+    user: UserPayload,
+    id: string,
+  ): Promise<ServiceOrderFinding[]> {
+    await this.findOne(user, id);
+    return this.findingRepo.find({
+      where: { serviceOrderId: id },
+      relations: ['user'],
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async createChecklist(

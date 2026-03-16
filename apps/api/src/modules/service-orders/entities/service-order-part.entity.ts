@@ -28,6 +28,9 @@ export class ServiceOrderPart {
   @Column({ name: 'subtotal', type: 'decimal', precision: 12, scale: 2 })
   subtotal: number;
 
+  @Column({ name: 'notes', type: 'text', nullable: true })
+  notes: string | null;
+
   @ManyToOne(() => ServiceOrder, (so) => so.parts, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'service_order_id' })
   serviceOrder?: ServiceOrder;

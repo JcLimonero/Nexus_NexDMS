@@ -1,6 +1,7 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
@@ -16,6 +17,7 @@ import { CreatePaymentPlanDto } from './dto/create-payment-plan.dto';
 import { FilterUnitSalesDto } from './dto/filter-unit-sales.dto';
 import { CancelUnitSaleDto } from './dto/cancel-unit-sale.dto';
 import { RegisterInstallmentPaymentDto } from './dto/register-installment-payment.dto';
+import { AddAccessoryToSaleDto } from '../unit-accessories/dto/add-accessory-to-sale.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
@@ -84,6 +86,40 @@ export class UnitSalesController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.unitSalesService.getPaymentPlan(user, id);
+  }
+
+  @Get(':id/accessories')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')
+  getAccessories(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.unitSalesService.getAccessories(user, id);
+  }
+
+  @Post(':id/accessories')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER')
+  addAccessory(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: AddAccessoryToSaleDto,
+  ) {
+    return this.unitSalesService.addAccessory(
+      user,
+      id,
+      dto.accessoryId,
+      dto.quantity,
+    );
+  }
+
+  @Delete(':id/accessories/:accessoryLineId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER')
+  removeAccessory(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('accessoryLineId', ParseUUIDPipe) accessoryLineId: string,
+  ) {
+    return this.unitSalesService.removeAccessory(user, id, accessoryLineId);
   }
 
   @Get(':id')

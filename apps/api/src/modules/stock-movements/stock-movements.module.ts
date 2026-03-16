@@ -4,9 +4,10 @@ import { StockMovement } from './entities/stock-movement.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovementsController } from './stock-movements.controller';
 import { StockMovementsService } from './stock-movements.service';
+import { BranchesModule } from '../branches/branches.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([StockMovement, Part])],
+  imports: [TypeOrmModule.forFeature([StockMovement, Part]), BranchesModule],
   controllers: [StockMovementsController],
   providers: [StockMovementsService],
   exports: [TypeOrmModule, StockMovementsService],

@@ -14,7 +14,7 @@ const mockUserPayload = {
   branchId: 'branch-1',
   legalEntityId: 'legal-entity-1',
   roles: ['DOCUMENT_VALIDATOR'],
-  scope: ScopeEnum.BRANCH,
+  scope: ScopeEnum.SUCURSAL,
 };
 
 const mockPendingDocuments = [

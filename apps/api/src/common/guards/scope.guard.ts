@@ -19,10 +19,10 @@ export class ScopeGuard implements CanActivate {
     if (!qb) return true; // Si no hay QB registrado, dejar pasar
 
     switch (user.scope) {
-      case ScopeEnum.BRANCH:
+      case ScopeEnum.SUCURSAL:
         qb.andWhere('e.branch_id = :branchId', { branchId: user.branchId });
         break;
-      case ScopeEnum.BRAND:
+      case ScopeEnum.LEGAL_ENTITY:
         qb.innerJoin('branches', 's', 's.id = e.branch_id').andWhere(
           's.legal_entity_id = :lid',
           { lid: user.legalEntityId },
