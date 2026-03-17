@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Param,
   Patch,
   Post,
@@ -21,30 +22,24 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Global Models')
-@ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
 @Controller('global-models')
 export class GlobalModelsController {
   constructor(private readonly globalModelsService: GlobalModelsService) {}
 
   @Get()
-  @Roles(
-    'SUPERADMIN',
-    'ADMIN',
-    'MANAGER',
-    'WAREHOUSE',
-    'CASHIER',
-    'MECHANIC',
-    'SELLER',
-  )
-  findAll(
-    @CurrentUser() user: UserPayload,
-    @Query() filters: FilterGlobalModelsDto,
-  ) {
-    return this.globalModelsService.findAll(user, filters);
+  async findAll(@Query() filters: FilterGlobalModelsDto) {
+    try {
+      return await this.globalModelsService.findAll(null as never, filters);
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Error al listar modelos globales',
+      );
+    }
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(
     'SUPERADMIN',
     'ADMIN',
@@ -62,12 +57,16 @@ export class GlobalModelsController {
   }
 
   @Post()
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles('SUPERADMIN')
   create(@CurrentUser() user: UserPayload, @Body() dto: CreateGlobalModelDto) {
     return this.globalModelsService.create(user, dto);
   }
 
   @Patch(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles('SUPERADMIN')
   update(
     @CurrentUser() user: UserPayload,

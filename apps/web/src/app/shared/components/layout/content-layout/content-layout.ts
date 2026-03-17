@@ -14,7 +14,6 @@ import { fadeIn } from "ng-animate";
 
 import { CustomizerService } from "../../../services/customizer.service";
 import { NavService } from "../../../services/nav.service";
-import { Breadcrumb } from "../../breadcrumb/breadcrumb";
 import { Customizer } from "../../customizer/customizer";
 import { Footer } from "../../footer/footer";
 import { Header } from "../../header/header";
@@ -27,7 +26,6 @@ import { Sidebar } from "../../sidebar/sidebar";
     Header,
     Sidebar,
     RightSidebar,
-    Breadcrumb,
     RouterModule,
     Footer,
     Customizer,

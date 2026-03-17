@@ -1,0 +1,71 @@
+<div class="container-fluid contactos-landing">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card contactos-landing-card">
+        <div class="card-header">
+          <div>
+            <h5>Contactos</h5>
+            <span>Selecciona un cliente para ver y gestionar sus contactos</span>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Buscar cliente por nombre, teléfono, RFC..."
+                [ngModel]="searchTerm()"
+                (ngModelChange)="onSearchChange($event)"
+              />
+            </div>
+          </div>
+
+          @if (loading()) {
+            <div class="text-center py-4">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Buscando...</span>
+              </div>
+            </div>
+          } @else if (clients().length) {
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Teléfono</th>
+                    <th>Tipo</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (client of clients(); track client.id) {
+                    <tr>
+                      <td>{{ getDisplayName(client) }}</td>
+                      <td>{{ client.phone }}</td>
+                      <td>{{ client.clientType === 'BUSINESS' ? 'Empresa' : 'Persona' }}</td>
+                      <td class="text-end">
+                        <a
+                          class="btn btn-primary btn-sm"
+                          [routerLink]="['/clientes', client.id, 'contactos']"
+                        >
+                          <app-feather-icons [icon]="'users'" />
+                          Ver contactos
+                        </a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          } @else {
+            <div class="text-center text-muted py-5">
+              <p class="mb-2">No se encontraron clientes.</p>
+              <p class="small mb-0">Prueba con otro término de búsqueda o <a routerLink="/clientes/nuevo">crea un cliente</a> primero.</p>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

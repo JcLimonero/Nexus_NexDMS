@@ -23,6 +23,8 @@ import { SalesModule } from './modules/sales/sales.module';
 import { WarehouseTransfersModule } from './modules/warehouse-transfers/warehouse-transfers.module';
 import { UsersModule } from './modules/users/users.module';
 import { GlobalModelsModule } from './modules/global-models/global-models.module';
+import { VehicleTypesModule } from './modules/vehicle-types/vehicle-types.module';
+import { CombustionTypesModule } from './modules/combustion-types/combustion-types.module';
 import { UnitLocationsModule } from './modules/unit-locations/unit-locations.module';
 import { CatalogUnitsModule } from './modules/catalog-units/catalog-units.module';
 import { UnitReservationsModule } from './modules/unit-reservations/unit-reservations.module';
@@ -110,6 +112,8 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     SalesModule,
     WarehouseTransfersModule,
     GlobalModelsModule,
+    VehicleTypesModule,
+    CombustionTypesModule,
     UnitLocationsModule,
     CatalogUnitsModule,
     UnitReservationsModule,

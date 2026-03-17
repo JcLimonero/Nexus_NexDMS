@@ -26,3 +26,34 @@ body {
   background-color: var(--bg, #F7F7F8);
   color: var(--text-primary, #111827);
 }
+
+/* Footer siempre visible — fijo al fondo del viewport */
+.page-wrapper .page-body-wrapper footer.footer {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 255px;
+  right: 0;
+  width: calc(100% - 255px) !important;
+  z-index: 10;
+}
+
+.page-wrapper .page-body-wrapper .page-body {
+  padding-bottom: 70px !important;
+}
+
+/* Sidebar colapsado: footer a ancho completo */
+.page-wrapper .page-body-wrapper .page-sidebar.open ~ footer.footer {
+  left: 0 !important;
+  width: 100% !important;
+}
+
+/* Compact/sidebar-icon: el tema ya ajusta márgenes */
+.page-wrapper.compact-page .page-body-wrapper footer.footer {
+  left: 75px;
+  width: calc(100% - 75px) !important;
+}
+
+.page-wrapper.compact-page .page-body-wrapper .page-sidebar.open ~ footer.footer {
+  left: 0 !important;
+  width: 100% !important;
+}

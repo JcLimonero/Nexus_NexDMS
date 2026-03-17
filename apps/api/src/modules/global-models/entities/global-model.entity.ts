@@ -3,17 +3,17 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
+  ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-
-export enum VehicleTypeEnum {
-  MOTORCYCLE = 'MOTORCYCLE',
-  CAR = 'CAR',
-}
+import { VehicleType } from '../../vehicle-types/entities/vehicle-type.entity';
+import { CombustionType } from '../../combustion-types/entities/combustion-type.entity';
 
 @Entity('global_models')
 @Index(['brandName'])
-@Index(['vehicleType'])
+@Index(['vehicleTypeId'])
+@Index(['combustionTypeId'])
 export class GlobalModel {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -21,17 +21,28 @@ export class GlobalModel {
   @Column({ name: 'brand_name', type: 'varchar', length: 100 })
   brandName: string;
 
-  @Column({ name: 'vehicle_type', type: 'enum', enum: VehicleTypeEnum })
-  vehicleType: VehicleTypeEnum;
+  @Column({ name: 'vehicle_type_id', type: 'uuid' })
+  vehicleTypeId: string;
+
+  @ManyToOne(() => VehicleType, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'vehicle_type_id' })
+  vehicleType?: VehicleType;
 
   @Column({ name: 'model', type: 'varchar', length: 200 })
   model: string;
 
-  @Column({ name: 'year_start', type: 'int' })
-  yearStart: number;
+  @Column({ name: 'version', type: 'varchar', length: 100, nullable: true })
+  version: string | null;
 
-  @Column({ name: 'year_end', type: 'int', nullable: true })
-  yearEnd: number | null;
+  @Column({ name: 'year', type: 'int' })
+  year: number;
+
+  @Column({ name: 'combustion_type_id', type: 'uuid', nullable: true })
+  combustionTypeId: string | null;
+
+  @ManyToOne(() => CombustionType, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'combustion_type_id' })
+  combustionType?: CombustionType | null;
 
   @Column({ name: 'displacement', type: 'int', nullable: true })
   displacement: number | null;

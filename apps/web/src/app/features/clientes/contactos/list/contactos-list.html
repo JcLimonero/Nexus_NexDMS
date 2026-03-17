@@ -1,0 +1,116 @@
+<div class="container-fluid contactos-list">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a [routerLink]="['/clientes', clientId()]" class="alert-link ms-2">Volver al cliente</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (!loading() && !error()) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card contactos-header-card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h5>Contactos</h5>
+              <span>Contactos de {{ clientName() }}</span>
+            </div>
+            <div class="d-flex gap-2">
+              <a
+                class="btn btn-primary"
+                [routerLink]="['/clientes', clientId(), 'contactos', 'nuevo']"
+              >
+                <app-feather-icons [icon]="'plus'" />
+                Nuevo contacto
+              </a>
+              <a
+                class="btn btn-outline-secondary"
+                [routerLink]="['/clientes', clientId()]"
+              >
+                Volver al cliente
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div class="card contactos-table-card">
+          <div class="card-body">
+            @if (contacts().length) {
+              <div class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Nombre</th>
+                      <th>Teléfono</th>
+                      <th>Email</th>
+                      <th>Puesto</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (contact of contacts(); track contact.id) {
+                      <tr>
+                        <td>
+                          <a [routerLink]="['/clientes', clientId(), 'contactos', contact.id]">
+                            {{ getDisplayName(contact) }}
+                          </a>
+                        </td>
+                        <td>{{ contact.phone }}</td>
+                        <td>{{ contact.email || "—" }}</td>
+                        <td>{{ contact.position || "—" }}</td>
+                        <td class="text-end">
+                          <div class="table-actions">
+                            <a
+                              class="table-action-btn"
+                              [routerLink]="['/clientes', clientId(), 'contactos', contact.id]"
+                              title="Ver"
+                            >
+                              <app-feather-icons [icon]="'eye'" />
+                            </a>
+                            <a
+                              class="table-action-btn"
+                              [routerLink]="['/clientes', clientId(), 'contactos', contact.id, 'editar']"
+                              title="Editar"
+                            >
+                              <app-feather-icons [icon]="'edit-2'" />
+                            </a>
+                            <button
+                              type="button"
+                              class="table-action-btn table-action-btn-danger"
+                              (click)="deleteContact(contact, $event)"
+                              title="Eliminar"
+                            >
+                              <app-feather-icons [icon]="'trash-2'" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <div class="text-center text-muted py-5">
+                <p class="mb-3">No hay contactos registrados para este cliente.</p>
+                <a
+                  class="btn btn-primary"
+                  [routerLink]="['/clientes', clientId(), 'contactos', 'nuevo']"
+                >
+                  Crear el primero
+                </a>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,31 +1,33 @@
 import {
   IsBoolean,
-  IsEnum,
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
 } from 'class-validator';
-import { VehicleTypeEnum } from '../entities/global-model.entity';
 
 export class CreateGlobalModelDto {
   @IsString()
   brandName: string;
 
-  @IsEnum(VehicleTypeEnum)
-  vehicleType: VehicleTypeEnum;
+  @IsUUID()
+  vehicleTypeId: string;
 
   @IsString()
   model: string;
 
+  @IsOptional()
+  @IsString()
+  version?: string;
+
   @IsInt()
   @Min(1900)
-  yearStart: number;
+  year: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1900)
-  yearEnd?: number;
+  @IsUUID()
+  combustionTypeId?: string;
 
   @IsOptional()
   @IsInt()

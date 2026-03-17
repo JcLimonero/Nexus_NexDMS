@@ -243,6 +243,45 @@ textarea.form-control {
   overflow-x: auto;
 }
 
+/* Table action icons (reemplazo de botones de texto) */
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.table-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--text-secondary);
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.table-action-btn:hover {
+  background: var(--bg);
+  border-color: var(--border-hover);
+  color: var(--primary);
+}
+
+.table-action-btn-danger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.table-action-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
 /* Alerts */
 .alert {
   padding: var(--space-12) var(--space-16);

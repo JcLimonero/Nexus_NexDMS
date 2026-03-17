@@ -50,7 +50,6 @@ export class NavService {
       active: false,
       children: [
         { path: "/clientes", title: "Clientes", type: "link" },
-        { path: "/contact/contacts", title: "Contactos", type: "link" },
       ],
     },
     {

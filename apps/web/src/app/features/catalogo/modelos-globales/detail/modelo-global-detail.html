@@ -1,0 +1,90 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/catalogo" class="alert-link ms-2">Volver al catálogo</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (model(); as m) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">{{ getDisplayLabel(m) }}</h5>
+            <div class="d-flex gap-2">
+              <a class="btn btn-primary btn-sm" [routerLink]="['/catalogo', m.id, 'editar']">
+                Editar
+              </a>
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/catalogo">
+                Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <table class="table table-sm table-borderless">
+              <tbody>
+                <tr>
+                  <th class="text-muted" style="width: 160px">Marca</th>
+                  <td>{{ m.brandName }}</td>
+                </tr>
+                <tr>
+                  <th class="text-muted">Modelo</th>
+                  <td>{{ m.model }}</td>
+                </tr>
+                @if (m.version) {
+                  <tr>
+                    <th class="text-muted">Versión</th>
+                    <td>{{ m.version }}</td>
+                  </tr>
+                }
+                <tr>
+                  <th class="text-muted">Año</th>
+                  <td>{{ m.year }}</td>
+                </tr>
+                <tr>
+                  <th class="text-muted">Tipo vehículo</th>
+                  <td>{{ getVehicleTypeLabel(m) }}</td>
+                </tr>
+                @if (m.combustionType) {
+                  <tr>
+                    <th class="text-muted">Combustión</th>
+                    <td>{{ getCombustionTypeLabel(m) }}</td>
+                  </tr>
+                }
+                @if (m.displacement) {
+                  <tr>
+                    <th class="text-muted">Cilindrada</th>
+                    <td>{{ m.displacement }} cc</td>
+                  </tr>
+                }
+                @if (m.doorCount) {
+                  <tr>
+                    <th class="text-muted">Puertas</th>
+                    <td>{{ m.doorCount }}</td>
+                  </tr>
+                }
+                <tr>
+                  <th class="text-muted">Estado</th>
+                  <td>
+                    <span class="badge" [class.bg-success]="m.isActive" [class.bg-secondary]="!m.isActive">
+                      {{ m.isActive ? "Activo" : "Inactivo" }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -15,15 +15,44 @@ export const clientesRoutes: Routes = [
   },
   {
     path: ":id",
-    loadComponent: () =>
-      import("./detail/cliente-detail").then((m) => m.ClienteDetail),
-    data: { title: "Detalle cliente", breadcrumb: "Detalle" },
-  },
-  {
-    path: ":id/editar",
-    loadComponent: () =>
-      import("./form/cliente-form").then((m) => m.ClienteForm),
-    data: { title: "Editar cliente", breadcrumb: "Editar" },
+    children: [
+      {
+        path: "",
+        loadComponent: () =>
+          import("./detail/cliente-detail").then((m) => m.ClienteDetail),
+        data: { title: "Detalle cliente", breadcrumb: "Detalle" },
+      },
+      {
+        path: "editar",
+        loadComponent: () =>
+          import("./form/cliente-form").then((m) => m.ClienteForm),
+        data: { title: "Editar cliente", breadcrumb: "Editar" },
+      },
+      {
+        path: "contactos",
+        loadComponent: () =>
+          import("./contactos/list/contactos-list").then((m) => m.ContactosList),
+        data: { title: "Contactos", breadcrumb: "Contactos" },
+      },
+      {
+        path: "contactos/nuevo",
+        loadComponent: () =>
+          import("./contactos/form/contacto-form").then((m) => m.ContactoForm),
+        data: { title: "Nuevo contacto", breadcrumb: "Nuevo" },
+      },
+      {
+        path: "contactos/:contactId",
+        loadComponent: () =>
+          import("./contactos/detail/contacto-detail").then((m) => m.ContactoDetail),
+        data: { title: "Detalle contacto", breadcrumb: "Detalle" },
+      },
+      {
+        path: "contactos/:contactId/editar",
+        loadComponent: () =>
+          import("./contactos/form/contacto-form").then((m) => m.ContactoForm),
+        data: { title: "Editar contacto", breadcrumb: "Editar" },
+      },
+    ],
   },
 ];
 

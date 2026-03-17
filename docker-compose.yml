@@ -87,6 +87,7 @@ services:
       - '4200:4200'
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - PROXY_API_TARGET=http://api:3000
     command: npm run start -- --host 0.0.0.0 --poll 1000
     networks:
       - nexDMS_net

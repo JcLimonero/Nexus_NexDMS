@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { GlobalModel } from './entities/global-model.entity';
 import { CreateGlobalModelDto } from './dto/create-global-model.dto';
 import { UpdateGlobalModelDto } from './dto/update-global-model.dto';
@@ -28,36 +28,21 @@ export class GlobalModelsService {
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 50;
 
-    const qb = this.modelRepo.createQueryBuilder('gm').where('1=1');
-
+    const where: Record<string, unknown> = {};
+    if (filters.vehicleTypeId) where.vehicleTypeId = filters.vehicleTypeId;
+    if (filters.year !== undefined) where.year = filters.year;
+    if (filters.isActive !== undefined) where.isActive = filters.isActive;
     if (filters.brandName?.trim()) {
-      qb.andWhere('gm.brand_name ILIKE :brandName', {
-        brandName: `%${filters.brandName.trim()}%`,
-      });
-    }
-    if (filters.vehicleType) {
-      qb.andWhere('gm.vehicle_type = :vehicleType', {
-        vehicleType: filters.vehicleType,
-      });
-    }
-    if (filters.year) {
-      qb.andWhere(
-        'gm.year_start <= :year AND (gm.year_end IS NULL OR gm.year_end >= :year)',
-        { year: filters.year },
-      );
-    }
-    if (filters.isActive !== undefined) {
-      qb.andWhere('gm.is_active = :isActive', {
-        isActive: filters.isActive,
-      });
+      where.brandName = ILike(`%${filters.brandName.trim()}%`);
     }
 
-    const [data, total] = await qb
-      .orderBy('gm.brand_name', 'ASC')
-      .addOrderBy('gm.model', 'ASC')
-      .skip((page - 1) * limit)
-      .take(limit)
-      .getManyAndCount();
+    const [data, total] = await this.modelRepo.findAndCount({
+      where: Object.keys(where).length ? where : undefined,
+      relations: ['vehicleType', 'combustionType'],
+      order: { brandName: 'ASC', model: 'ASC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
 
     return {
       data,
@@ -71,7 +56,10 @@ export class GlobalModelsService {
   }
 
   async findOne(_user: UserPayload, id: string): Promise<GlobalModel> {
-    const model = await this.modelRepo.findOne({ where: { id } });
+    const model = await this.modelRepo.findOne({
+      where: { id },
+      relations: ['vehicleType', 'combustionType'],
+    });
     if (!model) {
       throw new NotFoundException(`Modelo ${id} no encontrado`);
     }
@@ -85,7 +73,8 @@ export class GlobalModelsService {
     this.assertSuperadmin(user);
     const model = this.modelRepo.create({
       ...dto,
-      yearEnd: dto.yearEnd ?? null,
+      version: dto.version ?? null,
+      combustionTypeId: dto.combustionTypeId ?? null,
       displacement: dto.displacement ?? null,
       doorCount: dto.doorCount ?? null,
       isActive: dto.isActive ?? true,

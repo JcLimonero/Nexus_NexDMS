@@ -21,8 +21,8 @@ export const content: Routes = [
     path: "catalogo",
     data: { breadcrumb: "Catálogo" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.catalogo,
+      import("../../../app/features/catalogo/catalogo.routes").then(
+        (r) => r.catalogoRoutes,
       ),
   },
   {
@@ -129,13 +129,13 @@ export const content: Routes = [
         (r) => r.configuracion,
       ),
   },
-  // Rutas legacy del template (contact para compatibilidad)
+  // Contactos: selector de cliente para ver sus contactos
   {
-    path: "contact",
-    data: { breadcrumb: "Contacto" },
+    path: "contactos",
+    data: { breadcrumb: "Contactos" },
     loadChildren: () =>
-      import("../../../app/components/contact/contact.routes").then(
-        (r) => r.contact,
+      import("../../../app/features/clientes/contactos/contactos.routes").then(
+        (r) => r.contactosRoutes,
       ),
   },
 ];

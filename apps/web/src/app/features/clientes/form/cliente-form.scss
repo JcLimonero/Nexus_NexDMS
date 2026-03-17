@@ -187,4 +187,87 @@ $chevron-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' 
     margin-top: var(--space-24);
     gap: var(--space-8);
   }
+
+  /* ===== Optimización pantallas baja resolución (< 768px) ===== */
+  @media (max-width: 767px) {
+    .form-label {
+      margin-bottom: var(--space-4);
+      font-size: var(--text-xs);
+    }
+
+    .form-control,
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    .form-select:not(.phone-lada-select) {
+      min-height: 36px !important;
+      padding: 8px 10px !important;
+    }
+
+    .form-select:not(.phone-lada-select) {
+      padding: 8px 2.5rem 8px 10px !important;
+    }
+
+    textarea.form-control {
+      min-height: 72px;
+      padding: 8px 10px !important;
+    }
+
+    .phone-input-group {
+      min-height: 36px;
+
+      .phone-lada-select,
+      .form-control {
+        min-height: 36px !important;
+        padding: 8px 10px !important;
+      }
+      .phone-lada-select {
+        padding: 8px 2.5rem 8px 10px !important;
+        flex: 0 0 110px;
+        min-width: 110px;
+      }
+    }
+
+    .mb-3 {
+      margin-bottom: var(--space-12);
+    }
+
+    .d-flex.gap-2 {
+      margin-top: var(--space-16);
+      gap: var(--space-8);
+      flex-wrap: wrap;
+    }
+
+    .text-danger.small {
+      margin-top: 2px;
+    }
+  }
+}
+
+/* Container y columnas — menos gutter en móvil */
+@media (max-width: 767px) {
+  :host .container-fluid {
+    padding-left: var(--space-12);
+    padding-right: var(--space-12);
+  }
+  .cliente-form .row {
+    margin-left: -6px;
+    margin-right: -6px;
+
+    > [class*="col-"] {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+  }
+}
+
+/* Card — reducir padding en pantallas pequeñas */
+@media (max-width: 767px) {
+  :host .card-body {
+    padding: var(--space-16) !important;
+  }
+  :host .card-header {
+    padding: var(--space-12) var(--space-16) !important;
+  }
 }

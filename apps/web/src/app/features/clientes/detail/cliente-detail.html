@@ -119,21 +119,50 @@
 
       <div class="col-md-6 mt-3">
         <div class="card">
-          <div class="card-header">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h6 class="mb-0">Contactos ({{ c.contacts.length }})</h6>
+            <a
+              class="btn btn-primary btn-sm"
+              [routerLink]="['/clientes', c.id, 'contactos', 'nuevo']"
+            >
+              Nuevo contacto
+            </a>
           </div>
           <div class="card-body">
             @if (c.contacts.length) {
               <ul class="list-group list-group-flush">
                 @for (contact of c.contacts; track contact.id) {
-                  <li class="list-group-item px-0">
-                    <strong>{{ contact.firstName }} {{ contact.lastName ?? '' }}</strong><br />
-                    <small class="text-muted">{{ contact.phone }}{{ contact.email ? ' · ' + contact.email : '' }}</small>
+                  <li class="list-group-item px-0 d-flex justify-content-between align-items-center">
+                    <div>
+                      <a [routerLink]="['/clientes', c.id, 'contactos', contact.id]">
+                        <strong>{{ contact.firstName }} {{ contact.lastName ?? '' }}</strong>
+                      </a>
+                      <br />
+                      <small class="text-muted">{{ contact.phone }}{{ contact.email ? ' · ' + contact.email : '' }}</small>
+                    </div>
+                    <a
+                      class="btn btn-outline-secondary btn-sm"
+                      [routerLink]="['/clientes', c.id, 'contactos', contact.id]"
+                    >
+                      Ver
+                    </a>
                   </li>
                 }
               </ul>
+              <a
+                [routerLink]="['/clientes', c.id, 'contactos']"
+                class="btn btn-link btn-sm p-0 mt-2"
+              >
+                Ver todos los contactos →
+              </a>
             } @else {
               <p class="text-muted small mb-0">Sin contactos registrados</p>
+              <a
+                class="btn btn-primary btn-sm mt-2"
+                [routerLink]="['/clientes', c.id, 'contactos', 'nuevo']"
+              >
+                Crear contacto
+              </a>
             }
           </div>
         </div>
