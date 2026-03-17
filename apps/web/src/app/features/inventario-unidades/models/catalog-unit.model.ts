@@ -54,6 +54,9 @@ export interface CatalogUnit {
   year: number;
   version: string | null;
   color: string;
+  interiorColor?: string | null;
+  exteriorColorId?: string | null;
+  interiorColorId?: string | null;
   serialNumber: string;
   engineNumber: string | null;
   displacement: number | null;
@@ -94,14 +97,17 @@ export interface CatalogUnitFilters {
 
 export interface CreateCatalogUnitDto {
   branchId: string;
-  globalModelId?: string;
+  globalModelId: string;
   vehicleType: CatalogUnitVehicleType;
   conditionType?: CatalogUnitCondition;
-  brand: string;
-  model: string;
-  year: number;
+  brand?: string;
+  model?: string;
+  year?: number;
   version?: string;
-  color: string;
+  color?: string;
+  interiorColor?: string;
+  exteriorColorId: string;
+  interiorColorId?: string;
   serialNumber: string;
   engineNumber?: string;
   displacement?: number;

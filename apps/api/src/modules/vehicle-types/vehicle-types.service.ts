@@ -20,6 +20,14 @@ export class VehicleTypesService {
 
   async findAll(): Promise<VehicleType[]> {
     return this.repo.find({
+      relations: ['category'],
+      order: { label: 'ASC' },
+    });
+  }
+
+  async findByCategoryId(categoryId: string): Promise<VehicleType[]> {
+    return this.repo.find({
+      where: { categoryId },
       order: { label: 'ASC' },
     });
   }
@@ -43,6 +51,7 @@ export class VehicleTypesService {
       throw new ConflictException(`El código "${code}" ya existe`);
     }
     const type = this.repo.create({
+      categoryId: dto.categoryId,
       code,
       label: dto.label.trim(),
     });

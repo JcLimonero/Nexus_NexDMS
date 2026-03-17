@@ -11,7 +11,19 @@
         <div class="card-body">
           <form [formGroup]="form" (ngSubmit)="submit()">
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Categoría <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="categoryId">
+                  <option value="">Seleccionar...</option>
+                  @for (vc of vehicleCategories(); track vc.id) {
+                    <option [ngValue]="vc.id">{{ vc.label }}</option>
+                  }
+                </select>
+                @if (form.get('categoryId')?.invalid && form.get('categoryId')?.touched) {
+                  <div class="text-danger small mt-1">La categoría es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
                 <label class="form-label">Código (identificador) <span class="text-danger">*</span></label>
                 <input
                   type="text"
@@ -27,7 +39,7 @@
                   <div class="text-danger small mt-1">El código es obligatorio</div>
                 }
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-md-4 mb-3">
                 <label class="form-label">Etiqueta <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" formControlName="label" placeholder="Ej. Moto, Auto" />
                 @if (form.get('label')?.invalid && form.get('label')?.touched) {

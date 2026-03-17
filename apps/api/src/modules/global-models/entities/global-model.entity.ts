@@ -15,6 +15,7 @@ import { GlobalBrand } from '../../global-brands/entities/global-brand.entity';
 @Index(['brandId'])
 @Index(['vehicleTypeId'])
 @Index(['combustionTypeId'])
+@Index(['brandId', 'model', 'version', 'year'], { unique: true })
 export class GlobalModel {
   @PrimaryGeneratedColumn('uuid')
   id: string;
@@ -36,8 +37,8 @@ export class GlobalModel {
   @Column({ name: 'model', type: 'varchar', length: 200 })
   model: string;
 
-  @Column({ name: 'version', type: 'varchar', length: 100, nullable: true })
-  version: string | null;
+  @Column({ name: 'version', type: 'varchar', length: 100 })
+  version: string;
 
   @Column({ name: 'year', type: 'int' })
   year: number;
@@ -54,6 +55,15 @@ export class GlobalModel {
 
   @Column({ name: 'door_count', type: 'int', nullable: true })
   doorCount: number | null;
+
+  @Column({ name: 'passenger_count', type: 'int', nullable: true })
+  passengerCount: number | null;
+
+  @Column({ name: 'exterior_color_id', type: 'uuid', nullable: true })
+  exteriorColorId: string | null;
+
+  @Column({ name: 'interior_color_id', type: 'uuid', nullable: true })
+  interiorColorId: string | null;
 
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;

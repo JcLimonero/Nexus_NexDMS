@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "validate": "bash scripts/validate-implementation.sh",
+    "validate:combos": "node .cursor/skills/validate-combo-loading/scripts/audit-combos.js",
     "dev": "concurrently -n api,web -c blue,magenta \"npm run api:dev\" \"npm run web:dev\"",
     "api:dev": "cd apps/api && npm run start:dev",
     "api:build": "cd apps/api && npm run build",

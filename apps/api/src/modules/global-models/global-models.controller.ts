@@ -67,6 +67,19 @@ export class GlobalModelsController {
     }
   }
 
+  @Get('similar')
+  findSimilarSuggestions(
+    @Query('brandId') brandId: string,
+    @Query('model') model: string,
+    @Query('version') version?: string,
+  ) {
+    return this.globalModelsService.findSimilarSuggestions(
+      brandId || '',
+      model || '',
+      version,
+    );
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()

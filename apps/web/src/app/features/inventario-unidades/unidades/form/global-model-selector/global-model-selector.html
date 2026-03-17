@@ -1,0 +1,65 @@
+<div class="global-model-selector">
+  <div class="input-group">
+    <input
+      type="text"
+      class="form-control"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="onSearchInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      placeholder="Buscar variante..."
+      autocomplete="off"
+      [disabled]="disabled()"
+    />
+    @if (selectedModel()) {
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="clearSelection()"
+        title="Limpiar selección"
+      >
+        <i class="icofont icofont-close"></i>
+      </button>
+    }
+  </div>
+
+  @if (showDropdown() && filteredModels().length > 0) {
+    <ul class="global-model-selector-dropdown list-group">
+      @for (m of filteredModels(); track m.id) {
+        <li
+          class="list-group-item list-group-item-action"
+          [class.active]="selectedModel()?.id === m.id"
+          (mousedown)="selectModel(m); $event.preventDefault()"
+        >
+          {{ getModelLabel(m) }}
+        </li>
+      }
+      <li
+        class="list-group-item list-group-item-action list-group-item-primary"
+        (mousedown)="onCreateClick(); $event.preventDefault()"
+      >
+        <i class="icofont icofont-plus me-1"></i> Crear variante nueva
+      </li>
+    </ul>
+  }
+
+  @if (showDropdown() && brandName() && searchTerm() && !loading() && filteredModels().length === 0) {
+    <div class="global-model-selector-empty p-2 border rounded mt-1 bg-light small">
+      No se encontraron variantes.
+      <button
+        type="button"
+        class="btn btn-link btn-sm p-0 ms-1"
+        (mousedown)="onCreateClick(); $event.preventDefault()"
+      >
+        Crear variante nueva
+      </button>
+    </div>
+  }
+
+  @if (showDropdown() && loading()) {
+    <div class="global-model-selector-empty p-2 border rounded mt-1 bg-light small">
+      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+      Cargando variantes...
+    </div>
+  }
+</div>

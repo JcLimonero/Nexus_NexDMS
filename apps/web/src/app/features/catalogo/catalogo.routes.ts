@@ -4,10 +4,10 @@ export const catalogRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>
-      import("./modelos-globales/list/modelos-globales-list").then(
-        (m) => m.ModelosGlobalesList
+      import("./variantes/list/variantes-list").then(
+        (m) => m.VariantesList
       ),
-    data: { title: "Modelos globales", breadcrumb: "Modelos globales" },
+    data: { title: "Variantes de vehículo", breadcrumb: "Variantes" },
   },
   {
     path: "vehicle-types",
@@ -84,25 +84,25 @@ export const catalogRoutes: Routes = [
   {
     path: "nuevo",
     loadComponent: () =>
-      import("./modelos-globales/form/modelo-global-form").then(
-        (m) => m.ModeloGlobalForm
+      import("./variantes/form/variante-form").then(
+        (m) => m.VarianteForm
       ),
-    data: { title: "Nuevo modelo", breadcrumb: "Nuevo" },
+    data: { title: "Nueva variante", breadcrumb: "Nuevo" },
   },
   {
     path: ":id",
     loadComponent: () =>
-      import("./modelos-globales/detail/modelo-global-detail").then(
-        (m) => m.ModeloGlobalDetail
+      import("./variantes/detail/variante-detail").then(
+        (m) => m.VarianteDetail
       ),
-    data: { title: "Detalle modelo", breadcrumb: "Detalle" },
+    data: { title: "Detalle variante", breadcrumb: "Detalle" },
   },
   {
     path: ":id/editar",
     loadComponent: () =>
-      import("./modelos-globales/form/modelo-global-form").then(
-        (m) => m.ModeloGlobalForm
+      import("./variantes/form/variante-form").then(
+        (m) => m.VarianteForm
       ),
-    data: { title: "Editar modelo", breadcrumb: "Editar" },
+    data: { title: "Editar variante", breadcrumb: "Editar" },
   },
 ];

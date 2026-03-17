@@ -58,7 +58,7 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/catalog", title: "Modelos globales", type: "link" },
+        { path: "/catalog", title: "Variantes", type: "link" },
         { path: "/catalog/marcas", title: "Marcas", type: "link" },
         { path: "/catalog/vehicle-types", title: "Tipos de vehículo", type: "link" },
         { path: "/catalog/combustion-types", title: "Tipos de combustión", type: "link" },

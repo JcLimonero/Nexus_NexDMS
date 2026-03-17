@@ -6,6 +6,7 @@ import { VehicleType } from "./models/modelo-global.model";
 const API_URL = "/api/v1/vehicle-types";
 
 export interface CreateVehicleTypeDto {
+  categoryId: string;
   code: string;
   label: string;
 }
@@ -16,8 +17,9 @@ export interface CreateVehicleTypeDto {
 export class VehicleTypesService {
   private http = inject(HttpClient);
 
-  getAll(): Observable<VehicleType[]> {
-    return this.http.get<VehicleType[]>(API_URL);
+  getAll(categoryId?: string): Observable<VehicleType[]> {
+    const params = categoryId ? { categoryId } : {};
+    return this.http.get<VehicleType[]>(API_URL, { params: params as Record<string, string> });
   }
 
   getById(id: string): Observable<VehicleType> {

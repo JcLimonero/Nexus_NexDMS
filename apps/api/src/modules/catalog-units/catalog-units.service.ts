@@ -28,6 +28,8 @@ import {
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { BranchesService } from '../branches/branches.service';
+import { GlobalModel } from '../global-models/entities/global-model.entity';
+import { VehicleColor } from '../vehicle-colors/entities/vehicle-color.entity';
 
 @Injectable()
 export class CatalogUnitsService {
@@ -44,6 +46,10 @@ export class CatalogUnitsService {
     private readonly returnRepo: Repository<UnitReturn>,
     @InjectRepository(UnitReturnDocument)
     private readonly unitReturnDocRepo: Repository<UnitReturnDocument>,
+    @InjectRepository(GlobalModel)
+    private readonly globalModelRepo: Repository<GlobalModel>,
+    @InjectRepository(VehicleColor)
+    private readonly vehicleColorRepo: Repository<VehicleColor>,
     private readonly branchesService: BranchesService,
   ) {}
 
@@ -212,6 +218,38 @@ export class CatalogUnitsService {
 
     await this.branchesService.assertBranchInScope(user, dto.branchId);
 
+    const globalModel = await this.globalModelRepo.findOne({
+      where: { id: dto.globalModelId },
+      relations: { brand: true },
+    });
+    if (!globalModel) {
+      throw new BadRequestException(
+        'El modelo seleccionado no existe en el catálogo. Debe seleccionar un tipo válido.',
+      );
+    }
+
+    const exteriorColor = await this.vehicleColorRepo.findOne({
+      where: { id: dto.exteriorColorId },
+    });
+    if (!exteriorColor) {
+      throw new BadRequestException(
+        'El color exterior seleccionado no existe en el catálogo. Debe seleccionar un color válido.',
+      );
+    }
+
+    let interiorColorName: string | null = null;
+    if (dto.interiorColorId) {
+      const interiorColor = await this.vehicleColorRepo.findOne({
+        where: { id: dto.interiorColorId },
+      });
+      if (!interiorColor) {
+        throw new BadRequestException(
+          'El color interior seleccionado no existe en el catálogo.',
+        );
+      }
+      interiorColorName = interiorColor.name;
+    }
+
     const existing = await this.unitRepo.findOne({
       where: { serialNumber: dto.serialNumber },
     });
@@ -232,18 +270,34 @@ export class CatalogUnitsService {
       }
     }
 
+    const brandName = globalModel.brand?.name ?? '';
     const isSeminueva =
       dto.conditionType === CatalogUnitConditionEnum.USED;
     const unit = this.unitRepo.create({
       ...dto,
       tenantId: user.tenantId,
-      status: isSeminueva
-        ? CatalogUnitStatusEnum.PENDING_EXPEDIENTE
-        : CatalogUnitStatusEnum.AVAILABLE,
-      globalModelId: dto.globalModelId ?? null,
+      branchId: dto.branchId,
+      globalModelId: dto.globalModelId,
+      vehicleType: dto.vehicleType,
+      brand: brandName,
+      model: globalModel.model,
+      version: globalModel.version,
+      year: globalModel.year,
+      color: exteriorColor.name,
+      interiorColor: interiorColorName,
+      exteriorColorId: dto.exteriorColorId,
+      interiorColorId: dto.interiorColorId ?? null,
+      serialNumber: dto.serialNumber,
       engineNumber: dto.engineNumber ?? null,
       displacement: dto.displacement ?? null,
       doorCount: dto.doorCount ?? null,
+      costPrice: dto.costPrice,
+      listPrice: dto.listPrice,
+      salePrice: dto.salePrice,
+      status: isSeminueva
+        ? CatalogUnitStatusEnum.PENDING_EXPEDIENTE
+        : CatalogUnitStatusEnum.AVAILABLE,
+      conditionType: dto.conditionType ?? CatalogUnitConditionEnum.NEW,
       locationId: dto.locationId ?? null,
       imageKey: dto.imageKey ?? null,
       imagesKeys: null,
@@ -287,7 +341,56 @@ export class CatalogUnitsService {
       }
     }
 
-    Object.assign(unit, dto);
+    const derived: Partial<CatalogUnit> = {};
+    if (dto.globalModelId) {
+      const globalModel = await this.globalModelRepo.findOne({
+        where: { id: dto.globalModelId },
+        relations: { brand: true },
+      });
+      if (!globalModel) {
+        throw new BadRequestException(
+          'El modelo seleccionado no existe en el catálogo.',
+        );
+      }
+      derived.globalModelId = dto.globalModelId;
+      derived.brand = globalModel.brand?.name ?? unit.brand;
+      derived.model = globalModel.model;
+      derived.version = globalModel.version;
+      derived.year = globalModel.year;
+    }
+
+    if (dto.exteriorColorId) {
+      const exteriorColor = await this.vehicleColorRepo.findOne({
+        where: { id: dto.exteriorColorId },
+      });
+      if (!exteriorColor) {
+        throw new BadRequestException(
+          'El color exterior seleccionado no existe en el catálogo.',
+        );
+      }
+      derived.exteriorColorId = dto.exteriorColorId;
+      derived.color = exteriorColor.name;
+    }
+
+    if (dto.interiorColorId !== undefined) {
+      if (dto.interiorColorId) {
+        const interiorColor = await this.vehicleColorRepo.findOne({
+          where: { id: dto.interiorColorId },
+        });
+        if (!interiorColor) {
+          throw new BadRequestException(
+            'El color interior seleccionado no existe en el catálogo.',
+          );
+        }
+        derived.interiorColorId = dto.interiorColorId;
+        derived.interiorColor = interiorColor.name;
+      } else {
+        derived.interiorColorId = null;
+        derived.interiorColor = null;
+      }
+    }
+
+    Object.assign(unit, dto, derived);
     if (dto.acquisitionDate !== undefined) {
       unit.acquisitionDate = dto.acquisitionDate
         ? new Date(dto.acquisitionDate)

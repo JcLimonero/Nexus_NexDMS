@@ -13,6 +13,8 @@ import {
   VehicleTypesService,
   CreateVehicleTypeDto,
 } from "../vehicle-types.service";
+import { VehicleCategoriesService } from "../vehicle-categories.service";
+import type { VehicleCategory } from "../models/modelo-global.model";
 
 @Component({
   selector: "app-tipo-vehiculo-form",
@@ -25,9 +27,11 @@ export class TipoVehiculoForm implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private vehicleTypesService = inject(VehicleTypesService);
+  private vehicleCategoriesService = inject(VehicleCategoriesService);
   private toastr = inject(ToastrService);
 
   form!: FormGroup;
+  vehicleCategories = signal<VehicleCategory[]>([]);
   loading = signal(false);
   isEdit = signal(false);
   typeId = signal<string | null>(null);
@@ -37,7 +41,12 @@ export class TipoVehiculoForm implements OnInit {
     this.isEdit.set(!!id);
     this.typeId.set(id ?? null);
 
+    this.vehicleCategoriesService.getAll().subscribe({
+      next: (cats) => this.vehicleCategories.set(cats),
+    });
+
     this.form = this.fb.group({
+      categoryId: ["", Validators.required],
       code: ["", [Validators.required, Validators.maxLength(50)]],
       label: ["", [Validators.required, Validators.maxLength(100)]],
     });
@@ -45,7 +54,12 @@ export class TipoVehiculoForm implements OnInit {
     if (id) {
       this.vehicleTypesService.getById(id).subscribe({
         next: (t) => {
-          this.form.patchValue({ code: t.code, label: t.label });
+          const vehicleType = t as { categoryId?: string; code: string; label: string };
+          this.form.patchValue({
+            categoryId: vehicleType.categoryId ?? "",
+            code: vehicleType.code,
+            label: vehicleType.label,
+          });
           this.form.get("code")?.disable();
         },
         error: (err) => {
@@ -61,6 +75,7 @@ export class TipoVehiculoForm implements OnInit {
 
     const raw = this.form.getRawValue();
     const dto: CreateVehicleTypeDto = {
+      categoryId: raw.categoryId,
       code: (raw.code ?? "").trim().toUpperCase(),
       label: raw.label.trim(),
     };

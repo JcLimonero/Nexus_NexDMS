@@ -25,6 +25,10 @@ import { UsersModule } from './modules/users/users.module';
 import { GlobalModelsModule } from './modules/global-models/global-models.module';
 import { GlobalBrandsModule } from './modules/global-brands/global-brands.module';
 import { VehicleTypesModule } from './modules/vehicle-types/vehicle-types.module';
+import { VehicleCategoriesModule } from './modules/vehicle-categories/vehicle-categories.module';
+import { VehicleModelsModule } from './modules/vehicle-models/vehicle-models.module';
+import { VehicleVersionsModule } from './modules/vehicle-versions/vehicle-versions.module';
+import { VehicleColorsModule } from './modules/vehicle-colors/vehicle-colors.module';
 import { CombustionTypesModule } from './modules/combustion-types/combustion-types.module';
 import { UnitLocationsModule } from './modules/unit-locations/unit-locations.module';
 import { CatalogUnitsModule } from './modules/catalog-units/catalog-units.module';
@@ -117,6 +121,10 @@ import { UnitReturnDocumentsModule } from './modules/unit-return-documents/unit-
     GlobalModelsModule,
     GlobalBrandsModule,
     VehicleTypesModule,
+    VehicleCategoriesModule,
+    VehicleModelsModule,
+    VehicleVersionsModule,
+    VehicleColorsModule,
     CombustionTypesModule,
     UnitLocationsModule,
     CatalogUnitsModule,

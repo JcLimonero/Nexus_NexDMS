@@ -45,13 +45,15 @@
       color: rgba(255, 255, 255, 0.95);
     }
 
-    .text-muted {
-      color: rgba(255, 255, 255, 0.75) !important;
+    .text-muted,
+    p {
+      color: #fff !important;
+      text-transform: capitalize;
     }
 
     .fa-chevron-up {
       font-size: 10px;
-      color: rgba(255, 255, 255, 0.6);
+      color: #fff;
     }
   }
 }

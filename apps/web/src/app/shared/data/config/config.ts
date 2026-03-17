@@ -19,23 +19,24 @@ export interface ConfigData {
 }
 
 export class ConfigDB {
-  static data: ConfigData = {
+  static data = {
     settings: {
-      layout_type: "ltr",
-      sidebar: {
-        type: "default",
-        body_type: "default",
-      },
-      sidebar_setting: "default-sidebar",
-      sidebar_backround: "dark-sidebar",
+    layout_type: 'ltr',
+    sidebar: {
+       type: 'default',
+       body_type: 'default'
     },
-    color: {
-      layout_version: "light",
-      color: "color-1",
-      primary_color: "#4466f2",
-      secondary_color: "#1ea6ec",
-      mix_layout: "default",
-    },
-    router_animation: "fadeIn",
-  };
+    sidebar_setting: 'border-sidebar',
+    sidebar_backround: 'dark-sidebar'
+ },
+ color: {
+    layout_version: 'light',
+    color: 'color-2',
+    primary_color: '#0288d1',
+    secondary_color: '#26c6da',
+    mix_layout: 'dark-header-sidebar-mix'
+
+ },
+ router_animation: 'fadeIn'
+ };
 }

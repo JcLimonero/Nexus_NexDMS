@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
@@ -26,8 +27,11 @@ export class VehicleTypesController {
   constructor(private readonly service: VehicleTypesService) {}
 
   @Get()
-  async findAll() {
+  async findAll(@Query('categoryId') categoryId?: string) {
     try {
+      if (categoryId) {
+        return await this.service.findByCategoryId(categoryId);
+      }
       return await this.service.findAll();
     } catch (err) {
       throw new InternalServerErrorException(

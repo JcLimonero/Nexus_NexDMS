@@ -1,0 +1,74 @@
+<div class="modal-header">
+  <h5 class="modal-title">Nueva variante</h5>
+  <button type="button" class="btn-close" aria-label="Cerrar" (click)="dismiss()"></button>
+</div>
+<div class="modal-body">
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="row">
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Marca <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="brandId">
+          <option value="">Seleccionar marca</option>
+          @for (b of brands; track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+        @if (form.get('brandId')?.invalid && form.get('brandId')?.touched) {
+          <div class="text-danger small mt-1">La marca es obligatoria</div>
+        }
+      </div>
+      <div class="col-md-6 mb-3">
+        <label class="form-label">Tipo de vehículo <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="vehicleTypeId">
+          <option value="">Seleccionar tipo</option>
+          @for (vt of vehicleTypes; track vt.id) {
+            <option [ngValue]="vt.id">{{ vt.label }}</option>
+          }
+        </select>
+        @if (form.get('vehicleTypeId')?.invalid && form.get('vehicleTypeId')?.touched) {
+          <div class="text-danger small mt-1">El tipo es obligatorio</div>
+        }
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Modelo <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" formControlName="model" placeholder="Ej: Civic, CR-V" />
+      @if (form.get('model')?.invalid && form.get('model')?.touched) {
+        <div class="text-danger small mt-1">El modelo es obligatorio</div>
+      }
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Versión <span class="text-danger">*</span></label>
+      <input type="text" class="form-control" formControlName="version" placeholder="Ej: EX, Touring, Base" />
+      @if (form.get('version')?.invalid && form.get('version')?.touched) {
+        <div class="text-danger small mt-1">La versión es obligatoria</div>
+      }
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Año <span class="text-danger">*</span></label>
+      <input type="number" class="form-control" formControlName="year" min="1900" />
+      @if (form.get('year')?.invalid && form.get('year')?.touched) {
+        <div class="text-danger small mt-1">El año es obligatorio</div>
+      }
+    </div>
+    @if (error) {
+      <div class="alert alert-danger py-2">{{ error }}</div>
+    }
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-secondary" (click)="dismiss()">
+    Cancelar
+  </button>
+  <button
+    type="button"
+    class="btn btn-primary"
+    (click)="submit()"
+    [disabled]="form.invalid || saving"
+  >
+    @if (saving) {
+      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+    }
+    Crear modelo
+  </button>
+</div>

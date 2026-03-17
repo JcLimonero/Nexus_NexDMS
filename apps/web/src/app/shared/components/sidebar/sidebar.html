@@ -286,10 +286,11 @@
     <div class="d-flex align-items-center gap-2 w-100" ngbDropdownToggle>
       <div class="position-relative flex-shrink-0">
         <img
-          class="img-50 rounded-circle"
-          [src]="url || 'assets/images/user/1.jpg'"
+          class="img-40 rounded-circle"
+          [src]="url || defaultAvatarUrl"
           [alt]="displayName"
           loading="lazy"
+          (error)="$any($event.target).src = defaultAvatarUrl"
         />
       </div>
       <div class="flex-grow-1 min-w-0 text-start">

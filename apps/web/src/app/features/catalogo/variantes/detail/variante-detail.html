@@ -72,6 +72,12 @@
                     <td>{{ m.doorCount }}</td>
                   </tr>
                 }
+                @if (m.passengerCount) {
+                  <tr>
+                    <th class="text-muted">Pasajeros</th>
+                    <td>{{ m.passengerCount }}</td>
+                  </tr>
+                }
                 <tr>
                   <th class="text-muted">Estado</th>
                   <td>

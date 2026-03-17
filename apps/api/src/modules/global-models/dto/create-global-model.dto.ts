@@ -1,10 +1,12 @@
 import {
   IsBoolean,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
   IsUUID,
   Min,
+  MinLength,
 } from 'class-validator';
 
 export class CreateGlobalModelDto {
@@ -15,11 +17,13 @@ export class CreateGlobalModelDto {
   vehicleTypeId: string;
 
   @IsString()
+  @IsNotEmpty()
   model: string;
 
-  @IsOptional()
   @IsString()
-  version?: string;
+  @IsNotEmpty()
+  @MinLength(1, { message: 'La versión no puede estar vacía' })
+  version: string;
 
   @IsInt()
   @Min(1900)
@@ -40,6 +44,19 @@ export class CreateGlobalModelDto {
   doorCount?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  passengerCount?: number;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  exteriorColorId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  interiorColorId?: string;
 }

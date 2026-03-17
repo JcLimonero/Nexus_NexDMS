@@ -7,13 +7,13 @@ import { CatalogoService } from "../../catalogo.service";
 import { GlobalModel } from "../../models/modelo-global.model";
 
 @Component({
-  selector: "app-modelo-global-detail",
+  selector: "app-variante-detail",
   standalone: true,
   imports: [CommonModule, RouterModule],
-  templateUrl: "./modelo-global-detail.html",
-  styleUrls: ["./modelo-global-detail.scss"],
+  templateUrl: "./variante-detail.html",
+  styleUrls: ["./variante-detail.scss"],
 })
-export class ModeloGlobalDetail implements OnInit {
+export class VarianteDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private catalogoService = inject(CatalogoService);
@@ -26,7 +26,7 @@ export class ModeloGlobalDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/catalogo"]);
+      this.router.navigate(["/catalog"]);
       return;
     }
 
@@ -38,7 +38,7 @@ export class ModeloGlobalDetail implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err?.error?.message || "Error al cargar modelo");
+        this.error.set(err?.error?.message || "Error al cargar variante");
       },
     });
   }

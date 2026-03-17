@@ -86,6 +86,11 @@ body {
   width: auto !important;
 }
 
+/* Search header: evitar solapamiento icono + placeholder */
+.page-main-header .search-form .form-group input.form-control-plaintext {
+  padding-left: 52px !important;
+}
+
 /* Compact/sidebar-icon: el tema ya ajusta márgenes */
 .page-wrapper.compact-page .page-body-wrapper footer.footer {
   left: 75px;

@@ -1,4 +1,6 @@
-import { Component, inject } from "@angular/core";
+import { Component, DestroyRef, inject } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { filter } from "rxjs/operators";
 import { NavigationEnd, Router, RouterModule } from "@angular/router";
 
 import { NgbModule } from "@ng-bootstrap/ng-bootstrap";
@@ -27,10 +29,12 @@ const ROLE_LABELS: Record<string, string> = {
 export class Sidebar {
   private router = inject(Router);
   private auth = inject(AuthService);
+  private destroyRef = inject(DestroyRef);
   navServices = inject(NavService);
 
   public menuItems: Menu[];
   public url: string | ArrayBuffer | null = null;
+  readonly defaultAvatarUrl = "assets/images/user/default-user.svg";
 
   get displayName(): string {
     const u = this.auth.getUser();
@@ -47,27 +51,35 @@ export class Sidebar {
   }
 
   constructor() {
-    this.navServices.items.subscribe((menuItems) => {
-      this.menuItems = menuItems;
-      this.router.events.subscribe((event) => {
-        if (event instanceof NavigationEnd) {
-          menuItems.filter((items) => {
-            if (items.path === event.url) this.setNavActive(items);
-            if (!items.children) return false;
-            items.children.filter((subItems) => {
-              if (subItems.path === event.url) this.setNavActive(subItems);
-              if (!subItems.children) return false;
-              subItems.children.filter((subSubItems) => {
-                if (subSubItems.path === event.url)
-                  this.setNavActive(subSubItems);
-              });
-              return;
+    this.navServices.items
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((menuItems) => {
+        this.menuItems = menuItems;
+      });
+
+    this.router.events
+      .pipe(
+        filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        const menuItems = this.menuItems;
+        if (!menuItems) return;
+        menuItems.filter((items) => {
+          if (items.path === event.url) this.setNavActive(items);
+          if (!items.children) return false;
+          items.children.filter((subItems) => {
+            if (subItems.path === event.url) this.setNavActive(subItems);
+            if (!subItems.children) return false;
+            subItems.children.filter((subSubItems) => {
+              if (subSubItems.path === event.url)
+                this.setNavActive(subSubItems);
             });
             return;
           });
-        }
+          return;
+        });
       });
-    });
   }
 
   // Active Nave state

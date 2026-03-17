@@ -54,8 +54,8 @@ export class CatalogUnit {
   @Column({ name: 'branch_id', type: 'uuid' })
   branchId: string;
 
-  @Column({ name: 'global_model_id', type: 'uuid', nullable: true })
-  globalModelId: string | null;
+  @Column({ name: 'global_model_id', type: 'uuid' })
+  globalModelId: string;
 
   @Column({
     name: 'vehicle_type',
@@ -78,6 +78,15 @@ export class CatalogUnit {
 
   @Column({ name: 'color', type: 'varchar', length: 100 })
   color: string;
+
+  @Column({ name: 'interior_color', type: 'varchar', length: 100, nullable: true })
+  interiorColor: string | null;
+
+  @Column({ name: 'exterior_color_id', type: 'uuid', nullable: true })
+  exteriorColorId: string | null;
+
+  @Column({ name: 'interior_color_id', type: 'uuid', nullable: true })
+  interiorColorId: string | null;
 
   @Column({ name: 'serial_number', type: 'varchar', length: 100 })
   serialNumber: string;

@@ -153,6 +153,7 @@ export class SweetAlert {
   }
 
   customTimer() {
+    let timerInterval: ReturnType<typeof setInterval> | undefined;
     Swal.fire({
       title: "Auto close alert!",
       html: "I will close in <b></b> milliseconds.",
@@ -164,12 +165,15 @@ export class SweetAlert {
         const popup = Swal.getPopup();
         const timer = popup ? popup.querySelector("b") : null;
         if (timer) {
-          setInterval(() => {
+          timerInterval = setInterval(() => {
             if (timer) {
               timer.textContent = `${Swal.getTimerLeft()}`;
             }
           }, 100);
         }
+      },
+      willClose: () => {
+        if (timerInterval) clearInterval(timerInterval);
       },
     }).then((result) => {
       if (result.dismiss === Swal.DismissReason.timer) {

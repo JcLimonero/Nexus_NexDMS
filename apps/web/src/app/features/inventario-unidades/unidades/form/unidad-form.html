@@ -66,14 +66,17 @@
               </div>
               <div class="col-md-3 mb-3">
                 <label class="form-label">Modelo <span class="text-danger">*</span></label>
-                <select class="form-select" formControlName="model">
-                  <option value="">Seleccionar modelo</option>
-                  @for (m of models(); track m) {
-                    <option [ngValue]="m">{{ m }}</option>
-                  }
-                </select>
-                @if (form.get('model')?.invalid && form.get('model')?.touched) {
-                  <div class="text-danger small mt-1">El modelo es obligatorio</div>
+                <app-global-model-selector
+                  [brandName]="form.get('brand')?.value ?? ''"
+                  [vehicleTypeCode]="form.get('vehicleType')?.value ?? 'CAR'"
+                  [selectedModel]="selectedGlobalModel()"
+                  [initialDisplay]="getModelInitialDisplay()"
+                  [disabled]="isEdit()"
+                  (modelSelected)="onModelSelected($event)"
+                  (createRequested)="openCreateModelDialog()"
+                />
+                @if (form.get('globalModelId')?.invalid && form.get('globalModelId')?.touched) {
+                  <div class="text-danger small mt-1">Selecciona un modelo del catálogo</div>
                 }
               </div>
               <div class="col-md-2 mb-3">
@@ -81,15 +84,48 @@
                 <input type="number" class="form-control" formControlName="year" min="1900" />
               </div>
               <div class="col-md-2 mb-3">
-                <label class="form-label">Versión</label>
-                <input type="text" class="form-control" formControlName="version" />
+                <label class="form-label">Versión <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <select class="form-select" formControlName="versionId" (change)="onVersionSelected(form.get('versionId')?.value)">
+                    <option value="">Seleccionar versión</option>
+                    @for (v of versions(); track v.id) {
+                      <option [ngValue]="v.id">{{ v.name }}</option>
+                    }
+                  </select>
+                  <button type="button" class="btn btn-link btn-sm p-0 px-2 text-secondary" (click)="openCreateVersionDialog()" title="Crear versión"><i class="icofont icofont-plus"></i></button>
+                </div>
+                @if (form.get('versionId')?.invalid && form.get('versionId')?.touched) {
+                  <div class="text-danger small mt-1">Selecciona una versión del catálogo</div>
+                }
               </div>
               <div class="col-md-2 mb-3">
-                <label class="form-label">Color <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" formControlName="color" />
-                @if (form.get('color')?.invalid && form.get('color')?.touched) {
-                  <div class="text-danger small mt-1">El color es obligatorio</div>
+                <label class="form-label">Color ext. <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <select class="form-select" formControlName="exteriorColorId" (change)="onExteriorColorSelected(form.get('exteriorColorId')?.value ?? null)">
+                    <option [ngValue]="null">Seleccionar color</option>
+                    @for (c of exteriorColors(); track c.id) {
+                      <option [ngValue]="c.id">{{ c.name }}</option>
+                    }
+                  </select>
+                  <button type="button" class="btn btn-link btn-sm p-0 px-2 text-secondary" (click)="openCreateColorDialog('EXTERIOR')" title="Crear color"><i class="icofont icofont-plus"></i></button>
+                </div>
+                @if (form.get('exteriorColorId')?.invalid && form.get('exteriorColorId')?.touched) {
+                  <div class="text-danger small mt-1">Selecciona un color del catálogo</div>
                 }
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Color interior</label>
+                <div class="input-group">
+                  <select class="form-select" formControlName="interiorColorId" (change)="onInteriorColorSelected(form.get('interiorColorId')?.value ?? null)">
+                    <option [ngValue]="null">Seleccionar...</option>
+                    @for (c of interiorColors(); track c.id) {
+                      <option [ngValue]="c.id">{{ c.name }}</option>
+                    }
+                  </select>
+                  <button type="button" class="btn btn-link btn-sm p-0 px-2 text-secondary" (click)="openCreateColorDialog('INTERIOR')" title="Crear color"><i class="icofont icofont-plus"></i></button>
+                </div>
               </div>
             </div>
 

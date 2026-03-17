@@ -1,4 +1,5 @@
-import { Component, inject } from "@angular/core";
+import { Component, DestroyRef, inject } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   ActivatedRoute,
   ActivatedRouteSnapshot,
@@ -29,6 +30,7 @@ interface Breadcrumbs {
 export class Breadcrumb {
   private activatedRoute = inject(ActivatedRoute);
   private router = inject(Router);
+  private destroyRef = inject(DestroyRef);
 
   public breadcrumbs: Breadcrumbs = {
     parentBreadcrumb: null,
@@ -43,17 +45,16 @@ export class Breadcrumb {
         filter(
           (event): event is NavigationEnd => event instanceof NavigationEnd,
         ),
-      )
-      .pipe(map(() => this.activatedRoute))
-      .pipe(
+        map(() => this.activatedRoute),
         map((route) => {
           while (route.firstChild) {
             route = route.firstChild;
           }
           return route;
         }),
+        filter((route) => route.outlet === PRIMARY_OUTLET),
+        takeUntilDestroyed(this.destroyRef),
       )
-      .pipe(filter((route) => route.outlet === PRIMARY_OUTLET))
       .subscribe((route) => {
         const snapshot: ActivatedRouteSnapshot = route.snapshot;
 

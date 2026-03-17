@@ -8,6 +8,8 @@ import { UnitLocation } from '../unit-locations/entities/unit-location.entity';
 import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
 import { UnitReturn } from '../unit-returns/entities/unit-return.entity';
 import { UnitReturnDocument } from '../unit-return-documents/entities/unit-return-document.entity';
+import { GlobalModel } from '../global-models/entities/global-model.entity';
+import { VehicleColor } from '../vehicle-colors/entities/vehicle-color.entity';
 import { BranchesModule } from '../branches/branches.module';
 
 @Module({
@@ -19,6 +21,8 @@ import { BranchesModule } from '../branches/branches.module';
       UnitSale,
       UnitReturn,
       UnitReturnDocument,
+      GlobalModel,
+      VehicleColor,
     ]),
     BranchesModule,
   ],
