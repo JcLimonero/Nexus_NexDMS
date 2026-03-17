@@ -7,7 +7,7 @@
             <h5>Sucursales</h5>
             <span>Configuración por sucursal</span>
           </div>
-          <a class="btn btn-outline-secondary btn-sm" routerLink="/configuracion">Volver</a>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/settings">Volver</a>
         </div>
       </div>
 
@@ -47,7 +47,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/configuracion/sucursales', s.id]"
+                          [routerLink]="['/settings/sucursales', s.id]"
                           title="Configurar"
                         >
                           <app-feather-icons [icon]="'settings'" />

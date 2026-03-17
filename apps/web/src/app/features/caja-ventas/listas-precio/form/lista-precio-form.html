@@ -4,7 +4,7 @@
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <h5>{{ isEdit() ? 'Editar lista' : 'Nueva lista de precio' }}</h5>
-          <a class="btn btn-outline-secondary btn-sm" routerLink="/caja/listas-precio">Volver</a>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/cash-register/listas-precio">Volver</a>
         </div>
         <div class="card-body">
           <form class="lista-precio-form" [formGroup]="form" (ngSubmit)="submit()">
@@ -52,7 +52,7 @@
                 }
                 {{ isEdit() ? 'Guardar' : 'Crear' }}
               </button>
-              <a class="btn btn-outline-secondary" routerLink="/caja/listas-precio">Cancelar</a>
+              <a class="btn btn-outline-secondary" routerLink="/cash-register/listas-precio">Cancelar</a>
             </div>
           </form>
         </div>

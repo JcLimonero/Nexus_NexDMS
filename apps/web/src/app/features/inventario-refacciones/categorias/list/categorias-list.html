@@ -7,7 +7,7 @@
             <h5>Categorías de partes</h5>
             <span>Gestiona las categorías del inventario</span>
           </div>
-          <a class="btn btn-primary" routerLink="/inventario-refacciones/categorias/nuevo">
+          <a class="btn btn-primary" routerLink="/parts-inventory/categories/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nueva categoría
           </a>
         </div>
@@ -52,7 +52,7 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/inventario-refacciones/categorias', cat.id, 'editar']"
+                            [routerLink]="['/parts-inventory/categories', cat.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -63,7 +63,7 @@
                   } @empty {
                     <tr>
                       <td colspan="4" class="text-center text-muted py-4">
-                        No hay categorías. <a routerLink="/inventario-refacciones/categorias/nuevo">Crear la primera</a>
+                        No hay categorías. <a routerLink="/parts-inventory/categories/nuevo">Crear la primera</a>
                       </td>
                     </tr>
                   }

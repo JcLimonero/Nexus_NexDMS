@@ -109,7 +109,7 @@ export class CotizacionForm implements OnInit {
       this.cotizacionesService.getQuotation(id).subscribe({
         next: (q) => {
           if (q.status !== "DRAFT") {
-            this.router.navigate(["/cotizaciones", id]);
+            this.router.navigate(["/quotes", id]);
             return;
           }
           this.form.patchValue({
@@ -137,7 +137,7 @@ export class CotizacionForm implements OnInit {
           this.loadParts(q.branchId);
           this.loadUnits(q.branchId);
         },
-        error: () => this.router.navigate(["/cotizaciones"]),
+        error: () => this.router.navigate(["/quotes"]),
       });
     } else {
       const branchId = this.form.get("branchId")?.value;
@@ -290,7 +290,7 @@ export class CotizacionForm implements OnInit {
       this.cotizacionesService.updateQuotation(editId, dto).subscribe({
         next: (q) => {
           this.toastr.success("Cotización actualizada");
-          this.router.navigate(["/cotizaciones", q.id]);
+          this.router.navigate(["/quotes", q.id]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -301,7 +301,7 @@ export class CotizacionForm implements OnInit {
       this.cotizacionesService.createQuotation(dto).subscribe({
         next: (q) => {
           this.toastr.success("Cotización creada");
-          this.router.navigate(["/cotizaciones", q.id]);
+          this.router.navigate(["/quotes", q.id]);
         },
         error: (err) => {
           this.loading.set(false);

@@ -40,7 +40,7 @@ export class ComisionPeriodDetail implements OnInit {
 
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/reportes/comisiones"]);
+      this.router.navigate(["/reports/comisiones"]);
       return;
     }
 

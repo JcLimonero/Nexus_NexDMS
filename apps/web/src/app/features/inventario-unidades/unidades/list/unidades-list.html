@@ -7,7 +7,7 @@
             <h5>Catálogo de unidades</h5>
             <span>Vehículos en inventario (motos y autos)</span>
           </div>
-          <a class="btn btn-primary" routerLink="/inventario-unidades/nuevo">
+          <a class="btn btn-primary" routerLink="/units-inventory/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nueva unidad
           </a>
         </div>
@@ -98,7 +98,7 @@
                     <tr>
                       <td>{{ u.serialNumber }}</td>
                       <td>
-                        <a [routerLink]="['/inventario-unidades', u.id]">
+                        <a [routerLink]="['/units-inventory', u.id]">
                           {{ getDisplayLabel(u) }}
                         </a>
                       </td>
@@ -140,7 +140,7 @@
                           @if (u.status === 'PENDING_EXPEDIENTE') {
                             <a
                               class="table-action-btn text-danger"
-                              [routerLink]="['/inventario-unidades', u.id, 'expediente']"
+                              [routerLink]="['/units-inventory', u.id, 'expediente']"
                               title="Subir documentos del vendedor"
                             >
                               <app-feather-icons [icon]="'file-text'" />
@@ -148,14 +148,14 @@
                           }
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/inventario-unidades', u.id]"
+                            [routerLink]="['/units-inventory', u.id]"
                             title="Ver"
                           >
                             <app-feather-icons [icon]="'eye'" />
                           </a>
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/inventario-unidades', u.id, 'editar']"
+                            [routerLink]="['/units-inventory', u.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -166,7 +166,7 @@
                   } @empty {
                     <tr>
                       <td colspan="8" class="text-center text-muted py-4">
-                        No hay unidades. <a routerLink="/inventario-unidades/nuevo">Crear la primera</a>
+                        No hay unidades. <a routerLink="/units-inventory/nuevo">Crear la primera</a>
                       </td>
                     </tr>
                   }

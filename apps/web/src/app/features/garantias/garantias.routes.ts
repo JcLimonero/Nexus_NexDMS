@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const garantiasRoutes: Routes = [
+export const warrantiesRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>

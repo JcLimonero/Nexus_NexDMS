@@ -154,7 +154,7 @@ export class OrdenServicioForm implements OnInit {
     this.tallerService.createServiceOrder(dto).subscribe({
       next: (order) => {
         this.toastr.success("Orden de servicio creada");
-        this.router.navigate(["/taller/ordenes-servicio", order.id]);
+        this.router.navigate(["/workshop/service-orders", order.id]);
       },
       error: (err) => {
         this.loading.set(false);

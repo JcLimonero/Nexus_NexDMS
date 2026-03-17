@@ -10,91 +10,91 @@ export const content: Routes = [
       ),
   },
   {
-    path: "clientes",
+    path: "clients",
     data: { breadcrumb: "Clientes" },
     loadChildren: () =>
       import("../../../app/features/clientes/clientes.routes").then(
-        (r) => r.clientesRoutes,
+        (r) => r.clientsRoutes,
       ),
   },
   {
-    path: "catalogo",
+    path: "catalog",
     data: { breadcrumb: "Catálogo" },
     loadChildren: () =>
       import("../../../app/features/catalogo/catalogo.routes").then(
-        (r) => r.catalogoRoutes,
+        (r) => r.catalogRoutes,
       ),
   },
   {
-    path: "inventario-refacciones",
+    path: "parts-inventory",
     data: { breadcrumb: "Inventario refacciones" },
     loadChildren: () =>
       import("../../../app/features/inventario-refacciones/inventario-refacciones.routes").then(
-        (r) => r.inventarioRefaccionesRoutes,
+        (r) => r.partsInventoryRoutes,
       ),
   },
   {
-    path: "inventario-unidades",
+    path: "units-inventory",
     data: { breadcrumb: "Inventario unidades" },
     loadChildren: () =>
       import("../../../app/features/inventario-unidades/inventario-unidades.routes").then(
-        (r) => r.inventarioUnidadesRoutes,
+        (r) => r.unitsInventoryRoutes,
       ),
   },
   {
-    path: "compras",
+    path: "purchases",
     data: { breadcrumb: "Compras" },
     loadChildren: () =>
       import("../../../app/features/compras/compras.routes").then(
-        (r) => r.comprasRoutes,
+        (r) => r.purchasesRoutes,
       ),
   },
   {
-    path: "almacen",
+    path: "warehouse",
     data: { breadcrumb: "Almacén" },
     loadChildren: () =>
       import("../../../app/features/almacen/almacen.routes").then(
-        (r) => r.almacenRoutes,
+        (r) => r.warehouseRoutes,
       ),
   },
   {
-    path: "caja",
+    path: "cash-register",
     data: { breadcrumb: "Caja y ventas" },
     loadChildren: () =>
       import("../../../app/features/caja-ventas/caja-ventas.routes").then(
-        (r) => r.cajaVentasRoutes,
+        (r) => r.cashRegisterRoutes,
       ),
   },
   {
-    path: "ventas",
+    path: "sales",
     data: { breadcrumb: "Ventas de unidades" },
     loadChildren: () =>
       import("../../../app/features/ventas-unidades/ventas-unidades.routes").then(
-        (r) => r.ventasUnidadesRoutes
+        (r) => r.unitSalesRoutes
       ),
   },
   {
-    path: "cotizaciones",
+    path: "quotes",
     data: { breadcrumb: "Cotizaciones" },
     loadChildren: () =>
       import("../../../app/features/cotizaciones/cotizaciones.routes").then(
-        (r) => r.cotizacionesRoutes,
+        (r) => r.quotesRoutes,
       ),
   },
   {
-    path: "taller",
+    path: "workshop",
     data: { breadcrumb: "Taller" },
     loadChildren: () =>
       import("../../../app/features/taller/taller.routes").then(
-        (r) => r.tallerRoutes,
+        (r) => r.workshopRoutes,
       ),
   },
   {
-    path: "garantias",
+    path: "warranties",
     data: { breadcrumb: "Garantías" },
     loadChildren: () =>
       import("../../../app/features/garantias/garantias.routes").then(
-        (r) => r.garantiasRoutes,
+        (r) => r.warrantiesRoutes,
       ),
   },
   {
@@ -106,11 +106,11 @@ export const content: Routes = [
       ),
   },
   {
-    path: "reportes",
+    path: "reports",
     data: { breadcrumb: "Reportes" },
     loadChildren: () =>
       import("../../../app/features/reportes/reportes.routes").then(
-        (r) => r.reportesRoutes,
+        (r) => r.reportsRoutes,
       ),
   },
   {
@@ -122,20 +122,20 @@ export const content: Routes = [
       ),
   },
   {
-    path: "configuracion",
+    path: "settings",
     data: { breadcrumb: "Configuración" },
     loadChildren: () =>
       import("../../../app/features/configuracion/configuracion.routes").then(
-        (r) => r.configuracionRoutes,
+        (r) => r.settingsRoutes,
       ),
   },
   // Contactos: selector de cliente para ver sus contactos
   {
-    path: "contactos",
+    path: "contacts",
     data: { breadcrumb: "Contactos" },
     loadChildren: () =>
       import("../../../app/features/clientes/contactos/contactos.routes").then(
-        (r) => r.contactosRoutes,
+        (r) => r.contactsRoutes,
       ),
   },
 ];

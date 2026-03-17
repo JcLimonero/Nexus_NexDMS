@@ -259,7 +259,7 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
     this.ventasService.create(dto).subscribe({
       next: (sale) => {
         this.toastr.success("Venta de unidad creada");
-        this.router.navigate(["/ventas", sale.id]);
+        this.router.navigate(["/sales", sale.id]);
       },
       error: (err) => {
         this.saving.set(false);

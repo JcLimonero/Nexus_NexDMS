@@ -26,7 +26,7 @@ export class ParteDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/inventario-refacciones"]);
+      this.router.navigate(["/parts-inventory"]);
       return;
     }
 
@@ -54,7 +54,7 @@ export class ParteDetail implements OnInit {
     this.inventarioService.deletePart(p.id).subscribe({
       next: () => {
         this.toastr.success("Parte eliminada");
-        this.router.navigate(["/inventario-refacciones"]);
+        this.router.navigate(["/parts-inventory"]);
       },
       error: (err) =>
         this.toastr.error(err?.error?.message || "Error al eliminar"),

@@ -175,7 +175,7 @@ export class UnidadForm implements OnInit {
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || "Error al cargar unidad");
-        this.router.navigate(["/inventario-unidades"]);
+        this.router.navigate(["/units-inventory"]);
       },
     });
   }
@@ -213,7 +213,7 @@ export class UnidadForm implements OnInit {
       this.inventarioService.updateUnit(id, dto).subscribe({
         next: () => {
           this.toastr.success("Unidad actualizada");
-          this.router.navigate(["/inventario-unidades", id]);
+          this.router.navigate(["/units-inventory", id]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -224,7 +224,7 @@ export class UnidadForm implements OnInit {
       this.inventarioService.createUnit(dto).subscribe({
         next: (unidad) => {
           this.toastr.success("Unidad creada");
-          this.router.navigate(["/inventario-unidades", unidad.id]);
+          this.router.navigate(["/units-inventory", unidad.id]);
         },
         error: (err) => {
           this.loading.set(false);

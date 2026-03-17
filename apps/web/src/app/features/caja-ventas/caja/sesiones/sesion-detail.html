@@ -2,7 +2,7 @@
   @if (error()) {
     <div class="alert alert-danger" role="alert">
       {{ error() }}
-      <a routerLink="/caja/sesiones" class="alert-link ms-2">Volver</a>
+      <a routerLink="/cash-register/sesiones" class="alert-link ms-2">Volver</a>
     </div>
   }
 
@@ -20,7 +20,7 @@
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Sesión {{ s.id | slice:0:8 }}...</h5>
-            <a class="btn btn-outline-secondary btn-sm" routerLink="/caja/sesiones">Volver</a>
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/cash-register/sesiones">Volver</a>
           </div>
           <div class="card-body">
             <div class="row mb-4">

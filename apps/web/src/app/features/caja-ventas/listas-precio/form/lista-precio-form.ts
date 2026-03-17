@@ -71,7 +71,7 @@ export class ListaPrecioForm implements OnInit {
             isActive: list.isActive,
           });
         },
-        error: () => this.router.navigate(["/caja/listas-precio"]),
+        error: () => this.router.navigate(["/cash-register/listas-precio"]),
       });
     }
   }
@@ -95,7 +95,7 @@ export class ListaPrecioForm implements OnInit {
       this.cajaService.updatePriceList(editId, dto).subscribe({
         next: () => {
           this.toastr.success("Lista actualizada");
-          this.router.navigate(["/caja/listas-precio"]);
+          this.router.navigate(["/cash-register/listas-precio"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -106,7 +106,7 @@ export class ListaPrecioForm implements OnInit {
       this.cajaService.createPriceList(dto).subscribe({
         next: () => {
           this.toastr.success("Lista creada");
-          this.router.navigate(["/caja/listas-precio"]);
+          this.router.navigate(["/cash-register/listas-precio"]);
         },
         error: (err) => {
           this.loading.set(false);

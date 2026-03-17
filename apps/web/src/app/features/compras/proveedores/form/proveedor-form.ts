@@ -74,7 +74,7 @@ export class ProveedorForm implements OnInit {
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || "Error al cargar proveedor");
-        this.router.navigate(["/compras/proveedores"]);
+        this.router.navigate(["/purchases/proveedores"]);
       },
     });
   }
@@ -103,7 +103,7 @@ export class ProveedorForm implements OnInit {
       this.comprasService.updateSupplier(id, dto).subscribe({
         next: () => {
           this.toastr.success("Proveedor actualizado");
-          this.router.navigate(["/compras/proveedores"]);
+          this.router.navigate(["/purchases/proveedores"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -114,7 +114,7 @@ export class ProveedorForm implements OnInit {
       this.comprasService.createSupplier(dto).subscribe({
         next: () => {
           this.toastr.success("Proveedor creado");
-          this.router.navigate(["/compras/proveedores"]);
+          this.router.navigate(["/purchases/proveedores"]);
         },
         error: (err) => {
           this.loading.set(false);

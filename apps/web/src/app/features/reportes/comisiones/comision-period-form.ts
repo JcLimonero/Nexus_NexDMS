@@ -66,7 +66,7 @@ export class ComisionPeriodForm implements OnInit {
     this.reportesService.createCommissionPeriod(dto).subscribe({
       next: (period) => {
         this.toastr.success("Período creado");
-        this.router.navigate(["/reportes/comisiones", period.id]);
+        this.router.navigate(["/reports/comisiones", period.id]);
       },
       error: (err) => {
         this.loading.set(false);

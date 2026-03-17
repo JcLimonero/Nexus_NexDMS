@@ -2,7 +2,7 @@
   @if (error()) {
     <div class="alert alert-danger" role="alert">
       {{ error() }}
-      <a [routerLink]="['/clientes', clientId(), 'contactos']" class="alert-link ms-2">Volver al listado</a>
+      <a [routerLink]="['/clients', clientId(), 'contacts']" class="alert-link ms-2">Volver al listado</a>
     </div>
   }
 
@@ -23,7 +23,7 @@
             <div class="d-flex gap-2">
               <a
                 class="btn btn-primary btn-sm"
-                [routerLink]="['/clientes', clientId(), 'contactos', c.id, 'editar']"
+                [routerLink]="['/clients', clientId(), 'contacts', c.id, 'editar']"
               >
                 <app-feather-icons [icon]="'edit-2'" />
                 Editar
@@ -34,7 +34,7 @@
               </button>
               <a
                 class="btn btn-outline-secondary btn-sm"
-                [routerLink]="['/clientes', clientId(), 'contactos']"
+                [routerLink]="['/clients', clientId(), 'contacts']"
               >
                 Volver
               </a>

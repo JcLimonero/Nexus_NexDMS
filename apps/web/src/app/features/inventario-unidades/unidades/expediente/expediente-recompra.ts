@@ -46,7 +46,7 @@ export class ExpedienteRecompra implements OnInit {
     const id = this.unitId();
     const returnId = this.returnId();
     if (!id || !returnId) {
-      this.router.navigate(["/inventario-unidades"]);
+      this.router.navigate(["/units-inventory"]);
       return;
     }
 

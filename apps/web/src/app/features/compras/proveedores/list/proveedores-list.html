@@ -7,7 +7,7 @@
             <h5>Proveedores</h5>
             <span>Gestiona los proveedores de refacciones</span>
           </div>
-          <a class="btn btn-primary" routerLink="/compras/proveedores/nuevo">
+          <a class="btn btn-primary" routerLink="/purchases/proveedores/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nuevo proveedor
           </a>
         </div>
@@ -80,7 +80,7 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/compras/proveedores', p.id, 'editar']"
+                            [routerLink]="['/purchases/proveedores', p.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -99,7 +99,7 @@
                   } @empty {
                     <tr>
                       <td colspan="6" class="text-center text-muted py-4">
-                        No hay proveedores. <a routerLink="/compras/proveedores/nuevo">Crear el primero</a>
+                        No hay proveedores. <a routerLink="/purchases/proveedores/nuevo">Crear el primero</a>
                       </td>
                     </tr>
                   }

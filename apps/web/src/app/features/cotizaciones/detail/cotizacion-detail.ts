@@ -44,7 +44,7 @@ export class CotizacionDetail implements OnInit {
 
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/cotizaciones"]);
+      this.router.navigate(["/quotes"]);
       return;
     }
 

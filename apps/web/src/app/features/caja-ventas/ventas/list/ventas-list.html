@@ -7,7 +7,7 @@
             <h5>Ventas (POS)</h5>
             <span>Registro de ventas de refacciones</span>
           </div>
-          <a class="btn btn-primary" routerLink="/caja/ventas/nueva">
+          <a class="btn btn-primary" routerLink="/cash-register/ventas/nueva">
             <i class="icofont icofont-plus me-1"></i> Nueva venta
           </a>
         </div>
@@ -71,7 +71,7 @@
                   @for (v of ventas(); track v.id) {
                     <tr>
                       <td>
-                        <a [routerLink]="['/caja/ventas', v.id]">{{ v.ticketNumber }}</a>
+                        <a [routerLink]="['/cash-register/ventas', v.id]">{{ v.ticketNumber }}</a>
                       </td>
                       <td>{{ getClientName(v) }}</td>
                       <td>{{ getBranchName(v.branchId) }}</td>
@@ -88,7 +88,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/caja/ventas', v.id]"
+                          [routerLink]="['/cash-register/ventas', v.id]"
                           title="Ver"
                         >
                           <app-feather-icons [icon]="'eye'" />
@@ -98,7 +98,7 @@
                   } @empty {
                     <tr>
                       <td colspan="7" class="text-center text-muted py-4">
-                        No hay ventas. <a routerLink="/caja/ventas/nueva">Crear la primera</a>
+                        No hay ventas. <a routerLink="/cash-register/ventas/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

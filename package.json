@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "validate": "bash scripts/validate-implementation.sh",
+    "dev": "concurrently -n api,web -c blue,magenta \"npm run api:dev\" \"npm run web:dev\"",
     "api:dev": "cd apps/api && npm run start:dev",
     "api:build": "cd apps/api && npm run build",
     "api:migration:generate": "cd apps/api && npm run build && npm run migration:generate --",
@@ -11,5 +12,8 @@
     "web:dev": "cd apps/web && npm start",
     "pwa:dev": "cd apps/pwa && npm start",
     "admin:dev": "cd apps/admin && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
   }
 }

@@ -60,7 +60,7 @@ export class CategoriaForm implements OnInit {
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || "Error al cargar categoría");
-        this.router.navigate(["/inventario-refacciones/categorias"]);
+        this.router.navigate(["/parts-inventory/categories"]);
       },
     });
   }
@@ -82,7 +82,7 @@ export class CategoriaForm implements OnInit {
       this.inventarioService.updateCategory(id, dto).subscribe({
         next: () => {
           this.toastr.success("Categoría actualizada");
-          this.router.navigate(["/inventario-refacciones/categorias"]);
+          this.router.navigate(["/parts-inventory/categories"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -93,7 +93,7 @@ export class CategoriaForm implements OnInit {
       this.inventarioService.createCategory(dto).subscribe({
         next: () => {
           this.toastr.success("Categoría creada");
-          this.router.navigate(["/inventario-refacciones/categorias"]);
+          this.router.navigate(["/parts-inventory/categories"]);
         },
         error: (err) => {
           this.loading.set(false);

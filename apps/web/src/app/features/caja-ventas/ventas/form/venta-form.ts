@@ -220,7 +220,7 @@ export class VentaForm implements OnInit {
     this.cajaService.createSale(dto).subscribe({
       next: (sale) => {
         this.toastr.success("Venta registrada");
-        this.router.navigate(["/caja/ventas", sale.id]);
+        this.router.navigate(["/cash-register/ventas", sale.id]);
       },
       error: (err) => {
         this.loading.set(false);

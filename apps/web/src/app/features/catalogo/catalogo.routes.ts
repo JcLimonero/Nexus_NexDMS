@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const catalogoRoutes: Routes = [
+export const catalogRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>
@@ -10,7 +10,7 @@ export const catalogoRoutes: Routes = [
     data: { title: "Modelos globales", breadcrumb: "Modelos globales" },
   },
   {
-    path: "tipos-vehiculo",
+    path: "vehicle-types",
     loadComponent: () =>
       import("./tipos-vehiculo/tipos-vehiculo-list").then(
         (m) => m.TiposVehiculoList
@@ -18,7 +18,7 @@ export const catalogoRoutes: Routes = [
     data: { title: "Tipos de vehículo", breadcrumb: "Tipos vehículo" },
   },
   {
-    path: "tipos-vehiculo/nuevo",
+    path: "vehicle-types/nuevo",
     loadComponent: () =>
       import("./tipos-vehiculo/tipo-vehiculo-form").then(
         (m) => m.TipoVehiculoForm
@@ -26,7 +26,7 @@ export const catalogoRoutes: Routes = [
     data: { title: "Nuevo tipo de vehículo", breadcrumb: "Nuevo" },
   },
   {
-    path: "tipos-vehiculo/:id/editar",
+    path: "vehicle-types/:id/editar",
     loadComponent: () =>
       import("./tipos-vehiculo/tipo-vehiculo-form").then(
         (m) => m.TipoVehiculoForm
@@ -34,7 +34,7 @@ export const catalogoRoutes: Routes = [
     data: { title: "Editar tipo de vehículo", breadcrumb: "Editar" },
   },
   {
-    path: "tipos-combustion",
+    path: "combustion-types",
     loadComponent: () =>
       import("./tipos-combustion/tipos-combustion-list").then(
         (m) => m.TiposCombustionList
@@ -50,7 +50,7 @@ export const catalogoRoutes: Routes = [
     data: { title: "Nuevo tipo de combustión", breadcrumb: "Nuevo" },
   },
   {
-    path: "tipos-combustion/:id/editar",
+    path: "combustion-types/:id/editar",
     loadComponent: () =>
       import("./tipos-combustion/tipo-combustion-form").then(
         (m) => m.TipoCombustionForm

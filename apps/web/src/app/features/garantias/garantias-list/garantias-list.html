@@ -7,7 +7,7 @@
             <h5>Garantías</h5>
             <span>Gestión de garantías de unidades, refacciones y servicios</span>
           </div>
-          <a class="btn btn-primary" routerLink="/garantias/nueva">
+          <a class="btn btn-primary" routerLink="/warranties/nueva">
             <i class="icofont icofont-plus me-1"></i> Nueva garantía
           </a>
         </div>
@@ -102,7 +102,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/garantias', w.id]"
+                          [routerLink]="['/warranties', w.id]"
                           title="Ver"
                         >
                           <app-feather-icons [icon]="'eye'" />
@@ -112,7 +112,7 @@
                   } @empty {
                     <tr>
                       <td colspan="8" class="text-center text-muted py-4">
-                        No hay garantías. <a routerLink="/garantias/nueva">Crear la primera</a>
+                        No hay garantías. <a routerLink="/warranties/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

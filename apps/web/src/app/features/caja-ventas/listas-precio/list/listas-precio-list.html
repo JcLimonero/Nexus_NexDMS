@@ -7,7 +7,7 @@
             <h5>Listas de precio</h5>
             <span>Configuración de precios por sucursal</span>
           </div>
-          <a class="btn btn-primary" routerLink="/caja/listas-precio/nueva">
+          <a class="btn btn-primary" routerLink="/cash-register/listas-precio/nueva">
             <i class="icofont icofont-plus me-1"></i> Nueva lista
           </a>
         </div>
@@ -69,7 +69,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn me-2"
-                          [routerLink]="['/caja/listas-precio', l.id, 'editar']"
+                          [routerLink]="['/cash-register/listas-precio', l.id, 'editar']"
                           title="Editar"
                         >
                           <app-feather-icons [icon]="'edit-2'" />
@@ -79,7 +79,7 @@
                   } @empty {
                     <tr>
                       <td colspan="6" class="text-center text-muted py-4">
-                        No hay listas. <a routerLink="/caja/listas-precio/nueva">Crear la primera</a>
+                        No hay listas. <a routerLink="/cash-register/listas-precio/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

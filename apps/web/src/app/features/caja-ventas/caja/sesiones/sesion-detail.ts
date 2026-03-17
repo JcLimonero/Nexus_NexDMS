@@ -24,7 +24,7 @@ export class SesionDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/caja/sesiones"]);
+      this.router.navigate(["/cash-register/sesiones"]);
       return;
     }
 

@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const almacenRoutes: Routes = [
+export const warehouseRoutes: Routes = [
   {
     path: "",
     redirectTo: "transferencias",

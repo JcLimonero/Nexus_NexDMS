@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const cotizacionesRoutes: Routes = [
+export const quotesRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>

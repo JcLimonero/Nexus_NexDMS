@@ -41,7 +41,7 @@ export class OrdenCompraDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/compras/ordenes-compra"]);
+      this.router.navigate(["/purchases/purchase-orders"]);
       return;
     }
 

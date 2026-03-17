@@ -7,7 +7,7 @@
             <h5>Cotizaciones</h5>
             <span>Refacciones, servicios y unidades</span>
           </div>
-          <a class="btn btn-primary" routerLink="/cotizaciones/nueva">
+          <a class="btn btn-primary" routerLink="/quotes/nueva">
             <i class="icofont icofont-plus me-1"></i> Nueva cotización
           </a>
         </div>
@@ -88,7 +88,7 @@
                   @for (q of cotizaciones(); track q.id) {
                     <tr>
                       <td>
-                        <a [routerLink]="['/cotizaciones', q.id]">{{ q.folio }}</a>
+                        <a [routerLink]="['/quotes', q.id]">{{ q.folio }}</a>
                       </td>
                       <td>{{ getClientName(q) }}</td>
                       <td>{{ getTypeLabel(q.type) }}</td>
@@ -108,7 +108,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/cotizaciones', q.id]"
+                          [routerLink]="['/quotes', q.id]"
                           title="Ver"
                         >
                           <app-feather-icons [icon]="'eye'" />
@@ -116,7 +116,7 @@
                         @if (q.status === 'DRAFT') {
                           <a
                             class="table-action-btn ms-2"
-                            [routerLink]="['/cotizaciones', q.id, 'editar']"
+                            [routerLink]="['/quotes', q.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -127,7 +127,7 @@
                   } @empty {
                     <tr>
                       <td colspan="8" class="text-center text-muted py-4">
-                        No hay cotizaciones. <a routerLink="/cotizaciones/nueva">Crear la primera</a>
+                        No hay cotizaciones. <a routerLink="/quotes/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

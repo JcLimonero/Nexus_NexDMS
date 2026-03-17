@@ -109,7 +109,7 @@ export class ApartadoForm implements OnInit {
     this.almacenService.createUnitReservation(dto).subscribe({
       next: (reservation) => {
         this.toastr.success("Apartado creado");
-        this.router.navigate(["/almacen/apartados", reservation.id]);
+        this.router.navigate(["/warehouse/apartados", reservation.id]);
       },
       error: (err) => {
         this.loading.set(false);

@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const clientesRoutes: Routes = [
+export const clientsRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>
@@ -29,25 +29,25 @@ export const clientesRoutes: Routes = [
         data: { title: "Editar cliente", breadcrumb: "Editar" },
       },
       {
-        path: "contactos",
+        path: "contacts",
         loadComponent: () =>
           import("./contactos/list/contactos-list").then((m) => m.ContactosList),
         data: { title: "Contactos", breadcrumb: "Contactos" },
       },
       {
-        path: "contactos/nuevo",
+        path: "contacts/nuevo",
         loadComponent: () =>
           import("./contactos/form/contacto-form").then((m) => m.ContactoForm),
         data: { title: "Nuevo contacto", breadcrumb: "Nuevo" },
       },
       {
-        path: "contactos/:contactId",
+        path: "contacts/:contactId",
         loadComponent: () =>
           import("./contactos/detail/contacto-detail").then((m) => m.ContactoDetail),
         data: { title: "Detalle contacto", breadcrumb: "Detalle" },
       },
       {
-        path: "contactos/:contactId/editar",
+        path: "contacts/:contactId/editar",
         loadComponent: () =>
           import("./contactos/form/contacto-form").then((m) => m.ContactoForm),
         data: { title: "Editar contacto", breadcrumb: "Editar" },

@@ -82,7 +82,7 @@ export class UbicacionForm implements OnInit {
       error: (err) => {
         this.loading.set(false);
         this.toastr.error(err?.error?.message || "Error al cargar ubicación");
-        this.router.navigate(["/inventario-unidades/ubicaciones"]);
+        this.router.navigate(["/units-inventory/locations"]);
       },
     });
   }
@@ -106,7 +106,7 @@ export class UbicacionForm implements OnInit {
       this.inventarioService.updateLocation(id, dto).subscribe({
         next: () => {
           this.toastr.success("Ubicación actualizada");
-          this.router.navigate(["/inventario-unidades/ubicaciones"]);
+          this.router.navigate(["/units-inventory/locations"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -117,7 +117,7 @@ export class UbicacionForm implements OnInit {
       this.inventarioService.createLocation(dto).subscribe({
         next: () => {
           this.toastr.success("Ubicación creada");
-          this.router.navigate(["/inventario-unidades/ubicaciones"]);
+          this.router.navigate(["/units-inventory/locations"]);
         },
         error: (err) => {
           this.loading.set(false);

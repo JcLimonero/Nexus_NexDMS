@@ -56,7 +56,7 @@ export class OrdenServicioDetail implements OnInit {
 
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/taller/ordenes-servicio"]);
+      this.router.navigate(["/workshop/service-orders"]);
       return;
     }
 

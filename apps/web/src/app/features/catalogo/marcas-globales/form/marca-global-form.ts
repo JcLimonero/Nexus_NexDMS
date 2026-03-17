@@ -51,7 +51,7 @@ export class MarcaGlobalForm implements OnInit {
         },
         error: (err) => {
           this.toastr.error(err?.error?.message || "Error al cargar marca");
-          this.router.navigate(["/catalogo/marcas"]);
+          this.router.navigate(["/catalog/marcas"]);
         },
       });
     }
@@ -73,7 +73,7 @@ export class MarcaGlobalForm implements OnInit {
       this.globalBrandsService.update(id, dto).subscribe({
         next: () => {
           this.toastr.success("Marca actualizada");
-          this.router.navigate(["/catalogo/marcas"]);
+          this.router.navigate(["/catalog/marcas"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -84,7 +84,7 @@ export class MarcaGlobalForm implements OnInit {
       this.globalBrandsService.create(dto).subscribe({
         next: () => {
           this.toastr.success("Marca creada");
-          this.router.navigate(["/catalogo/marcas"]);
+          this.router.navigate(["/catalog/marcas"]);
         },
         error: (err) => {
           this.loading.set(false);

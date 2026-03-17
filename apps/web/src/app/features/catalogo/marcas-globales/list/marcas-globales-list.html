@@ -8,10 +8,10 @@
             <span>Catálogo de marcas para evitar errores de escritura en modelos</span>
           </div>
           <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary" routerLink="/catalogo">
+            <a class="btn btn-outline-primary" routerLink="/catalog">
               Modelos
             </a>
-            <a class="btn btn-primary" routerLink="/catalogo/marcas/nuevo">
+            <a class="btn btn-primary" routerLink="/catalog/marcas/nuevo">
             <app-feather-icons [icon]="'plus'" />
             Nueva marca
           </a>
@@ -60,7 +60,7 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/catalogo/marcas', brand.id, 'editar']"
+                            [routerLink]="['/catalog/marcas', brand.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />

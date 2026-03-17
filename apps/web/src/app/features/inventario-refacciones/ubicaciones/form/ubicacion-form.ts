@@ -78,14 +78,14 @@ export class UbicacionForm implements OnInit {
           this.form.get("branchId")?.disable();
         } else {
           this.toastr.error("Ubicación no encontrada");
-          this.router.navigate(["/inventario-refacciones/ubicaciones"]);
+          this.router.navigate(["/parts-inventory/locations"]);
         }
         this.loading.set(false);
       },
       error: (err) => {
         this.loading.set(false);
         this.toastr.error(err?.error?.message || "Error al cargar ubicación");
-        this.router.navigate(["/inventario-refacciones/ubicaciones"]);
+        this.router.navigate(["/parts-inventory/locations"]);
       },
     });
   }
@@ -112,7 +112,7 @@ export class UbicacionForm implements OnInit {
       this.inventarioService.updateLocation(id, dto).subscribe({
         next: () => {
           this.toastr.success("Ubicación actualizada");
-          this.router.navigate(["/inventario-refacciones/ubicaciones"]);
+          this.router.navigate(["/parts-inventory/locations"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -123,7 +123,7 @@ export class UbicacionForm implements OnInit {
       this.inventarioService.createLocation(dto).subscribe({
         next: () => {
           this.toastr.success("Ubicación creada");
-          this.router.navigate(["/inventario-refacciones/ubicaciones"]);
+          this.router.navigate(["/parts-inventory/locations"]);
         },
         error: (err) => {
           this.loading.set(false);

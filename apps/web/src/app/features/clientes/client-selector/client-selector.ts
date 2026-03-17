@@ -137,7 +137,7 @@ export class ClientSelector {
   }
 
   openNewClient(): void {
-    window.open("/clientes/nuevo", "_blank", "noopener,noreferrer");
+    window.open("/clients/nuevo", "_blank", "noopener,noreferrer");
   }
 
   onReload(): void {

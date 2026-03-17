@@ -127,7 +127,7 @@ export class ParteForm implements OnInit {
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || "Error al cargar parte");
-        this.router.navigate(["/inventario-refacciones"]);
+        this.router.navigate(["/parts-inventory"]);
       },
     });
   }
@@ -164,7 +164,7 @@ export class ParteForm implements OnInit {
       this.inventarioService.updatePart(id, dto).subscribe({
         next: () => {
           this.toastr.success("Parte actualizada");
-          this.router.navigate(["/inventario-refacciones", id]);
+          this.router.navigate(["/parts-inventory", id]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -175,7 +175,7 @@ export class ParteForm implements OnInit {
       this.inventarioService.createPart(dto).subscribe({
         next: (parte) => {
           this.toastr.success("Parte creada");
-          this.router.navigate(["/inventario-refacciones", parte.id]);
+          this.router.navigate(["/parts-inventory", parte.id]);
         },
         error: (err) => {
           this.loading.set(false);

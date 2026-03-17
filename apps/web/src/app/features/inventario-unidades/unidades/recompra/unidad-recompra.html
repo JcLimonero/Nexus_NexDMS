@@ -7,7 +7,7 @@
             <h5 class="mb-0">
               {{ u.status === 'PENDING_EXPEDIENTE' ? 'Registrar datos del vendedor' : 'Registrar recompra' }} — {{ u.brand }} {{ u.model }} ({{ u.year }})
             </h5>
-            <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/inventario-unidades', u.id]">
+            <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/units-inventory', u.id]">
               Volver
             </a>
           </div>
@@ -59,7 +59,7 @@
                   }
                   {{ u.status === 'PENDING_EXPEDIENTE' ? 'Registrar vendedor y continuar' : 'Registrar recompra' }}
                 </button>
-                <a class="btn btn-outline-secondary" [routerLink]="['/inventario-unidades', u.id]">Cancelar</a>
+                <a class="btn btn-outline-secondary" [routerLink]="['/units-inventory', u.id]">Cancelar</a>
               </div>
             </form>
           </div>

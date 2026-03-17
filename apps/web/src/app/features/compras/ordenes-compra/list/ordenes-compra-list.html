@@ -7,7 +7,7 @@
             <h5>Órdenes de compra</h5>
             <span>Gestiona las órdenes de compra a proveedores</span>
           </div>
-          <a class="btn btn-primary" routerLink="/compras/ordenes-compra/nueva">
+          <a class="btn btn-primary" routerLink="/purchases/purchase-orders/nueva">
             <i class="icofont icofont-plus me-1"></i> Nueva orden
           </a>
         </div>
@@ -87,7 +87,7 @@
                   @for (o of ordenes(); track o.id) {
                     <tr>
                       <td>
-                        <a [routerLink]="['/compras/ordenes-compra', o.id]">
+                        <a [routerLink]="['/purchases/purchase-orders', o.id]">
                           {{ o.folio }}
                         </a>
                       </td>
@@ -108,7 +108,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/compras/ordenes-compra', o.id]"
+                          [routerLink]="['/purchases/purchase-orders', o.id]"
                           title="Ver"
                         >
                           <app-feather-icons [icon]="'eye'" />
@@ -118,7 +118,7 @@
                   } @empty {
                     <tr>
                       <td colspan="7" class="text-center text-muted py-4">
-                        No hay órdenes. <a routerLink="/compras/ordenes-compra/nueva">Crear la primera</a>
+                        No hay órdenes. <a routerLink="/purchases/purchase-orders/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

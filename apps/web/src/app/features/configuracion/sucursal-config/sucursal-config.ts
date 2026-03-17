@@ -55,7 +55,7 @@ export class SucursalConfig implements OnInit {
 
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/configuracion/sucursales"]);
+      this.router.navigate(["/settings/sucursales"]);
       return;
     }
     this.branchId.set(id);

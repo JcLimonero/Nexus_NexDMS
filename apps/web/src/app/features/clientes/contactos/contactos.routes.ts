@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const contactosRoutes: Routes = [
+export const contactsRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>

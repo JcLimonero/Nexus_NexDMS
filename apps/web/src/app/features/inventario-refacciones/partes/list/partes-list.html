@@ -7,7 +7,7 @@
             <h5>Partes / Refacciones</h5>
             <span>Gestiona el inventario de refacciones</span>
           </div>
-          <a class="btn btn-primary" routerLink="/inventario-refacciones/nuevo">
+          <a class="btn btn-primary" routerLink="/parts-inventory/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nueva parte
           </a>
         </div>
@@ -96,7 +96,7 @@
                     <tr>
                       <td>{{ parte.sku }}</td>
                       <td>
-                        <a [routerLink]="['/inventario-refacciones', parte.id]">
+                        <a [routerLink]="['/parts-inventory', parte.id]">
                           {{ parte.name }}
                         </a>
                       </td>
@@ -113,14 +113,14 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/inventario-refacciones', parte.id]"
+                            [routerLink]="['/parts-inventory', parte.id]"
                             title="Ver"
                           >
                             <app-feather-icons [icon]="'eye'" />
                           </a>
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/inventario-refacciones', parte.id, 'editar']"
+                            [routerLink]="['/parts-inventory', parte.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -139,7 +139,7 @@
                   } @empty {
                     <tr>
                       <td colspan="8" class="text-center text-muted py-4">
-                        No hay partes. <a routerLink="/inventario-refacciones/nuevo">Crear la primera</a>
+                        No hay partes. <a routerLink="/parts-inventory/nuevo">Crear la primera</a>
                       </td>
                     </tr>
                   }

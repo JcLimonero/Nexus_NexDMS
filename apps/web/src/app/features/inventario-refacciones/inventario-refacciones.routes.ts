@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const inventarioRefaccionesRoutes: Routes = [
+export const partsInventoryRoutes: Routes = [
   {
     path: "",
     loadComponent: () =>
@@ -14,7 +14,7 @@ export const inventarioRefaccionesRoutes: Routes = [
     data: { title: "Nueva parte", breadcrumb: "Nuevo" },
   },
   {
-    path: "categorias",
+    path: "categories",
     children: [
       {
         path: "",
@@ -37,7 +37,7 @@ export const inventarioRefaccionesRoutes: Routes = [
     ],
   },
   {
-    path: "ubicaciones",
+    path: "locations",
     children: [
       {
         path: "",

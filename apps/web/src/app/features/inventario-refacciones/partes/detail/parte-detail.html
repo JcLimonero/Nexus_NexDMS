@@ -2,7 +2,7 @@
   @if (error()) {
     <div class="alert alert-danger" role="alert">
       {{ error() }}
-      <a routerLink="/inventario-refacciones" class="alert-link ms-2">Volver al listado</a>
+      <a routerLink="/parts-inventory" class="alert-link ms-2">Volver al listado</a>
     </div>
   }
 
@@ -21,13 +21,13 @@
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0">{{ p.name }}</h5>
             <div class="d-flex gap-2">
-              <a class="btn btn-primary btn-sm" [routerLink]="['/inventario-refacciones', p.id, 'editar']">
+              <a class="btn btn-primary btn-sm" [routerLink]="['/parts-inventory', p.id, 'editar']">
                 Editar
               </a>
               <button class="btn btn-outline-danger btn-sm" (click)="deleteParte()">
                 Eliminar
               </button>
-              <a class="btn btn-outline-secondary btn-sm" routerLink="/inventario-refacciones">
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/parts-inventory">
                 Volver
               </a>
             </div>

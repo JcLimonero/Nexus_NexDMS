@@ -32,7 +32,7 @@ export class ApartadoDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/almacen/apartados"]);
+      this.router.navigate(["/warehouse/apartados"]);
       return;
     }
 

@@ -8,10 +8,10 @@
             <span>Catálogo maestro de marcas, modelos, versiones y años</span>
           </div>
           <div class="d-flex gap-2">
-            <a class="btn btn-outline-primary" routerLink="/catalogo/marcas">
+            <a class="btn btn-outline-primary" routerLink="/catalog/marcas">
               Marcas
             </a>
-            <a class="btn btn-primary" routerLink="/catalogo/nuevo">
+            <a class="btn btn-primary" routerLink="/catalog/nuevo">
             <app-feather-icons [icon]="'plus'" />
             Nuevo modelo
           </a>
@@ -80,7 +80,7 @@
                     <tr>
                       <td>{{ model.brand?.name ?? "—" }}</td>
                       <td>
-                        <a [routerLink]="['/catalogo', model.id]">
+                        <a [routerLink]="['/catalog', model.id]">
                           {{ model.model }}
                         </a>
                       </td>
@@ -92,14 +92,14 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/catalogo', model.id]"
+                            [routerLink]="['/catalog', model.id]"
                             title="Ver"
                           >
                             <app-feather-icons [icon]="'eye'" />
                           </a>
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/catalogo', model.id, 'editar']"
+                            [routerLink]="['/catalog', model.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />

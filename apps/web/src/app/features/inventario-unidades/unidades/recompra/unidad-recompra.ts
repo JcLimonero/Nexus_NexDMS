@@ -38,7 +38,7 @@ export class UnidadRecompra implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/inventario-unidades"]);
+      this.router.navigate(["/units-inventory"]);
       return;
     }
 
@@ -59,12 +59,12 @@ export class UnidadRecompra implements OnInit {
           this.toastr.warning(
             "Solo se puede registrar recompra de unidades vendidas o seminuevas con expediente pendiente"
           );
-          this.router.navigate(["/inventario-unidades", id]);
+          this.router.navigate(["/units-inventory", id]);
         }
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || "Error al cargar unidad");
-        this.router.navigate(["/inventario-unidades"]);
+        this.router.navigate(["/units-inventory"]);
       },
     });
 
@@ -98,7 +98,7 @@ export class UnidadRecompra implements OnInit {
         next: (res) => {
           this.toastr.success("Recompra registrada");
           this.router.navigate([
-            "/inventario-unidades",
+            "/units-inventory",
             id,
             "recompra",
             res.id,

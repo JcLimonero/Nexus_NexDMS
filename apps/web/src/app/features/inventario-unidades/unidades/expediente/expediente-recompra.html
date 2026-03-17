@@ -2,7 +2,7 @@
   @if (error()) {
     <div class="alert alert-danger" role="alert">
       {{ error() }}
-      <a routerLink="/inventario-unidades" class="alert-link ms-2">Volver al listado</a>
+      <a routerLink="/units-inventory" class="alert-link ms-2">Volver al listado</a>
     </div>
   }
 
@@ -25,7 +25,7 @@
             <div class="d-flex gap-2">
               <a
                 class="btn btn-outline-secondary btn-sm"
-                [routerLink]="['/inventario-unidades', u.id]"
+                [routerLink]="['/units-inventory', u.id]"
               >
                 Volver al detalle
               </a>

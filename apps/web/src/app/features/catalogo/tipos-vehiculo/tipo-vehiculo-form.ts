@@ -50,7 +50,7 @@ export class TipoVehiculoForm implements OnInit {
         },
         error: (err) => {
           this.toastr.error(err?.error?.message || "Error al cargar tipo");
-          this.router.navigate(["/catalogo/tipos-vehiculo"]);
+          this.router.navigate(["/catalog/vehicle-types"]);
         },
       });
     }
@@ -72,7 +72,7 @@ export class TipoVehiculoForm implements OnInit {
       this.vehicleTypesService.update(id, { label: raw.label.trim() }).subscribe({
         next: () => {
           this.toastr.success("Tipo actualizado");
-          this.router.navigate(["/catalogo/tipos-vehiculo"]);
+          this.router.navigate(["/catalog/vehicle-types"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -83,7 +83,7 @@ export class TipoVehiculoForm implements OnInit {
       this.vehicleTypesService.create(dto).subscribe({
         next: () => {
           this.toastr.success("Tipo creado");
-          this.router.navigate(["/catalogo/tipos-vehiculo"]);
+          this.router.navigate(["/catalog/vehicle-types"]);
         },
         error: (err) => {
           this.loading.set(false);

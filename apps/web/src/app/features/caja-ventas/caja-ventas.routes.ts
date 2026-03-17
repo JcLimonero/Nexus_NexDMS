@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const cajaVentasRoutes: Routes = [
+export const cashRegisterRoutes: Routes = [
   {
     path: "",
     redirectTo: "sesiones",

@@ -7,7 +7,7 @@
             <h5>Ventas de unidades</h5>
             <span>Inventario de unidades listas para la venta</span>
           </div>
-          <a class="btn btn-primary btn-sm" routerLink="/ventas/nueva">Nueva venta</a>
+          <a class="btn btn-primary btn-sm" routerLink="/sales/nueva">Nueva venta</a>
         </div>
         <div class="card-body">
           @if (error()) {
@@ -82,7 +82,7 @@
                       <td class="text-end">
                         <a
                           class="btn btn-outline-primary btn-sm"
-                          [routerLink]="['/ventas', v.id]"
+                          [routerLink]="['/sales', v.id]"
                         >
                           Ver
                         </a>
@@ -92,7 +92,7 @@
                     <tr>
                       <td colspan="6" class="text-center text-muted py-4">
                         No hay ventas de unidades.
-                        <a routerLink="/ventas/nueva">Crear la primera</a>
+                        <a routerLink="/sales/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

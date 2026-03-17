@@ -29,7 +29,7 @@ export class VentaDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/caja/ventas"]);
+      this.router.navigate(["/cash-register/ventas"]);
       return;
     }
 

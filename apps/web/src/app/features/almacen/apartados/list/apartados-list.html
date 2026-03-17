@@ -7,7 +7,7 @@
             <h5>Apartados de unidades</h5>
             <span>Gestiona los apartados de unidades del inventario</span>
           </div>
-          <a class="btn btn-primary" routerLink="/almacen/apartados/nuevo">
+          <a class="btn btn-primary" routerLink="/warehouse/apartados/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nuevo apartado
           </a>
         </div>
@@ -74,7 +74,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/almacen/apartados', a.id]"
+                          [routerLink]="['/warehouse/apartados', a.id]"
                           title="Ver"
                         >
                           <app-feather-icons [icon]="'eye'" />
@@ -84,7 +84,7 @@
                   } @empty {
                     <tr>
                       <td colspan="6" class="text-center text-muted py-4">
-                        No hay apartados. <a routerLink="/almacen/apartados/nuevo">Crear el primero</a>
+                        No hay apartados. <a routerLink="/warehouse/apartados/nuevo">Crear el primero</a>
                       </td>
                     </tr>
                   }

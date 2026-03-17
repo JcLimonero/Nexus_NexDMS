@@ -7,7 +7,7 @@
             <h5>Clientes</h5>
             <span>Gestiona tu cartera de clientes</span>
           </div>
-          <a class="btn btn-primary" routerLink="/clientes/nuevo">
+          <a class="btn btn-primary" routerLink="/clients/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nuevo cliente
           </a>
         </div>
@@ -70,7 +70,7 @@
                   @for (client of clients(); track client.id) {
                     <tr>
                       <td>
-                        <a [routerLink]="['/clientes', client.id]">
+                        <a [routerLink]="['/clients', client.id]">
                           {{ getDisplayName(client) }}
                         </a>
                       </td>
@@ -90,14 +90,14 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/clientes', client.id]"
+                            [routerLink]="['/clients', client.id]"
                             title="Ver"
                           >
                             <app-feather-icons [icon]="'eye'" />
                           </a>
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/clientes', client.id, 'editar']"
+                            [routerLink]="['/clients', client.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -116,7 +116,7 @@
                   } @empty {
                     <tr>
                       <td colspan="6" class="text-center text-muted py-4">
-                        No hay clientes. <a routerLink="/clientes/nuevo">Crear el primero</a>
+                        No hay clientes. <a routerLink="/clients/nuevo">Crear el primero</a>
                       </td>
                     </tr>
                   }

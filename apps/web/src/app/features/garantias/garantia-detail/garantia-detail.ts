@@ -40,7 +40,7 @@ export class GarantiaDetail implements OnInit {
 
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/garantias"]);
+      this.router.navigate(["/warranties"]);
       return;
     }
 

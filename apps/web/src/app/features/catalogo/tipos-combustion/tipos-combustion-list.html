@@ -8,10 +8,10 @@
             <span>Catálogo de tipos (Gasolina, Diésel, Eléctrico, etc.)</span>
           </div>
           <div class="d-flex gap-2">
-            <a class="btn btn-outline-secondary btn-sm" routerLink="/catalogo">
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/catalog">
               Volver
             </a>
-            <a class="btn btn-primary btn-sm" routerLink="/catalogo/tipos-combustion/nuevo">
+            <a class="btn btn-primary btn-sm" routerLink="/catalog/combustion-types/nuevo">
               Nuevo tipo
             </a>
           </div>
@@ -43,7 +43,7 @@
                         <div class="d-flex gap-1 justify-content-end">
                           <a
                             class="btn btn-sm btn-outline-secondary"
-                            [routerLink]="['/catalogo/tipos-combustion', t.id, 'editar']"
+                            [routerLink]="['/catalog/combustion-types', t.id, 'editar']"
                           >
                             Editar
                           </a>

@@ -1,13 +1,13 @@
 import { Routes } from "@angular/router";
 
-export const tallerRoutes: Routes = [
+export const workshopRoutes: Routes = [
   {
     path: "",
-    redirectTo: "ordenes-servicio",
+    redirectTo: "service-orders",
     pathMatch: "full",
   },
   {
-    path: "ordenes-servicio",
+    path: "service-orders",
     children: [
       {
         path: "",

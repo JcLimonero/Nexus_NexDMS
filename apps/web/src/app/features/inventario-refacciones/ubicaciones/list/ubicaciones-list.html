@@ -7,7 +7,7 @@
             <h5>Ubicaciones de almacén</h5>
             <span>Gestiona las ubicaciones por sucursal</span>
           </div>
-          <a class="btn btn-primary" routerLink="/inventario-refacciones/ubicaciones/nueva">
+          <a class="btn btn-primary" routerLink="/parts-inventory/locations/nueva">
             <i class="icofont icofont-plus me-1"></i> Nueva ubicación
           </a>
         </div>
@@ -77,7 +77,7 @@
                         <div class="table-actions">
                           <a
                             class="table-action-btn"
-                            [routerLink]="['/inventario-refacciones/ubicaciones', loc.id, 'editar']"
+                            [routerLink]="['/parts-inventory/locations', loc.id, 'editar']"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -88,7 +88,7 @@
                   } @empty {
                     <tr>
                       <td colspan="8" class="text-center text-muted py-4">
-                        No hay ubicaciones. <a routerLink="/inventario-refacciones/ubicaciones/nueva">Crear la primera</a>
+                        No hay ubicaciones. <a routerLink="/parts-inventory/locations/nueva">Crear la primera</a>
                       </td>
                     </tr>
                   }

@@ -134,7 +134,7 @@ export class OrdenCompraForm implements OnInit {
     this.comprasService.createPurchaseOrder(dto).subscribe({
       next: (order) => {
         this.toastr.success("Orden de compra creada");
-        this.router.navigate(["/compras/ordenes-compra", order.id]);
+        this.router.navigate(["/purchases/purchase-orders", order.id]);
       },
       error: (err) => {
         this.loading.set(false);

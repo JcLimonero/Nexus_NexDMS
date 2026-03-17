@@ -134,7 +134,7 @@ export class TransferenciaForm implements OnInit {
     this.almacenService.createWarehouseTransfer(dto).subscribe({
       next: (transfer) => {
         this.toastr.success("Transferencia creada");
-        this.router.navigate(["/almacen/transferencias", transfer.id]);
+        this.router.navigate(["/warehouse/transferencias", transfer.id]);
       },
       error: (err) => {
         this.loading.set(false);

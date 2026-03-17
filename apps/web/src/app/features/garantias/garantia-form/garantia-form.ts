@@ -179,7 +179,7 @@ export class GarantiaForm implements OnInit {
     this.garantiasService.createWarranty(dto).subscribe({
       next: (warranty) => {
         this.toastr.success("Garantía creada");
-        this.router.navigate(["/garantias", warranty.id]);
+        this.router.navigate(["/warranties", warranty.id]);
       },
       error: (err) => {
         this.loading.set(false);

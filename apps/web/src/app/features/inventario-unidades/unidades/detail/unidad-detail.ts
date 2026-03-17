@@ -42,7 +42,7 @@ export class UnidadDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/inventario-unidades"]);
+      this.router.navigate(["/units-inventory"]);
       return;
     }
 

@@ -98,7 +98,7 @@ export class ModeloGlobalForm implements OnInit {
         },
         error: (err) => {
           this.toastr.error(err?.error?.message || "Error al cargar modelo");
-          this.router.navigate(["/catalogo"]);
+          this.router.navigate(["/catalog"]);
         },
       });
     }
@@ -127,7 +127,7 @@ export class ModeloGlobalForm implements OnInit {
       this.catalogoService.update(id, dto).subscribe({
         next: () => {
           this.toastr.success("Modelo actualizado");
-          this.router.navigate(["/catalogo"]);
+          this.router.navigate(["/catalog"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -138,7 +138,7 @@ export class ModeloGlobalForm implements OnInit {
       this.catalogoService.create(dto).subscribe({
         next: () => {
           this.toastr.success("Modelo creado");
-          this.router.navigate(["/catalogo"]);
+          this.router.navigate(["/catalog"]);
         },
         error: (err) => {
           this.loading.set(false);

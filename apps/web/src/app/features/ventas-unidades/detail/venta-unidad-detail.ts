@@ -28,7 +28,7 @@ export class VentaUnidadDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/ventas"]);
+      this.router.navigate(["/sales"]);
       return;
     }
     this.ventasService.getOne(id).subscribe({

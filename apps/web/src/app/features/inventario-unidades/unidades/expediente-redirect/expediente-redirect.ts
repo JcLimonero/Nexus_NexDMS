@@ -22,7 +22,7 @@ export class ExpedienteRedirect implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/inventario-unidades"]);
+      this.router.navigate(["/units-inventory"]);
       return;
     }
 
@@ -31,7 +31,7 @@ export class ExpedienteRedirect implements OnInit {
         if (status.lastReturn) {
           this.router.navigate(
             [
-              "/inventario-unidades",
+              "/units-inventory",
               id,
               "recompra",
               status.lastReturn.id,
@@ -41,13 +41,13 @@ export class ExpedienteRedirect implements OnInit {
           );
         } else {
           this.router.navigate(
-            ["/inventario-unidades", id, "recompra"],
+            ["/units-inventory", id, "recompra"],
             { replaceUrl: true }
           );
         }
       },
       error: () => {
-        this.router.navigate(["/inventario-unidades", id]);
+        this.router.navigate(["/units-inventory", id]);
       },
     });
   }

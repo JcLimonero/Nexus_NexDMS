@@ -1,6 +1,6 @@
 import { Routes } from "@angular/router";
 
-export const comprasRoutes: Routes = [
+export const purchasesRoutes: Routes = [
   {
     path: "",
     redirectTo: "proveedores",
@@ -36,7 +36,7 @@ export const comprasRoutes: Routes = [
     ],
   },
   {
-    path: "ordenes-compra",
+    path: "purchase-orders",
     children: [
       {
         path: "",

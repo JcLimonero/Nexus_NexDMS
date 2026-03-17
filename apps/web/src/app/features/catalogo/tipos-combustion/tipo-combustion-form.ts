@@ -50,7 +50,7 @@ export class TipoCombustionForm implements OnInit {
         },
         error: (err) => {
           this.toastr.error(err?.error?.message || "Error al cargar tipo");
-          this.router.navigate(["/catalogo/tipos-combustion"]);
+          this.router.navigate(["/catalog/combustion-types"]);
         },
       });
     }
@@ -72,7 +72,7 @@ export class TipoCombustionForm implements OnInit {
       this.combustionTypesService.update(id, { label: raw.label.trim() }).subscribe({
         next: () => {
           this.toastr.success("Tipo actualizado");
-          this.router.navigate(["/catalogo/tipos-combustion"]);
+          this.router.navigate(["/catalog/combustion-types"]);
         },
         error: (err) => {
           this.loading.set(false);
@@ -83,7 +83,7 @@ export class TipoCombustionForm implements OnInit {
       this.combustionTypesService.create(dto).subscribe({
         next: () => {
           this.toastr.success("Tipo creado");
-          this.router.navigate(["/catalogo/tipos-combustion"]);
+          this.router.navigate(["/catalog/combustion-types"]);
         },
         error: (err) => {
           this.loading.set(false);

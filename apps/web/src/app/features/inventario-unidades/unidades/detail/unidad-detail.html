@@ -2,7 +2,7 @@
   @if (error()) {
     <div class="alert alert-danger" role="alert">
       {{ error() }}
-      <a routerLink="/inventario-unidades" class="alert-link ms-2">Volver al listado</a>
+      <a routerLink="/units-inventory" class="alert-link ms-2">Volver al listado</a>
     </div>
   }
 
@@ -22,27 +22,27 @@
             <h5 class="mb-0">{{ getDisplayLabel(u) }}</h5>
             <div class="d-flex gap-2 flex-wrap">
               @if (u.status === 'SOLD') {
-                <a class="btn btn-warning btn-sm" [routerLink]="['/inventario-unidades', u.id, 'recompra']">
+                <a class="btn btn-warning btn-sm" [routerLink]="['/units-inventory', u.id, 'recompra']">
                   Registrar recompra
                 </a>
               }
               @if (u.status === 'PENDING_EXPEDIENTE') {
                 @if (getExpedienteStatus()?.lastReturn; as last) {
-                  <a class="btn btn-danger btn-sm" [routerLink]="['/inventario-unidades', u.id, 'recompra', last.id, 'expediente']">
+                  <a class="btn btn-danger btn-sm" [routerLink]="['/units-inventory', u.id, 'recompra', last.id, 'expediente']">
                     <i class="icofont icofont-file-document me-1"></i>
                     Subir documentos del vendedor
                   </a>
                 } @else {
-                  <a class="btn btn-danger btn-sm" [routerLink]="['/inventario-unidades', u.id, 'recompra']">
+                  <a class="btn btn-danger btn-sm" [routerLink]="['/units-inventory', u.id, 'recompra']">
                     <i class="icofont icofont-user me-1"></i>
                     Registrar datos del vendedor
                   </a>
                 }
               }
-              <a class="btn btn-primary btn-sm" [routerLink]="['/inventario-unidades', u.id, 'editar']">
+              <a class="btn btn-primary btn-sm" [routerLink]="['/units-inventory', u.id, 'editar']">
                 Editar
               </a>
-              <a class="btn btn-outline-secondary btn-sm" routerLink="/inventario-unidades">
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/units-inventory">
                 Volver
               </a>
             </div>
@@ -183,7 +183,7 @@
                         }
                         <a
                           class="btn btn-link btn-sm p-0 ms-2"
-                          [routerLink]="['/inventario-unidades', u.id, 'recompra', exp.lastReturn.id, 'expediente']"
+                          [routerLink]="['/units-inventory', u.id, 'recompra', exp.lastReturn.id, 'expediente']"
                         >
                           Ver expediente
                         </a>
@@ -229,7 +229,7 @@
                           @if (event.type === 'RETURN' && event.id) {
                             <a
                               class="btn btn-link btn-sm p-0 ms-2"
-                              [routerLink]="['/inventario-unidades', u.id, 'recompra', event.id, 'expediente']"
+                              [routerLink]="['/units-inventory', u.id, 'recompra', event.id, 'expediente']"
                             >
                               Ver expediente
                             </a>

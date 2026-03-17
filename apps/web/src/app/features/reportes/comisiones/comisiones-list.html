@@ -7,7 +7,7 @@
             <h5>Comisiones</h5>
             <span>Períodos de comisiones por sucursal</span>
           </div>
-          <a class="btn btn-primary" routerLink="/reportes/comisiones/nuevo">
+          <a class="btn btn-primary" routerLink="/reports/comisiones/nuevo">
             <i class="icofont icofont-plus me-1"></i> Nuevo período
           </a>
         </div>
@@ -95,7 +95,7 @@
                       <td class="text-end">
                         <a
                           class="table-action-btn"
-                          [routerLink]="['/reportes/comisiones', p.id]"
+                          [routerLink]="['/reports/comisiones', p.id]"
                           title="Ver"
                         >
                           <app-feather-icons [icon]="'eye'" />
@@ -105,7 +105,7 @@
                   } @empty {
                     <tr>
                       <td colspan="5" class="text-center text-muted py-4">
-                        No hay períodos de comisión. <a routerLink="/reportes/comisiones/nuevo">Crear el primero</a>
+                        No hay períodos de comisión. <a routerLink="/reports/comisiones/nuevo">Crear el primero</a>
                       </td>
                     </tr>
                   }

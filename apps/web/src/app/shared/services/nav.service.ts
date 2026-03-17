@@ -49,7 +49,7 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/clientes", title: "Clientes", type: "link" },
+        { path: "/clients", title: "Clientes", type: "link" },
       ],
     },
     {
@@ -58,10 +58,10 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/catalogo", title: "Modelos globales", type: "link" },
-        { path: "/catalogo/marcas", title: "Marcas", type: "link" },
-        { path: "/catalogo/tipos-vehiculo", title: "Tipos de vehículo", type: "link" },
-        { path: "/catalogo/tipos-combustion", title: "Tipos de combustión", type: "link" },
+        { path: "/catalog", title: "Modelos globales", type: "link" },
+        { path: "/catalog/marcas", title: "Marcas", type: "link" },
+        { path: "/catalog/vehicle-types", title: "Tipos de vehículo", type: "link" },
+        { path: "/catalog/combustion-types", title: "Tipos de combustión", type: "link" },
       ],
     },
     {
@@ -70,9 +70,9 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/inventario-refacciones", title: "Partes", type: "link" },
-        { path: "/inventario-refacciones/categorias", title: "Categorías", type: "link" },
-        { path: "/inventario-refacciones/ubicaciones", title: "Ubicaciones almacén", type: "link" },
+        { path: "/parts-inventory", title: "Partes", type: "link" },
+        { path: "/parts-inventory/categories", title: "Categorías", type: "link" },
+        { path: "/parts-inventory/locations", title: "Ubicaciones almacén", type: "link" },
       ],
     },
     {
@@ -81,8 +81,8 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/inventario-unidades", title: "Unidades", type: "link" },
-        { path: "/inventario-unidades/ubicaciones", title: "Ubicaciones", type: "link" },
+        { path: "/units-inventory", title: "Unidades", type: "link" },
+        { path: "/units-inventory/locations", title: "Ubicaciones", type: "link" },
       ],
     },
     {
@@ -91,8 +91,8 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/compras/proveedores", title: "Proveedores", type: "link" },
-        { path: "/compras/ordenes-compra", title: "Órdenes de compra", type: "link" },
+        { path: "/purchases/proveedores", title: "Proveedores", type: "link" },
+        { path: "/purchases/purchase-orders", title: "Órdenes de compra", type: "link" },
       ],
     },
     {
@@ -101,8 +101,8 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/almacen/transferencias", title: "Transferencias", type: "link" },
-        { path: "/almacen/apartados", title: "Apartados", type: "link" },
+        { path: "/warehouse/transferencias", title: "Transferencias", type: "link" },
+        { path: "/warehouse/apartados", title: "Apartados", type: "link" },
       ],
     },
     {
@@ -111,9 +111,9 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/caja", title: "Caja", type: "link" },
-        { path: "/caja/ventas", title: "Ventas (POS)", type: "link" },
-        { path: "/caja/listas-precio", title: "Listas de precio", type: "link" },
+        { path: "/cash-register", title: "Caja", type: "link" },
+        { path: "/cash-register/ventas", title: "Ventas (POS)", type: "link" },
+        { path: "/cash-register/listas-precio", title: "Listas de precio", type: "link" },
       ],
     },
     {
@@ -122,12 +122,12 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/ventas", title: "Ventas de unidades", type: "link" },
-        { path: "/ventas", title: "Reservas", type: "link" },
+        { path: "/sales", title: "Ventas de unidades", type: "link" },
+        { path: "/sales", title: "Reservas", type: "link" },
       ],
     },
     {
-      path: "/cotizaciones",
+      path: "/quotes",
       title: "Cotizaciones",
       icon: "file-text",
       type: "link",
@@ -138,13 +138,13 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/taller/ordenes-servicio", title: "Órdenes de servicio", type: "link" },
-        { path: "/taller/agenda", title: "Agenda", type: "link" },
-        { path: "/taller/citas", title: "Citas", type: "link" },
+        { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
+        { path: "/workshop/agenda", title: "Agenda", type: "link" },
+        { path: "/workshop/citas", title: "Citas", type: "link" },
       ],
     },
     {
-      path: "/garantias",
+      path: "/warranties",
       title: "Garantías",
       icon: "shield",
       type: "link",
@@ -161,9 +161,9 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/reportes", title: "Inicio", type: "link" },
-        { path: "/reportes/comisiones", title: "Comisiones", type: "link" },
-        { path: "/reportes/general", title: "Reportes generales", type: "link" },
+        { path: "/reports", title: "Inicio", type: "link" },
+        { path: "/reports/comisiones", title: "Comisiones", type: "link" },
+        { path: "/reports/general", title: "Reportes generales", type: "link" },
       ],
     },
     {
@@ -183,9 +183,9 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/configuracion", title: "Inicio", type: "link" },
-        { path: "/configuracion/sucursales", title: "Sucursales", type: "link" },
-        { path: "/configuracion/general", title: "General", type: "link" },
+        { path: "/settings", title: "Inicio", type: "link" },
+        { path: "/settings/sucursales", title: "Sucursales", type: "link" },
+        { path: "/settings/general", title: "General", type: "link" },
       ],
     },
   ];

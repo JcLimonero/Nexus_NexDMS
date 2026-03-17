@@ -34,7 +34,7 @@ export class TransferenciaDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/almacen/transferencias"]);
+      this.router.navigate(["/warehouse/transferencias"]);
       return;
     }
 
