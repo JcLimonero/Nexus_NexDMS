@@ -1,0 +1,63 @@
+<div class="container-fluid venta-unidad-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Venta {{ sale()?.folio }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/ventas">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else if (sale(); as s) {
+            <div class="row">
+              <div class="col-md-6">
+                <dl class="row">
+                  <dt class="col-sm-4">Folio</dt>
+                  <dd class="col-sm-8">{{ s.folio }}</dd>
+
+                  <dt class="col-sm-4">Unidad</dt>
+                  <dd class="col-sm-8">{{ getUnitLabel(s) }}</dd>
+
+                  <dt class="col-sm-4">Cliente</dt>
+                  <dd class="col-sm-8">{{ getClientLabel(s) }}</dd>
+
+                  <dt class="col-sm-4">Precio lista</dt>
+                  <dd class="col-sm-8">${{ s.listPrice | number:'1.2-2' }}</dd>
+
+                  <dt class="col-sm-4">Precio final</dt>
+                  <dd class="col-sm-8">${{ s.finalPrice | number:'1.2-2' }}</dd>
+
+                  <dt class="col-sm-4">Enganche</dt>
+                  <dd class="col-sm-8">${{ s.downPayment | number:'1.2-2' }}</dd>
+
+                  <dt class="col-sm-4">Estatus</dt>
+                  <dd class="col-sm-8">{{ getStatusLabel(s.status) }}</dd>
+
+                  @if (s.deliveryDate) {
+                    <dt class="col-sm-4">Fecha entrega</dt>
+                    <dd class="col-sm-8">{{ s.deliveryDate }}</dd>
+                  }
+                  @if (s.notes) {
+                    <dt class="col-sm-4">Notas</dt>
+                    <dd class="col-sm-8">{{ s.notes }}</dd>
+                  }
+                </dl>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

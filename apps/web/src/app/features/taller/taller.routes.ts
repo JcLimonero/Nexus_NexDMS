@@ -1,0 +1,54 @@
+import { Routes } from "@angular/router";
+
+export const tallerRoutes: Routes = [
+  {
+    path: "",
+    redirectTo: "ordenes-servicio",
+    pathMatch: "full",
+  },
+  {
+    path: "ordenes-servicio",
+    children: [
+      {
+        path: "",
+        loadComponent: () =>
+          import("./ordenes-servicio/list/ordenes-servicio-list").then(
+            (m) => m.OrdenesServicioList
+          ),
+        data: { title: "Órdenes de servicio", breadcrumb: "Órdenes" },
+      },
+      {
+        path: "nueva",
+        loadComponent: () =>
+          import("./ordenes-servicio/form/orden-servicio-form").then(
+            (m) => m.OrdenServicioForm
+          ),
+        data: { title: "Nueva orden", breadcrumb: "Nueva" },
+      },
+      {
+        path: ":id",
+        loadComponent: () =>
+          import("./ordenes-servicio/detail/orden-servicio-detail").then(
+            (m) => m.OrdenServicioDetail
+          ),
+        data: { title: "Detalle orden", breadcrumb: "Detalle" },
+      },
+    ],
+  },
+  {
+    path: "agenda",
+    loadComponent: () =>
+      import("../../components/placeholder/placeholder").then(
+        (m) => m.Placeholder
+      ),
+    data: { title: "Agenda", breadcrumb: "Agenda" },
+  },
+  {
+    path: "citas",
+    loadComponent: () =>
+      import("../../components/placeholder/placeholder").then(
+        (m) => m.Placeholder
+      ),
+    data: { title: "Citas", breadcrumb: "Citas" },
+  },
+];

@@ -13,8 +13,13 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label class="form-label">Marca <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" formControlName="brandName" />
-                @if (form.get('brandName')?.invalid && form.get('brandName')?.touched) {
+                <select class="form-select" formControlName="brandId">
+                  <option value="">Seleccionar marca</option>
+                  @for (b of brands(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('brandId')?.invalid && form.get('brandId')?.touched) {
                   <div class="text-danger small mt-1">La marca es obligatoria</div>
                 }
               </div>

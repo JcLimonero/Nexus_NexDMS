@@ -8,8 +8,8 @@ import {
 } from 'class-validator';
 
 export class CreateGlobalModelDto {
-  @IsString()
-  brandName: string;
+  @IsUUID()
+  brandId: string;
 
   @IsUUID()
   vehicleTypeId: string;

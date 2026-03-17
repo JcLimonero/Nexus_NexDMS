@@ -20,6 +20,7 @@
                 placeholder="Buscar por nombre, teléfono, RFC..."
                 [ngModel]="searchTerm()"
                 (ngModelChange)="onSearchChange($event)"
+                (keyup.enter)="load()"
               />
             </div>
             <div class="col-md-4">
@@ -78,7 +79,7 @@
                       <td>{{ client.email || "—" }}</td>
                       <td class="text-center">
                         @if (client.dataQuality; as dq) {
-                          <span class="badge" [ngClass]="getQualityBadgeClass(dq.level)" [title]="'Faltan: ' + (dq.missingFields?.join(', ') || '')">
+                          <span class="badge" [ngClass]="getQualityBadgeClass(dq.level)" [title]="'Faltan: ' + (dq.missingFields.join(', ') || '')">
                             {{ dq.score }}%
                           </span>
                         } @else {

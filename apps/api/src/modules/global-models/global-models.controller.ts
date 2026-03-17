@@ -37,6 +37,36 @@ export class GlobalModelsController {
     }
   }
 
+  @Get('brands')
+  async getBrands(@Query('vehicleTypeCode') vehicleTypeCode: string) {
+    try {
+      return await this.globalModelsService.getBrands(
+        vehicleTypeCode || 'CAR',
+      );
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Error al listar marcas',
+      );
+    }
+  }
+
+  @Get('models')
+  async getModels(
+    @Query('vehicleTypeCode') vehicleTypeCode: string,
+    @Query('brandName') brandName: string,
+  ) {
+    try {
+      return await this.globalModelsService.getModels(
+        vehicleTypeCode || 'CAR',
+        brandName || '',
+      );
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Error al listar modelos',
+      );
+    }
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()
@@ -59,7 +89,7 @@ export class GlobalModelsController {
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles('SUPERADMIN')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
   create(@CurrentUser() user: UserPayload, @Body() dto: CreateGlobalModelDto) {
     return this.globalModelsService.create(user, dto);
   }
@@ -67,7 +97,7 @@ export class GlobalModelsController {
   @Patch(':id')
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles('SUPERADMIN')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
   update(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

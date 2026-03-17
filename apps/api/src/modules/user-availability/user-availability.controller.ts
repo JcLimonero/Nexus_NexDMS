@@ -39,4 +39,14 @@ export class UserAvailabilityController {
   async getMechanicsForBranch(@Query('branchId') branchId: string) {
     return this.userAvailabilityService.getMechanicsForBranch(branchId);
   }
+
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Get('mechanics-with-details')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  async getMechanicsWithDetailsForBranch(@Query('branchId') branchId: string) {
+    return this.userAvailabilityService.getMechanicsWithDetailsForBranch(
+      branchId,
+    );
+  }
 }

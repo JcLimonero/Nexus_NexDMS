@@ -1,0 +1,197 @@
+<div class="container-fluid cotizacion-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5>Cotización {{ cotizacion()?.folio }}</h5>
+          <div class="d-flex gap-2">
+            @if (canEdit()) {
+              <a
+                class="btn btn-warning btn-sm"
+                [routerLink]="['/cotizaciones', cotizacion()?.id, 'editar']"
+              >
+                Editar
+              </a>
+            }
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/cotizaciones">Volver</a>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+          } @else if (cotizacion(); as q) {
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 35%">Cliente</th>
+                      <td>{{ getClientName(q) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ getTypeLabel(q.type) }}</td>
+                    </tr>
+                    @if (q.type !== 'UNIT') {
+                      <tr>
+                        <th class="text-muted">Lista de precios</th>
+                        <td>{{ getPriceListLabel(q.priceList) }}</td>
+                      </tr>
+                    }
+                    <tr>
+                      <th class="text-muted">Sucursal</th>
+                      <td>{{ getBranchName(q.branchId) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-secondary]="q.status === 'DRAFT'"
+                          [class.bg-warning]="q.status === 'PENDING_APPROVAL'"
+                          [class.bg-success]="q.status === 'APPROVED' || q.status === 'SENT' || q.status === 'ACCEPTED'"
+                          [class.bg-danger]="q.status === 'REJECTED'"
+                          [class.bg-info]="q.status === 'CONVERTED'">
+                          {{ getStatusLabel(q.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Vigencia</th>
+                      <td>{{ q.validityDate ? (q.validityDate | date) : "—" }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 35%">Subtotal</th>
+                      <td class="text-end">${{ q.subtotal | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Descuento ({{ q.discountPct }}%)</th>
+                      <td class="text-end">${{ q.discountAmount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">IVA</th>
+                      <td class="text-end">${{ q.taxAmount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Total</th>
+                      <td class="text-end fw-bold">${{ q.total | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            @if (q.conditions) {
+              <div class="mb-4">
+                <h6>Condiciones</h6>
+                <p class="text-muted small">{{ q.conditions }}</p>
+              </div>
+            }
+
+            <h6 class="mb-2">Ítems</h6>
+            <div class="table-responsive mb-4">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Descripción</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">P. unit.</th>
+                    <th class="text-end">Desc.</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of q.items; track item.id) {
+                    <tr>
+                      <td>{{ getItemDescription(item) }}</td>
+                      <td class="text-center">{{ item.quantity }}</td>
+                      <td class="text-end">${{ item.unitPrice | number:'1.2-2' }}</td>
+                      <td class="text-end">${{ item.discount | number:'1.2-2' }}</td>
+                      <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+              @if (canApprove()) {
+                <button
+                  type="button"
+                  class="btn btn-success"
+                  (click)="onApprove()"
+                  [disabled]="approving()"
+                >
+                  @if (approving()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Aprobar
+                </button>
+              }
+              @if (canReject()) {
+                <div class="d-flex gap-2 align-items-center">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    style="width: 200px"
+                    [ngModel]="rejectReason()"
+                    (ngModelChange)="rejectReason.set($event)"
+                    placeholder="Motivo de rechazo"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger"
+                    (click)="onReject()"
+                    [disabled]="rejecting()"
+                  >
+                    @if (rejecting()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    Rechazar
+                  </button>
+                </div>
+              }
+              @if (canSend()) {
+                <button
+                  type="button"
+                  class="btn btn-primary"
+                  (click)="onSend()"
+                  [disabled]="sending()"
+                >
+                  @if (sending()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Enviar al cliente
+                </button>
+              }
+              @if (canConvert()) {
+                <button
+                  type="button"
+                  class="btn btn-info"
+                  (click)="onConvert()"
+                  [disabled]="converting()"
+                >
+                  @if (converting()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Convertir a orden
+                </button>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

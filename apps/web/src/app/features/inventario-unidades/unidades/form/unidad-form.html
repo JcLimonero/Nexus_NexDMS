@@ -1,0 +1,159 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar unidad" : "Nueva unidad" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/inventario-unidades">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="unidad-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId" [disabled]="isEdit()">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('branchId')?.invalid && form.get('branchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo vehículo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="vehicleType">
+                  @for (vt of vehicleTypes(); track vt.value) {
+                    <option [ngValue]="vt.value">{{ vt.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Condición <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="conditionType">
+                  @for (ct of conditionTypes; track ct.value) {
+                    <option [ngValue]="ct.value">{{ ct.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Ubicación</label>
+                <select class="form-select" formControlName="locationId">
+                  <option [ngValue]="null">Sin ubicación</option>
+                  @for (loc of ubicaciones(); track loc.id) {
+                    <option [ngValue]="loc.id">{{ loc.code }} - {{ loc.space }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <h6 class="mt-3 mb-2">Datos del vehículo</h6>
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Marca <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="brand">
+                  <option value="">Seleccionar marca</option>
+                  @for (b of brands(); track b) {
+                    <option [ngValue]="b">{{ b }}</option>
+                  }
+                </select>
+                @if (form.get('brand')?.invalid && form.get('brand')?.touched) {
+                  <div class="text-danger small mt-1">La marca es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Modelo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="model">
+                  <option value="">Seleccionar modelo</option>
+                  @for (m of models(); track m) {
+                    <option [ngValue]="m">{{ m }}</option>
+                  }
+                </select>
+                @if (form.get('model')?.invalid && form.get('model')?.touched) {
+                  <div class="text-danger small mt-1">El modelo es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Año <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="year" min="1900" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Versión</label>
+                <input type="text" class="form-control" formControlName="version" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Color <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="color" />
+                @if (form.get('color')?.invalid && form.get('color')?.touched) {
+                  <div class="text-danger small mt-1">El color es obligatorio</div>
+                }
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número de serie <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="serialNumber" />
+                @if (form.get('serialNumber')?.invalid && form.get('serialNumber')?.touched) {
+                  <div class="text-danger small mt-1">El número de serie es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Número de motor</label>
+                <input type="text" class="form-control" formControlName="engineNumber" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Cilindrada</label>
+                <input type="number" class="form-control" formControlName="displacement" min="0" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Puertas</label>
+                <input type="number" class="form-control" formControlName="doorCount" min="0" />
+              </div>
+            </div>
+
+            <h6 class="mt-3 mb-2">Precios</h6>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Costo <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="costPrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Precio lista <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="listPrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Precio venta <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="salePrice" min="0" step="0.01" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Fecha de adquisición</label>
+                <input type="date" class="form-control" formControlName="acquisitionDate" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? "Guardar cambios" : "Crear unidad" }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/inventario-unidades">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

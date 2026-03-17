@@ -1,0 +1,80 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar ubicación" : "Nueva ubicación" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/inventario-refacciones/ubicaciones">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="ubicacion-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId" [disabled]="isEdit()">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('branchId')?.invalid && form.get('branchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Código</label>
+                <input type="text" class="form-control" formControlName="code" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Zona <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="zone" />
+                @if (form.get('zone')?.invalid && form.get('zone')?.touched) {
+                  <div class="text-danger small mt-1">La zona es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Pasillo</label>
+                <input type="text" class="form-control" formControlName="aisle" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Estante</label>
+                <input type="text" class="form-control" formControlName="shelf" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nivel</label>
+                <input type="text" class="form-control" formControlName="level" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" formControlName="description" rows="2"></textarea>
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check mt-4">
+                  <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
+                  <label class="form-check-label" for="isActive">Activa</label>
+                </div>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? "Guardar cambios" : "Crear ubicación" }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/inventario-refacciones/ubicaciones">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

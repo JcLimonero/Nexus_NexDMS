@@ -5,7 +5,6 @@ import { RouterModule } from "@angular/router";
 
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
-import { AuthService } from "../../../auth/auth.service";
 import { Menu, NavService } from "../../services/nav.service";
 import { FeatherIcons } from "../feather-icons/feather-icons";
 
@@ -25,7 +24,6 @@ import { FeatherIcons } from "../feather-icons/feather-icons";
 })
 export class Header implements OnInit, OnDestroy {
   navServices = inject(NavService);
-  private auth = inject(AuthService);
   private document = inject(DOCUMENT);
   private translate = inject(TranslateService);
 
@@ -122,10 +120,6 @@ export class Header implements OnInit, OnDestroy {
     this.searchResult = false;
     this.document.body.classList.remove("offcanvas");
     this.text = "";
-  }
-
-  SignOut(): void {
-    this.auth.logout();
   }
 
   toggleFullScreen(): void {

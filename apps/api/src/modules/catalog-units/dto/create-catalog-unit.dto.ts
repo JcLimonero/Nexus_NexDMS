@@ -1,4 +1,5 @@
 import {
+  Allow,
   IsEnum,
   IsInt,
   IsNumber,
@@ -8,7 +9,10 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { CatalogUnitVehicleTypeEnum } from '../entities/catalog-unit.entity';
+import {
+  CatalogUnitConditionEnum,
+  CatalogUnitVehicleTypeEnum,
+} from '../entities/catalog-unit.entity';
 
 export class CreateCatalogUnitDto {
   @IsUUID()
@@ -20,6 +24,11 @@ export class CreateCatalogUnitDto {
 
   @IsEnum(CatalogUnitVehicleTypeEnum)
   vehicleType: CatalogUnitVehicleTypeEnum;
+
+  @Allow()
+  @IsOptional()
+  @IsEnum(CatalogUnitConditionEnum)
+  conditionType?: CatalogUnitConditionEnum;
 
   @IsString()
   @MaxLength(100)

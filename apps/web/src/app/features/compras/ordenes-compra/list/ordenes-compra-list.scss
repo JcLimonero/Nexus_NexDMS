@@ -1,0 +1,13 @@
+.ordenes-compra-list {
+  .ordenes-header-card {
+    margin-bottom: 1rem;
+  }
+  .ordenes-table-card {
+    .table-action-btn {
+      color: var(--text-muted);
+      &:hover {
+        color: var(--primary);
+      }
+    }
+  }
+}

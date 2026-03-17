@@ -1,0 +1,189 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/compras/ordenes-compra" class="alert-link ms-2">Volver al listado</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (orden(); as o) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Orden {{ o.folio }}</h5>
+            <div class="d-flex gap-2 flex-wrap">
+              @if (canSend()) {
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="onSend()"
+                  [disabled]="sending()"
+                >
+                  @if (sending()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  Enviar al proveedor
+                </button>
+              }
+              @if (canReceive()) {
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  (click)="onReceive()"
+                  [disabled]="receiving()"
+                >
+                  @if (receiving()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  Recibir mercancía
+                </button>
+              }
+              @if (canCancel()) {
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="onCancel()"
+                  [disabled]="cancelling()"
+                >
+                  Cancelar orden
+                </button>
+              }
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/compras/ordenes-compra">
+                Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Proveedor</th>
+                      <td>{{ supplier()?.name ?? o.supplierId }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Sucursal</th>
+                      <td>{{ branchName() }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-secondary]="o.status === 'DRAFT'"
+                          [class.bg-primary]="o.status === 'SENT'"
+                          [class.bg-warning]="o.status === 'PARTIAL'"
+                          [class.bg-success]="o.status === 'RECEIVED'"
+                          [class.bg-danger]="o.status === 'CANCELLED'">
+                          {{ getStatusLabel(o.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Fecha orden</th>
+                      <td>{{ o.orderedAt }}</td>
+                    </tr>
+                    @if (o.expectedAt) {
+                      <tr>
+                        <th class="text-muted">Fecha esperada</th>
+                        <td>{{ o.expectedAt }}</td>
+                      </tr>
+                    }
+                    @if (o.receivedAt) {
+                      <tr>
+                        <th class="text-muted">Fecha recibida</th>
+                        <td>{{ o.receivedAt }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Totales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Subtotal</th>
+                      <td class="text-end">{{ o.subtotal | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">IVA</th>
+                      <td class="text-end">{{ o.taxAmount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Total</th>
+                      <td class="text-end fw-bold">{{ o.total | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            @if (o.notes) {
+              <div class="mb-3">
+                <h6 class="text-muted">Notas</h6>
+                <p class="mb-0">{{ o.notes }}</p>
+              </div>
+            }
+
+            <h6 class="text-muted mb-3">Líneas</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Parte</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-center">Recibida</th>
+                    @if (canReceive()) {
+                      <th class="text-center">A recibir</th>
+                    }
+                    <th class="text-end">Precio unit.</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of o.items ?? []; track item.id) {
+                    <tr>
+                      <td>{{ getItemPartName(item) }}</td>
+                      <td class="text-center">{{ item.quantity }}</td>
+                      <td class="text-center">{{ item.quantityReceived }}</td>
+                      @if (canReceive()) {
+                        <td class="text-center">
+                          @if (item.quantity - item.quantityReceived > 0) {
+                            <input
+                              type="number"
+                              class="form-control form-control-sm d-inline-block"
+                              style="width: 80px"
+                              [ngModel]="receiveQuantities()[item.id]"
+                              (ngModelChange)="setReceiveQty(item.id, $event)"
+                              min="0"
+                              [max]="item.quantity - item.quantityReceived"
+                            />
+                          } @else {
+                            <span class="text-muted">—</span>
+                          }
+                        </td>
+                      }
+                      <td class="text-end">{{ item.unitPrice | number:'1.2-2' }}</td>
+                      <td class="text-end">{{ item.subtotal | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

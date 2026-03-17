@@ -14,6 +14,12 @@ import { CatalogUnit } from '../../catalog-units/entities/catalog-unit.entity';
 export enum VehicleTypeEnum {
   MOTORCYCLE = 'MOTORCYCLE',
   CAR = 'CAR',
+  SUV = 'SUV',
+  MINIVAN = 'MINIVAN',
+  TRUCK = 'TRUCK',
+  VAN = 'VAN',
+  CARGO_VAN = 'CARGO_VAN',
+  BOX_TRUCK = 'BOX_TRUCK',
 }
 
 @Entity('customer_vehicles')

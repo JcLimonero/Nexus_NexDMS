@@ -1,0 +1,105 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Nueva orden de compra</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/compras/ordenes-compra">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="orden-compra-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('branchId')?.invalid && form.get('branchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Proveedor <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="supplierId">
+                  <option value="">Seleccionar proveedor</option>
+                  @for (s of suppliers(); track s.id) {
+                    <option [ngValue]="s.id">{{ s.name }}</option>
+                  }
+                </select>
+                @if (form.get('supplierId')?.invalid && form.get('supplierId')?.touched) {
+                  <div class="text-danger small mt-1">El proveedor es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Fecha orden <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="orderedAt" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Fecha esperada</label>
+                <input type="date" class="form-control" formControlName="expectedAt" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+              </div>
+            </div>
+
+            <h6 class="mt-4 mb-2">Líneas de la orden</h6>
+            <div formArrayName="lines">
+              @for (line of lines.controls; track $index; let i = $index) {
+                <div class="row align-items-end mb-2" [formGroupName]="i">
+                  <div class="col-md-5">
+                    <label class="form-label small">Parte</label>
+                    <select
+                      class="form-select form-select-sm"
+                      formControlName="partId"
+                      (change)="onPartSelect(i)"
+                    >
+                      <option value="">Seleccionar parte</option>
+                      @for (p of parts(); track p.id) {
+                        <option [ngValue]="p.id">{{ getPartLabel(p) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small">Cantidad</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1" />
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small">Precio unit.</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="unitPrice" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeLine(i)" [disabled]="lines.length <= 1">
+                      <i class="icofont icofont-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addLine()">
+              <i class="icofont icofont-plus me-1"></i> Agregar línea
+            </button>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Crear orden
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/compras/ordenes-compra">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

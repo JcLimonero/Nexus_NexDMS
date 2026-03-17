@@ -29,88 +29,88 @@ export const content: Routes = [
     path: "inventario-refacciones",
     data: { breadcrumb: "Inventario refacciones" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.inventarioRefacciones,
+      import("../../../app/features/inventario-refacciones/inventario-refacciones.routes").then(
+        (r) => r.inventarioRefaccionesRoutes,
       ),
   },
   {
     path: "inventario-unidades",
     data: { breadcrumb: "Inventario unidades" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.inventarioUnidades,
+      import("../../../app/features/inventario-unidades/inventario-unidades.routes").then(
+        (r) => r.inventarioUnidadesRoutes,
       ),
   },
   {
     path: "compras",
     data: { breadcrumb: "Compras" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.compras,
+      import("../../../app/features/compras/compras.routes").then(
+        (r) => r.comprasRoutes,
       ),
   },
   {
     path: "almacen",
     data: { breadcrumb: "Almacén" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.almacen,
+      import("../../../app/features/almacen/almacen.routes").then(
+        (r) => r.almacenRoutes,
       ),
   },
   {
     path: "caja",
-    data: { breadcrumb: "Caja" },
+    data: { breadcrumb: "Caja y ventas" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.caja,
+      import("../../../app/features/caja-ventas/caja-ventas.routes").then(
+        (r) => r.cajaVentasRoutes,
       ),
   },
   {
     path: "ventas",
-    data: { breadcrumb: "Ventas" },
+    data: { breadcrumb: "Ventas de unidades" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.ventas,
+      import("../../../app/features/ventas-unidades/ventas-unidades.routes").then(
+        (r) => r.ventasUnidadesRoutes
       ),
   },
   {
     path: "cotizaciones",
     data: { breadcrumb: "Cotizaciones" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.cotizaciones,
+      import("../../../app/features/cotizaciones/cotizaciones.routes").then(
+        (r) => r.cotizacionesRoutes,
       ),
   },
   {
     path: "taller",
     data: { breadcrumb: "Taller" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.taller,
+      import("../../../app/features/taller/taller.routes").then(
+        (r) => r.tallerRoutes,
       ),
   },
   {
     path: "garantias",
     data: { breadcrumb: "Garantías" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.garantias,
+      import("../../../app/features/garantias/garantias.routes").then(
+        (r) => r.garantiasRoutes,
       ),
   },
   {
     path: "cfdi",
     data: { breadcrumb: "CFDI" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.cfdi,
+      import("../../../app/features/cfdi/cfdi.routes").then(
+        (r) => r.cfdiRoutes,
       ),
   },
   {
     path: "reportes",
     data: { breadcrumb: "Reportes" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.reportes,
+      import("../../../app/features/reportes/reportes.routes").then(
+        (r) => r.reportesRoutes,
       ),
   },
   {
@@ -125,8 +125,8 @@ export const content: Routes = [
     path: "configuracion",
     data: { breadcrumb: "Configuración" },
     loadChildren: () =>
-      import("../../../app/components/placeholder/placeholder.routes").then(
-        (r) => r.configuracion,
+      import("../../../app/features/configuracion/configuracion.routes").then(
+        (r) => r.configuracionRoutes,
       ),
   },
   // Contactos: selector de cliente para ver sus contactos

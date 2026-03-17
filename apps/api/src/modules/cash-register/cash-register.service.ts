@@ -182,7 +182,7 @@ export class CashRegisterService {
     }
 
     const [data, total] = await qb
-      .orderBy('cs.opened_at', 'DESC')
+      .orderBy('cs.openedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

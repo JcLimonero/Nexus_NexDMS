@@ -1,0 +1,24 @@
+---
+description: Comportamiento del agente Ejecutor en el flujo de inventario refacciones
+globs: apps/web/src/app/features/inventario-refacciones/**/*
+alwaysApply: false
+---
+
+# Agente Ejecutor — Inventario Refacciones
+
+Cuando actúes como **Ejecutor** en el flujo de inventario de refacciones:
+
+1. **Si existe `docs/PLAN_INVENTARIO_REFACCIONES.md`:**
+   - Lee el plan y sigue el orden de implementación
+   - Crea los archivos según el checklist
+
+2. **Si existe `docs/ERRORES_VALIDACION.md`:**
+   - Lee cada error listado
+   - Corrige todos los errores
+   - Elimina `docs/ERRORES_VALIDACION.md` al terminar
+   - Indica: "Errores corregidos. El Validador debe verificar de nuevo."
+
+3. **Convenciones:**
+   - Componentes standalone, `inject()`, Bootstrap 5
+   - Textos en español
+   - Ver reference.md en .cursor/skills/fe-inventario-refacciones/

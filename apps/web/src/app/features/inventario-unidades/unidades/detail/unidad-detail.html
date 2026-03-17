@@ -1,0 +1,268 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/inventario-unidades" class="alert-link ms-2">Volver al listado</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (unidad(); as u) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">{{ getDisplayLabel(u) }}</h5>
+            <div class="d-flex gap-2 flex-wrap">
+              @if (u.status === 'SOLD') {
+                <a class="btn btn-warning btn-sm" [routerLink]="['/inventario-unidades', u.id, 'recompra']">
+                  Registrar recompra
+                </a>
+              }
+              @if (u.status === 'PENDING_EXPEDIENTE') {
+                @if (getExpedienteStatus()?.lastReturn; as last) {
+                  <a class="btn btn-danger btn-sm" [routerLink]="['/inventario-unidades', u.id, 'recompra', last.id, 'expediente']">
+                    <i class="icofont icofont-file-document me-1"></i>
+                    Subir documentos del vendedor
+                  </a>
+                } @else {
+                  <a class="btn btn-danger btn-sm" [routerLink]="['/inventario-unidades', u.id, 'recompra']">
+                    <i class="icofont icofont-user me-1"></i>
+                    Registrar datos del vendedor
+                  </a>
+                }
+              }
+              <a class="btn btn-primary btn-sm" [routerLink]="['/inventario-unidades', u.id, 'editar']">
+                Editar
+              </a>
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/inventario-unidades">
+                Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Datos del vehículo</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Número de serie</th>
+                      <td>{{ u.serialNumber }}</td>
+                    </tr>
+                    @if (u.engineNumber) {
+                      <tr>
+                        <th class="text-muted">Número de motor</th>
+                        <td>{{ u.engineNumber }}</td>
+                      </tr>
+                    }
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ getVehicleTypeLabel(u.vehicleType) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-success]="u.status === 'AVAILABLE'"
+                          [class.bg-warning]="u.status === 'RESERVED'"
+                          [class.bg-info]="u.status === 'SOLD'"
+                          [class.bg-secondary]="u.status === 'WRITTEN_OFF'"
+                          [class.bg-danger]="u.status === 'PENDING_EXPEDIENTE'">
+                          {{ getStatusLabel(u.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    @if (u.conditionType) {
+                      <tr>
+                        <th class="text-muted">Condición</th>
+                        <td>{{ getConditionLabel(u.conditionType) }}</td>
+                      </tr>
+                    }
+                    @if (u.displacement) {
+                      <tr>
+                        <th class="text-muted">Cilindrada</th>
+                        <td>{{ u.displacement }} cc</td>
+                      </tr>
+                    }
+                    @if (u.doorCount) {
+                      <tr>
+                        <th class="text-muted">Puertas</th>
+                        <td>{{ u.doorCount }}</td>
+                      </tr>
+                    }
+                    @if (u.acquisitionDate) {
+                      <tr>
+                        <th class="text-muted">Fecha adquisición</th>
+                        <td>{{ u.acquisitionDate }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Precios</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Costo</th>
+                      <td>{{ u.costPrice | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Precio lista</th>
+                      <td>{{ u.listPrice | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Precio venta</th>
+                      <td>{{ u.salePrice | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                @if (u.lastServiceDate || u.nextServiceDate) {
+                  <h6 class="text-muted mb-3 mt-4">Servicio</h6>
+                  <table class="table table-sm table-borderless">
+                    <tbody>
+                      @if (u.lastServiceDate) {
+                        <tr>
+                          <th class="text-muted" style="width: 140px">Último servicio</th>
+                          <td>{{ u.lastServiceDate }}{{ u.lastServiceMileage ? ' · ' + u.lastServiceMileage + ' km' : '' }}</td>
+                        </tr>
+                      }
+                      @if (u.nextServiceDate) {
+                        <tr>
+                          <th class="text-muted">Próximo servicio</th>
+                          <td>{{ u.nextServiceDate }}{{ u.nextServiceMileage ? ' · ' + u.nextServiceMileage + ' km' : '' }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                }
+              </div>
+            </div>
+
+            @if (u.notes) {
+              <div class="mt-3">
+                <h6 class="text-muted">Notas</h6>
+                <p class="mb-0">{{ u.notes }}</p>
+              </div>
+            }
+
+            @if (getExpedienteStatus(); as exp) {
+              @if (exp.lastReturn) {
+                <div class="mt-4">
+                  <h6 class="text-muted mb-3">Datos del vendedor (recompra)</h6>
+                  <div class="card bg-light">
+                    <div class="card-body py-3">
+                      <div class="row">
+                        <div class="col-md-6">
+                          <strong>Vendedor:</strong> {{ exp.lastReturn.clientName }}
+                        </div>
+                        <div class="col-md-6">
+                          <strong>Fecha recompra:</strong> {{ exp.lastReturn.returnDate }}
+                        </div>
+                      </div>
+                      <div class="mt-2">
+                        <strong>Expediente:</strong>
+                        @if (exp.complete) {
+                          <span class="text-success">Completo</span>
+                        } @else {
+                          <span class="text-danger">Incompleto</span>
+                          @if (exp.missingDocs.length) {
+                            <span class="small text-muted ms-1">
+                              — Faltan: {{ getMissingDocsLabel(exp.missingDocs) }}
+                            </span>
+                          }
+                        }
+                        <a
+                          class="btn btn-link btn-sm p-0 ms-2"
+                          [routerLink]="['/inventario-unidades', u.id, 'recompra', exp.lastReturn.id, 'expediente']"
+                        >
+                          Ver expediente
+                        </a>
+                      </div>
+                      @if (exp.canBecomeAvailable) {
+                        <div class="mt-3">
+                          <button
+                            type="button"
+                            class="btn btn-success btn-sm"
+                            (click)="onCompleteExpediente()"
+                            [disabled]="completing()"
+                          >
+                            @if (completing()) {
+                              <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                            }
+                            Completar expediente y marcar disponible
+                          </button>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            }
+
+            @if (history().length) {
+              <div class="mt-4">
+                <h6 class="text-muted mb-3">Historial de clientes</h6>
+                <div class="unit-history-timeline">
+                  @for (event of history(); track $index) {
+                    <div class="d-flex gap-3 mb-3">
+                      <div class="flex-shrink-0">
+                        <span class="badge rounded-pill"
+                          [class.bg-primary]="event.type === 'ACQUISITION'"
+                          [class.bg-success]="event.type === 'SALE'"
+                          [class.bg-warning]="event.type === 'RETURN'">
+                          {{ event.date }}
+                        </span>
+                      </div>
+                      <div class="flex-grow-1">
+                        <div class="fw-medium">
+                          {{ getHistoryEventLabel(event) }}
+                          @if (event.type === 'RETURN' && event.id) {
+                            <a
+                              class="btn btn-link btn-sm p-0 ms-2"
+                              [routerLink]="['/inventario-unidades', u.id, 'recompra', event.id, 'expediente']"
+                            >
+                              Ver expediente
+                            </a>
+                          }
+                        </div>
+                        @if (event.clientName) {
+                          <div class="small text-muted">
+                            @if (event.finalPrice) {
+                              <span>Precio venta: {{ event.finalPrice | number:'1.2-2' }}</span>
+                            }
+                            @if (event.buybackPrice) {
+                              <span>Precio recompra: {{ event.buybackPrice | number:'1.2-2' }}</span>
+                            }
+                            @if (event.folio) {
+                              <span> · Folio: {{ event.folio }}</span>
+                            }
+                            @if (event.deliveryDate) {
+                              <span> · Entregada: {{ event.deliveryDate }}</span>
+                            }
+                            @if (event.mileage) {
+                              <span> · {{ event.mileage }} km</span>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

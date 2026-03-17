@@ -2,19 +2,20 @@ export interface VehicleType {
   id: string;
   code: string;
   label: string;
-  sortOrder: number;
 }
 
 export interface CombustionType {
   id: string;
   code: string;
   label: string;
-  sortOrder: number;
 }
+
+import type { GlobalBrand } from "./global-brand.model";
 
 export interface GlobalModel {
   id: string;
-  brandName: string;
+  brandId: string;
+  brand?: GlobalBrand;
   vehicleTypeId: string;
   vehicleType?: VehicleType;
   model: string;
@@ -39,7 +40,7 @@ export interface GlobalModelsResponse {
 }
 
 export interface CreateGlobalModelDto {
-  brandName: string;
+  brandId: string;
   vehicleTypeId: string;
   model: string;
   version?: string;
@@ -51,7 +52,7 @@ export interface CreateGlobalModelDto {
 }
 
 export interface FilterGlobalModels {
-  brandName?: string;
+  brandId?: string;
   vehicleTypeId?: string;
   year?: number;
   isActive?: boolean;

@@ -1,0 +1,13 @@
+.listas-precio-list {
+  .listas-header-card {
+    margin-bottom: 1rem;
+  }
+  .listas-table-card {
+    .table-action-btn {
+      color: var(--text-muted);
+      &:hover {
+        color: var(--primary);
+      }
+    }
+  }
+}

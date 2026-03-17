@@ -1,0 +1,139 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? 'Editar cotización' : 'Nueva cotización' }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/cotizaciones">Volver</a>
+        </div>
+        <div class="card-body">
+          <form class="cotizacion-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId">
+                  <option value="">Seleccionar</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="type">
+                  @for (t of typeOptions; track t.value) {
+                    <option [ngValue]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+              </div>
+              @if (form.get('type')?.value !== 'UNIT') {
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Lista precios <span class="text-danger">*</span></label>
+                  <select class="form-select" formControlName="priceList">
+                    @for (pl of priceListOptions; track pl.value) {
+                      <option [ngValue]="pl.value">{{ pl.label }}</option>
+                    }
+                  </select>
+                </div>
+              }
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Cliente</label>
+                <select class="form-select" formControlName="clientId">
+                  <option value="">Sin cliente</option>
+                  @for (c of clients(); track c.id) {
+                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-1 mb-3">
+                <label class="form-label">Desc. %</label>
+                <input type="number" class="form-control" formControlName="discountPct" min="0" max="100" step="0.01" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Vigencia</label>
+                <input type="date" class="form-control" formControlName="validityDate" />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Condiciones</label>
+              <textarea class="form-control" formControlName="conditions" rows="2"></textarea>
+            </div>
+
+            <h6 class="mt-4 mb-2">Ítems</h6>
+            <div formArrayName="items">
+              @for (item of items.controls; track $index; let i = $index) {
+                <div class="row align-items-end mb-2" [formGroupName]="i">
+                  <div class="col-md-3">
+                    <select
+                      class="form-select form-select-sm"
+                      formControlName="partId"
+                      (change)="onPartSelect(i)"
+                    >
+                      <option value="">Parte (opcional)</option>
+                      @for (p of parts(); track p.id) {
+                        <option [ngValue]="p.id">{{ getPartLabel(p) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select
+                      class="form-select form-select-sm"
+                      formControlName="catalogUnitId"
+                      (change)="onUnitSelect(i)"
+                    >
+                      <option value="">Unidad (opcional)</option>
+                      @for (u of units(); track u.id) {
+                        <option [ngValue]="u.id">{{ getUnitLabel(u) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <input type="text" class="form-control form-control-sm" formControlName="description" placeholder="Descripción manual" />
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1" />
+                  </div>
+                  <div class="col-md-2">
+                    <input type="number" class="form-control form-control-sm" formControlName="unitPrice" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" class="form-control form-control-sm" formControlName="discount" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeItem(i)" [disabled]="items.length <= 1">
+                      <i class="icofont icofont-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addItem()">
+              <i class="icofont icofont-plus me-1"></i> Agregar ítem
+            </button>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <p class="mb-0">
+                  <strong>Subtotal:</strong> {{ getTotalCalculado().subtotal | number:'1.2-2' }} |
+                  <strong>IVA:</strong> {{ getTotalCalculado().tax | number:'1.2-2' }} |
+                  <strong>Total:</strong> {{ getTotalCalculado().total | number:'1.2-2' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? 'Guardar' : 'Crear cotización' }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/cotizaciones">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

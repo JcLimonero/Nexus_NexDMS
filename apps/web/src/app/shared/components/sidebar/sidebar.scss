@@ -1,0 +1,68 @@
+/* Sidebar: menú arriba, usuario abajo */
+.page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
+  display: flex !important;
+  flex-direction: column;
+  height: calc(100vh - 80px) !important;
+  overflow: hidden !important; /* solo el menú hace scroll, no el sidebar completo */
+
+  .sidebar-menu {
+    flex: 1;
+    min-height: 0; /* necesario para que flex shrink funcione con overflow */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .sidebar-user-bottom {
+    flex-shrink: 0;
+    padding: 12px 15px;
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+
+    .d-flex {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .flex-grow-1 {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .text-start {
+      text-align: left;
+    }
+
+    .text-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    h6 {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .text-muted {
+      color: rgba(255, 255, 255, 0.75) !important;
+    }
+
+    .fa-chevron-up {
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+  }
+}
+
+/* Dropdown del usuario en sidebar: iconos alineados */
+.sidebar-user-bottom .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-user-bottom .dropdown-item app-feather-icons {
+  flex-shrink: 0;
+}

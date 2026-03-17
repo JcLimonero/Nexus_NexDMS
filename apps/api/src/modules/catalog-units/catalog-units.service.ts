@@ -8,10 +8,17 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
   CatalogUnit,
+  CatalogUnitConditionEnum,
   CatalogUnitStatusEnum,
 } from './entities/catalog-unit.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { UnitLocation } from '../unit-locations/entities/unit-location.entity';
+import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
+import { UnitReturn } from '../unit-returns/entities/unit-return.entity';
+import { UnitReturnDocument } from '../unit-return-documents/entities/unit-return-document.entity';
+import { UnitReturnDocumentStatusEnum } from '../unit-return-documents/entities/unit-return-document.entity';
+import { REQUIRED_EXPEDIENTE_DOCUMENT_TYPES } from '../unit-return-documents/constants/document-types';
+import { UnitSaleStatusEnum } from '../unit-sales/entities/unit-sale.entity';
 import { CreateCatalogUnitDto } from './dto/create-catalog-unit.dto';
 import { UpdateCatalogUnitDto } from './dto/update-catalog-unit.dto';
 import {
@@ -31,6 +38,12 @@ export class CatalogUnitsService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(UnitLocation)
     private readonly locationRepo: Repository<UnitLocation>,
+    @InjectRepository(UnitSale)
+    private readonly saleRepo: Repository<UnitSale>,
+    @InjectRepository(UnitReturn)
+    private readonly returnRepo: Repository<UnitReturn>,
+    @InjectRepository(UnitReturnDocument)
+    private readonly unitReturnDocRepo: Repository<UnitReturnDocument>,
     private readonly branchesService: BranchesService,
   ) {}
 
@@ -219,10 +232,14 @@ export class CatalogUnitsService {
       }
     }
 
+    const isSeminueva =
+      dto.conditionType === CatalogUnitConditionEnum.USED;
     const unit = this.unitRepo.create({
       ...dto,
       tenantId: user.tenantId,
-      status: CatalogUnitStatusEnum.AVAILABLE,
+      status: isSeminueva
+        ? CatalogUnitStatusEnum.PENDING_EXPEDIENTE
+        : CatalogUnitStatusEnum.AVAILABLE,
       globalModelId: dto.globalModelId ?? null,
       engineNumber: dto.engineNumber ?? null,
       displacement: dto.displacement ?? null,
@@ -276,6 +293,194 @@ export class CatalogUnitsService {
         ? new Date(dto.acquisitionDate)
         : null;
     }
+    return this.unitRepo.save(unit);
+  }
+
+  async getHistory(
+    user: UserPayload,
+    id: string,
+  ): Promise<
+    Array<{
+      type: 'ACQUISITION' | 'SALE' | 'RETURN';
+      date: string;
+      id?: string;
+      clientId?: string;
+      clientName?: string;
+      finalPrice?: number;
+      buybackPrice?: number;
+      deliveryDate?: string;
+      folio?: string;
+      mileage?: number;
+    }>
+  > {
+    const unit = await this.findOne(user, id);
+    const events: Array<{
+      type: 'ACQUISITION' | 'SALE' | 'RETURN';
+      date: string;
+      id?: string;
+      clientId?: string;
+      clientName?: string;
+      finalPrice?: number;
+      buybackPrice?: number;
+      deliveryDate?: string;
+      folio?: string;
+      mileage?: number;
+    }> = [];
+
+    if (unit.acquisitionDate) {
+      events.push({
+        type: 'ACQUISITION',
+        date: unit.acquisitionDate.toString(),
+      });
+    } else if (unit.createdAt) {
+      events.push({
+        type: 'ACQUISITION',
+        date: new Date(unit.createdAt).toISOString().split('T')[0],
+      });
+    }
+
+    const sales = await this.saleRepo.find({
+      where: { catalogUnitId: id, status: UnitSaleStatusEnum.COMPLETED },
+      relations: ['client'],
+      order: { createdAt: 'ASC' },
+    });
+    for (const s of sales) {
+      const clientName =
+        s.client?.companyName?.trim() ||
+        [s.client?.firstName, s.client?.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        'Cliente';
+      events.push({
+        type: 'SALE',
+        date: new Date(s.createdAt).toISOString().split('T')[0],
+        id: s.id,
+        clientId: s.clientId,
+        clientName,
+        finalPrice: Number(s.finalPrice),
+        deliveryDate: s.deliveryDate
+          ? new Date(s.deliveryDate).toISOString().split('T')[0]
+          : undefined,
+        folio: s.folio,
+      });
+    }
+
+    const returns = await this.returnRepo.find({
+      where: { catalogUnitId: id },
+      relations: ['client'],
+      order: { returnDate: 'ASC' },
+    });
+    for (const r of returns) {
+      const clientName =
+        r.client?.companyName?.trim() ||
+        [r.client?.firstName, r.client?.lastName]
+          .filter(Boolean)
+          .join(' ')
+          .trim() ||
+        'Cliente';
+      events.push({
+        type: 'RETURN',
+        date: new Date(r.returnDate).toISOString().split('T')[0],
+        id: r.id,
+        clientId: r.clientId,
+        clientName,
+        buybackPrice: Number(r.buybackPrice),
+        mileage: r.mileage ?? undefined,
+      });
+    }
+
+    events.sort((a, b) => a.date.localeCompare(b.date));
+    return events;
+  }
+
+  async getExpedienteStatus(
+    user: UserPayload,
+    id: string,
+  ): Promise<{
+    complete: boolean;
+    hasSeller: boolean;
+    missingDocs: string[];
+    lastReturn: { id: string; clientName: string; returnDate: string } | null;
+    canBecomeAvailable: boolean;
+  }> {
+    const unit = await this.findOne(user, id);
+
+    const lastReturn = await this.returnRepo.findOne({
+      where: { catalogUnitId: id },
+      relations: ['client'],
+      order: { returnDate: 'DESC' },
+    });
+
+    if (!lastReturn) {
+      return {
+        complete: false,
+        hasSeller: false,
+        missingDocs: [...REQUIRED_EXPEDIENTE_DOCUMENT_TYPES],
+        lastReturn: null,
+        canBecomeAvailable: false,
+      };
+    }
+
+    const clientName =
+      lastReturn.client?.companyName?.trim() ||
+      [lastReturn.client?.firstName, lastReturn.client?.lastName]
+        .filter(Boolean)
+        .join(' ')
+        .trim() ||
+      'Vendedor';
+
+    const docs = await this.unitReturnDocRepo.find({
+      where: {
+        unitReturnId: lastReturn.id,
+        status: UnitReturnDocumentStatusEnum.APPROVED,
+      },
+    });
+
+    const approvedTypes = new Set(docs.map((d) => d.documentType));
+    const missingDocs = REQUIRED_EXPEDIENTE_DOCUMENT_TYPES.filter(
+      (t) => !approvedTypes.has(t),
+    );
+
+    const complete =
+      lastReturn.clientId != null && missingDocs.length === 0;
+    const canBecomeAvailable =
+      unit.status === CatalogUnitStatusEnum.PENDING_EXPEDIENTE && complete;
+
+    return {
+      complete,
+      hasSeller: lastReturn.clientId != null,
+      missingDocs: [...missingDocs],
+      lastReturn: {
+        id: lastReturn.id,
+        clientName,
+        returnDate: new Date(lastReturn.returnDate).toISOString().split('T')[0],
+      },
+      canBecomeAvailable,
+    };
+  }
+
+  async completeExpediente(
+    user: UserPayload,
+    id: string,
+  ): Promise<CatalogUnit> {
+    this.assertCanWrite(user);
+    const unit = await this.findOne(user, id);
+
+    if (unit.status !== CatalogUnitStatusEnum.PENDING_EXPEDIENTE) {
+      throw new BadRequestException(
+        'Solo unidades con expediente pendiente pueden completarse',
+      );
+    }
+
+    const status = await this.getExpedienteStatus(user, id);
+    if (!status.complete) {
+      throw new BadRequestException(
+        `Expediente incompleto. Faltan documentos: ${status.missingDocs.join(', ')}`,
+      );
+    }
+
+    unit.status = CatalogUnitStatusEnum.AVAILABLE;
     return this.unitRepo.save(unit);
   }
 

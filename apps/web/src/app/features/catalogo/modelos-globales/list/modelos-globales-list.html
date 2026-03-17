@@ -7,21 +7,29 @@
             <h5>Modelos globales</h5>
             <span>Catálogo maestro de marcas, modelos, versiones y años</span>
           </div>
-          <a class="btn btn-primary" routerLink="/catalogo/nuevo">
+          <div class="d-flex gap-2">
+            <a class="btn btn-outline-primary" routerLink="/catalogo/marcas">
+              Marcas
+            </a>
+            <a class="btn btn-primary" routerLink="/catalogo/nuevo">
             <app-feather-icons [icon]="'plus'" />
             Nuevo modelo
           </a>
+          </div>
         </div>
         <div class="card-body">
           <div class="row">
             <div class="col-md-6">
-              <input
-                type="text"
-                class="form-control"
-                placeholder="Buscar por marca..."
-                [ngModel]="searchTerm()"
-                (ngModelChange)="onSearchChange($event)"
-              />
+              <select
+                class="form-select"
+                [ngModel]="brandFilter()"
+                (ngModelChange)="onBrandFilterChange($event)"
+              >
+                <option value="">Todas las marcas</option>
+                @for (b of brands(); track b.id) {
+                  <option [ngValue]="b.id">{{ b.name }}</option>
+                }
+              </select>
             </div>
             <div class="col-md-4">
               <select
@@ -70,7 +78,7 @@
                 <tbody>
                   @for (model of models(); track model.id) {
                     <tr>
-                      <td>{{ model.brandName }}</td>
+                      <td>{{ model.brand?.name ?? "—" }}</td>
                       <td>
                         <a [routerLink]="['/catalogo', model.id]">
                           {{ model.model }}

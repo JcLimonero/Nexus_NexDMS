@@ -1,0 +1,224 @@
+<div class="container-fluid venta-unidad-form">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Nueva venta de unidad</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/ventas">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <p class="text-muted mb-4">
+            Selecciona una unidad del inventario (listas para la venta) y solo los accesorios compatibles con esa unidad.
+          </p>
+
+          <form [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Filtrar por sucursal</label>
+                <select
+                  class="form-select"
+                  [ngModel]="branchFilter()"
+                  (ngModelChange)="onBranchChange($event)"
+                  [ngModelOptions]="{standalone: true}"
+                >
+                  <option value="">Todas las sucursales</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Unidad <span class="text-danger">*</span></label>
+                <select
+                  class="form-select"
+                  formControlName="catalogUnitId"
+                  (change)="onUnitChange(form.get('catalogUnitId')?.value)"
+                >
+                  <option value="">Seleccionar unidad disponible</option>
+                  @for (u of units(); track u.id) {
+                    <option [ngValue]="u.id">{{ getUnitLabel(u) }}</option>
+                  }
+                </select>
+                @if (form.get('catalogUnitId')?.invalid && form.get('catalogUnitId')?.touched) {
+                  <div class="text-danger small mt-1">La unidad es obligatoria</div>
+                }
+                @if (unitsLoading()) {
+                  <div class="small text-muted mt-1">Cargando unidades...</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="clientId">
+                  <option value="">Seleccionar cliente</option>
+                  @for (c of clients(); track c.id) {
+                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
+                  }
+                </select>
+                @if (form.get('clientId')?.invalid && form.get('clientId')?.touched) {
+                  <div class="text-danger small mt-1">El cliente es obligatorio</div>
+                }
+              </div>
+            </div>
+
+            @if (selectedUnit()) {
+              <div class="alert alert-light border mb-4">
+                <strong>Precio lista:</strong> ${{ basePrice() | number:'1.2-2' }}
+              </div>
+
+              <div class="accessories-section mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <h6 class="mb-0">Accesorios compatibles</h6>
+                  @if (accessoriesLoading()) {
+                    <span class="badge bg-secondary">Cargando...</span>
+                  } @else if (compatibleAccessories().length > 0) {
+                    <button
+                      type="button"
+                      class="btn btn-outline-primary btn-sm"
+                      (click)="addAccessory()"
+                    >
+                      Agregar accesorio
+                    </button>
+                  } @else {
+                    <span class="text-muted small">Sin accesorios compatibles</span>
+                  }
+                </div>
+                @if (accessoriesArray.length > 0) {
+                  <div class="table-responsive">
+                    <table class="table table-sm">
+                      <thead>
+                        <tr>
+                          <th>Accesorio</th>
+                          <th>Precio</th>
+                          <th style="width: 100px">Cantidad</th>
+                          <th>Subtotal</th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        @for (ctrl of accessoriesArray.controls; track $index; let i = $index) {
+                          <tr [formGroupName]="i">
+                            <td>
+                              <select class="form-select form-select-sm" formControlName="accessoryId" (change)="syncFinalPrice()">
+                                @for (a of compatibleAccessories(); track a.id) {
+                                  <option [ngValue]="a.id">{{ a.name }} — ${{ a.price | number:'1.2-2' }}</option>
+                                }
+                              </select>
+                            </td>
+                            <td>
+                              @if (compatibleAccessories().length > 0) {
+                                @let acc = compatibleAccessories().find(a => a.id === ctrl.get('accessoryId')?.value);
+                                @if (acc) {
+                                  ${{ acc.price | number:'1.2-2' }}
+                                }
+                              }
+                            </td>
+                            <td>
+                              <input
+                                type="number"
+                                class="form-control form-control-sm"
+                                formControlName="quantity"
+                                min="1"
+                                (change)="syncFinalPrice()"
+                              />
+                            </td>
+                            <td>
+                              @if (compatibleAccessories().length > 0) {
+                                @let acc = compatibleAccessories().find(a => a.id === ctrl.get('accessoryId')?.value);
+                                @if (acc) {
+                                  ${{ (acc.price * (ctrl.get('quantity')?.value || 0)) | number:'1.2-2' }}
+                                }
+                              }
+                            </td>
+                            <td>
+                              <button
+                                type="button"
+                                class="btn btn-outline-danger btn-sm"
+                                (click)="removeAccessory(i); syncFinalPrice()"
+                              >
+                                Quitar
+                              </button>
+                            </td>
+                          </tr>
+                        }
+                      </tbody>
+                    </table>
+                  </div>
+                }
+              </div>
+            }
+
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio final <span class="text-danger">*</span></label>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="finalPrice"
+                  min="0"
+                  step="0.01"
+                />
+                @if (selectedUnit()) {
+                  <small class="text-muted">Base + accesorios: ${{ totalPrice() | number:'1.2-2' }}</small>
+                }
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Enganche <span class="text-danger">*</span></label>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="downPayment"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo de financiamiento</label>
+                <select class="form-select" formControlName="financingType">
+                  @for (ft of financingTypes; track ft.value) {
+                    <option [ngValue]="ft.value">{{ ft.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Fecha entrega</label>
+                <input type="date" class="form-control" formControlName="deliveryDate" />
+              </div>
+            </div>
+
+            @if (form.get('financingType')?.value === 'BANK_CREDIT') {
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Banco financiador</label>
+                  <input type="text" class="form-control" formControlName="bankFinancier" />
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Folio banco</label>
+                  <input type="text" class="form-control" formControlName="bankFolio" />
+                </div>
+              </div>
+            }
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving()">
+                @if (saving()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Crear venta
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/ventas">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -127,7 +127,7 @@ export class WarrantiesService {
     }
 
     const [data, total] = await qb
-      .orderBy('w.created_at', 'DESC')
+      .orderBy('w.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

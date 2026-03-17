@@ -44,11 +44,11 @@ export class ClientesList implements OnInit {
 
     this.searchSubject
       .pipe(
-        debounceTime(300),
+        debounceTime(150),
         switchMap(() => {
           const ct = this.clientTypeFilter();
           return this.clientesService.getAll({
-            search: this.searchTerm() || undefined,
+            search: this.searchTerm().trim() || undefined,
             clientType:
               ct === "INDIVIDUAL" || ct === "BUSINESS" ? (ct as ClientType) : undefined,
             page: this.meta()?.page ?? 1,

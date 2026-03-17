@@ -100,7 +100,7 @@
                       {{ getQualityLabel(c.dataQuality.level) }}
                     </span>
                   </div>
-                  @if (c.dataQuality.missingFields?.length) {
+                  @if (c.dataQuality.missingFields.length) {
                     <p class="small text-muted mb-0">
                       Faltan: {{ c.dataQuality.missingFields.join(", ") }}
                     </p>

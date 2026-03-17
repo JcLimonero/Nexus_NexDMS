@@ -48,11 +48,15 @@ export class PurchaseOrdersService {
   ) {
     switch (user.scope) {
       case ScopeEnum.SUCURSAL:
+        if (!user.branchId) {
+          qb.andWhere('1 = 0');
+          return;
+        }
         qb.andWhere('po.branch_id = :branchId', { branchId: user.branchId });
         break;
       case ScopeEnum.LEGAL_ENTITY:
         if (!user.legalEntityId) return;
-        qb.innerJoin('branches', 'b', 'b.id = po.branch_id').andWhere(
+        qb.innerJoin(Branch, 'b', 'b.id = po.branch_id').andWhere(
           'b.legal_entity_id = :legalEntityId',
           { legalEntityId: user.legalEntityId },
         );
@@ -129,7 +133,7 @@ export class PurchaseOrdersService {
     }
 
     const [data, total] = await qb
-      .orderBy('po.created_at', 'DESC')
+      .orderBy('po.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

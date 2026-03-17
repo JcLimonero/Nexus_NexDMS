@@ -1,0 +1,160 @@
+<div class="container-fluid cotizaciones-list">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card cotizaciones-header-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Cotizaciones</h5>
+            <span>Refacciones, servicios y unidades</span>
+          </div>
+          <a class="btn btn-primary" routerLink="/cotizaciones/nueva">
+            <i class="icofont icofont-plus me-1"></i> Nueva cotización
+          </a>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="statusFilter()"
+                (ngModelChange)="statusFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todos los estados</option>
+                <option value="DRAFT">Borrador</option>
+                <option value="PENDING_APPROVAL">Pendiente aprobación</option>
+                <option value="APPROVED">Aprobada</option>
+                <option value="SENT">Enviada</option>
+                <option value="ACCEPTED">Aceptada</option>
+                <option value="REJECTED">Rechazada</option>
+                <option value="CONVERTED">Convertida</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="typeFilter()"
+                (ngModelChange)="typeFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todos los tipos</option>
+                <option value="PARTS">Refacciones</option>
+                <option value="SERVICE">Servicio</option>
+                <option value="UNIT">Unidad</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="branchFilter()"
+                (ngModelChange)="branchFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todas las sucursales</option>
+                @for (b of branches(); track b.id) {
+                  <option [ngValue]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card cotizaciones-table-card">
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Folio</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Sucursal</th>
+                    <th>Fecha</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (q of cotizaciones(); track q.id) {
+                    <tr>
+                      <td>
+                        <a [routerLink]="['/cotizaciones', q.id]">{{ q.folio }}</a>
+                      </td>
+                      <td>{{ getClientName(q) }}</td>
+                      <td>{{ getTypeLabel(q.type) }}</td>
+                      <td>{{ getBranchName(q.branchId) }}</td>
+                      <td>{{ q.createdAt | date:'short' }}</td>
+                      <td class="text-end">{{ q.total | number:'1.2-2' }}</td>
+                      <td class="text-center">
+                        <span class="badge"
+                          [class.bg-secondary]="q.status === 'DRAFT'"
+                          [class.bg-warning]="q.status === 'PENDING_APPROVAL'"
+                          [class.bg-success]="q.status === 'APPROVED' || q.status === 'SENT' || q.status === 'ACCEPTED'"
+                          [class.bg-danger]="q.status === 'REJECTED'"
+                          [class.bg-info]="q.status === 'CONVERTED'">
+                          {{ getStatusLabel(q.status) }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <a
+                          class="table-action-btn"
+                          [routerLink]="['/cotizaciones', q.id]"
+                          title="Ver"
+                        >
+                          <app-feather-icons [icon]="'eye'" />
+                        </a>
+                        @if (q.status === 'DRAFT') {
+                          <a
+                            class="table-action-btn ms-2"
+                            [routerLink]="['/cotizaciones', q.id, 'editar']"
+                            title="Editar"
+                          >
+                            <app-feather-icons [icon]="'edit-2'" />
+                          </a>
+                        }
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="8" class="text-center text-muted py-4">
+                        No hay cotizaciones. <a routerLink="/cotizaciones/nueva">Crear la primera</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if (meta(); as m) {
+              @if (m.totalPages > 1) {
+                <nav class="mt-3 d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">
+                    {{ m.total }} cotización(es) · Página {{ m.page }} de {{ m.totalPages }}
+                  </span>
+                  <ul class="pagination mb-0">
+                    <li class="page-item" [class.disabled]="m.page <= 1">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page - 1)">Anterior</a>
+                    </li>
+                    <li class="page-item" [class.disabled]="m.page >= m.totalPages">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page + 1)">Siguiente</a>
+                    </li>
+                  </ul>
+                </nav>
+              }
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -124,7 +124,8 @@ export class UnitSalesService {
   ): Promise<UnitSale[]> {
     const qb = this.saleRepo
       .createQueryBuilder('us')
-      .innerJoin('us.catalogUnit', 'cu')
+      .innerJoinAndSelect('us.catalogUnit', 'cu')
+      .leftJoinAndSelect('us.client', 'client')
       .where('us.tenant_id = :tenantId', { tenantId: user.tenantId });
 
     this.applyScope(qb, user);
@@ -160,7 +161,8 @@ export class UnitSalesService {
   async findOne(user: UserPayload, id: string): Promise<UnitSale> {
     const qb = this.saleRepo
       .createQueryBuilder('us')
-      .innerJoin('us.catalogUnit', 'cu')
+      .innerJoinAndSelect('us.catalogUnit', 'cu')
+      .leftJoinAndSelect('us.client', 'client')
       .where('us.id = :id', { id })
       .andWhere('us.tenant_id = :tenantId', { tenantId: user.tenantId });
 

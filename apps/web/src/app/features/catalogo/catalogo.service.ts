@@ -18,7 +18,7 @@ export class CatalogoService {
 
   getAll(filters: FilterGlobalModels = {}): Observable<GlobalModelsResponse> {
     let params = new HttpParams();
-    if (filters.brandName) params = params.set("brandName", filters.brandName);
+    if (filters.brandId) params = params.set("brandId", filters.brandId);
     if (filters.vehicleTypeId)
       params = params.set("vehicleTypeId", filters.vehicleTypeId);
     if (filters.year) params = params.set("year", filters.year.toString());
@@ -34,6 +34,23 @@ export class CatalogoService {
     return this.http.get<GlobalModel>(`${API_URL}/${id}`);
   }
 
+  getBrands(vehicleTypeCode: string): Observable<string[]> {
+    const params = new HttpParams().set(
+      "vehicleTypeCode",
+      vehicleTypeCode || "CAR",
+    );
+    return this.http.get<string[]>(`${API_URL}/brands`, { params });
+  }
+
+  getModels(vehicleTypeCode: string, brandName: string): Observable<string[]> {
+    let params = new HttpParams().set(
+      "vehicleTypeCode",
+      vehicleTypeCode || "CAR",
+    );
+    if (brandName) params = params.set("brandName", brandName);
+    return this.http.get<string[]>(`${API_URL}/models`, { params });
+  }
+
   create(dto: CreateGlobalModelDto): Observable<GlobalModel> {
     return this.http.post<GlobalModel>(API_URL, dto);
   }
@@ -44,7 +61,8 @@ export class CatalogoService {
 
   getDisplayLabel(model: GlobalModel): string {
     const version = model.version ? ` ${model.version}` : "";
-    return `${model.brandName} ${model.model}${version} (${model.year})`;
+    const brandName = model.brand?.name ?? "—";
+    return `${brandName} ${model.model}${version} (${model.year})`;
   }
 
   getVehicleTypeLabel(model: GlobalModel): string {

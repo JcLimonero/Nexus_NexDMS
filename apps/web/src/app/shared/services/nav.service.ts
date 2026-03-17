@@ -59,6 +59,9 @@ export class NavService {
       active: false,
       children: [
         { path: "/catalogo", title: "Modelos globales", type: "link" },
+        { path: "/catalogo/marcas", title: "Marcas", type: "link" },
+        { path: "/catalogo/tipos-vehiculo", title: "Tipos de vehículo", type: "link" },
+        { path: "/catalogo/tipos-combustion", title: "Tipos de combustión", type: "link" },
       ],
     },
     {
@@ -68,8 +71,8 @@ export class NavService {
       active: false,
       children: [
         { path: "/inventario-refacciones", title: "Partes", type: "link" },
-        { path: "/inventario-refacciones", title: "Ubicaciones almacén", type: "link" },
-        { path: "/inventario-refacciones", title: "Movimientos", type: "link" },
+        { path: "/inventario-refacciones/categorias", title: "Categorías", type: "link" },
+        { path: "/inventario-refacciones/ubicaciones", title: "Ubicaciones almacén", type: "link" },
       ],
     },
     {
@@ -78,8 +81,8 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/inventario-unidades", title: "Catálogo unidades", type: "link" },
-        { path: "/inventario-unidades", title: "Ubicaciones", type: "link" },
+        { path: "/inventario-unidades", title: "Unidades", type: "link" },
+        { path: "/inventario-unidades/ubicaciones", title: "Ubicaciones", type: "link" },
       ],
     },
     {
@@ -88,8 +91,8 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/compras", title: "Proveedores", type: "link" },
-        { path: "/compras", title: "Órdenes de compra", type: "link" },
+        { path: "/compras/proveedores", title: "Proveedores", type: "link" },
+        { path: "/compras/ordenes-compra", title: "Órdenes de compra", type: "link" },
       ],
     },
     {
@@ -98,8 +101,8 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/almacen", title: "Transferencias", type: "link" },
-        { path: "/almacen", title: "Apartados", type: "link" },
+        { path: "/almacen/transferencias", title: "Transferencias", type: "link" },
+        { path: "/almacen/apartados", title: "Apartados", type: "link" },
       ],
     },
     {
@@ -109,8 +112,8 @@ export class NavService {
       active: false,
       children: [
         { path: "/caja", title: "Caja", type: "link" },
-        { path: "/ventas", title: "Ventas (POS)", type: "link" },
-        { path: "/ventas", title: "Listas de precio", type: "link" },
+        { path: "/caja/ventas", title: "Ventas (POS)", type: "link" },
+        { path: "/caja/listas-precio", title: "Listas de precio", type: "link" },
       ],
     },
     {
@@ -135,9 +138,9 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/taller", title: "Órdenes de servicio", type: "link" },
-        { path: "/taller", title: "Agenda", type: "link" },
-        { path: "/taller", title: "Citas", type: "link" },
+        { path: "/taller/ordenes-servicio", title: "Órdenes de servicio", type: "link" },
+        { path: "/taller/agenda", title: "Agenda", type: "link" },
+        { path: "/taller/citas", title: "Citas", type: "link" },
       ],
     },
     {
@@ -158,21 +161,32 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/reportes", title: "Comisiones", type: "link" },
-        { path: "/reportes", title: "Reportes", type: "link" },
+        { path: "/reportes", title: "Inicio", type: "link" },
+        { path: "/reportes/comisiones", title: "Comisiones", type: "link" },
+        { path: "/reportes/general", title: "Reportes generales", type: "link" },
       ],
     },
     {
-      path: "/billing",
       title: "Facturación",
       icon: "credit-card",
-      type: "link",
+      type: "sub",
+      active: false,
+      children: [
+        { path: "/billing", title: "Inicio", type: "link" },
+        { path: "/billing/facturas", title: "Facturas (CFDI)", type: "link" },
+        { path: "/billing/plan", title: "Plan NexDMS", type: "link" },
+      ],
     },
     {
-      path: "/configuracion",
       title: "Configuración",
       icon: "settings",
-      type: "link",
+      type: "sub",
+      active: false,
+      children: [
+        { path: "/configuracion", title: "Inicio", type: "link" },
+        { path: "/configuracion/sucursales", title: "Sucursales", type: "link" },
+        { path: "/configuracion/general", title: "General", type: "link" },
+      ],
     },
   ];
 

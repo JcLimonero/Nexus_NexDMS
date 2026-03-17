@@ -1,0 +1,62 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? 'Editar lista' : 'Nueva lista de precio' }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/caja/listas-precio">Volver</a>
+        </div>
+        <div class="card-body">
+          <form class="lista-precio-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId" [disabled]="isEdit()">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" maxlength="200" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="type">
+                  @for (t of typeOptions; track t.value) {
+                    <option [ngValue]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Descuento %</label>
+                <input type="number" class="form-control" formControlName="discountPct" min="0" max="100" step="0.01" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Activa</label>
+                <div class="form-check form-switch mt-2">
+                  <input class="form-check-input" type="checkbox" formControlName="isActive" />
+                  <label class="form-check-label">Lista activa</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? 'Guardar' : 'Crear' }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/caja/listas-precio">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

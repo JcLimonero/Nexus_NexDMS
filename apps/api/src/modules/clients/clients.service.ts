@@ -64,11 +64,29 @@ export class ClientsService {
       .andWhere('c.deleted_at IS NULL');
 
     if (filters.search?.trim()) {
-      const term = `%${filters.search.trim()}%`;
-      qb.andWhere(
-        '(c.first_name ILIKE :term OR c.last_name ILIKE :term OR c.company_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
-        { term },
-      );
+      const raw = filters.search.trim();
+      const term = `%${raw}%`;
+      const digitsOnly = raw.replace(/\D/g, '');
+      const conditions = [
+        'c.first_name ILIKE :term',
+        'c.last_name ILIKE :term',
+        'c.company_name ILIKE :term',
+        "CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) ILIKE :term",
+        "CONCAT(COALESCE(c.last_name, ''), ' ', COALESCE(c.first_name, '')) ILIKE :term",
+        'c.phone ILIKE :term',
+        'COALESCE(c.phone_alt, \'\') ILIKE :term',
+        'c.email ILIKE :term',
+        'c.rfc ILIKE :term',
+      ];
+      const params: Record<string, string> = { term };
+      if (digitsOnly) {
+        conditions.push(
+          "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
+          "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+        );
+        params.termDigits = `%${digitsOnly}%`;
+      }
+      qb.andWhere(`(${conditions.join(' OR ')})`, params);
     }
     if (filters.clientType) {
       qb.andWhere('c.client_type = :clientType', {
@@ -90,7 +108,10 @@ export class ClientsService {
 
     const data = clients.map((client) => ({
       ...client,
-      dataQuality: this.computeDataQuality(client, vehicleCounts[client.id] ?? 0),
+      dataQuality: this.computeDataQuality(
+        client,
+        vehicleCounts[client.id] ?? 0,
+      ),
     }));
 
     return {
@@ -209,18 +230,37 @@ export class ClientsService {
     return this.computeDataQuality(client, count);
   }
 
-  async search(user: UserPayload, q: string, limit = 8): Promise<Client[]> {
+  async search(user: UserPayload, q: string, limit = 50): Promise<Client[]> {
     if (!q?.trim()) return [];
-    const term = `%${q.trim()}%`;
+    const raw = q.trim();
+    const term = `%${raw}%`;
+    const digitsOnly = raw.replace(/\D/g, '');
+    const conditions = [
+      'c.first_name ILIKE :term',
+      'c.last_name ILIKE :term',
+      'c.company_name ILIKE :term',
+      "CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) ILIKE :term",
+      "CONCAT(COALESCE(c.last_name, ''), ' ', COALESCE(c.first_name, '')) ILIKE :term",
+      'c.phone ILIKE :term',
+      'COALESCE(c.phone_alt, \'\') ILIKE :term',
+      'c.email ILIKE :term',
+      'c.rfc ILIKE :term',
+    ];
+    const params: Record<string, string> = { term };
+    if (digitsOnly) {
+      conditions.push(
+        "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
+        "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+      );
+      params.termDigits = `%${digitsOnly}%`;
+    }
     return this.clientRepo
       .createQueryBuilder('c')
       .where('c.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('c.deleted_at IS NULL')
-      .andWhere(
-        '(c.first_name ILIKE :term OR c.last_name ILIKE :term OR c.company_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
-        { term },
-      )
+      .andWhere(`(${conditions.join(' OR ')})`, params)
       .orderBy('c.first_name', 'ASC')
+      .addOrderBy('c.last_name', 'ASC')
       .take(limit)
       .getMany();
   }

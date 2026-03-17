@@ -19,9 +19,6 @@ export class CombustionType {
   @Column({ name: 'label', type: 'varchar', length: 100 })
   label: string;
 
-  @Column({ name: 'sort_order', type: 'smallint', default: 0 })
-  sortOrder: number;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

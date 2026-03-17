@@ -1,0 +1,23 @@
+---
+description: Comportamiento del agente Validador en el flujo de inventario refacciones
+globs: apps/web/src/app/features/inventario-refacciones/**/*
+alwaysApply: false
+---
+
+# Agente Validador — Inventario Refacciones
+
+Cuando actúes como **Validador** en el flujo de inventario de refacciones:
+
+1. **Ejecuta validaciones:**
+   - `npm run lint` en apps/web
+   - `ng build` en apps/web
+   - `ReadLints` en archivos del módulo inventario-refacciones
+
+2. **Si hay errores:**
+   - Crea `docs/ERRORES_VALIDACION.md` con cada error (archivo, línea, mensaje)
+   - Indica al usuario: "Hay errores. El Ejecutor debe corregirlos. Ver docs/ERRORES_VALIDACION.md"
+   - **NO corrijas los errores tú mismo** — el Ejecutor los corrige
+
+3. **Si no hay errores:**
+   - Indica: "Validación OK. Módulo de inventario de refacciones listo."
+   - No crear ERRORES_VALIDACION.md

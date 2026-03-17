@@ -1,0 +1,52 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar tipo de combustión" : "Nuevo tipo de combustión" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/catalogo/tipos-combustion">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Código (identificador) <span class="text-danger">*</span></label>
+                <input
+                  type="text"
+                  class="form-control"
+                  formControlName="code"
+                  placeholder="Ej. GASOLINE, DIESEL"
+                  [readonly]="isEdit()"
+                />
+                @if (isEdit()) {
+                  <div class="form-text">El código no se puede modificar (identificador estable para relaciones).</div>
+                }
+                @if (form.get('code')?.invalid && form.get('code')?.touched) {
+                  <div class="text-danger small mt-1">El código es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Etiqueta <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="label" placeholder="Ej. Gasolina, Diésel" />
+                @if (form.get('label')?.invalid && form.get('label')?.touched) {
+                  <div class="text-danger small mt-1">La etiqueta es obligatoria</div>
+                }
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? "Guardar cambios" : "Crear tipo" }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/catalogo/tipos-combustion">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

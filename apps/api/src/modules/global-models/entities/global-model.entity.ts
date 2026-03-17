@@ -9,17 +9,22 @@ import {
 } from 'typeorm';
 import { VehicleType } from '../../vehicle-types/entities/vehicle-type.entity';
 import { CombustionType } from '../../combustion-types/entities/combustion-type.entity';
+import { GlobalBrand } from '../../global-brands/entities/global-brand.entity';
 
 @Entity('global_models')
-@Index(['brandName'])
+@Index(['brandId'])
 @Index(['vehicleTypeId'])
 @Index(['combustionTypeId'])
 export class GlobalModel {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'brand_name', type: 'varchar', length: 100 })
-  brandName: string;
+  @Column({ name: 'brand_id', type: 'uuid' })
+  brandId: string;
+
+  @ManyToOne(() => GlobalBrand, { onDelete: 'RESTRICT' })
+  @JoinColumn({ name: 'brand_id' })
+  brand?: GlobalBrand;
 
   @Column({ name: 'vehicle_type_id', type: 'uuid' })
   vehicleTypeId: string;

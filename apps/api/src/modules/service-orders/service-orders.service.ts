@@ -283,7 +283,7 @@ export class ServiceOrdersService {
     }
 
     const [data, total] = await qb
-      .orderBy('so.created_at', 'DESC')
+      .orderBy('so.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

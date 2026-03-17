@@ -1,0 +1,70 @@
+<div class="client-selector">
+  <div class="input-group">
+    <input
+      type="text"
+      class="form-control"
+      [ngModel]="searchTerm()"
+      (ngModelChange)="onSearchInput($event)"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      placeholder="Buscar por nombre, teléfono o email..."
+      autocomplete="off"
+    />
+    @if (selectedId()) {
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="clearSelection()"
+        title="Limpiar selección"
+      >
+        <i class="icofont icofont-close"></i>
+      </button>
+    }
+    <div class="btn-group">
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        (click)="openNewClient()"
+        title="Crear nuevo cliente"
+      >
+        <i class="icofont icofont-plus"></i> Nuevo
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="onReload()"
+        title="Recargar lista de clientes"
+      >
+        <i class="icofont icofont-refresh"></i>
+      </button>
+    </div>
+  </div>
+
+  @if (showDropdown() && filteredClients().length > 0) {
+    <ul class="client-selector-dropdown list-group">
+      @for (c of filteredClients(); track c.id) {
+        <li
+          class="list-group-item list-group-item-action"
+          [class.active]="c.id === selectedId()"
+          (mousedown)="selectClient(c); $event.preventDefault()"
+        >
+          {{ getDisplayName(c) }}
+          @if (c.phone) {
+            <span class="text-muted small ms-2">{{ c.phone }}</span>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  @if (showDropdown() && searchTerm() && !searchLoading() && filteredClients().length === 0) {
+    <div class="client-selector-empty p-2 border rounded mt-1 bg-light small">
+      No se encontraron clientes. <a href="#" (click)="openNewClient(); $event.preventDefault()">Crear nuevo cliente</a>
+    </div>
+  }
+  @if (showDropdown() && searchTerm() && searchLoading()) {
+    <div class="client-selector-empty p-2 border rounded mt-1 bg-light small">
+      <span class="spinner-border spinner-border-sm me-1" role="status"></span> Buscando...
+    </div>
+  }
+</div>

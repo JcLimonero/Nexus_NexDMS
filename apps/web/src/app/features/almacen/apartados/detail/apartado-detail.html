@@ -1,0 +1,107 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/almacen/apartados" class="alert-link ms-2">Volver al listado</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (apartado(); as a) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Apartado {{ a.id | slice:0:8 }}...</h5>
+            <div class="d-flex gap-2 flex-wrap">
+              @if (canRelease()) {
+                <div class="d-flex gap-1 align-items-center">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    placeholder="Motivo de liberación"
+                    [ngModel]="releaseReason()"
+                    (ngModelChange)="setReleaseReason($event)"
+                    style="width: 200px"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    (click)="onRelease()"
+                    [disabled]="releasing() || !releaseReason().trim()"
+                  >
+                    @if (releasing()) {
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Liberar apartado
+                  </button>
+                </div>
+              }
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/almacen/apartados">
+                Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Unidad</th>
+                      <td>{{ getUnitLabel(a) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Cliente</th>
+                      <td>{{ getClientName(a) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-success]="a.status === 'ACTIVE'"
+                          [class.bg-primary]="a.status === 'CONVERTED'"
+                          [class.bg-secondary]="a.status === 'RELEASED'">
+                          {{ getStatusLabel(a.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Anticipo</th>
+                      <td>{{ a.advanceAmount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Fecha creación</th>
+                      <td>{{ a.createdAt | date:'medium' }}</td>
+                    </tr>
+                    @if (a.releaseReason) {
+                      <tr>
+                        <th class="text-muted">Motivo liberación</th>
+                        <td>{{ a.releaseReason }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            @if (a.notes) {
+              <div class="mb-3">
+                <h6 class="text-muted">Notas</h6>
+                <p class="mb-0">{{ a.notes }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

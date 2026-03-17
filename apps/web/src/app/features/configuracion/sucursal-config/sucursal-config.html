@@ -1,0 +1,124 @@
+<div class="container-fluid sucursal-config">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Configuración: {{ branchName() || "Sucursal" }}</h5>
+            <span>FacturAPI, WhatsApp, datos bancarios y CFDI</span>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/configuracion/sucursales">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else {
+            <form [formGroup]="form" (ngSubmit)="submit()">
+              <div class="config-sections">
+                <section class="config-section">
+                  <h6 class="section-title">FacturAPI</h6>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">API Key</label>
+                      <input
+                        type="password"
+                        class="form-control"
+                        formControlName="facturaapiApiKey"
+                        [placeholder]="form.get('facturaapiApiKey')?.value === SENSITIVE_PLACEHOLDER ? SENSITIVE_PLACEHOLDER : 'Nueva API Key'"
+                        autocomplete="off"
+                      />
+                      <small class="text-muted">Dejar vacío o el valor enmascarado para conservar</small>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="config-section">
+                  <h6 class="section-title">WhatsApp</h6>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Phone ID</label>
+                      <input
+                        type="password"
+                        class="form-control"
+                        formControlName="whatsappPhoneId"
+                        [placeholder]="form.get('whatsappPhoneId')?.value === SENSITIVE_PLACEHOLDER ? SENSITIVE_PLACEHOLDER : ''"
+                        autocomplete="off"
+                      />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Token</label>
+                      <input
+                        type="password"
+                        class="form-control"
+                        formControlName="whatsappToken"
+                        [placeholder]="form.get('whatsappToken')?.value === SENSITIVE_PLACEHOLDER ? SENSITIVE_PLACEHOLDER : ''"
+                        autocomplete="off"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section class="config-section">
+                  <h6 class="section-title">Datos bancarios</h6>
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Banco</label>
+                      <input type="text" class="form-control" formControlName="bankName" maxlength="100" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">CLABE</label>
+                      <input type="text" class="form-control" formControlName="bankClabe" maxlength="18" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Cuenta</label>
+                      <input type="text" class="form-control" formControlName="bankAccount" maxlength="20" />
+                    </div>
+                    <div class="col-md-6 mb-3">
+                      <label class="form-label">Titular</label>
+                      <input type="text" class="form-control" formControlName="bankHolder" maxlength="300" />
+                    </div>
+                  </div>
+                </section>
+
+                <section class="config-section">
+                  <h6 class="section-title">CFDI</h6>
+                  <div class="row">
+                    <div class="col-md-4 mb-3">
+                      <label class="form-label">Último folio CFDI</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        formControlName="cfdiLastFolio"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving()">
+                  @if (saving()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  Guardar
+                </button>
+                <a class="btn btn-outline-secondary" routerLink="/configuracion/sucursales">Cancelar</a>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

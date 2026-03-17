@@ -155,46 +155,6 @@
             /><span class="dot"></span>
           </a>
         </li>
-        <li class="onhover-dropdown">
-          <div class="media align-items-center">
-            <img
-              class="align-self-center pull-right img-50 rounded-circle"
-              src="assets/images/dashboard/user.png"
-              alt="header-user" loading="lazy"
-            />
-            <div class="dotted-animation">
-              <span class="animate-circle"></span
-              ><span class="main-circle"></span>
-            </div>
-          </div>
-          <ul class="profile-dropdown onhover-show-div p-20">
-            <li>
-              <a href="javascript:void(0)">
-                <app-feather-icons [icon]="'user'" />Edit Profile
-              </a>
-            </li>
-            <li>
-              <a href="javascript:void(0)">
-                <app-feather-icons [icon]="'mail'" />Inbox
-              </a>
-            </li>
-            <li>
-              <a href="javascript:void(0)">
-                <app-feather-icons [icon]="'lock'" />Lock Screen
-              </a>
-            </li>
-            <li>
-              <a href="javascript:void(0)">
-                <app-feather-icons [icon]="'settings'" />Settings
-              </a>
-            </li>
-            <li>
-              <a href="javascript:void(0)" (click)="SignOut()">
-                <app-feather-icons [icon]="'log-out'" />Logout
-              </a>
-            </li>
-          </ul>
-        </li>
       </ul>
       <div class="d-lg-none mobile-toggle pull-right" (click)="openMobileNav()">
         <app-feather-icons [icon]="'more-horizontal'" />

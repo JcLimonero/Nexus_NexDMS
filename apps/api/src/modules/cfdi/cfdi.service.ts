@@ -403,7 +403,7 @@ export class CfdiService {
     }
 
     const [data, total] = await qb
-      .orderBy('c.created_at', 'DESC')
+      .orderBy('c.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

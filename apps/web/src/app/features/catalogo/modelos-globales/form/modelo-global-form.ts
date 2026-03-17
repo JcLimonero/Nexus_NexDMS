@@ -10,6 +10,7 @@ import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { CatalogoService } from "../../catalogo.service";
+import { GlobalBrandsService } from "../../global-brands.service";
 import { VehicleTypesService } from "../../vehicle-types.service";
 import { CombustionTypesService } from "../../combustion-types.service";
 import {
@@ -30,6 +31,7 @@ export class ModeloGlobalForm implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private catalogoService = inject(CatalogoService);
+  private globalBrandsService = inject(GlobalBrandsService);
   private vehicleTypesService = inject(VehicleTypesService);
   private combustionTypesService = inject(CombustionTypesService);
   private toastr = inject(ToastrService);
@@ -38,6 +40,7 @@ export class ModeloGlobalForm implements OnInit {
   loading = signal(false);
   isEdit = signal(false);
   modelId = signal<string | null>(null);
+  brands = signal<{ id: string; name: string }[]>([]);
   vehicleTypes = signal<VehicleType[]>([]);
   combustionTypes = signal<CombustionType[]>([]);
 
@@ -57,9 +60,17 @@ export class ModeloGlobalForm implements OnInit {
     this.combustionTypesService.getAll().subscribe({
       next: (types) => this.combustionTypes.set(types),
     });
+    this.globalBrandsService.getAll().subscribe({
+      next: (brands) =>
+        this.brands.set(
+          brands
+            .filter((b) => b.isActive)
+            .map((b) => ({ id: b.id, name: b.name })),
+        ),
+    });
 
     this.form = this.fb.group({
-      brandName: ["", [Validators.required, Validators.maxLength(100)]],
+      brandId: ["", Validators.required],
       vehicleTypeId: ["", Validators.required],
       model: ["", [Validators.required, Validators.maxLength(200)]],
       version: ["", [Validators.maxLength(100)]],
@@ -74,7 +85,7 @@ export class ModeloGlobalForm implements OnInit {
       this.catalogoService.getById(id).subscribe({
         next: (m) => {
           this.form.patchValue({
-            brandName: m.brandName,
+            brandId: m.brandId,
             vehicleTypeId: m.vehicleTypeId,
             model: m.model,
             version: m.version ?? "",
@@ -98,7 +109,7 @@ export class ModeloGlobalForm implements OnInit {
 
     const raw = this.form.getRawValue();
     const dto: CreateGlobalModelDto = {
-      brandName: raw.brandName.trim(),
+      brandId: raw.brandId,
       vehicleTypeId: raw.vehicleTypeId,
       model: raw.model.trim(),
       version: raw.version?.trim() || undefined,

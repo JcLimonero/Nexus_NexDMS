@@ -1,0 +1,75 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Tipos de vehículo</h5>
+            <span>Catálogo de tipos (Moto, Auto, etc.)</span>
+          </div>
+          <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/catalogo">
+              Volver
+            </a>
+            <a class="btn btn-primary btn-sm" routerLink="/catalogo/tipos-vehiculo/nuevo">
+              Nuevo tipo
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Etiqueta</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (t of types(); track t.id) {
+                    <tr>
+                      <td>{{ t.code }}</td>
+                      <td>{{ t.label }}</td>
+                      <td class="text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                          <a
+                            class="btn btn-sm btn-outline-secondary"
+                            [routerLink]="['/catalogo/tipos-vehiculo', t.id, 'editar']"
+                          >
+                            Editar
+                          </a>
+                          <button
+                            type="button"
+                            class="btn btn-sm btn-outline-danger"
+                            (click)="deleteType(t)"
+                          >
+                            Eliminar
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="3" class="text-center text-muted py-4">
+                        No hay tipos de vehículo.
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

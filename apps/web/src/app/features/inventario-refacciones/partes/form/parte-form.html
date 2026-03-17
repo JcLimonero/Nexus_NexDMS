@@ -1,0 +1,149 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar parte" : "Nueva parte" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/inventario-refacciones">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="parte-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId" [disabled]="isEdit()">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('branchId')?.invalid && form.get('branchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Categoría</label>
+                <select class="form-select" formControlName="categoryId">
+                  <option [ngValue]="null">Sin categoría</option>
+                  @for (c of categorias(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Ubicación</label>
+                <select class="form-select" formControlName="locationId">
+                  <option [ngValue]="null">Sin ubicación</option>
+                  @for (u of ubicaciones(); track u.id) {
+                    <option [ngValue]="u.id">{{ u.code }} - {{ u.zone }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">SKU</label>
+                <input type="text" class="form-control" formControlName="sku" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Código de barras</label>
+                <input type="text" class="form-control" formControlName="barcode" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Unidad de medida</label>
+                <input type="text" class="form-control" formControlName="unitOfMeasure" placeholder="PZA" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" />
+                @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                  <div class="text-danger small mt-1">El nombre es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tipo vehículo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="vehicleType">
+                  @for (vt of vehicleTypes; track vt.value) {
+                    <option [ngValue]="vt.value">{{ vt.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" formControlName="description" rows="2"></textarea>
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Marcas compatibles</label>
+                <input type="text" class="form-control" formControlName="compatibleMakes" placeholder="Ej: Honda, Yamaha" />
+              </div>
+            </div>
+
+            <h6 class="mt-3 mb-2">Precios</h6>
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Costo compra</label>
+                <input type="number" class="form-control" formControlName="purchasePrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio público</label>
+                <input type="number" class="form-control" formControlName="publicPrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio mayoreo</label>
+                <input type="number" class="form-control" formControlName="wholesalePrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio negocio</label>
+                <input type="number" class="form-control" formControlName="businessPrice" min="0" step="0.01" />
+              </div>
+            </div>
+
+            <h6 class="mt-3 mb-2">Inventario</h6>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Descuento máx. (%)</label>
+                <input type="number" class="form-control" formControlName="maxDiscountPct" min="0" max="100" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Stock mínimo</label>
+                <input type="number" class="form-control" formControlName="minStock" min="0" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Stock máximo</label>
+                <input type="number" class="form-control" formControlName="maxStock" min="0" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
+                  <label class="form-check-label" for="isActive">Activa</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-3">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? "Guardar cambios" : "Crear parte" }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/inventario-refacciones">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

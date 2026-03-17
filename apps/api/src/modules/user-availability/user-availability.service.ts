@@ -5,11 +5,18 @@ import { UserSchedule } from './entities/user-schedule.entity';
 import { UserAbsence } from './entities/user-absence.entity';
 import { UserBranch } from '../legal-entities/entities/user-branch.entity';
 import { UserRole } from '../users/entities/user-role.entity';
+import { User } from '../users/entities/user.entity';
 import { RoleEnum } from '../users/entities/user.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { AppointmentStatusEnum } from '../appointments/entities/appointment.entity';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import { BranchRamp } from '../branch-ramps/entities/branch-ramp.entity';
+
+export interface MechanicInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
 
 export interface AvailableSlot {
   start: string;
@@ -28,6 +35,8 @@ export class UserAvailabilityService {
     private readonly userBranchRepo: Repository<UserBranch>,
     @InjectRepository(UserRole)
     private readonly userRoleRepo: Repository<UserRole>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
     @InjectRepository(ServiceType)
@@ -49,6 +58,25 @@ export class UserAvailabilityService {
       .distinct(true)
       .getRawMany<{ user_id: string }>();
     return mechanics.map((m) => m.user_id);
+  }
+
+  /**
+   * Get mechanics with MECHANIC role assigned to the branch, including name
+   */
+  async getMechanicsWithDetailsForBranch(
+    branchId: string,
+  ): Promise<MechanicInfo[]> {
+    const ids = await this.getMechanicsForBranch(branchId);
+    if (ids.length === 0) return [];
+    const users = await this.userRepo.find({
+      where: { id: In(ids) },
+      select: ['id', 'firstName', 'lastName'],
+    });
+    return users.map((u) => ({
+      id: u.id,
+      firstName: u.firstName,
+      lastName: u.lastName,
+    }));
   }
 
   /**

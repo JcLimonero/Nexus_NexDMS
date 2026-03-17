@@ -2,6 +2,7 @@
   "name": "nexdms",
   "private": true,
   "scripts": {
+    "validate": "bash scripts/validate-implementation.sh",
     "api:dev": "cd apps/api && npm run start:dev",
     "api:build": "cd apps/api && npm run build",
     "api:migration:generate": "cd apps/api && npm run build && npm run migration:generate --",

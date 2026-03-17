@@ -23,6 +23,7 @@ import { SalesModule } from './modules/sales/sales.module';
 import { WarehouseTransfersModule } from './modules/warehouse-transfers/warehouse-transfers.module';
 import { UsersModule } from './modules/users/users.module';
 import { GlobalModelsModule } from './modules/global-models/global-models.module';
+import { GlobalBrandsModule } from './modules/global-brands/global-brands.module';
 import { VehicleTypesModule } from './modules/vehicle-types/vehicle-types.module';
 import { CombustionTypesModule } from './modules/combustion-types/combustion-types.module';
 import { UnitLocationsModule } from './modules/unit-locations/unit-locations.module';
@@ -65,6 +66,8 @@ import { BranchRampsModule } from './modules/branch-ramps/branch-ramps.module';
 import { ServicePlanningModule } from './modules/service-planning/service-planning.module';
 import { UnitAccessoriesModule } from './modules/unit-accessories/unit-accessories.module';
 import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extras.module';
+import { UnitReturnsModule } from './modules/unit-returns/unit-returns.module';
+import { UnitReturnDocumentsModule } from './modules/unit-return-documents/unit-return-documents.module';
 
 @Module({
   imports: [
@@ -84,9 +87,9 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
       inject: ['REDIS_CLIENT'],
       useFactory: (redis: { increment: unknown }) => ({
         throttlers: [
-          { name: 'short', ttl: seconds(1), limit: 3 },
-          { name: 'medium', ttl: seconds(60), limit: 10 },
-          { name: 'long', ttl: seconds(60), limit: 100 },
+          { name: 'short', ttl: seconds(1), limit: 30 },
+          { name: 'medium', ttl: seconds(60), limit: 120 },
+          { name: 'long', ttl: seconds(60), limit: 300 },
         ],
         storage: new RedisThrottlerStorage(redis as never),
         getTracker: getThrottlerTracker,
@@ -112,6 +115,7 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     SalesModule,
     WarehouseTransfersModule,
     GlobalModelsModule,
+    GlobalBrandsModule,
     VehicleTypesModule,
     CombustionTypesModule,
     UnitLocationsModule,
@@ -127,6 +131,8 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     ServicePlanningModule,
     UnitAccessoriesModule,
     UnitSaleExtrasModule,
+    UnitReturnsModule,
+    UnitReturnDocumentsModule,
     ServiceOrdersModule,
     WarrantiesModule,
     CommissionsModule,

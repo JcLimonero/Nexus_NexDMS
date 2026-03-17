@@ -1,0 +1,43 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar marca" : "Nueva marca" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/catalogo/marcas">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="marca-global-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" placeholder="Ej. Honda, Toyota" />
+                @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                  <div class="text-danger small mt-1">El nombre es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check mt-4">
+                  <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
+                  <label class="form-check-label" for="isActive">Activa</label>
+                </div>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? "Guardar cambios" : "Crear marca" }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/catalogo/marcas">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,144 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Nueva venta</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/caja/ventas">Volver</a>
+        </div>
+        <div class="card-body">
+          <form class="venta-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Lista de precios <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="priceList">
+                  @for (pl of priceListOptions; track pl.value) {
+                    <option [ngValue]="pl.value">{{ pl.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Cliente</label>
+                <select class="form-select" formControlName="clientId">
+                  <option value="">Sin cliente</option>
+                  @for (c of clients(); track c.id) {
+                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Descuento global</label>
+                <input type="number" class="form-control" formControlName="discount" min="0" step="0.01" />
+              </div>
+            </div>
+
+            <h6 class="mt-4 mb-2">Líneas</h6>
+            <div formArrayName="lines">
+              @for (line of lines.controls; track $index; let i = $index) {
+                <div class="row align-items-end mb-2" [formGroupName]="i">
+                  <div class="col-md-5">
+                    <select
+                      class="form-select form-select-sm"
+                      formControlName="partId"
+                      (change)="onPartSelect(i)"
+                    >
+                      <option value="">Seleccionar parte</option>
+                      @for (p of parts(); track p.id) {
+                        <option [ngValue]="p.id">{{ getPartLabel(p) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1" />
+                  </div>
+                  <div class="col-md-2">
+                    <input type="number" class="form-control form-control-sm" formControlName="unitPrice" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-2">
+                    <input type="number" class="form-control form-control-sm" formControlName="discount" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeLine(i)" [disabled]="lines.length <= 1">
+                      <i class="icofont icofont-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addLine()">
+              <i class="icofont icofont-plus me-1"></i> Agregar línea
+            </button>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <p class="mb-0">
+                  <strong>Subtotal:</strong> {{ getTotalCalculado().subtotal | number:'1.2-2' }} |
+                  <strong>IVA:</strong> {{ getTotalCalculado().tax | number:'1.2-2' }} |
+                  <strong>Total:</strong> {{ getTotalCalculado().total | number:'1.2-2' }}
+                </p>
+              </div>
+            </div>
+
+            <h6 class="mt-4 mb-2">Pagos</h6>
+            <button type="button" class="btn btn-outline-secondary btn-sm mb-2" (click)="updatePaymentsTotal()">
+              Igualar al total
+            </button>
+            <div formArrayName="payments">
+              @for (pay of payments.controls; track $index; let i = $index) {
+                <div class="row align-items-end mb-2" [formGroupName]="i">
+                  <div class="col-md-3">
+                    <select class="form-select form-select-sm" formControlName="method">
+                      @for (pm of paymentMethods; track pm.value) {
+                        <option [ngValue]="pm.value">{{ pm.label }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <input type="number" class="form-control form-control-sm" formControlName="amount" min="0.01" step="0.01" />
+                  </div>
+                  <div class="col-md-4">
+                    <input type="text" class="form-control form-control-sm" formControlName="reference" placeholder="Referencia" />
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removePayment(i)" [disabled]="payments.length <= 1">
+                      <i class="icofont icofont-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addPayment()">
+              <i class="icofont icofont-plus me-1"></i> Agregar pago
+            </button>
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Registrar venta
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/caja/ventas">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

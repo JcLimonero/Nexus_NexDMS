@@ -3,8 +3,8 @@ import { Type } from 'class-transformer';
 
 export class FilterGlobalModelsDto {
   @IsOptional()
-  @IsString()
-  brandName?: string;
+  @IsUUID()
+  brandId?: string;
 
   @IsOptional()
   @IsUUID()

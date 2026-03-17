@@ -1,0 +1,38 @@
+<div class="document-upload card">
+  <div class="card-body">
+    <h6 class="card-title mb-3">Adjuntar documento</h6>
+    <div class="row g-2 align-items-end">
+      <div class="col-md-5">
+        <label class="form-label small text-muted">Tipo de documento</label>
+        <select
+          class="form-select form-select-sm"
+          [value]="selectedType()"
+          (change)="selectedType.set($any($event.target).value)"
+          [disabled]="disabled"
+        >
+          <option value="">Seleccionar tipo</option>
+          @for (t of documentTypes; track t) {
+            <option [value]="t">{{ typeLabels[t] }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-md-4">
+        <input
+          id="doc-file-input"
+          type="file"
+          class="d-none"
+          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+          (change)="onFileSelected($event)"
+        />
+        <button
+          type="button"
+          class="btn btn-outline-primary btn-sm w-100"
+          [disabled]="!selectedType() || disabled"
+          (click)="triggerFileInput()"
+        >
+          Seleccionar archivo
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

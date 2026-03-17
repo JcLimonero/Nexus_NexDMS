@@ -10,6 +10,78 @@ export const catalogoRoutes: Routes = [
     data: { title: "Modelos globales", breadcrumb: "Modelos globales" },
   },
   {
+    path: "tipos-vehiculo",
+    loadComponent: () =>
+      import("./tipos-vehiculo/tipos-vehiculo-list").then(
+        (m) => m.TiposVehiculoList
+      ),
+    data: { title: "Tipos de vehículo", breadcrumb: "Tipos vehículo" },
+  },
+  {
+    path: "tipos-vehiculo/nuevo",
+    loadComponent: () =>
+      import("./tipos-vehiculo/tipo-vehiculo-form").then(
+        (m) => m.TipoVehiculoForm
+      ),
+    data: { title: "Nuevo tipo de vehículo", breadcrumb: "Nuevo" },
+  },
+  {
+    path: "tipos-vehiculo/:id/editar",
+    loadComponent: () =>
+      import("./tipos-vehiculo/tipo-vehiculo-form").then(
+        (m) => m.TipoVehiculoForm
+      ),
+    data: { title: "Editar tipo de vehículo", breadcrumb: "Editar" },
+  },
+  {
+    path: "tipos-combustion",
+    loadComponent: () =>
+      import("./tipos-combustion/tipos-combustion-list").then(
+        (m) => m.TiposCombustionList
+      ),
+    data: { title: "Tipos de combustión", breadcrumb: "Tipos combustión" },
+  },
+  {
+    path: "tipos-combustion/nuevo",
+    loadComponent: () =>
+      import("./tipos-combustion/tipo-combustion-form").then(
+        (m) => m.TipoCombustionForm
+      ),
+    data: { title: "Nuevo tipo de combustión", breadcrumb: "Nuevo" },
+  },
+  {
+    path: "tipos-combustion/:id/editar",
+    loadComponent: () =>
+      import("./tipos-combustion/tipo-combustion-form").then(
+        (m) => m.TipoCombustionForm
+      ),
+    data: { title: "Editar tipo de combustión", breadcrumb: "Editar" },
+  },
+  {
+    path: "marcas",
+    loadComponent: () =>
+      import("./marcas-globales/list/marcas-globales-list").then(
+        (m) => m.MarcasGlobalesList
+      ),
+    data: { title: "Marcas globales", breadcrumb: "Marcas" },
+  },
+  {
+    path: "marcas/nuevo",
+    loadComponent: () =>
+      import("./marcas-globales/form/marca-global-form").then(
+        (m) => m.MarcaGlobalForm
+      ),
+    data: { title: "Nueva marca", breadcrumb: "Nueva" },
+  },
+  {
+    path: "marcas/:id/editar",
+    loadComponent: () =>
+      import("./marcas-globales/form/marca-global-form").then(
+        (m) => m.MarcaGlobalForm
+      ),
+    data: { title: "Editar marca", breadcrumb: "Editar" },
+  },
+  {
     path: "nuevo",
     loadComponent: () =>
       import("./modelos-globales/form/modelo-global-form").then(

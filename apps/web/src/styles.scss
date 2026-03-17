@@ -10,6 +10,23 @@
 @import "styles/design-system";
 @import "styles/layout";
 
+/* Sidebar: usuario fijo en la parte inferior */
+.page-wrapper .page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+
+  .sidebar-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-user-bottom {
+    flex-shrink: 0;
+  }
+}
+
 /* Logo de empresa */
 .page-sidebar .logo-wrapper img,
 .page-main-header .logo-wrapper img {
@@ -27,14 +44,35 @@ body {
   color: var(--text-primary, #111827);
 }
 
-/* Footer siempre visible — fijo al fondo del viewport */
+/* Footer siempre visible — fijo al fondo del viewport, ocupa todo el espacio disponible */
 .page-wrapper .page-body-wrapper footer.footer {
   position: fixed !important;
   bottom: 0 !important;
-  left: 255px;
-  right: 0;
-  width: calc(100% - 255px) !important;
+  left: 255px; /* coincide con el tema */
+  right: 0 !important;
+  width: auto !important; /* left + right definen el ancho */
+  min-width: 0;
   z-index: 10;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  margin-left: 0 !important; /* anular margen del tema */
+}
+
+.page-wrapper .page-body-wrapper footer.footer .container-fluid {
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1;
+}
+
+.page-wrapper .page-body-wrapper footer.footer .row {
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-wrapper .page-body-wrapper footer.footer .footer-copyright p {
+  white-space: nowrap;
 }
 
 .page-wrapper .page-body-wrapper .page-body {
@@ -44,16 +82,19 @@ body {
 /* Sidebar colapsado: footer a ancho completo */
 .page-wrapper .page-body-wrapper .page-sidebar.open ~ footer.footer {
   left: 0 !important;
-  width: 100% !important;
+  right: 0 !important;
+  width: auto !important;
 }
 
 /* Compact/sidebar-icon: el tema ya ajusta márgenes */
 .page-wrapper.compact-page .page-body-wrapper footer.footer {
   left: 75px;
-  width: calc(100% - 75px) !important;
+  right: 0 !important;
+  width: auto !important;
 }
 
 .page-wrapper.compact-page .page-body-wrapper .page-sidebar.open ~ footer.footer {
   left: 0 !important;
-  width: 100% !important;
+  right: 0 !important;
+  width: auto !important;
 }

@@ -6,12 +6,14 @@ import { Subject } from "rxjs";
 import { debounceTime, switchMap } from "rxjs/operators";
 
 import { CatalogoService } from "../../catalogo.service";
+import { GlobalBrandsService } from "../../global-brands.service";
 import { VehicleTypesService } from "../../vehicle-types.service";
 import {
   GlobalModel,
   GlobalModelsResponse,
   VehicleType,
 } from "../../models/modelo-global.model";
+import { GlobalBrand } from "../../models/global-brand.model";
 import { FeatherIcons } from "../../../../shared/components/feather-icons/feather-icons";
 
 @Component({
@@ -23,14 +25,16 @@ import { FeatherIcons } from "../../../../shared/components/feather-icons/feathe
 })
 export class ModelosGlobalesList implements OnInit {
   private catalogoService = inject(CatalogoService);
+  private globalBrandsService = inject(GlobalBrandsService);
   private vehicleTypesService = inject(VehicleTypesService);
 
   models = signal<GlobalModel[]>([]);
+  brands = signal<GlobalBrand[]>([]);
   vehicleTypes = signal<VehicleType[]>([]);
   meta = signal<GlobalModelsResponse["meta"] | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
-  searchTerm = signal("");
+  brandFilter = signal<string>("");
   vehicleTypeFilter = signal<string>("");
 
   private searchSubject = new Subject<void>();
@@ -39,13 +43,16 @@ export class ModelosGlobalesList implements OnInit {
     this.vehicleTypesService.getAll().subscribe({
       next: (types) => this.vehicleTypes.set(types),
     });
+    this.globalBrandsService.getAll().subscribe({
+      next: (brands) => this.brands.set(brands),
+    });
 
     this.searchSubject
       .pipe(
         debounceTime(300),
         switchMap(() =>
           this.catalogoService.getAll({
-            brandName: this.searchTerm() || undefined,
+            brandId: this.brandFilter() || undefined,
             vehicleTypeId: this.vehicleTypeFilter() || undefined,
             page: this.meta()?.page ?? 1,
             limit: 20,
@@ -73,8 +80,8 @@ export class ModelosGlobalesList implements OnInit {
     this.searchSubject.next();
   }
 
-  onSearchChange(value: string): void {
-    this.searchTerm.set(value);
+  onBrandFilterChange(value: string): void {
+    this.brandFilter.set(value);
     this.meta.update((m) => (m ? { ...m, page: 1 } : null));
     this.load();
   }

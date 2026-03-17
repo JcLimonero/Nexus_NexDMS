@@ -1,0 +1,115 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/caja/sesiones" class="alert-link ms-2">Volver</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (sesion(); as s) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Sesión {{ s.id | slice:0:8 }}...</h5>
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/caja/sesiones">Volver</a>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Sucursal</th>
+                      <td>{{ s.branch?.name ?? s.branchId }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Usuario</th>
+                      <td>{{ getUserName(s) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-success]="s.status === 'OPEN'"
+                          [class.bg-secondary]="s.status === 'CLOSED'">
+                          {{ getStatusLabel(s.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Apertura</th>
+                      <td>{{ s.openedAt | date:'medium' }}</td>
+                    </tr>
+                    @if (s.closedAt) {
+                      <tr>
+                        <th class="text-muted">Cierre</th>
+                        <td>{{ s.closedAt | date:'medium' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Totales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Fondo inicial</th>
+                      <td class="text-end">{{ s.openingBalance | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Efectivo</th>
+                      <td class="text-end">{{ s.totalCash | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tarjeta</th>
+                      <td class="text-end">{{ s.totalCard | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Transferencia</th>
+                      <td class="text-end">{{ s.totalTransfer | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Total ventas</th>
+                      <td class="text-end fw-bold">{{ s.totalSales | number:'1.2-2' }}</td>
+                    </tr>
+                    @if (s.closingBalance !== null) {
+                      <tr>
+                        <th class="text-muted">Fondo final</th>
+                        <td class="text-end">{{ s.closingBalance | number:'1.2-2' }}</td>
+                      </tr>
+                      @if (s.difference !== null) {
+                        <tr>
+                          <th class="text-muted">Diferencia</th>
+                          <td class="text-end" [class.text-danger]="s.difference !== 0" [class.text-success]="s.difference === 0">
+                            {{ s.difference | number:'1.2-2' }}
+                          </td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            @if (s.closingNotes) {
+              <div class="mb-3">
+                <h6 class="text-muted">Notas de cierre</h6>
+                <p class="mb-0">{{ s.closingNotes }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

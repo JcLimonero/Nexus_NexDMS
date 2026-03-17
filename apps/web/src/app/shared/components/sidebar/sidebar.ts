@@ -4,8 +4,19 @@ import { NavigationEnd, Router, RouterModule } from "@angular/router";
 import { NgbModule } from "@ng-bootstrap/ng-bootstrap";
 import { TranslateModule } from "@ngx-translate/core";
 
+import { AuthService } from "../../../auth/auth.service";
 import { Menu, NavService } from "../../services/nav.service";
 import { FeatherIcons } from "../feather-icons/feather-icons";
+
+const ROLE_LABELS: Record<string, string> = {
+  SUPERADMIN: "Super administrador",
+  ADMIN: "Administrador",
+  MANAGER: "Gerente",
+  WAREHOUSE: "Almacén",
+  CASHIER: "Cajero",
+  MECHANIC: "Mecánico",
+  SELLER: "Vendedor",
+};
 
 @Component({
   selector: "app-sidebar",
@@ -15,10 +26,25 @@ import { FeatherIcons } from "../feather-icons/feather-icons";
 })
 export class Sidebar {
   private router = inject(Router);
+  private auth = inject(AuthService);
   navServices = inject(NavService);
 
   public menuItems: Menu[];
   public url: string | ArrayBuffer | null = null;
+
+  get displayName(): string {
+    const u = this.auth.getUser();
+    if (!u) return "Usuario";
+    const name = [u.firstName, u.lastName].filter(Boolean).join(" ").trim();
+    return name || u.email;
+  }
+
+  get roleLabel(): string {
+    const u = this.auth.getUser();
+    if (!u?.roles?.length) return "";
+    const role = u.roles[0];
+    return ROLE_LABELS[role] ?? role;
+  }
 
   constructor() {
     this.navServices.items.subscribe((menuItems) => {
@@ -46,19 +72,17 @@ export class Sidebar {
 
   // Active Nave state
   setNavActive(item: Menu) {
-    this.menuItems.filter((menuItem) => {
-      if (menuItem != item) menuItem.active = false;
-      if (menuItem.children && menuItem.children.includes(item))
-        menuItem.active = true;
-      if (menuItem.children) {
-        menuItem.children.filter((submenuItems) => {
-          if (submenuItems.children && submenuItems.children.includes(item)) {
-            menuItem.active = true;
-            submenuItems.active = true;
-          }
-        });
-      }
+    this.menuItems.forEach((menuItem) => {
+      if (menuItem !== item) menuItem.active = false;
+      if (menuItem.children?.includes(item)) menuItem.active = true;
+      menuItem.children?.forEach((submenuItems) => {
+        if (submenuItems.children?.includes(item)) {
+          menuItem.active = true;
+          submenuItems.active = true;
+        }
+      });
     });
+    this.navServices.items.next([...this.menuItems]);
   }
 
   // Click Toggle menu
@@ -76,6 +100,10 @@ export class Sidebar {
       });
     }
     item.active = !item.active;
+  }
+
+  signOut(): void {
+    this.auth.logout();
   }
 
   //Fileupload

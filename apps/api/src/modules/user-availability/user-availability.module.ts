@@ -6,6 +6,7 @@ import { UserAvailabilityService } from './user-availability.service';
 import { UserAvailabilityController } from './user-availability.controller';
 import { UserBranch } from '../legal-entities/entities/user-branch.entity';
 import { UserRole } from '../users/entities/user-role.entity';
+import { User } from '../users/entities/user.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import { BranchRamp } from '../branch-ramps/entities/branch-ramp.entity';
@@ -17,6 +18,7 @@ import { BranchRamp } from '../branch-ramps/entities/branch-ramp.entity';
       UserAbsence,
       UserBranch,
       UserRole,
+      User,
       Appointment,
       ServiceType,
       BranchRamp,
