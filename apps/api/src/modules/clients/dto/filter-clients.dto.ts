@@ -13,6 +13,11 @@ export class FilterClientsDto {
 
   @IsOptional()
   @IsEnum(ClientTypeEnum)
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' || value === null || value === undefined
+      ? undefined
+      : value,
+  )
   clientType?: ClientTypeEnum;
 
   @IsOptional()

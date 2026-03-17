@@ -1,0 +1,14 @@
+/* NexDMS Design System — Bootstrap (grid + utilities), design overrides in _design-system */
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+
+@import "../scss/style.scss";
+@import "./theme/responsive";
+@import "./theme/dashboard_default";
+
+@import "../../../node_modules/ngx-owl-carousel-o/lib/styles/scss/owl.theme.default.scss";
+@import "../../../node_modules/ngx-owl-carousel-o/lib/styles/scss/owl.carousel.scss";
+@import "sticky/sticky.scss";
+@import "sweetalert/sweetalert2.scss";
+@import "todo/todo";
+
+// @import "~dragula/dist/dragula.css";

@@ -1,0 +1,36 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Ngx Editor</h5>
+        </div>
+        <div class="card-body">
+          <div class="NgxEditor__Wrapper">
+            <ngx-editor-menu [editor]="editor" />
+            <ngx-editor
+              [editor]="editor"
+              [ngModel]="html"
+              [disabled]="false"
+              [placeholder]="'Type here...'"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>KolKov Editor</h5>
+        </div>
+        <div class="card-body">
+          <angular-editor
+            [placeholder]="'Enter text here...'"
+            [(ngModel)]="htmlContent"
+            [config]="editorConfig"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

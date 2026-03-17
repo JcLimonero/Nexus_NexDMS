@@ -1,0 +1,119 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid product-wrapper" [class.sidebaron]="sidebaron">
+  <div class="product-grid">
+    <div class="card">
+      <div class="card-body">
+        <div class="row">
+          <div class="col-xl-6">
+            <form class="search-form contact-search">
+              <div class="form-group mb-0">
+                <input
+                  type="text"
+                  class="form-control"
+                  [(ngModel)]="searchValue"
+                  [ngModelOptions]="{ standalone: true }"
+                  placeholder="Search by name..."
+                  (keyup)="searchByName()"
+                />
+              </div>
+            </form>
+          </div>
+          <div class="col-xl-6">
+            <div class="contact-filter">
+              <h5 class="mb-0 me-2">Filter By Age</h5>
+              <ngx-slider
+                [(value)]="value"
+                [options]="options"
+                (userChangeStart)="onUserChangeStart($event)"
+                (userChange)="onUserChange($event)"
+                (userChangeEnd)="onUserChangeEnd($event)"
+              />
+              <button
+                class="btn btn-primary me-2"
+                [routerLink]="['/contact/new-user']"
+              >
+                <i>ADD</i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div
+      class="product-wrapper-grid"
+      [class.list-view]="listView"
+      style="opacity: 1"
+    >
+      <div class="row">
+        <div class="col-sm-12">
+          <div class="card">
+            <div class="product-box table-responsive contact-table">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>
+                      <h5 class="mb-0">Profile</h5>
+                    </th>
+                    <th>
+                      <h5 class="mb-0">Name</h5>
+                    </th>
+                    <th>
+                      <h5 class="mb-0">Surname</h5>
+                    </th>
+                    <th>
+                      <h5 class="mb-0">Mobile</h5>
+                    </th>
+                    <th colspan="2">
+                      <h5 class="mb-0">Age</h5>
+                    </th>
+                  </tr>
+                </thead>
+                @for (item of items; track item) {
+                  <tbody>
+                    <tr>
+                      <td>
+                        <img
+                          class="img-60 rounded-circle"
+                          src="{{ item.avatar }}"
+                          alt="#" loading="lazy"
+                        />
+                      </td>
+                      <td>
+                        <h6>{{ item.name }}</h6>
+                      </td>
+                      <td>
+                        <h6>{{ item.surname }}</h6>
+                      </td>
+                      <td>
+                        <h6>{{ item.mobile }}</h6>
+                      </td>
+                      <td>
+                        <h6>{{ item.age }}</h6>
+                      </td>
+                      <td>
+                        <a
+                          class="btn btn-primary me-2"
+                          [routerLink]="['/contact/edit-user', item.id]"
+                          >Edit</a
+                        >
+                        <button
+                          class="btn btn-secondary"
+                          (click)="delete(item.id)"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                }
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-12">
+    </div>
+  </div>
+</div>
+<!-- Container-fluid Ends-->

@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -112,11 +116,17 @@ export class AuthService {
       },
     );
 
-    await this.redis.setex(
-      `${REFRESH_KEY_PREFIX}${user.id}`,
-      REFRESH_TTL_SECONDS,
-      refreshToken,
-    );
+    try {
+      await this.redis.setex(
+        `${REFRESH_KEY_PREFIX}${user.id}`,
+        REFRESH_TTL_SECONDS,
+        refreshToken,
+      );
+    } catch {
+      throw new ServiceUnavailableException(
+        'Redis no disponible. Verifica que el contenedor nexDMS_redis esté corriendo.',
+      );
+    }
 
     return {
       accessToken,

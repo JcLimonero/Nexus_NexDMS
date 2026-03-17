@@ -1,0 +1,24 @@
+<div class="my-gallery row gallery-with-description" id="aniimated-thumbnials">
+  <div class="my-app-custom-plain-container-with-desc row">
+    <div
+      class="my-gallery card-body row gallery-with-description"
+      itemscope=""
+      gallerize
+    >
+      @for (img of imageData; track img) {
+        <figure class="col-xl-3 col-sm-6" itemprop="associatedMedia">
+          <a href="javascript:void(0)" itemprop="contentUrl">
+            <img [src]="img.srcUrl" class="img-fluid" alt="portfolio" lazy="loading"/>
+            <div class="caption">
+              <h4>Portfolio Title</h4>
+              <p>
+                is simply dummy text of the printing and typesetting industry.
+                Lorem Ipsum has been the industry's standard dummy.
+              </p>
+            </div>
+          </a>
+        </figure>
+      }
+    </div>
+  </div>
+</div>

@@ -1,0 +1,133 @@
+<div class="page-wrapper">
+  <div class="auth-bg">
+    <div class="authentication-box login-authentication-box">
+      <div class="text-center login-logo-wrapper">
+        <img
+          src="assets/nexus_images/logo/logo_full.png"
+          alt="NexDMS"
+          loading="lazy"
+          class="login-logo"
+        />
+      </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <div class="text-center">
+            <h4>Iniciar sesión</h4>
+            <h6>Ingresa tu correo electrónico y contraseña</h6>
+          </div>
+          @if (!newUser) {
+            <form
+              class="theme-form"
+              [formGroup]="loginForm"
+              (ngSubmit)="login()"
+              autocomplete="on"
+            >
+              <div aria-live="polite" aria-atomic="true">
+                @if (error) {
+                  <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                  </div>
+                }
+              </div>
+              <div class="form-group">
+                <label for="login-email" class="col-form-label pt-0"
+                  >Correo electrónico</label
+                >
+                <input
+                  id="login-email"
+                  class="form-control"
+                  formControlName="email"
+                  type="email"
+                  autocomplete="email"
+                  [attr.aria-invalid]="
+                    loginForm.controls['email'].invalid &&
+                    loginForm.controls['email'].touched
+                  "
+                  [attr.aria-describedby]="
+                    loginForm.controls['email'].touched &&
+                    loginForm.controls['email'].errors
+                      ? 'email-error'
+                      : null
+                  "
+                />
+                @if (
+                  loginForm.controls["email"].touched &&
+                  loginForm.controls["email"].errors
+                ) {
+                  <div
+                    id="email-error"
+                    class="text text-danger mt-1"
+                    role="alert"
+                  >
+                    @if (loginForm.controls["email"].errors["required"]) {
+                      El correo es obligatorio
+                    } @else if (loginForm.controls["email"].errors["email"]) {
+                      Correo electrónico no válido
+                    }
+                  </div>
+                }
+              </div>
+              <div class="form-group">
+                <label for="login-password" class="col-form-label"
+                  >Contraseña</label
+                >
+                <input
+                  id="login-password"
+                  class="form-control"
+                  type="password"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  [attr.aria-invalid]="
+                    loginForm.controls['password'].invalid &&
+                    loginForm.controls['password'].touched
+                  "
+                  [attr.aria-describedby]="
+                    loginForm.controls['password'].touched &&
+                    loginForm.controls['password'].errors
+                      ? 'password-error'
+                      : null
+                  "
+                />
+                @if (
+                  loginForm.controls["password"].touched &&
+                  loginForm.controls["password"].errors &&
+                  loginForm.controls["password"].errors["required"]
+                ) {
+                  <div
+                    id="password-error"
+                    class="text text-danger mt-1"
+                    role="alert"
+                  >
+                    La contraseña es obligatoria
+                  </div>
+                }
+              </div>
+              <div class="form-group d-flex justify-content-end">
+                <a
+                  routerLink="/auth/forgot-password"
+                  class="text-muted small"
+                  >¿Olvidaste tu contraseña?</a
+                >
+              </div>
+              <div class="form-group row mt-3 mb-0">
+                <button
+                  class="btn btn-primary btn-block btn-lg login-submit-btn"
+                  [disabled]="!loginForm.valid || loading"
+                  type="submit"
+                  [attr.aria-busy]="loading"
+                >
+                  @if (loading) {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Iniciando sesión...</span>
+                  } @else {
+                    <span>Iniciar sesión</span>
+                  }
+                </button>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

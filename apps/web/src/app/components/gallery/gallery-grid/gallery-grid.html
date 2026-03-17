@@ -1,0 +1,20 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>IMAGE GALLERY</h5>
+        </div>
+        <div class="gallery my-gallery card-body row" itemscope="" gallerize>
+          @for (img of imageData; track img) {
+            <figure class="col-xl-3 col-sm-6" itemprop="associatedMedia">
+              <a href="javascript:void(0)" itemprop="contentUrl">
+                <img [src]="img.srcUrl" class="img-fluid" alt="" lazy="loading"/>
+              </a>
+            </figure>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

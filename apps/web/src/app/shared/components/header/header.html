@@ -1,0 +1,205 @@
+<!-- Page Header Start-->
+<div
+  class="page-main-header"
+  [class.open]="navServices.collapseSidebar"
+  id="page-main-header"
+>
+  <div class="main-header-right row">
+    <div class="main-header-left col-auto p-0 d-lg-none">
+      <div class="logo-wrapper">
+        <a href="javascript:void(0)"
+          ><img src="assets/nexus_images/logo/logo_white.png" alt="NexDMS" loading="lazy"
+        /></a>
+      </div>
+    </div>
+    <div class="mobile-sidebar col-auto p-0">
+      <div class="media-body text-start switch-sm">
+        <label class="switch">
+          <a href="javascript:void(0)" (click)="collapseSidebar()">
+            <app-feather-icons id="sidebar-toggle" [icon]="'align-left'" />
+          </a>
+        </label>
+      </div>
+    </div>
+    <div class="nav-right col">
+      <ul class="nav-menus" [class.open]="openNav">
+        <li>
+          <form class="form-inline search-form">
+            <div class="form-group mb-0">
+              <input
+                class="form-control-plaintext"
+                [class.open]="isOpenMobile"
+                [(ngModel)]="text"
+                [ngModelOptions]="{ standalone: true }"
+                (keyup)="searchTerm(text)"
+                type="text"
+                autocomplete="off"
+                placeholder="Search.."
+              />
+              <span class="d-sm-none mobile-search">
+                <app-feather-icons
+                  [icon]="'search'"
+                  (click)="isOpenMobile = !isOpenMobile"
+                />
+              </span>
+              <div
+                class="Typeahead-menu"
+                [class.is-open]="searchResult"
+                id="search-outer"
+              >
+                @for (menuItem of menuItems | slice: 0 : 8; track menuItem) {
+                  <div class="ProfileCard u-cf">
+                    <div class="ProfileCard-avatar">
+                      <app-feather-icons
+                        [icon]="menuItem.icon"
+                        class="header-search"
+                      />
+                    </div>
+                    <div class="ProfileCard-details">
+                      <div class="ProfileCard-realName">
+                        <a
+                          [routerLink]="menuItem?.path"
+                          class="realname"
+                          (click)="removeFix()"
+                          >{{ menuItem?.title }}</a
+                        >
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+              <div class="Typeahead-menu" [class.is-open]="searchResultEmpty">
+                <div class="tt-dataset tt-dataset-0">
+                  <div class="EmptyMessage">
+                    Opps!! There are no result found.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </form>
+        </li>
+        <li>
+          <a
+            href="javascript:void(0)"
+            class="text-dark"
+            (click)="toggleFullScreen()"
+          >
+            <app-feather-icons [icon]="'maximize'" />
+          </a>
+        </li>
+        <li class="onhover-dropdown">
+          <app-feather-icons [icon]="'bell'" /><span class="dot"></span>
+          <ul class="notification-dropdown onhover-show-div">
+            <li>
+              Notification
+              <span class="badge rounded-pill badge-primary pull-right">3</span>
+            </li>
+            <li>
+              <div class="media">
+                <div class="flex-grow-1">
+                  <h6 class="mt-0">
+                    <span>
+                      <app-feather-icons
+                        class="shopping-color"
+                        [icon]="'shopping-bag'"
+                      /> </span
+                    >Your order ready for Ship..!<small class="pull-right"
+                      >9:00 AM</small
+                    >
+                  </h6>
+                  <p class="mb-0">Lorem ipsum dolor sit amet, consectetuer.</p>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="media">
+                <div class="flex-grow-1">
+                  <h6 class="mt-0 txt-success">
+                    <span>
+                      <app-feather-icons
+                        class="download-color font-success"
+                        [icon]="'download'"
+                      /> </span
+                    >Download Complete<small class="pull-right">2:30 PM</small>
+                  </h6>
+                  <p class="mb-0">Lorem ipsum dolor sit amet, consectetuer.</p>
+                </div>
+              </div>
+            </li>
+            <li>
+              <div class="media">
+                <div class="flex-grow-1">
+                  <h6 class="mt-0 txt-danger">
+                    <span>
+                      <app-feather-icons
+                        class="alert-color font-danger"
+                        [icon]="'alert-circle'"
+                      /> </span
+                    >250 MB trush files<small class="pull-right">5:00 PM</small>
+                  </h6>
+                  <p class="mb-0">Lorem ipsum dolor sit amet, consectetuer.</p>
+                </div>
+              </div>
+            </li>
+            <li class="bg-light txt-dark">
+              <a href="javascript:void(0)">All</a> notification
+            </li>
+          </ul>
+        </li>
+        <li>
+          <a>
+            <app-feather-icons
+              class="right_side_toggle"
+              [icon]="'message-circle'"
+              (click)="right_side_bar()"
+            /><span class="dot"></span>
+          </a>
+        </li>
+        <li class="onhover-dropdown">
+          <div class="media align-items-center">
+            <img
+              class="align-self-center pull-right img-50 rounded-circle"
+              src="assets/images/dashboard/user.png"
+              alt="header-user" loading="lazy"
+            />
+            <div class="dotted-animation">
+              <span class="animate-circle"></span
+              ><span class="main-circle"></span>
+            </div>
+          </div>
+          <ul class="profile-dropdown onhover-show-div p-20">
+            <li>
+              <a href="javascript:void(0)">
+                <app-feather-icons [icon]="'user'" />Edit Profile
+              </a>
+            </li>
+            <li>
+              <a href="javascript:void(0)">
+                <app-feather-icons [icon]="'mail'" />Inbox
+              </a>
+            </li>
+            <li>
+              <a href="javascript:void(0)">
+                <app-feather-icons [icon]="'lock'" />Lock Screen
+              </a>
+            </li>
+            <li>
+              <a href="javascript:void(0)">
+                <app-feather-icons [icon]="'settings'" />Settings
+              </a>
+            </li>
+            <li>
+              <a href="javascript:void(0)" (click)="SignOut()">
+                <app-feather-icons [icon]="'log-out'" />Logout
+              </a>
+            </li>
+          </ul>
+        </li>
+      </ul>
+      <div class="d-lg-none mobile-toggle pull-right" (click)="openMobileNav()">
+        <app-feather-icons [icon]="'more-horizontal'" />
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Page Header Ends -->

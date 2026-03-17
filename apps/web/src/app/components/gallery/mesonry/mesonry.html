@@ -1,0 +1,29 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>MASONRY GALLERY</h5>
+        </div>
+        <div
+          class="card-body photoswipe-pb-responsive"
+          itemprop="associatedMedia"
+          gallerize
+        >
+          <ngx-masonry
+            [options]="masonryOptions"
+            style="width: 100%"
+            [ordered]="true"
+            (itemsLoaded)="itemsLoaded()"
+          >
+            @for (image of masonryImages; track image; let index = $index) {
+              <div ngxMasonryItem [prepend]="image.isNew" style="width: 250px">
+                <img [src]="image.imageUrl" width="100%" class="img-fluid" alt="img" lazy="loading" />
+              </div>
+            }
+          </ngx-masonry>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

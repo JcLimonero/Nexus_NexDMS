@@ -1,0 +1,190 @@
+/**
+ * Estilo tipo Cursor Dashboard (cursor.com/dashboard/billing)
+ * Controles minimalistas, fondos neutros, bordes sutiles
+ */
+
+// Variables del tema Cursor-style
+$cursor-bg-neutral: #fafafa;
+$cursor-bg-input: #ffffff;
+$cursor-border: #e5e7eb;
+$cursor-border-focus: #6366f1; // Indigo tipo Cursor (alternativa: $primary-color para mantener marca NexDMS)
+$cursor-text: #374151;
+$cursor-text-muted: #6b7280;
+$cursor-radius: 8px;
+$cursor-radius-sm: 6px;
+$cursor-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+$cursor-shadow-focus: 0 0 0 3px rgba(99, 102, 241, 0.15);
+
+/* ========== Form Controls (inputs, select, textarea) ========== */
+.form-control,
+input.form-control,
+select.form-control,
+textarea.form-control,
+.theme-form input[type="text"],
+.theme-form input[type="email"],
+.theme-form input[type="search"],
+.theme-form input[type="password"],
+.theme-form input[type="number"],
+.theme-form input[type="tel"],
+.theme-form input[type="date"],
+.theme-form input[type="datetime-local"],
+.theme-form input[type="time"],
+.theme-form input[type="url"],
+.theme-form select {
+  background-color: $cursor-bg-input !important;
+  border: 1px solid $cursor-border !important;
+  border-radius: $cursor-radius-sm !important;
+  color: $cursor-text !important;
+  font-size: 14px !important;
+  padding: 0.5rem 0.75rem !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+
+  &::placeholder {
+    color: $cursor-text-muted !important;
+  }
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: darken($cursor-border, 8%) !important;
+  }
+
+  &:focus {
+    border-color: $cursor-border-focus !important;
+    box-shadow: $cursor-shadow-focus !important;
+    outline: none !important;
+  }
+
+  &:disabled {
+    background-color: $cursor-bg-neutral !important;
+    color: $cursor-text-muted !important;
+    cursor: not-allowed;
+  }
+}
+
+/* Select con flecha limpia */
+select.form-control:not([size]):not([multiple]) {
+  appearance: auto;
+  padding-right: 2rem;
+}
+
+/* Textarea */
+textarea.form-control {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* ========== Buttons ========== */
+.btn {
+  border-radius: $cursor-radius-sm !important;
+  font-weight: 500 !important;
+  transition: all 0.15s ease;
+}
+
+.btn-primary {
+  background-color: $cursor-border-focus !important;
+  border-color: $cursor-border-focus !important;
+  color: #fff !important;
+
+  &:hover:not(:disabled) {
+    background-color: darken($cursor-border-focus, 8%) !important;
+    border-color: darken($cursor-border-focus, 8%) !important;
+  }
+
+  &:focus {
+    box-shadow: $cursor-shadow-focus !important;
+  }
+}
+
+.btn-outline-primary {
+  border-color: $cursor-border-focus !important;
+  color: $cursor-border-focus !important;
+  background: transparent !important;
+
+  &:hover:not(:disabled) {
+    background-color: rgba(99, 102, 241, 0.08) !important;
+    border-color: $cursor-border-focus !important;
+    color: $cursor-border-focus !important;
+  }
+}
+
+.btn-secondary,
+.btn-light {
+  background-color: $cursor-bg-neutral !important;
+  border-color: $cursor-border !important;
+  color: $cursor-text !important;
+
+  &:hover:not(:disabled) {
+    background-color: darken($cursor-bg-neutral, 4%) !important;
+    border-color: darken($cursor-border, 8%) !important;
+  }
+}
+
+/* ========== Cards ========== */
+.card {
+  border: 1px solid $cursor-border !important;
+  border-radius: $cursor-radius !important;
+  box-shadow: $cursor-shadow !important;
+  background-color: #fff !important;
+
+  .card-header {
+    background-color: #fff !important;
+    border-bottom: 1px solid $cursor-border !important;
+    color: $cursor-text !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+  }
+
+  .card-body {
+    background-color: #fff !important;
+  }
+}
+
+/* ========== Input groups ========== */
+.input-group {
+  .form-control {
+    border-radius: 0 !important;
+
+    &:first-child {
+      border-top-left-radius: $cursor-radius-sm !important;
+      border-bottom-left-radius: $cursor-radius-sm !important;
+    }
+
+    &:last-child {
+      border-top-right-radius: $cursor-radius-sm !important;
+      border-bottom-right-radius: $cursor-radius-sm !important;
+    }
+  }
+
+  .input-group-text {
+    background-color: $cursor-bg-neutral !important;
+    border: 1px solid $cursor-border !important;
+    border-radius: $cursor-radius-sm !important;
+    color: $cursor-text-muted !important;
+  }
+}
+
+/* ========== Labels ========== */
+.form-label,
+.col-form-label,
+label {
+  color: $cursor-text !important;
+  font-weight: 500 !important;
+  font-size: 14px !important;
+}
+
+/* ========== Ng-Select (si se usa) ========== */
+.ng-select.ng-select-single .ng-select-container,
+.ng-select .ng-select-container {
+  background-color: $cursor-bg-input !important;
+  border: 1px solid $cursor-border !important;
+  border-radius: $cursor-radius-sm !important;
+  min-height: 38px !important;
+
+  &:hover {
+    border-color: darken($cursor-border, 8%) !important;
+  }
+}
+
+.ng-select.ng-select-focused .ng-select-container {
+  border-color: $cursor-border-focus !important;
+  box-shadow: $cursor-shadow-focus !important;
+}

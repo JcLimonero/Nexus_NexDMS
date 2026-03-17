@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { LegalEntitiesModule } from './modules/legal-entities/legal-entities.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
+import { ClientTypesModule } from './modules/client-types/client-types.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { CustomerVehiclesModule } from './modules/customer-vehicles/customer-vehicles.module';
 import { PartCategoriesModule } from './modules/part-categories/part-categories.module';
@@ -95,6 +96,7 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     LegalEntitiesModule,
     BranchesModule,
     ClientsModule,
+    ClientTypesModule,
     ContactsModule,
     CustomerVehiclesModule,
     PartCategoriesModule,

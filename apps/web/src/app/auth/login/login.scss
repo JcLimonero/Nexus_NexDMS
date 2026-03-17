@@ -1,0 +1,29 @@
+/* Responsive: evita overflow en móvil */
+.login-authentication-box {
+  max-width: 100%;
+}
+
+/* Logo: mantiene proporciones y tamaño adecuado */
+.login-logo-wrapper {
+  .login-logo {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+}
+
+/* Focus visible para cumplir WCAG 2.4.7 */
+.login-authentication-box {
+  .form-control:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--bs-primary, #4466f2);
+    outline-offset: 2px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--bs-primary, #4466f2);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}

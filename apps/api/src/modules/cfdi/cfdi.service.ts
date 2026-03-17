@@ -17,7 +17,6 @@ import { Sale } from '../sales/entities/sale.entity';
 import { ServiceOrder } from '../service-orders/entities/service-order.entity';
 import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
 import {
-  UnitSaleExtra,
   UnitSaleExtraStatusEnum,
   UnitSaleExtraTypeEnum,
 } from '../unit-sale-extras/entities/unit-sale-extra.entity';

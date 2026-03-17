@@ -1,0 +1,63 @@
+<!-- Right sidebar Start-->
+<div>
+  <div class="container p-0">
+    <div class="modal-header p-l-20 p-r-20">
+      <div class="col-sm-8 p-0">
+        <h6 class="modal-title font-weight-bold">FRIEND LIST</h6>
+      </div>
+      <div class="col-sm-4 text-end p-0">
+        <i class="me-2" data-feather="settings"></i>
+      </div>
+    </div>
+  </div>
+  <div class="friend-list-search mt-0">
+    <input
+      class="form-control"
+      [(ngModel)]="searchText"
+      [ngModelOptions]="{ standalone: true }"
+      (keyup)="searchTerm(searchText)"
+      type="text"
+      placeholder="search"
+    /><i class="fa fa-search"></i>
+  </div>
+  <div class="p-l-30 p-r-30">
+    <div class="chat-box">
+      <div class="people-list friend-list custom-scrollbar">
+        <ul class="list">
+          @for (user of searchUsers; track user) {
+            @if (user.authenticate !== 1) {
+              <li class="clearfix">
+                <a [routerLink]="['/chat/']">
+                  <img
+                    class="rounded-circle user-image"
+                    [src]="user?.profile"
+                    alt="" loading="lazy"
+                  />
+                  <div
+                    class="status-circle"
+                    [class]="{ online: user.online, offline: !user.online }"
+                  ></div>
+                  <div class="about">
+                    <div class="name">{{ user?.name }}</div>
+                    <div class="status">{{ user?.status }}</div>
+                  </div>
+                </a>
+              </li>
+            }
+          }
+          @if (notFound) {
+            <div class="image-not-found">
+              <div class="">
+                <img src="assets/images/search-not-found.png" alt="" loading="lazy" />
+                <p class="mb-0">
+                  Sorry, We didn't find any results matching this search
+                </p>
+              </div>
+            </div>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!-- Right sidebar Ends-->
+</div>
