@@ -135,6 +135,12 @@ export class NavService {
       type: "link",
     },
     {
+      path: "/pld",
+      title: "Cumplimiento PLD",
+      icon: "shield",
+      type: "link",
+    },
+    {
       path: "/quotes",
       title: "Cotizaciones",
       icon: "file-text",

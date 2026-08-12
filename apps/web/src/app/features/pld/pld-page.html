@@ -1,0 +1,132 @@
+<div class="container-fluid">
+  <div class="card pld-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Cumplimiento PLD</h5>
+        <span>Operaciones vulnerables — venta de vehículos (LFPIORPI Art. 17)</span>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-light" (click)="exportCsv()">Exportar avisos (CSV)</button>
+        <button class="btn btn-primary" (click)="evaluate()">Evaluar ventas</button>
+      </div>
+    </div>
+  </div>
+
+  @if (summary(); as s) {
+    <div class="pld-cards mb-4">
+      <div class="pld-card">
+        <div class="v">{{ s.total }}</div>
+        <div class="l">Operaciones registradas</div>
+      </div>
+      <div class="pld-card" [class.warn]="s.expedientesPendientes > 0">
+        <div class="v">{{ s.expedientesPendientes }}</div>
+        <div class="l">Expedientes pendientes</div>
+      </div>
+      <div class="pld-card" [class.danger]="s.avisosPendientes > 0">
+        <div class="v">{{ s.avisosPendientes }}</div>
+        <div class="l">Avisos pendientes (SAT/UIF)</div>
+      </div>
+      <div class="pld-card">
+        <div class="v">{{ s.avisosPresentados }}</div>
+        <div class="l">Avisos presentados</div>
+      </div>
+      <div class="pld-card uma">
+        @if (umaEdit()) {
+          <div class="uma-edit">
+            <input type="number" class="form-control" [(ngModel)]="umaValue" step="0.01" />
+            <button class="btn btn-primary btn-sm" (click)="saveUma()">OK</button>
+          </div>
+        } @else {
+          <div class="v clickable" (click)="umaEdit.set(true)" title="Clic para editar">
+            ${{ s.config.umaValue }}
+          </div>
+        }
+        <div class="l">
+          UMA vigente · Identificación ≥ {{ s.config.identificationUma }} ·
+          Aviso ≥ {{ s.config.noticeUma }}
+        </div>
+      </div>
+    </div>
+  }
+
+  <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5>Operaciones</h5>
+      <input
+        type="month"
+        class="form-control month-input"
+        [ngModel]="month()"
+        (ngModelChange)="month.set($event); load()"
+      />
+    </div>
+    @if (loading()) {
+      <div class="card-body text-center py-4"><span class="spinner-border"></span></div>
+    } @else if (ops().length === 0) {
+      <div class="card-body text-center py-4 text-muted">
+        Sin operaciones vulnerables registradas. Usa "Evaluar ventas" para
+        revisar las ventas de unidades completadas.
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Cliente</th>
+              <th class="text-end">Monto</th>
+              <th class="text-end">UMA</th>
+              <th>Expediente</th>
+              <th>Aviso</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (op of ops(); track op.id) {
+              <tr>
+                <td>{{ op.operationDate }}</td>
+                <td>{{ clientLabel(op) }}</td>
+                <td class="text-end">{{ money(op.amount) }}</td>
+                <td class="text-end">{{ op.umaAmount }}</td>
+                <td>
+                  <span class="badge" [class.badge-success]="op.fileStatus === 'COMPLETE'" [class.badge-warning]="op.fileStatus === 'PENDING'">
+                    {{ op.fileStatus === "COMPLETE" ? "Completo" : "Pendiente" }}
+                  </span>
+                </td>
+                <td>
+                  @if (op.noticeStatus === "NOT_REQUIRED") {
+                    <span class="badge badge-secondary">No requerido</span>
+                  } @else if (op.noticeStatus === "PENDING") {
+                    <span class="badge badge-danger">Pendiente</span>
+                  } @else {
+                    <span class="badge badge-success">Presentado</span>
+                  }
+                </td>
+                <td class="text-end">
+                  <div class="d-flex gap-2 justify-content-end">
+                    <button class="btn btn-outline-secondary btn-sm" (click)="toggleFile(op)">
+                      {{ op.fileStatus === "COMPLETE" ? "Reabrir expediente" : "Expediente completo" }}
+                    </button>
+                    @if (op.noticeStatus === "PENDING") {
+                      <button class="btn btn-outline-primary btn-sm" (click)="markReported(op)">
+                        Aviso presentado
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <p class="pld-disclaimer">
+    Los umbrales corresponden a la venta de vehículos como actividad vulnerable
+    (Art. 17 fracc. VIII LFPIORPI): identificación del cliente a partir de
+    3,210 UMA y aviso al SAT/UIF a partir de 6,420 UMA. Actualiza el valor de
+    la UMA cada año conforme lo publique INEGI. La presentación del aviso se
+    realiza en el portal del SAT (SPPLD); este módulo lleva el control y el
+    export de apoyo.
+  </p>
+</div>

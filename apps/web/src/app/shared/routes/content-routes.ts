@@ -138,6 +138,12 @@ export const content: Routes = [
     data: { title: "Seminuevos", breadcrumb: "Seminuevos" },
   },
   {
+    path: "pld",
+    loadComponent: () =>
+      import("../../../app/features/pld/pld-page").then((m) => m.PldPage),
+    data: { title: "Cumplimiento PLD", breadcrumb: "PLD" },
+  },
+  {
     path: "billing",
     data: { breadcrumb: "Facturación" },
     loadChildren: () =>

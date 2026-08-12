@@ -39,6 +39,10 @@ export class Tenant {
   @Column({ name: 'service_flow', type: 'jsonb', nullable: true })
   serviceFlow: Record<string, string[]> | null;
 
+  /** Config PLD (umbrales UMA); null = defaults del sistema. */
+  @Column({ name: 'pld_config', type: 'jsonb', nullable: true })
+  pldConfig: Record<string, number> | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

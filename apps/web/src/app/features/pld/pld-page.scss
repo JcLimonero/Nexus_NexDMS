@@ -1,0 +1,48 @@
+.pld-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.pld-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+
+  .v {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+
+    &.clickable { cursor: pointer; }
+    &.clickable:hover { color: var(--primary); }
+  }
+
+  .l {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+  }
+
+  &.warn .v { color: #b45309; }
+  &.danger .v { color: var(--danger); }
+  &.uma { border-left: 3px solid var(--accent); }
+}
+
+.uma-edit {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+
+  input { width: 110px; }
+}
+
+.month-input { width: 170px; }
+
+.pld-disclaimer {
+  margin-top: 16px;
+  font-size: 12px;
+  color: var(--text-muted);
+  max-width: 90ch;
+}
