@@ -1,0 +1,58 @@
+<div class="public-wrap">
+  <div class="public-card">
+    <div class="public-brand">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">NexDMS</span>
+    </div>
+
+    @if (loading()) {
+      <p class="muted center">Cargando tu orden…</p>
+    } @else if (error()) {
+      <p class="error-box">{{ error() }}</p>
+    } @else if (data(); as d) {
+      <h1>Orden {{ d.folio }}</h1>
+      <p class="muted">{{ vehicleLabel() }}</p>
+
+      @if (d.cancelled) {
+        <p class="error-box">Esta orden fue cancelada.</p>
+      } @else {
+        <!-- Timeline -->
+        <div class="timeline-steps">
+          @for (s of d.steps; track s.status) {
+            <div class="step" [class.done]="s.done" [class.current]="s.current">
+              <div class="dot">
+                @if (s.done && !s.current) { ✓ }
+              </div>
+              <div class="step-label">{{ s.label }}</div>
+            </div>
+          }
+        </div>
+
+        <div class="status-banner">
+          Tu {{ d.vehicle?.brand ? "vehículo" : "orden" }} está:
+          <b>{{ d.statusLabel }}</b>
+        </div>
+      }
+
+      <!-- Avances -->
+      @if (d.updates.length > 0) {
+        <h2>Avances del taller</h2>
+        @for (u of d.updates; track u.createdAt) {
+          <div class="update-item">
+            <div>{{ u.message }}</div>
+            <div class="update-date">{{ dateLabel(u.createdAt) }}</div>
+          </div>
+        }
+      }
+
+      @if (d.branch) {
+        <div class="branch-foot">
+          {{ d.branch.name }}
+          @if (d.branch.phone) {
+            · <a href="tel:{{ d.branch.phone }}">{{ d.branch.phone }}</a>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>

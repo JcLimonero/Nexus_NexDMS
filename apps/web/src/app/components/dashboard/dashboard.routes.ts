@@ -6,7 +6,10 @@ export const dashboard: Routes = [
     children: [
       {
         path: "default",
-        loadComponent: () => import("./default/default").then((m) => m.Default),
+        loadComponent: () =>
+          import("../../features/inicio/dashboard-inicio").then(
+            (m) => m.DashboardInicio,
+          ),
         data: {
           title: "Inicio",
           breadcrumb: "Inicio",

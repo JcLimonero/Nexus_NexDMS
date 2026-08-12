@@ -1,0 +1,56 @@
+<div class="public-wrap">
+  <div class="public-card">
+    <div class="public-brand">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">NexDMS</span>
+    </div>
+
+    @if (loading()) {
+      <p class="muted center">Cargando encuesta…</p>
+    } @else if (error()) {
+      <p class="error-box">{{ error() }}</p>
+    } @else if (answered() || sent()) {
+      <div class="thanks">
+        <div class="thanks-icon">🙌</div>
+        <h1>¡Gracias por tu opinión!</h1>
+        <p class="muted">
+          Tu respuesta nos ayuda a mejorar el servicio del taller.
+        </p>
+      </div>
+    } @else {
+      <h1>¿Cómo fue tu servicio?</h1>
+      @if (folio()) {
+        <p class="muted">Orden {{ folio() }}</p>
+      }
+
+      <div class="stars">
+        @for (n of [1, 2, 3, 4, 5]; track n) {
+          <button
+            type="button"
+            class="star"
+            [class.on]="score() >= n"
+            (click)="setScore(n)"
+            [attr.aria-label]="n + ' estrellas'"
+          >
+            ★
+          </button>
+        }
+      </div>
+
+      <label class="comment-label">Cuéntanos más (opcional)</label>
+      <textarea
+        rows="3"
+        [(ngModel)]="comment"
+        placeholder="¿Qué te gustó? ¿Qué podemos mejorar?"
+      ></textarea>
+
+      <button
+        class="btn-send"
+        [disabled]="score() < 1 || saving()"
+        (click)="submit()"
+      >
+        {{ saving() ? "Enviando…" : "Enviar respuesta" }}
+      </button>
+    }
+  </div>
+</div>

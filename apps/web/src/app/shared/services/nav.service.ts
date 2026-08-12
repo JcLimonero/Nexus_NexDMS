@@ -191,4 +191,22 @@ export class NavService {
   ];
 
   items = new BehaviorSubject<Menu[]>(this.MENUITEMS);
+
+  /**
+   * Filtra el menú según los módulos habilitados del tenant (SaaS).
+   * La clave de módulo es el primer segmento del path (p.ej. "workshop").
+   * null/vacío = todos los módulos.
+   */
+  applyEnabledModules(mods: string[] | null): void {
+    if (!mods || mods.length === 0) {
+      this.items.next(this.MENUITEMS);
+      return;
+    }
+    const allowed = new Set([...mods, "dashboard"]);
+    const keyOf = (m: Menu): string => {
+      const p = m.path ?? m.children?.[0]?.path ?? "";
+      return p.split("/")[1] ?? "";
+    };
+    this.items.next(this.MENUITEMS.filter((m) => allowed.has(keyOf(m))));
+  }
 }

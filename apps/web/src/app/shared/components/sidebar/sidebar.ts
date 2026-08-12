@@ -1,4 +1,5 @@
 import { Component, DestroyRef, inject } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter } from "rxjs/operators";
 import { NavigationEnd, Router, RouterModule } from "@angular/router";
@@ -50,11 +51,22 @@ export class Sidebar {
     return ROLE_LABELS[role] ?? role;
   }
 
+  private http = inject(HttpClient);
+
   constructor() {
     this.navServices.items
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((menuItems) => {
         this.menuItems = menuItems;
+      });
+
+    // Módulos habilitados del tenant (SaaS) — filtra el menú
+    this.http
+      .get<{ enabledModules: string[] | null }>("/api/v1/tenants/me/modules")
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => this.navServices.applyEnabledModules(res.enabledModules),
+        error: () => {}, // sin restricción si falla
       });
 
     this.router.events

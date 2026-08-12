@@ -1,0 +1,243 @@
+/* Páginas públicas (tracking + encuesta) — mobile-first, sin layout interno */
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: linear-gradient(to bottom, #18181b, #27272a);
+}
+
+.public-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 24px 16px;
+}
+
+.public-card {
+  width: 100%;
+  max-width: 460px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 26px 22px;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+}
+
+.public-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    background: linear-gradient(to bottom right, #dc2626, #b91c1c);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+  }
+
+  .brand-name {
+    font-weight: 700;
+    color: #18181b;
+  }
+}
+
+h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  color: #18181b;
+}
+
+h2 {
+  margin: 22px 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #52525b;
+}
+
+.muted {
+  color: #71717a;
+  font-size: 14px;
+  margin: 0 0 14px;
+}
+
+.center { text-align: center; }
+
+.error-box {
+  padding: 12px;
+  border-radius: 8px;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+/* ── Timeline (tracking) ── */
+.timeline-steps {
+  display: flex;
+  justify-content: space-between;
+  margin: 22px 0 8px;
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+
+  &:not(:first-child)::before {
+    content: "";
+    position: absolute;
+    top: 11px;
+    right: 50%;
+    width: 100%;
+    height: 2px;
+    background: #e4e4e7;
+    z-index: 0;
+  }
+
+  &.done:not(:first-child)::before {
+    background: #16a34a;
+  }
+
+  .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    background: #e4e4e7;
+    color: #fff;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  &.done .dot { background: #16a34a; }
+  &.current .dot {
+    background: #dc2626;
+    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.2);
+  }
+
+  .step-label {
+    font-size: 10px;
+    text-align: center;
+    color: #71717a;
+    max-width: 70px;
+  }
+
+  &.current .step-label {
+    color: #18181b;
+    font-weight: 600;
+  }
+}
+
+.status-banner {
+  margin: 16px 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #e4e4e7;
+  font-size: 14px;
+  color: #3f3f46;
+
+  b { color: #dc2626; }
+}
+
+.update-item {
+  padding: 10px 0;
+  border-top: 1px solid #f4f4f5;
+  font-size: 14px;
+  color: #18181b;
+
+  .update-date {
+    font-size: 11px;
+    color: #a1a1aa;
+  }
+}
+
+.branch-foot {
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #e4e4e7;
+  font-size: 13px;
+  color: #71717a;
+
+  a { color: #2563eb; text-decoration: none; }
+}
+
+/* ── Encuesta ── */
+.stars {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin: 18px 0;
+}
+
+.star {
+  font-size: 38px;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #e4e4e7;
+  transition: transform 0.1s, color 0.1s;
+
+  &.on { color: #f59e0b; }
+  &:hover { transform: scale(1.15); }
+}
+
+.comment-label {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3f3f46;
+  margin-bottom: 6px;
+}
+
+textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-family: inherit;
+  border: 1px solid #d4d4d8;
+  border-radius: 8px;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: #2563eb;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3);
+  }
+}
+
+.btn-send {
+  width: 100%;
+  margin-top: 16px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: #2563eb;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.thanks {
+  text-align: center;
+  padding: 12px 0;
+
+  .thanks-icon { font-size: 44px; margin-bottom: 8px; }
+}

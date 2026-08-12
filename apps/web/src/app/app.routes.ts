@@ -14,6 +14,19 @@ export const routes: Routes = [
     path: "auth/login",
     loadComponent: () => import("./auth/login/login").then((m) => m.Login),
   },
+  // ── Páginas públicas por token (sin login) ──
+  {
+    path: "t/:token",
+    loadComponent: () =>
+      import("./pages/public/tracking-publico").then((m) => m.TrackingPublico),
+    data: { title: "Seguimiento de orden" },
+  },
+  {
+    path: "s/:token",
+    loadComponent: () =>
+      import("./pages/public/encuesta-publica").then((m) => m.EncuestaPublica),
+    data: { title: "Encuesta de servicio" },
+  },
   {
     path: "auth/forgot-password",
     loadComponent: () =>
