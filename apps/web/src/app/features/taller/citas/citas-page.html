@@ -1,0 +1,235 @@
+<div class="container-fluid">
+  <!-- Header de página -->
+  <div class="card citas-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Citas</h5>
+        <span>Agenda del taller y planificación de capacidad</span>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        @if (pendientes() > 0) {
+          <span class="badge badge-warning">{{ pendientes() }} por confirmar</span>
+        }
+        <button class="btn btn-primary" (click)="toggleForm()">
+          <app-feather-icons [icon]="showForm() ? 'x' : 'plus'" />
+          {{ showForm() ? "Cerrar" : "Nueva cita" }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controles de día / sucursal -->
+  <div class="card mb-4">
+    <div class="card-body day-controls">
+      <div class="d-flex gap-2 align-items-center">
+        <button class="btn btn-light btn-sm" (click)="shiftDate(-1)">
+          <app-feather-icons [icon]="'chevron-left'" />
+        </button>
+        <input
+          type="date"
+          class="form-control date-input"
+          [ngModel]="date()"
+          (ngModelChange)="onDateChange($event)"
+        />
+        <button class="btn btn-light btn-sm" (click)="shiftDate(1)">
+          <app-feather-icons [icon]="'chevron-right'" />
+        </button>
+      </div>
+      <select
+        class="form-control branch-input"
+        [ngModel]="branchId()"
+        (ngModelChange)="onBranchChange($event)"
+      >
+        @for (b of branches(); track b.id) {
+          <option [value]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Nueva cita -->
+  @if (showForm()) {
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Nueva cita</h5>
+        <span>Selecciona cliente, servicio y un hueco en la matriz</span>
+      </div>
+      <div class="card-body">
+        <div class="row mb-3">
+          <div class="col-md-4">
+            <label>Cliente</label>
+            <app-client-selector
+              [clients]="clients()"
+              [selectedId]="form().clientId"
+              (selectedIdChange)="onClientChange($event)"
+            />
+          </div>
+          <div class="col-md-4">
+            <label>Vehículo</label>
+            <select
+              class="form-control"
+              [ngModel]="form().vehicleId"
+              (ngModelChange)="form.set({ ...form(), vehicleId: $event })"
+              [disabled]="!form().clientId || vehiclesLoading()"
+            >
+              <option value="">
+                {{ vehiclesLoading() ? "Cargando…" : "Selecciona vehículo" }}
+              </option>
+              @for (v of vehicles(); track v.id) {
+                <option [value]="v.id">{{ vehicleOptionLabel(v) }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-md-4">
+            <label>Tipo de servicio</label>
+            @if (serviceTypes().length > 0) {
+              <select
+                class="form-control"
+                [ngModel]="form().serviceTypeId"
+                (ngModelChange)="onServiceTypeChange($event)"
+              >
+                <option value="">Selecciona servicio</option>
+                @for (st of serviceTypes(); track st.id) {
+                  <option [value]="st.id">{{ st.name }}</option>
+                }
+              </select>
+            } @else {
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Ej. Mantenimiento 10,000 km"
+                [ngModel]="form().serviceType"
+                (ngModelChange)="form.set({ ...form(), serviceType: $event })"
+              />
+            }
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label>Notas</label>
+          <input
+            type="text"
+            class="form-control"
+            placeholder="Comentarios para el taller (opcional)"
+            [ngModel]="form().notes"
+            (ngModelChange)="form.set({ ...form(), notes: $event })"
+          />
+        </div>
+
+        <!-- Matriz de capacidad -->
+        <label class="matrix-label">Disponibilidad del día</label>
+        <app-capacity-matrix
+          [branchId]="branchId()"
+          [date]="date()"
+          [serviceTypeId]="form().serviceTypeId"
+          (slotSelected)="onSlotSelected($event)"
+        />
+
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <div class="selected-slot">
+            @if (selectedSlot(); as slot) {
+              <app-feather-icons [icon]="'check-circle'" />
+              <span>
+                {{ slot.mechanicName }} — {{ hourLabel(slot.start) }} a
+                {{ hourLabel(slot.end) }}
+              </span>
+            } @else {
+              <span class="text-muted">Ningún horario seleccionado</span>
+            }
+          </div>
+          <button
+            class="btn btn-primary"
+            [disabled]="!canSave()"
+            (click)="save()"
+          >
+            {{ saving() ? "Guardando…" : "Crear cita" }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Citas del día -->
+  <div class="card">
+    <div class="card-header">
+      <h5>Citas del día</h5>
+      <span>{{ citas().length }} citas</span>
+    </div>
+    @if (loading()) {
+      <div class="card-body text-center py-4">
+        <span class="spinner-border"></span>
+      </div>
+    } @else if (error()) {
+      <div class="card-body">
+        <div class="alert alert-danger">{{ error() }}</div>
+      </div>
+    } @else if (citas().length === 0) {
+      <div class="card-body text-center py-4 text-muted">
+        No hay citas para este día.
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Hora</th>
+              <th>Cliente</th>
+              <th>Vehículo</th>
+              <th>Servicio</th>
+              <th>Mecánico</th>
+              <th>Estatus</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of citas(); track c.id) {
+              <tr>
+                <td class="fw-500">{{ hourLabel(c.scheduledAt) }}</td>
+                <td>{{ clientLabel(c) }}</td>
+                <td>{{ vehicleLabel(c) }}</td>
+                <td>{{ c.serviceType }}</td>
+                <td>{{ mechanicLabel(c) }}</td>
+                <td>
+                  <span class="badge {{ statusClass(c.status) }}">
+                    {{ statusLabel(c.status) }}
+                  </span>
+                </td>
+                <td class="text-end">
+                  <div class="table-actions">
+                    @if (c.status === "PENDING_CONFIRMATION" || c.status === "SCHEDULED") {
+                      <button
+                        class="table-action-btn"
+                        title="Confirmar"
+                        (click)="confirm(c)"
+                      >
+                        <app-feather-icons [icon]="'check'" />
+                      </button>
+                    }
+                    @if (c.status === "CONFIRMED" || c.status === "SCHEDULED") {
+                      <button
+                        class="table-action-btn"
+                        title="Completar"
+                        (click)="complete(c)"
+                      >
+                        <app-feather-icons [icon]="'check-circle'" />
+                      </button>
+                    }
+                    @if (c.status !== "CANCELLED" && c.status !== "COMPLETED") {
+                      <button
+                        class="table-action-btn table-action-btn-danger"
+                        title="Cancelar"
+                        (click)="cancel(c)"
+                      >
+                        <app-feather-icons [icon]="'x'" />
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

@@ -38,17 +38,13 @@ export const workshopRoutes: Routes = [
   {
     path: "agenda",
     loadComponent: () =>
-      import("../../components/placeholder/placeholder").then(
-        (m) => m.Placeholder
-      ),
-    data: { title: "Agenda", breadcrumb: "Agenda" },
+      import("./agenda/planificador-taller").then((m) => m.PlanificadorTaller),
+    data: { title: "Planificador de taller", breadcrumb: "Planificador" },
   },
   {
     path: "citas",
     loadComponent: () =>
-      import("../../components/placeholder/placeholder").then(
-        (m) => m.Placeholder
-      ),
+      import("./citas/citas-page").then((m) => m.CitasPage),
     data: { title: "Citas", breadcrumb: "Citas" },
   },
 ];

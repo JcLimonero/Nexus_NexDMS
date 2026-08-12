@@ -1,0 +1,49 @@
+@if (loading()) {
+  <div class="matrix-loading">
+    <span class="spinner-border"></span>
+    <span>Cargando disponibilidad…</span>
+  </div>
+} @else if (error()) {
+  <div class="alert alert-danger">{{ error() }}</div>
+} @else if (rows().length === 0) {
+  <div class="matrix-empty">
+    No hay mecánicos asignados a esta sucursal.
+  </div>
+} @else if (hours().length === 0) {
+  <div class="matrix-empty">
+    Sin horarios disponibles para este día.
+  </div>
+} @else {
+  <div class="matrix-wrapper">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th class="mech-col">Mecánico</th>
+          @for (h of hours(); track h) {
+            <th class="hour-col">{{ formatHour(h) }}</th>
+          }
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.mechanicId) {
+          <tr>
+            <td class="mech-col">{{ row.mechanicName }}</td>
+            @for (count of row.counts; track $index) {
+              <td
+                class="slot-cell {{ cellClass(count) }}"
+                [class.selected]="isSelected(row.mechanicId, hours()[$index])"
+                (click)="onCellClick(row, $index)"
+              >
+                {{ count > 0 ? count : "—" }}
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+  <p class="matrix-hint">
+    Los números indican huecos disponibles por hora. Haz clic en una celda
+    para asignar mecánico y hora.
+  </p>
+}
