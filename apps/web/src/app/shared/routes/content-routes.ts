@@ -114,6 +114,30 @@ export const content: Routes = [
       ),
   },
   {
+    path: "finance",
+    loadComponent: () =>
+      import("../../../app/features/finanzas/finanzas-page").then(
+        (m) => m.FinanzasPage,
+      ),
+    data: { title: "Finanzas", breadcrumb: "Finanzas" },
+  },
+  {
+    path: "leads",
+    loadComponent: () =>
+      import("../../../app/features/leads/leads-page").then(
+        (m) => m.LeadsPage,
+      ),
+    data: { title: "Leads", breadcrumb: "Leads" },
+  },
+  {
+    path: "used-units",
+    loadComponent: () =>
+      import("../../../app/features/seminuevos/seminuevos-page").then(
+        (m) => m.SeminuevosPage,
+      ),
+    data: { title: "Seminuevos", breadcrumb: "Seminuevos" },
+  },
+  {
     path: "billing",
     data: { breadcrumb: "Facturación" },
     loadChildren: () =>

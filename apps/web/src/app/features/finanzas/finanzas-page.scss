@@ -1,0 +1,47 @@
+.kind-toggle {
+  display: flex;
+  gap: 8px;
+}
+
+.aging-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+}
+
+.aging-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+
+  &.total {
+    border-left: 3px solid var(--primary);
+  }
+
+  &.overdue .aging-amount {
+    color: var(--danger);
+  }
+}
+
+.aging-amount {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.aging-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.fw-600 { font-weight: 600; }
+
+.pay-inline {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+
+  .pay-input { width: 110px; }
+}

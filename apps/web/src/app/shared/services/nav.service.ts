@@ -50,6 +50,7 @@ export class NavService {
       active: false,
       children: [
         { path: "/clients", title: "Clientes", type: "link" },
+        { path: "/leads", title: "Leads", type: "link" },
       ],
     },
     {
@@ -93,6 +94,7 @@ export class NavService {
       children: [
         { path: "/purchases/proveedores", title: "Proveedores", type: "link" },
         { path: "/purchases/purchase-orders", title: "Órdenes de compra", type: "link" },
+        { path: "/used-units", title: "Seminuevos", type: "link" },
       ],
     },
     {
@@ -125,6 +127,12 @@ export class NavService {
         { path: "/sales", title: "Ventas de unidades", type: "link" },
         { path: "/sales", title: "Reservas", type: "link" },
       ],
+    },
+    {
+      path: "/finance",
+      title: "Finanzas",
+      icon: "credit-card",
+      type: "link",
     },
     {
       path: "/quotes",
