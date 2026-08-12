@@ -31,6 +31,26 @@ export class TenantsController {
     return this.tenantsService.findAll(user);
   }
 
+  /** Módulos activos del tenant del usuario logueado (para armar el menú). */
+  @Get('me/modules')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getMyModules(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getEnabledModules(user.tenantId);
+  }
+
+  /** Actualiza los módulos activos del tenant del usuario (ADMIN). */
+  @Patch('me/modules')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyModules(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { enabledModules: string[] | null },
+  ) {
+    return this.tenantsService.setEnabledModules(
+      user.tenantId,
+      body.enabledModules,
+    );
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(

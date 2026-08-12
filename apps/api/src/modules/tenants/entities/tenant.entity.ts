@@ -28,6 +28,10 @@ export class Tenant {
   @Column({ name: 'plan', type: 'enum', enum: TenantPlanEnum })
   plan: TenantPlanEnum;
 
+  /** Módulos habilitados para el tenant; null = todos (sin restricción). */
+  @Column({ name: 'enabled_modules', type: 'jsonb', nullable: true })
+  enabledModules: string[] | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

@@ -40,7 +40,11 @@ import { CfdiService } from '../cfdi/cfdi.service';
 import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { Client } from '../clients/entities/client.entity';
-import { ServicioHallazgoCotizacionEvent } from '../../events/domain-events';
+import {
+  OsEntregadaEvent,
+  ServicioHallazgoCotizacionEvent,
+} from '../../events/domain-events';
+import { ServiceSurvey } from './entities/service-survey.entity';
 
 const STATUS_TRANSITIONS: Record<
   ServiceOrderStatusEnum,
@@ -103,6 +107,8 @@ export class ServiceOrdersService {
     private readonly findingRepo: Repository<ServiceOrderFinding>,
     @InjectRepository(Client)
     private readonly clientRepo: Repository<Client>,
+    @InjectRepository(ServiceSurvey)
+    private readonly surveyRepo: Repository<ServiceSurvey>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly branchesService: BranchesService,
@@ -904,6 +910,39 @@ export class ServiceOrdersService {
     } catch (e) {
       this.logger.warn('CFDI no generado', e);
     }
+
+    // Encuesta post-entrega: una por orden, se envía por WhatsApp vía evento
+    try {
+      let survey = await this.surveyRepo.findOne({
+        where: { serviceOrderId: id },
+      });
+      if (!survey) {
+        survey = await this.surveyRepo.save(
+          this.surveyRepo.create({
+            tenantId: so.tenantId,
+            serviceOrderId: id,
+          }),
+        );
+      }
+      const client = await this.clientRepo.findOne({
+        where: { id: so.ownerId },
+      });
+      this.eventEmitter.emit(
+        'os.entregada',
+        new OsEntregadaEvent(
+          id,
+          so.branchId,
+          so.tenantId,
+          so.folio,
+          survey.token,
+          so.trackingToken,
+          { email: client?.email ?? undefined, phone: client?.phone ?? undefined },
+        ),
+      );
+    } catch (e) {
+      this.logger.warn('Encuesta post-entrega no creada', e);
+    }
+
     return this.findOne(user, id);
   }
 

@@ -50,4 +50,29 @@ export class TenantsService {
     tenant.isActive = false;
     return this.tenantRepo.save(tenant);
   }
+
+  /** Módulos habilitados; null = todos. */
+  async getEnabledModules(
+    tenantId: string,
+  ): Promise<{ enabledModules: string[] | null }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    return { enabledModules: tenant.enabledModules ?? null };
+  }
+
+  async setEnabledModules(
+    tenantId: string,
+    enabledModules: string[] | null,
+  ): Promise<{ enabledModules: string[] | null }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    tenant.enabledModules =
+      enabledModules && enabledModules.length > 0 ? enabledModules : null;
+    await this.tenantRepo.save(tenant);
+    return { enabledModules: tenant.enabledModules };
+  }
 }

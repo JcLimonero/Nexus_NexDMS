@@ -8,6 +8,7 @@ import {
   CitaAgendadaEvent,
   CitaRecordatorioEvent,
   CfdiGeneradoEvent,
+  OsEntregadaEvent,
   OsEstatusChangedEvent,
   StockMinimoEvent,
   PagoCreditoVencidoEvent,
@@ -97,6 +98,26 @@ export class NotificationsListener {
         html: `<p>Su factura ha sido generada. Total: $${event.total}</p>`,
       });
     }
+  }
+
+  @OnEvent('os.entregada')
+  async onOsEntregada(event: OsEntregadaEvent): Promise<void> {
+    if (!event.client?.phone) return;
+    const base = process.env.APP_PUBLIC_URL ?? 'http://localhost:4200';
+    await this.notificationsQueue.add('send', {
+      channel: NotificationChannelEnum.WHATSAPP,
+      templateKey: 'encuesta_servicio',
+      referenceType: 'ServiceOrder',
+      referenceId: event.serviceOrderId,
+      recipient: event.client.phone,
+      tenantId: event.tenantId,
+      branchId: event.branchId,
+      templateParams: {
+        folio: event.folio,
+        surveyUrl: `${base}/s/${event.surveyToken}`,
+        trackingUrl: `${base}/t/${event.trackingToken}`,
+      },
+    });
   }
 
   @OnEvent('os.estatus_changed')

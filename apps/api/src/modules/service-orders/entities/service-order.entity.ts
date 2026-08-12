@@ -100,6 +100,14 @@ export class ServiceOrder {
   @Column({ name: 'folio', type: 'varchar', length: 50 })
   folio: string;
 
+  /** Token para el link público de seguimiento (sin auth). */
+  @Column({
+    name: 'tracking_token',
+    type: 'uuid',
+    default: () => 'uuid_generate_v4()',
+  })
+  trackingToken: string;
+
   @Column({ name: 'status', type: 'enum', enum: ServiceOrderStatusEnum })
   status: ServiceOrderStatusEnum;
 

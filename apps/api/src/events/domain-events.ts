@@ -20,6 +20,18 @@ export class CfdiGeneradoEvent {
   ) {}
 }
 
+export class OsEntregadaEvent {
+  constructor(
+    public readonly serviceOrderId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly folio: string,
+    public readonly surveyToken: string,
+    public readonly trackingToken: string,
+    public readonly client?: { email?: string; phone?: string },
+  ) {}
+}
+
 export class OsEstatusChangedEvent {
   constructor(
     public readonly serviceOrderId: string,
