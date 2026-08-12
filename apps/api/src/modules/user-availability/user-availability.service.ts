@@ -91,7 +91,9 @@ export class UserAvailabilityService {
     durationMin?: number,
     serviceTypeId?: string,
   ): Promise<AvailableSlot[]> {
-    const targetDate = new Date(date);
+    // "YYYY-MM-DD" a secas se parsea como medianoche UTC (día anterior en
+    // horario local); con hora explícita se interpreta en el TZ del proceso.
+    const targetDate = new Date(`${date}T00:00:00`);
     if (isNaN(targetDate.getTime())) {
       return [];
     }
@@ -135,10 +137,8 @@ export class UserAvailabilityService {
       return [];
     }
 
-    const dayStart = new Date(date);
-    dayStart.setHours(0, 0, 0, 0);
-    const dayEnd = new Date(date);
-    dayEnd.setHours(23, 59, 59, 999);
+    const dayStart = new Date(`${date}T00:00:00`);
+    const dayEnd = new Date(`${date}T23:59:59.999`);
 
     const [schedules, absences, appointments] = await Promise.all([
       this.scheduleRepo.find({
@@ -213,8 +213,13 @@ export class UserAvailabilityService {
       );
 
       for (const win of workWindows) {
-        const slotStart = new Date(win.start);
-        while (slotStart < win.end) {
+        // Avanza 30 min en cada iteración (con `continue` incluido) para no
+        // quedar en loop infinito cuando un slot traslapa una cita existente.
+        for (
+          let slotStart = new Date(win.start);
+          slotStart < win.end;
+          slotStart = new Date(slotStart.getTime() + 30 * 60 * 1000)
+        ) {
           const slotEnd = new Date(slotStart);
           slotEnd.setMinutes(slotEnd.getMinutes() + duration);
           if (slotEnd > win.end) break;
@@ -251,7 +256,6 @@ export class UserAvailabilityService {
             end: slotEnd.toISOString(),
             mechanicId: mid,
           });
-          slotStart.setMinutes(slotStart.getMinutes() + 30);
         }
       }
     }

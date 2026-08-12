@@ -52,6 +52,7 @@ services:
       - ./apps/api/.env
     environment:
       NODE_ENV: development
+      TZ: America/Mexico_City
       DATABASE_URL: postgresql://nexdms:${POSTGRES_PASSWORD:-nexdms_dev}@postgres:5432/nexdms
       REDIS_URL: redis://:${REDIS_PASSWORD:-nexdms_dev}@redis:6379
     volumes:
@@ -109,6 +110,7 @@ services:
       - '4201:4200'
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - PROXY_API_TARGET=http://api:3000
     command: npm run start -- --host 0.0.0.0 --poll 1000
     networks:
       - nexDMS_net

@@ -249,7 +249,9 @@ export class AppointmentsService {
     }
 
     const [data, total] = await qb
-      .orderBy('a.scheduled_at', 'ASC')
+      // Propiedad de la entidad (no columna SQL): con skip/take TypeORM
+      // resuelve el orderBy vía metadata y truena con nombres snake_case.
+      .orderBy('a.scheduledAt', 'ASC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
