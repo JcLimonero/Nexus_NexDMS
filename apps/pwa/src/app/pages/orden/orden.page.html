@@ -1,0 +1,139 @@
+<header class="topbar">
+  <a routerLink="/" class="back">‹</a>
+  <div class="title">
+    <div class="folio">{{ orden()?.folio || "Orden de servicio" }}</div>
+    <div class="sub">{{ vehicleLabel() }}</div>
+  </div>
+  @if (orden(); as o) {
+    <span class="chip {{ o.status }}">{{ statusLabel(o.status) }}</span>
+  }
+</header>
+
+<main class="content">
+  @if (loading()) {
+    <div class="empty">Cargando orden…</div>
+  } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+  } @else if (orden(); as o) {
+    <!-- Cronómetro -->
+    <section class="card timer-card" [class.running]="running()">
+      <div>
+        <div class="timer-label">
+          {{ running() ? "Trabajando en esta orden" : "Tiempo registrado" }}
+        </div>
+        <div class="timer-value">{{ timeLabel() }}</div>
+      </div>
+      <button
+        class="timer-btn"
+        [class.pause]="running()"
+        [disabled]="busy()"
+        (click)="toggleTimer()"
+      >
+        {{ running() ? "⏸ Pausar" : "▶ Iniciar" }}
+      </button>
+    </section>
+
+    <!-- Datos -->
+    <section class="card info">
+      <div class="row">
+        <span class="k">Cliente</span>
+        <span class="v">{{ clientLabel() || "—" }}</span>
+      </div>
+      <div class="row">
+        <span class="k">Problema</span>
+        <span class="v">{{ o.reportedFault || "—" }}</span>
+      </div>
+      @if (o.parts && o.parts.length > 0) {
+        <div class="row">
+          <span class="k">Refacciones</span>
+          <span class="v">
+            @for (p of o.parts; track p.id) {
+              <div>{{ p.quantity }}× {{ p.part?.name || p.part?.sku || "Refacción" }}</div>
+            }
+          </span>
+        </div>
+      }
+    </section>
+
+    <!-- Cambiar estatus -->
+    @if (nextStatuses().length > 0) {
+      <section class="card">
+        <h3>Avanzar estatus</h3>
+        <div class="status-btns">
+          @for (s of nextStatuses(); track s.value) {
+            <button
+              class="status-btn"
+              [disabled]="busy()"
+              (click)="changeStatus(s.value)"
+            >
+              {{ s.label }}
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Reportar hallazgo -->
+    <section class="card">
+      <h3>Reportar hallazgo</h3>
+      <p class="hint">
+        Trabajo adicional detectado — requiere foto de evidencia y se
+        notifica al asesor
+      </p>
+      <div class="input-row">
+        <input
+          type="text"
+          placeholder="Ej. Balatas al 20%, se recomienda cambio"
+          [(ngModel)]="nuevoHallazgo"
+        />
+      </div>
+      <div class="input-row">
+        <label class="file-btn">
+          📷 {{ hallazgoFile ? hallazgoFile.name : "Tomar foto" }}
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            hidden
+            (change)="onHallazgoFile($event)"
+          />
+        </label>
+        <button
+          [disabled]="busy() || !nuevoHallazgo.trim() || !hallazgoFile"
+          (click)="addHallazgo()"
+        >
+          Enviar
+        </button>
+      </div>
+    </section>
+
+    <!-- Avances -->
+    <section class="card">
+      <h3>Avances</h3>
+      <div class="input-row">
+        <input
+          type="text"
+          placeholder="Registrar avance…"
+          [(ngModel)]="nuevaNota"
+          (keyup.enter)="addNota()"
+        />
+        <button [disabled]="busy() || !nuevaNota.trim()" (click)="addNota()">
+          Agregar
+        </button>
+      </div>
+      @if (updates().length === 0) {
+        <div class="empty small">Sin avances registrados.</div>
+      }
+      @for (u of updates(); track u.id) {
+        <div class="update">
+          <div class="update-text">{{ updateText(u) }}</div>
+          <div class="update-date">{{ dateLabel(u.createdAt) }}</div>
+        </div>
+      }
+    </section>
+  }
+
+  @if (toast()) {
+    <div class="toast">{{ toast() }}</div>
+  }
+</main>

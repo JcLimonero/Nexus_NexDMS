@@ -14,30 +14,54 @@
             "outputPath": "dist/pwa",
             "index": "src/index.html",
             "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
+            "polyfills": [
+              "zone.js"
+            ],
             "tsConfig": "tsconfig.app.json",
             "inlineStyleLanguage": "scss",
-            "assets": [{"glob": "**/*", "input": "public"}],
-            "styles": ["src/styles.scss"],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ],
             "scripts": []
           },
           "configurations": {
-            "production": {"outputHashing": "all"},
-            "development": {"optimization": false, "extractLicenses": false, "sourceMap": true}
+            "production": {
+              "outputHashing": "all"
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
           },
           "defaultConfiguration": "production"
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": {"buildTarget": "pwa:build"},
+          "options": {
+            "buildTarget": "pwa:build",
+            "proxyConfig": "proxy.conf.js"
+          },
           "configurations": {
-            "production": {"buildTarget": "pwa:build:production"},
-            "development": {"buildTarget": "pwa:build:development"}
+            "production": {
+              "buildTarget": "pwa:build:production"
+            },
+            "development": {
+              "buildTarget": "pwa:build:development"
+            }
           },
           "defaultConfiguration": "development"
         }
       }
     }
   },
-  "cli": {"analytics": false}
+  "cli": {
+    "analytics": false
+  }
 }
