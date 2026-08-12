@@ -10,6 +10,9 @@
 @import "styles/design-system";
 @import "styles/layout";
 
+/* Skin APRISSA — replica del Figma site (siempre al final para ganar cascada) */
+@import "styles/aprissa-theme";
+
 /* Sidebar: usuario fijo en la parte inferior */
 .page-wrapper .page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
   display: flex !important;

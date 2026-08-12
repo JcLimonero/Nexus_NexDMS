@@ -5,24 +5,24 @@
  */
 
 :root {
-  /* Background */
-  --bg: #F7F7F8;
+  /* Background — APRISSA: zinc-50 */
+  --bg: #FAFAFA;
   --bg-elevated: #FFFFFF;
   --card: #FFFFFF;
   --input-bg: #FFFFFF;
 
-  /* Borders */
-  --border: #E5E7EB;
-  --border-hover: #D1D5DB;
+  /* Borders — zinc-200 / zinc-300 */
+  --border: #E4E4E7;
+  --border-hover: #D4D4D8;
 
-  /* Text */
-  --text-primary: #111827;
-  --text-secondary: #6B7280;
-  --text-muted: #9CA3AF;
+  /* Text — zinc-900 / zinc-500 / zinc-400 */
+  --text-primary: #18181B;
+  --text-secondary: #71717A;
+  --text-muted: #A1A1AA;
 
-  /* States */
-  --primary: #111827;
-  --primary-hover: #1F2937;
+  /* States — APRISSA: primary azul blue-600 */
+  --primary: #2563EB;
+  --primary-hover: #1D4ED8;
   --success: #16A34A;
   --success-bg: #DCFCE7;
   --warning: #F59E0B;
@@ -31,10 +31,27 @@
   --danger-bg: #FEE2E2;
   --info: #3B82F6;
 
-  /* Radius */
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
+  /* Accent — APRISSA: rojo de marca (activo sidebar) */
+  --accent: #DC2626;
+  --accent-dark: #B91C1C;
+
+  /* Sidebar — gradiente zinc-900 → zinc-800 */
+  --sidebar-bg-from: #18181B;
+  --sidebar-bg-via: #18181B;
+  --sidebar-bg-to: #27272A;
+  --sidebar-text: #D4D4D8;        /* zinc-300 */
+  --sidebar-text-hover: #FFFFFF;
+  --sidebar-hover-bg: rgba(39, 39, 42, 0.5);   /* zinc-800/50 */
+  --sidebar-section: #71717A;     /* zinc-500 — labels de sección */
+  --sidebar-border: rgba(63, 63, 70, 0.5);     /* zinc-700/50 */
+  --sidebar-active-from: #DC2626; /* red-600 */
+  --sidebar-active-to: #B91C1C;   /* red-700 */
+  --sidebar-active-glow: 0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -4px rgba(239, 68, 68, 0.3);
+
+  /* Radius — APRISSA: rounded-md 6px / rounded-lg 8px */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
 
   /* Spacing scale (px) */
   --space-4: 4px;
@@ -91,10 +108,10 @@
   /* Shadows — minimal */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
   --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.04);
-  --focus-ring: 0 0 0 3px rgba(17, 24, 39, 0.12);
+  --focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.45);
 
-  /* Layout */
-  --sidebar-width: 260px;
+  /* Layout — APRISSA: sidebar w-64, topbar h-16 */
+  --sidebar-width: 256px;
   --sidebar-collapsed: 72px;
   --header-height: 64px;
 }

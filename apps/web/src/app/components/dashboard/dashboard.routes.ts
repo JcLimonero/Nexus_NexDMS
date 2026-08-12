@@ -8,8 +8,8 @@ export const dashboard: Routes = [
         path: "default",
         loadComponent: () => import("./default/default").then((m) => m.Default),
         data: {
-          title: "Default",
-          breadcrumb: "Default",
+          title: "Inicio",
+          breadcrumb: "Inicio",
         },
       },
       {
