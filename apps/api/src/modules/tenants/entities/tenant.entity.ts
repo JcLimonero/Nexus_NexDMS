@@ -32,6 +32,13 @@ export class Tenant {
   @Column({ name: 'enabled_modules', type: 'jsonb', nullable: true })
   enabledModules: string[] | null;
 
+  /**
+   * Flujo de estatus de taller configurable: mapa from → [to, ...].
+   * null = usar el flujo por defecto del sistema.
+   */
+  @Column({ name: 'service_flow', type: 'jsonb', nullable: true })
+  serviceFlow: Record<string, string[]> | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

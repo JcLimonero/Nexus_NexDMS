@@ -62,6 +62,31 @@ export class TenantsService {
     return { enabledModules: tenant.enabledModules ?? null };
   }
 
+  /** Flujo de estatus de taller; null = flujo por defecto. */
+  async getServiceFlow(
+    tenantId: string,
+  ): Promise<{ serviceFlow: Record<string, string[]> | null }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    return { serviceFlow: tenant.serviceFlow ?? null };
+  }
+
+  async setServiceFlow(
+    tenantId: string,
+    serviceFlow: Record<string, string[]> | null,
+  ): Promise<{ serviceFlow: Record<string, string[]> | null }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    tenant.serviceFlow =
+      serviceFlow && Object.keys(serviceFlow).length > 0 ? serviceFlow : null;
+    await this.tenantRepo.save(tenant);
+    return { serviceFlow: tenant.serviceFlow };
+  }
+
   async setEnabledModules(
     tenantId: string,
     enabledModules: string[] | null,

@@ -73,6 +73,9 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
 import { UnitReturnsModule } from './modules/unit-returns/unit-returns.module';
 import { UnitReturnDocumentsModule } from './modules/unit-return-documents/unit-return-documents.module';
 import { PublicPortalModule } from './modules/public-portal/public-portal.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { LeadsModule } from './modules/leads/leads.module';
+import { UsedUnitsModule } from './modules/used-units/used-units.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
 
@@ -160,6 +163,9 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     PublicPortalModule,
     DashboardModule,
     WhatsappBotModule,
+    FinanceModule,
+    LeadsModule,
+    UsedUnitsModule,
   ],
   controllers: [AppController],
   providers: [

@@ -45,6 +45,7 @@ import {
   ServicioHallazgoCotizacionEvent,
 } from '../../events/domain-events';
 import { ServiceSurvey } from './entities/service-survey.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 
 const STATUS_TRANSITIONS: Record<
   ServiceOrderStatusEnum,
@@ -109,6 +110,8 @@ export class ServiceOrdersService {
     private readonly clientRepo: Repository<Client>,
     @InjectRepository(ServiceSurvey)
     private readonly surveyRepo: Repository<ServiceSurvey>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly branchesService: BranchesService,
@@ -368,8 +371,15 @@ export class ServiceOrdersService {
       throw new ForbiddenException('Sin permisos para cambiar estatus');
     }
 
-    const transitions = STATUS_TRANSITIONS[so.status]?.[dto.status];
-    if (transitions === undefined) {
+    // Flujo configurable por tenant (service_flow); fallback al default
+    const tenant = await this.tenantRepo.findOne({
+      where: { id: so.tenantId },
+    });
+    const customFlow = tenant?.serviceFlow ?? null;
+    const allowedTargets = customFlow
+      ? (customFlow[so.status] ?? [])
+      : Object.keys(STATUS_TRANSITIONS[so.status] ?? {});
+    if (!allowedTargets.includes(dto.status)) {
       throw new BadRequestException(
         `Transición no permitida de ${so.status} a ${dto.status}`,
       );

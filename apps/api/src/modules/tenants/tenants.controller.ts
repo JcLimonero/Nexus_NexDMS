@@ -51,6 +51,22 @@ export class TenantsController {
     );
   }
 
+  /** Flujo de estatus de taller del tenant (configurable). */
+  @Get('me/service-flow')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getMyServiceFlow(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getServiceFlow(user.tenantId);
+  }
+
+  @Patch('me/service-flow')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyServiceFlow(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { serviceFlow: Record<string, string[]> | null },
+  ) {
+    return this.tenantsService.setServiceFlow(user.tenantId, body.serviceFlow);
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(

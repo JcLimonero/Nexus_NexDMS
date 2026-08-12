@@ -11,6 +11,7 @@ import { ServiceOrderUpdate } from './entities/service-order-update.entity';
 import { ServiceOrderFinding } from './entities/service-order-finding.entity';
 import { ServiceOrderFolioSeq } from './entities/service-order-folio-seq.entity';
 import { ServiceSurvey } from './entities/service-survey.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
@@ -34,6 +35,7 @@ import { MechanicChecklistModule } from '../mechanic-checklist/mechanic-checklis
       ServiceOrderFinding,
       ServiceOrderFolioSeq,
       ServiceSurvey,
+      Tenant,
       Branch,
       Part,
       StockMovement,
