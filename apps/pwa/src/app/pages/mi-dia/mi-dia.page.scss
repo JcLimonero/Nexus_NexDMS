@@ -1,7 +1,7 @@
 :host {
   display: block;
   min-height: 100dvh;
-  background: #fafafa;
+  background: var(--bg);
 }
 
 .topbar {
@@ -12,8 +12,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: linear-gradient(to bottom, #18181b, #27272a);
-  color: #fff;
+  background: linear-gradient(to bottom, var(--navy-600), var(--navy-800));
+  color: var(--card);
 }
 
 .who {
@@ -26,8 +26,8 @@
   width: 38px;
   height: 38px;
   border-radius: 9999px;
-  background: linear-gradient(to bottom right, #dc2626, #b91c1c);
-  color: #fff;
+  background: linear-gradient(to bottom right, var(--nexus-600), var(--nexus-700));
+  color: var(--card);
   font-weight: 700;
   font-size: 14px;
   display: flex;
@@ -41,14 +41,16 @@
 }
 
 .date {
-  font-size: 12px;
-  color: #a1a1aa;
-  text-transform: capitalize;
+  font-size: var(--text-xs);
+  color: var(--text-on-dark);
+
+  /* Solo la inicial: capitalize mayúsculiza cada palabra ("12 De Agosto") */
+  &::first-letter { text-transform: uppercase; }
 }
 
 .icon-btn {
   background: rgba(255, 255, 255, 0.1);
-  color: #fff;
+  color: var(--card);
   border: none;
   border-radius: 8px;
   width: 36px;
@@ -72,7 +74,7 @@ h2 {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: #52525b;
+  color: var(--text-secondary);
   margin: 0 0 10px;
   display: flex;
   align-items: center;
@@ -80,8 +82,8 @@ h2 {
 }
 
 .count {
-  background: #e4e4e7;
-  color: #3f3f46;
+  background: var(--border);
+  color: var(--text-secondary);
   border-radius: 9999px;
   font-size: 12px;
   padding: 1px 8px;
@@ -91,8 +93,8 @@ h2 {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: #fff;
-  border: 1px solid #e4e4e7;
+  background: var(--card);
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 14px;
   margin-bottom: 10px;
@@ -109,12 +111,12 @@ h2 {
   .hour {
     font-weight: 700;
     font-size: 15px;
-    color: #18181b;
+    color: var(--navy-600);
   }
 
   .dur {
     font-size: 11px;
-    color: #a1a1aa;
+    color: var(--text-muted);
   }
 }
 
@@ -126,7 +128,7 @@ h2 {
 .card-title {
   font-weight: 600;
   font-size: 14px;
-  color: #18181b;
+  color: var(--navy-600);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -134,13 +136,13 @@ h2 {
 
 .card-sub {
   font-size: 13px;
-  color: #3f3f46;
+  color: var(--text-secondary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   &.muted {
-    color: #a1a1aa;
+    color: var(--text-muted);
     font-size: 12px;
   }
 }
@@ -151,34 +153,34 @@ h2 {
   padding: 3px 8px;
   border-radius: 9999px;
   white-space: nowrap;
-  background: #e4e4e7;
-  color: #3f3f46;
+  background: var(--border);
+  color: var(--text-secondary);
 
-  &.SCHEDULED, &.PENDING_CONFIRMATION { background: #dbeafe; color: #1e40af; }
-  &.CONFIRMED { background: #dcfce7; color: #166534; }
-  &.IN_PROGRESS { background: #fef3c7; color: #92400e; }
-  &.WAITING_PARTS { background: #fee2e2; color: #991b1b; }
-  &.READY, &.COMPLETED { background: #dcfce7; color: #166534; }
+  &.SCHEDULED, &.PENDING_CONFIRMATION { background: var(--primary-soft); color: var(--primary); }
+  &.CONFIRMED { background: var(--success-bg); color: var(--success); }
+  &.IN_PROGRESS { background: var(--warning-bg); color: var(--warning); }
+  &.WAITING_PARTS { background: var(--danger-bg); color: var(--danger); }
+  &.READY, &.COMPLETED { background: var(--success-bg); color: var(--success); }
 }
 
 .arrow {
-  color: #a1a1aa;
+  color: var(--text-muted);
   font-size: 20px;
 }
 
 .empty {
   padding: 20px;
   text-align: center;
-  color: #a1a1aa;
+  color: var(--text-muted);
   font-size: 14px;
-  border: 1px dashed #d4d4d8;
+  border: 1px dashed var(--border-hover);
   border-radius: 12px;
 }
 
 .error {
   padding: 12px;
   border-radius: 8px;
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--danger-bg);
+  color: var(--danger);
   font-size: 13px;
 }

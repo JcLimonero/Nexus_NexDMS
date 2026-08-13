@@ -1,27 +1,26 @@
 .intake-form {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
+  gap: var(--space-12);
+  align-items: end;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-.fw-600 { font-weight: 600; }
+.fw-600 { font-weight: var(--font-semibold); }
 
 .sub {
-  font-size: 12px;
+  font-size: var(--text-xs);
   color: var(--text-muted);
 }
 
 .values-inline,
 .actions-inline {
   display: inline-flex;
-  gap: 6px;
+  gap: var(--space-8);
   align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
-
-.v-input { width: 110px; }

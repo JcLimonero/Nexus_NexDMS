@@ -1,59 +1,83 @@
 /**
  * NexDMS Design System — Design Tokens
- * Neutral SaaS admin UI · Cursor settings style
- * Jerarquía tipográfica intencional: tamaños y pesos distintos por rol
+ * Identidad Nexus Q Tech: azul acero #105078 (isotipo) + navy #203848 (tipografía).
+ * Los neutrales llevan un sesgo azulado para que lean como elegidos, no heredados.
+ *
+ * REGLA DE ORO: todo control (input, select, textarea, botón) comparte
+ * altura, radio, tipografía y anillo de foco. Ver "Controles" más abajo.
  */
 
 :root {
-  /* Background — APRISSA: zinc-50 */
-  --bg: #FAFAFA;
+  /* ── Marca Nexus Q Tech ─────────────────────────── */
+  --nexus-50:  #F0F6FA;
+  --nexus-100: #DBEAF3;
+  --nexus-200: #B3D0E4;
+  --nexus-300: #7FAFD0;
+  --nexus-400: #4589B5;
+  --nexus-500: #1A6395;
+  --nexus-600: #105078;   /* ← azul de marca (isotipo + Q) */
+  --nexus-700: #0C4062;
+  --nexus-800: #09314B;
+  --nexus-900: #072536;
+
+  --navy-500: #2C4A5E;
+  --navy-600: #203848;    /* ← navy de marca (tipografía del logo) */
+  --navy-700: #1A2D3A;
+  --navy-800: #16262F;
+  --navy-900: #101C23;
+
+  /* ── Superficies ────────────────────────────────── */
+  --bg: #F5F7F9;
   --bg-elevated: #FFFFFF;
   --card: #FFFFFF;
   --input-bg: #FFFFFF;
 
-  /* Borders — zinc-200 / zinc-300 */
-  --border: #E4E4E7;
-  --border-hover: #D4D4D8;
+  /* ── Bordes ─────────────────────────────────────── */
+  --border: #DDE3E9;
+  --border-hover: #C5CFD8;
+  --border-strong: #A9B7C3;
 
-  /* Text — zinc-900 / zinc-500 / zinc-400 */
-  --text-primary: #18181B;
-  --text-secondary: #71717A;
-  --text-muted: #A1A1AA;
+  /* ── Texto ──────────────────────────────────────── */
+  --text-primary: #16262F;
+  --text-secondary: #5A6B78;
+  --text-muted: #8A98A4;
+  --text-on-brand: #FFFFFF;
 
-  /* States — APRISSA: primary azul blue-600 */
-  --primary: #2563EB;
-  --primary-hover: #1D4ED8;
-  --success: #16A34A;
-  --success-bg: #DCFCE7;
-  --warning: #F59E0B;
-  --warning-bg: #FEF3C7;
-  --danger: #DC2626;
-  --danger-bg: #FEE2E2;
-  --info: #3B82F6;
+  /* ── Acción / estados ───────────────────────────── */
+  --primary: var(--nexus-600);
+  --primary-hover: var(--nexus-700);
+  --primary-soft: var(--nexus-50);
+  --accent: var(--nexus-600);
 
-  /* Accent — APRISSA: rojo de marca (activo sidebar) */
-  --accent: #DC2626;
-  --accent-dark: #B91C1C;
+  --success: #157F52;
+  --success-bg: #E3F4EC;
+  --warning: #9A5B12;
+  --warning-bg: #FBF0DE;
+  --danger: #B3261E;
+  --danger-bg: #FBE9E7;
+  --info: var(--nexus-600);
+  --info-bg: var(--nexus-50);
 
-  /* Sidebar — gradiente zinc-900 → zinc-800 */
-  --sidebar-bg-from: #18181B;
-  --sidebar-bg-via: #18181B;
-  --sidebar-bg-to: #27272A;
-  --sidebar-text: #D4D4D8;        /* zinc-300 */
+  /* ── Sidebar (navy de marca) ────────────────────── */
+  --sidebar-bg-from: var(--navy-600);
+  --sidebar-bg-via: var(--navy-700);
+  --sidebar-bg-to: var(--navy-800);
+  --sidebar-text: #B9C6D0;
   --sidebar-text-hover: #FFFFFF;
-  --sidebar-hover-bg: rgba(39, 39, 42, 0.5);   /* zinc-800/50 */
-  --sidebar-section: #71717A;     /* zinc-500 — labels de sección */
-  --sidebar-border: rgba(63, 63, 70, 0.5);     /* zinc-700/50 */
-  --sidebar-active-from: #DC2626; /* red-600 */
-  --sidebar-active-to: #B91C1C;   /* red-700 */
-  --sidebar-active-glow: 0 10px 15px -3px rgba(239, 68, 68, 0.3), 0 4px 6px -4px rgba(239, 68, 68, 0.3);
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-section: #7C8D9A;
+  --sidebar-border: rgba(255, 255, 255, 0.09);
+  --sidebar-active-from: var(--nexus-600);
+  --sidebar-active-to: var(--nexus-700);
+  --sidebar-active-glow: 0 6px 14px -4px rgba(16, 80, 120, 0.55);
 
-  /* Radius — APRISSA: rounded-md 6px / rounded-lg 8px */
+  /* ── Radios ─────────────────────────────────────── */
   --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
+  --radius-pill: 9999px;
 
-  /* Spacing scale (px) */
+  /* ── Espaciado ──────────────────────────────────── */
   --space-4: 4px;
   --space-8: 8px;
   --space-12: 12px;
@@ -61,11 +85,10 @@
   --space-24: 24px;
   --space-32: 32px;
 
-  /* Typography — jerarquía por rol (NO iguales) */
+  /* ── Tipografía ─────────────────────────────────── */
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', monospace;
 
-  /* Escala de tamaños */
   --text-xs: 12px;
   --text-sm: 14px;
   --text-base: 16px;
@@ -74,13 +97,12 @@
   --text-2xl: 24px;
   --text-3xl: 28px;
 
-  /* Pesos — distintos por contexto */
   --font-regular: 400;
   --font-medium: 500;
   --font-semibold: 600;
   --font-bold: 700;
 
-  /* Semántica tipográfica (Cursor-style) */
+  /* Semántica tipográfica por rol */
   --text-page-title: var(--text-2xl);
   --text-page-title-weight: var(--font-semibold);
   --text-section-title: var(--text-base);
@@ -95,51 +117,85 @@
   --text-button-weight: var(--font-medium);
   --text-input: var(--text-sm);
   --text-input-weight: var(--font-regular);
+  /* Encabezados de tabla y etiquetas de sección */
+  --text-overline: var(--text-xs);
+  --text-overline-weight: var(--font-semibold);
+  --text-overline-tracking: 0.05em;
 
-  /* Controles — referencia grupo teléfono (altura + espacio interno) */
-  --input-height: 35px;
-  --input-height-sm: 30px;
-  --input-padding-x: 10px;
-  --input-padding-y: 10px;
-  --btn-height: 38px;
-  --btn-height-sm: 34px;
-  --btn-height-lg: 44px;
+  /* ══ CONTROLES — escala única ══════════════════════
+     input = select = textarea = button comparten estas
+     medidas. No declares alturas de control fuera de aquí. */
+  --control-h: 38px;
+  --control-h-sm: 32px;
+  --control-h-lg: 44px;
+  --control-px: 12px;
+  --control-px-sm: 10px;
+  --control-px-lg: 20px;
+  --control-radius: var(--radius-md);
+  --control-font: var(--text-sm);
+  --control-font-sm: var(--text-xs);
+  --control-border-w: 1px;
+  --control-gap: var(--space-8);
 
-  /* Shadows — minimal */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.04);
-  --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.04);
-  --focus-ring: 0 0 0 2px rgba(59, 130, 246, 0.45);
+  /* Anchos de campo homologados (evita px sueltos por página) */
+  --field-xs: 90px;
+  --field-sm: 130px;
+  --field-md: 190px;
+  --field-lg: 260px;
 
-  /* Layout — APRISSA: sidebar w-64, topbar h-16 */
+  /* Alias heredados — apuntan a la escala única */
+  --input-height: var(--control-h);
+  --input-height-sm: var(--control-h-sm);
+  --input-padding-x: var(--control-px);
+  --input-padding-y: 0;
+  --btn-height: var(--control-h);
+  --btn-height-sm: var(--control-h-sm);
+  --btn-height-lg: var(--control-h-lg);
+
+  /* ── Sombras y foco ─────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(22, 38, 47, 0.05);
+  --shadow-md: 0 2px 6px rgba(22, 38, 47, 0.07);
+  --shadow-lg: 0 10px 24px -8px rgba(22, 38, 47, 0.22);
+  --focus-ring: 0 0 0 3px rgba(16, 80, 120, 0.18);
+  --focus-ring-danger: 0 0 0 3px rgba(179, 38, 30, 0.18);
+
+  /* ── Layout ─────────────────────────────────────── */
   --sidebar-width: 256px;
   --sidebar-collapsed: 72px;
   --header-height: 64px;
 }
 
-/* Dark mode — Cursor settings style */
+/* Dark mode — mismo azul de marca, aclarado para contraste sobre oscuro */
 [data-theme="dark"],
 .dark {
-  --bg: #0f0f0f;
-  --bg-elevated: #1a1a1a;
-  --card: #1a1a1a;
-  --input-bg: #1a1a1a;
+  --bg: #0F171C;
+  --bg-elevated: #16222A;
+  --card: #16222A;
+  --input-bg: #16222A;
 
-  --border: #2a2a2a;
-  --border-hover: #3a3a3a;
+  --border: #26353F;
+  --border-hover: #354854;
+  --border-strong: #4A5F6D;
 
-  --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-muted: #737373;
+  --text-primary: #EAF0F4;
+  --text-secondary: #9FB0BC;
+  --text-muted: #71838F;
 
-  --primary: #ffffff;
-  --primary-hover: #e5e5e5;
-  --success: #22c55e;
-  --success-bg: #14532d;
-  --warning: #f59e0b;
-  --warning-bg: #422006;
-  --danger: #ef4444;
-  --danger-bg: #450a0a;
-  --info: #3b82f6;
+  --primary: var(--nexus-400);
+  --primary-hover: var(--nexus-300);
+  --primary-soft: rgba(69, 137, 181, 0.14);
+  --accent: var(--nexus-400);
 
-  --focus-ring: 0 0 0 3px rgba(255, 255, 255, 0.15);
+  --success: #4ADE9B;
+  --success-bg: #10352A;
+  --warning: #E9B872;
+  --warning-bg: #3A2A12;
+  --danger: #F09088;
+  --danger-bg: #3A1815;
+  --info: var(--nexus-400);
+  --info-bg: rgba(69, 137, 181, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45);
+  --focus-ring: 0 0 0 3px rgba(69, 137, 181, 0.32);
 }

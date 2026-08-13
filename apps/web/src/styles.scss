@@ -6,12 +6,15 @@
 /* App + theme (Bootstrap grid/utilities only, no components) */
 @import "../public/assets/scss/app.scss";
 
-/* Design system overrides — Cursor-style neutral SaaS */
+/* Componentes del design system */
 @import "styles/design-system";
 @import "styles/layout";
 
-/* Skin APRISSA — replica del Figma site (siempre al final para ganar cascada) */
-@import "styles/aprissa-theme";
+/* Controles homologados — después de los componentes para ganar la cascada */
+@import "styles/controls";
+
+/* Skin Nexus Q Tech — identidad de marca sobre la estructura del template */
+@import "styles/nexus-theme";
 
 /* Sidebar: usuario fijo en la parte inferior */
 .page-wrapper .page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
@@ -42,16 +45,17 @@
 
 /* Body base */
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background-color: var(--bg, #F7F7F8);
-  color: var(--text-primary, #111827);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  background-color: var(--bg);
+  color: var(--text-primary);
 }
 
 /* Footer siempre visible — fijo al fondo del viewport, ocupa todo el espacio disponible */
 .page-wrapper .page-body-wrapper footer.footer {
   position: fixed !important;
   bottom: 0 !important;
-  left: 255px; /* coincide con el tema */
+  left: var(--sidebar-width); /* mismo ancho que el sidebar */
   right: 0 !important;
   width: auto !important; /* left + right definen el ancho */
   min-width: 0;

@@ -19,7 +19,7 @@
         </button>
         <input
           type="date"
-          class="form-control date-input"
+          class="form-control field-sm"
           [ngModel]="date()"
           (ngModelChange)="onDateChange($event)"
         />
@@ -29,7 +29,7 @@
         <button class="btn btn-light btn-sm" (click)="today()">Hoy</button>
       </div>
       <select
-        class="form-control branch-input"
+        class="form-control field-lg"
         [ngModel]="branchId()"
         (ngModelChange)="onBranchChange($event)"
       >

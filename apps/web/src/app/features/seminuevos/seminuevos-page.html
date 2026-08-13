@@ -67,8 +67,8 @@
                 <td class="text-end">
                   @if (editingValues() === i.id) {
                     <div class="values-inline">
-                      <input class="form-control v-input" type="number" placeholder="Avalúo" [(ngModel)]="values.appraisedValue" />
-                      <input class="form-control v-input" type="number" placeholder="Oferta" [(ngModel)]="values.offeredValue" />
+                      <input class="form-control field-sm" type="number" placeholder="Avalúo" [(ngModel)]="values.appraisedValue" />
+                      <input class="form-control field-sm" type="number" placeholder="Oferta" [(ngModel)]="values.offeredValue" />
                       <button class="btn btn-primary btn-sm" (click)="saveValues(i)">OK</button>
                       <button class="btn btn-light btn-sm" (click)="editingValues.set(null)">✕</button>
                     </div>

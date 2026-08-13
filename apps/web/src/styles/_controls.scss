@@ -1,0 +1,325 @@
+/**
+ * NexDMS — Controles homologados
+ *
+ * Un solo contrato para TODO control interactivo: misma altura, mismo radio,
+ * misma tipografía, mismo anillo de foco. Si un control no se ve igual que
+ * sus vecinos, el arreglo va aquí — no en el SCSS de la página.
+ *
+ * Alturas: --control-h (38px) · sm 32px · lg 44px
+ */
+
+/* ── Base compartida por input / select / textarea / botón ── */
+%control-base {
+  box-sizing: border-box;
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  font-family: var(--font-sans);
+  font-size: var(--control-font);
+  line-height: 1;
+  border-radius: var(--control-radius);
+  border: var(--control-border-w) solid var(--border);
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+/* ── Campos de captura ─────────────────────────────────── */
+.form-control,
+.form-select,
+input[type="text"],
+input[type="email"],
+input[type="search"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="month"],
+input[type="datetime-local"],
+input[type="time"],
+input[type="url"],
+select,
+textarea {
+  @extend %control-base;
+
+  width: 100%;
+  color: var(--text-primary);
+  background: var(--input-bg);
+  font-weight: var(--text-input-weight);
+  appearance: none;
+
+  &::placeholder {
+    color: var(--text-muted);
+  }
+
+  &:hover:not(:disabled):not(:focus) {
+    border-color: var(--border-hover);
+  }
+
+  &:focus,
+  &:focus-visible {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+  }
+
+  &:disabled,
+  &[readonly] {
+    background: var(--bg);
+    color: var(--text-muted);
+    cursor: not-allowed;
+  }
+
+  &.is-invalid,
+  &[aria-invalid="true"] {
+    border-color: var(--danger);
+
+    &:focus {
+      box-shadow: var(--focus-ring-danger);
+    }
+  }
+}
+
+/* El textarea es el único que crece: mantiene el padding vertical */
+textarea,
+textarea.form-control {
+  height: auto;
+  min-height: calc(var(--control-h) * 2);
+  padding: var(--space-8) var(--control-px);
+  line-height: 1.5;
+  resize: vertical;
+}
+
+/* Select: chevron propio (appearance:none arriba lo quitó) */
+select,
+select.form-control,
+.form-select {
+  padding-right: calc(var(--control-px) + 20px);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%235A6B78' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right var(--control-px) center;
+  background-size: 12px 9px;
+  cursor: pointer;
+}
+
+/* Checkbox y radio: cuadrados, alineados a la tipografía */
+input[type="checkbox"],
+input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+  vertical-align: middle;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+input[type="checkbox"] { border-radius: var(--radius-sm); }
+input[type="radio"] { border-radius: var(--radius-pill); }
+
+/* ── Botones ───────────────────────────────────────────── */
+.btn {
+  @extend %control-base;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--control-gap);
+  width: auto;
+  padding: 0 var(--control-px-lg);
+  font-weight: var(--text-button-weight);
+  border-color: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+
+  &:disabled,
+  &.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--text-on-brand);
+  border-color: var(--primary);
+
+  &:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+}
+
+.btn-secondary,
+.btn-light {
+  background: var(--card);
+  color: var(--text-primary);
+  border-color: var(--border);
+
+  &:hover:not(:disabled) {
+    background: var(--bg);
+    border-color: var(--border-hover);
+  }
+}
+
+.btn-outline-primary {
+  background: transparent;
+  color: var(--primary);
+  border-color: var(--primary);
+
+  &:hover:not(:disabled) {
+    background: var(--primary-soft);
+  }
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  color: var(--text-secondary);
+  border-color: var(--border);
+
+  &:hover:not(:disabled) {
+    background: var(--bg);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+
+  &:hover:not(:disabled) { filter: brightness(0.92); }
+}
+
+.btn-outline-danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+
+  &:hover:not(:disabled) { background: var(--danger-bg); }
+}
+
+.btn-success {
+  background: var(--success);
+  color: #fff;
+  border-color: var(--success);
+
+  &:hover:not(:disabled) { filter: brightness(0.92); }
+}
+
+/* Tamaños — los tres controles siguen la misma escala */
+.btn-xs,
+.btn-sm {
+  height: var(--control-h-sm);
+  padding: 0 var(--control-px);
+  font-size: var(--control-font-sm);
+}
+
+.btn-lg {
+  height: var(--control-h-lg);
+  padding: 0 var(--space-24);
+  font-size: var(--text-base);
+}
+
+.form-control-sm,
+.input-sm,
+select.form-control-sm {
+  height: var(--control-h-sm);
+  font-size: var(--control-font-sm);
+  padding: 0 var(--control-px-sm);
+}
+
+/* Botón cuadrado (solo icono): mismo alto que ancho */
+.btn-icon,
+.btn-square {
+  width: var(--control-h);
+  padding: 0;
+
+  &.btn-sm { width: var(--control-h-sm); }
+}
+
+/* ── Grupos e input-group ──────────────────────────────── */
+.input-group {
+  display: flex;
+  align-items: center;
+  gap: 0;
+
+  > .form-control,
+  > .form-select,
+  > select,
+  > input {
+    border-radius: 0;
+
+    &:first-child { border-radius: var(--control-radius) 0 0 var(--control-radius); }
+    &:last-child { border-radius: 0 var(--control-radius) var(--control-radius) 0; }
+    &:only-child { border-radius: var(--control-radius); }
+  }
+
+  > .btn:last-child {
+    border-radius: 0 var(--control-radius) var(--control-radius) 0;
+  }
+}
+
+/* Fila de controles: separación uniforme y alineación por línea base */
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+/* ── Anchos de campo homologados ───────────────────────── */
+.field-xs { width: var(--field-xs); flex: 0 0 auto; }
+.field-sm { width: var(--field-sm); flex: 0 0 auto; }
+.field-md { width: var(--field-md); flex: 0 0 auto; }
+.field-lg { width: var(--field-lg); flex: 0 0 auto; }
+.field-full { width: 100%; }
+
+/* ── Etiquetas ─────────────────────────────────────────── */
+.form-label,
+.col-form-label,
+label {
+  display: block;
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--text-primary);
+  margin-bottom: var(--space-8);
+}
+
+/* Label inline de checkbox/radio: sin salto ni margen */
+label.inline-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: 0;
+  font-weight: var(--font-regular);
+  cursor: pointer;
+}
+
+.form-hint {
+  display: block;
+  margin-top: var(--space-4);
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+.form-error {
+  display: block;
+  margin-top: var(--space-4);
+  font-size: var(--text-caption);
+  color: var(--danger);
+}

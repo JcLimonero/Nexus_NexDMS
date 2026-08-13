@@ -55,7 +55,7 @@ import { AuthService } from "../../core/auth.service";
         display: flex;
         align-items: center;
         justify-content: center;
-        background: linear-gradient(to bottom, #18181b, #27272a);
+        background: linear-gradient(to bottom, var(--navy-600), var(--navy-800));
         padding: 16px;
       }
       .login-card {
@@ -75,8 +75,8 @@ import { AuthService } from "../../core/auth.service";
       .brand-mark {
         width: 40px;
         height: 40px;
-        border-radius: 10px;
-        background: linear-gradient(to bottom right, #dc2626, #b91c1c);
+        border-radius: var(--radius-md);
+        background: linear-gradient(to bottom right, var(--nexus-500), var(--nexus-700));
         color: #fff;
         font-weight: 700;
         font-size: 20px;
@@ -86,30 +86,30 @@ import { AuthService } from "../../core/auth.service";
       }
       .brand-name {
         font-weight: 700;
-        color: #18181b;
+        color: var(--navy-600);
       }
       .brand-sub {
         font-size: 12px;
-        color: #71717a;
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
       h1 {
         font-size: 22px;
         font-weight: 600;
-        color: #18181b;
+        color: var(--navy-600);
         margin: 0 0 4px;
       }
       .hint {
         font-size: 14px;
-        color: #71717a;
+        color: var(--text-secondary);
         margin: 0 0 20px;
       }
       label {
         display: block;
         font-size: 13px;
         font-weight: 500;
-        color: #3f3f46;
+        color: var(--text-secondary);
         margin: 12px 0 6px;
       }
       input {
@@ -117,20 +117,20 @@ import { AuthService } from "../../core/auth.service";
         box-sizing: border-box;
         padding: 12px;
         font-size: 16px;
-        border: 1px solid #d4d4d8;
+        border: 1px solid var(--border);
         border-radius: 8px;
       }
       input:focus {
         outline: none;
-        border-color: #2563eb;
-        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+        border-color: var(--primary);
+        box-shadow: 0 0 0 2px rgba(16, 80, 120, 0.25);
       }
       .error {
         margin-top: 12px;
         padding: 10px 12px;
         border-radius: 8px;
-        background: #fee2e2;
-        color: #991b1b;
+        background: var(--danger-bg);
+        color: var(--danger);
         font-size: 13px;
       }
       .btn-primary {
@@ -140,7 +140,7 @@ import { AuthService } from "../../core/auth.service";
         font-size: 15px;
         font-weight: 600;
         color: #fff;
-        background: #2563eb;
+        background: var(--primary);
         border: none;
         border-radius: 8px;
         cursor: pointer;

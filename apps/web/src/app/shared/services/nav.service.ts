@@ -66,7 +66,7 @@ export class NavService {
       ],
     },
     {
-      title: "Inventario refacciones",
+      title: "Inventario de refacciones",
       icon: "box",
       type: "sub",
       active: false,
@@ -77,7 +77,7 @@ export class NavService {
       ],
     },
     {
-      title: "Inventario unidades",
+      title: "Inventario de unidades",
       icon: "car",
       type: "sub",
       active: false,
@@ -114,7 +114,7 @@ export class NavService {
       active: false,
       children: [
         { path: "/cash-register", title: "Caja", type: "link" },
-        { path: "/cash-register/ventas", title: "Ventas (POS)", type: "link" },
+        { path: "/cash-register/ventas", title: "Punto de venta", type: "link" },
         { path: "/cash-register/listas-precio", title: "Listas de precio", type: "link" },
       ],
     },
