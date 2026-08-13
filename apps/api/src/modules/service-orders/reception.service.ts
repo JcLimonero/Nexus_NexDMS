@@ -147,23 +147,44 @@ export class ReceptionService {
   // ─── Recepción ───────────────────────────────────
 
   /** Citas del día listas para recibir, con lo que ya se recibió. */
-  async agendaDelDia(user: UserPayload, branchId: string, date: string) {
+  /**
+   * Citas del día listas para recibir.
+   *
+   * `soloMias` limita a las asignadas al asesor que pregunta: es lo que ve en
+   * su portal, donde el resto de la sucursal solo sería ruido.
+   */
+  async agendaDelDia(
+    user: UserPayload,
+    branchId: string,
+    date: string,
+    soloMias = false,
+  ) {
     const desde = new Date(`${date}T00:00:00`);
     const hasta = new Date(`${date}T23:59:59.999`);
 
-    const citas = await this.apptRepo
+    const qb = this.apptRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.client', 'client')
       .leftJoinAndSelect('a.vehicle', 'vehicle')
       .leftJoinAndSelect('a.mechanic', 'mechanic')
+      .leftJoinAndSelect('a.advisor', 'advisor')
       .where('a.tenant_id = :t', { t: user.tenantId })
       .andWhere('a.branch_id = :b', { b: branchId })
       .andWhere('a.scheduled_at BETWEEN :d1 AND :d2', { d1: desde, d2: hasta })
       .andWhere('a.status NOT IN (:...off)', {
         off: [AppointmentStatusEnum.CANCELLED, AppointmentStatusEnum.NO_SHOW],
       })
-      .orderBy('a.scheduledAt', 'ASC')
-      .getMany();
+      .orderBy('a.scheduledAt', 'ASC');
+
+    if (soloMias) {
+      // Las que aún no tienen asesor también aparecen: alguien tiene que
+      // recibirlas, y esconderlas dejaría unidades sin atender en el patio.
+      qb.andWhere('(a.advisor_id = :yo OR a.advisor_id IS NULL)', {
+        yo: user.sub,
+      });
+    }
+
+    const citas = await qb.getMany();
 
     const ordenes = await this.soRepo.find({
       where: { tenantId: user.tenantId, branchId },
@@ -203,6 +224,10 @@ export class ReceptionService {
           : null,
         mechanicName: c.mechanic
           ? `${c.mechanic.firstName} ${c.mechanic.lastName}`
+          : null,
+        advisorId: c.advisorId ?? null,
+        advisorName: c.advisor
+          ? `${c.advisor.firstName} ${c.advisor.lastName}`
           : null,
         // Si ya se recibió, se enlaza a la orden en vez de ofrecer recibir
         recibida: !!orden,

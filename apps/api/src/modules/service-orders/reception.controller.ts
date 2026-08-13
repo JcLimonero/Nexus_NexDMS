@@ -46,8 +46,9 @@ export class ReceptionController {
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId: string,
     @Query('date') date: string,
+    @Query('soloMias') soloMias?: string,
   ) {
-    return this.reception.agendaDelDia(user, branchId, date);
+    return this.reception.agendaDelDia(user, branchId, date, soloMias === 'true');
   }
 
   /** Catálogo de fotos aplicable (opcionalmente por tipo de vehículo). */

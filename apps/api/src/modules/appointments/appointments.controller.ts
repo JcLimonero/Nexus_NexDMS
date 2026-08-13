@@ -37,7 +37,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Get()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   findAll(
     @CurrentUser() user: UserPayload,
     @Query() filters: FilterAppointmentsDto,
@@ -48,7 +48,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Get('calendar')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   findCalendar(
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId: string,
@@ -66,7 +66,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Get('availability')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   getAvailability(
     @Query('branchId') branchId: string,
     @Query('date') date: string,
@@ -85,8 +85,31 @@ export class AppointmentsController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
+  /**
+   * Asesores de la sucursal con su carga del día.
+   *
+   * Alimenta el combo de asignación al agendar y deja ver el reparto: quien
+   * agenda puede respetar el balanceo o forzar un asesor concreto sabiendo
+   * cómo va cada uno.
+   */
+  @Get('advisors')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
+  advisors(
+    @CurrentUser() user: UserPayload,
+    @Query('branchId') branchId: string,
+    @Query('date') date?: string,
+  ) {
+    // Sin fecha se entiende hoy: es el caso normal al recibir en el mostrador.
+    const fecha = date ? new Date(`${date}T12:00:00`) : new Date();
+    return this.appointmentsService.cargaDeAsesores(
+      user.tenantId,
+      branchId,
+      fecha,
+    );
+  }
+
   @Get(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   findOne(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -105,7 +128,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Patch(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   update(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -140,7 +163,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Post(':id/complete')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   complete(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

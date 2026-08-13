@@ -1,0 +1,62 @@
+<div class="pantalla">
+  <header class="cabecera">
+    <div>
+      <div class="quien">{{ auth.user()?.firstName }} {{ auth.user()?.lastName }}</div>
+      <div class="sub">
+        {{ pendientes() }} por recibir · {{ fecha() | date: "EEEE d 'de' MMMM" }}
+      </div>
+    </div>
+    <button type="button" class="salir" (click)="auth.logout()" aria-label="Salir">⎋</button>
+  </header>
+
+  <div class="filtros">
+    <button type="button" class="dia" (click)="moverDia(-1)" aria-label="Día anterior">‹</button>
+    <input type="date" [ngModel]="fecha()" (ngModelChange)="fecha.set($event); cargar()" />
+    <button type="button" class="dia" (click)="moverDia(1)" aria-label="Día siguiente">›</button>
+    @if (sucursales().length > 1) {
+      <select [ngModel]="branchId()" (ngModelChange)="branchId.set($event); cargar()">
+        @for (s of sucursales(); track s.id) {
+          <option [value]="s.id">{{ s.name }}</option>
+        }
+      </select>
+    }
+    <button type="button" class="alcance" [class.activo]="soloMias()" (click)="alternarAlcance()">
+      {{ soloMias() ? "Solo mías" : "Todo el mostrador" }}
+    </button>
+  </div>
+
+  @if (cargando()) {
+    <p class="aviso">Cargando…</p>
+  } @else if (error()) {
+    <p class="aviso error">{{ error() }}</p>
+  } @else if (citas().length === 0) {
+    <p class="aviso">No hay unidades para recibir este día.</p>
+  }
+
+  <ul class="lista">
+    @for (c of citas(); track c.id) {
+      <li class="cita" [class.recibida]="c.recibida">
+        <div class="hora">{{ hora(c.scheduledAt) }}</div>
+        <div class="datos">
+          <strong>{{ c.clientName }}</strong>
+          <span class="unidad">{{ unidad(c) }}</span>
+          <span class="servicio">{{ c.serviceType }}</span>
+          <div class="etiquetas">
+            @if (c.recibida) {
+              <span class="tag hecha">Recibida · {{ c.serviceOrderFolio }}</span>
+            } @else if (esLibre(c)) {
+              <span class="tag libre">Sin asesor — puedes tomarla</span>
+            } @else if (mia(c)) {
+              <span class="tag mia">Asignada a ti</span>
+            } @else {
+              <span class="tag otro">{{ c.advisorName }}</span>
+            }
+          </div>
+        </div>
+        <button type="button" class="accion" (click)="abrir(c)">
+          {{ c.recibida ? "Ver" : c.vehicle ? "Recibir" : "Capturar" }}
+        </button>
+      </li>
+    }
+  </ul>
+</div>

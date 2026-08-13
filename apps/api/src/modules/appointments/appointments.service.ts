@@ -14,6 +14,7 @@ import {
 } from './entities/appointment.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Client } from '../clients/entities/client.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { CreatePublicAppointmentDto } from './dto/public-appointment.dto';
 import { FilterAppointmentsDto } from './dto/filter-appointments.dto';
@@ -35,6 +36,8 @@ export class AppointmentsService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(Client)
     private readonly clientRepo: Repository<Client>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly branchesService: BranchesService,
     private readonly userAvailabilityService: UserAvailabilityService,
     private readonly serviceTypesService: ServiceTypesService,
@@ -128,6 +131,9 @@ export class AppointmentsService {
       clientId: dto.clientId ?? null,
       vehicleId: dto.vehicleId ?? null,
       mechanicId: dto.mechanicId ?? null,
+      advisorId:
+        dto.advisorId ??
+        (await this.asesorConMenosCarga(user.tenantId, dto.branchId, scheduledAt)),
       origin: AppointmentOriginEnum.INTERNAL,
       status: AppointmentStatusEnum.SCHEDULED,
       serviceType: dto.serviceType,
@@ -169,6 +175,84 @@ export class AppointmentsService {
     }
 
     return saved;
+  }
+
+  /**
+   * Asesores de servicio disponibles en una sucursal.
+   *
+   * Son quienes reciben unidades: el rol es lo que habilita la recepción, así
+   * que la lista sale de ahí y no de una configuración aparte que habría que
+   * mantener sincronizada.
+   */
+  async asesoresDeSucursal(
+    tenantId: string,
+    branchId: string,
+  ): Promise<{ id: string; nombre: string }[]> {
+    const filas = await this.userRepo
+      .createQueryBuilder('u')
+      .innerJoin('user_roles', 'ur', 'ur.user_id = u.id')
+      .innerJoin('user_branches', 'ub', 'ub.user_id = u.id')
+      .where('u.tenant_id = :tenantId', { tenantId })
+      .andWhere('u.is_active = true')
+      .andWhere('ur.role = :rol', { rol: 'RECEPTIONIST' })
+      .andWhere('ub.branch_id = :branchId', { branchId })
+      .select(['u.id AS id', 'u.first_name AS nombre', 'u.last_name AS apellido'])
+      .getRawMany<{ id: string; nombre: string; apellido: string }>();
+
+    return filas.map((f) => ({
+      id: f.id,
+      nombre: `${f.nombre ?? ''} ${f.apellido ?? ''}`.trim(),
+    }));
+  }
+
+  /** Citas que ya tiene cada asesor ese día, para repartir con criterio. */
+  async cargaDeAsesores(
+    tenantId: string,
+    branchId: string,
+    fecha: Date,
+  ): Promise<{ id: string; nombre: string; citas: number }[]> {
+    const asesores = await this.asesoresDeSucursal(tenantId, branchId);
+    if (!asesores.length) return [];
+
+    const inicio = new Date(fecha);
+    inicio.setHours(0, 0, 0, 0);
+    const fin = new Date(fecha);
+    fin.setHours(23, 59, 59, 999);
+
+    const conteo = await this.appointmentRepo
+      .createQueryBuilder('a')
+      .select('a.advisor_id', 'advisorId')
+      .addSelect('COUNT(*)', 'total')
+      .where('a.branch_id = :branchId', { branchId })
+      .andWhere('a.advisor_id IS NOT NULL')
+      .andWhere('a.scheduled_at BETWEEN :inicio AND :fin', { inicio, fin })
+      // Una cita cancelada no ocupa a nadie; contarla desbalancearía el reparto.
+      .andWhere('a.status != :cancelada', { cancelada: AppointmentStatusEnum.CANCELLED })
+      .groupBy('a.advisor_id')
+      .getRawMany<{ advisorId: string; total: string }>();
+
+    const porId = new Map(conteo.map((c) => [c.advisorId, Number(c.total)]));
+    return asesores.map((a) => ({ ...a, citas: porId.get(a.id) ?? 0 }));
+  }
+
+  /**
+   * A quién asignar cuando la cita no trae asesor.
+   *
+   * Reparte por carga del día, no por turno rotativo: lo segundo suena justo
+   * pero deja a alguien con seis recepciones seguidas si las cancelaciones no
+   * caen parejas. Con empate gana el de menor id, para que el resultado no
+   * dependa del orden en que la base devuelva las filas.
+   */
+  private async asesorConMenosCarga(
+    tenantId: string,
+    branchId: string,
+    fecha: Date,
+  ): Promise<string | null> {
+    const carga = await this.cargaDeAsesores(tenantId, branchId, fecha);
+    if (!carga.length) return null;
+    return carga.sort(
+      (a, b) => a.citas - b.citas || a.id.localeCompare(b.id),
+    )[0].id;
   }
 
   async createPublic(dto: CreatePublicAppointmentDto): Promise<Appointment> {

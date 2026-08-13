@@ -50,8 +50,17 @@ export class Appointment {
   @Column({ name: 'vehicle_id', type: 'uuid', nullable: true })
   vehicleId: string | null;
 
+  /** Técnico que hará la reparación. */
   @Column({ name: 'mechanic_id', type: 'uuid', nullable: true })
   mechanicId: string | null;
+
+  /**
+   * Asesor de servicio que atiende al cliente y recibe la unidad. Es otra
+   * persona y otro cuello de botella: el mostrador se satura en la mañana
+   * aunque el taller tenga técnicos libres.
+   */
+  @Column({ name: 'advisor_id', type: 'uuid', nullable: true })
+  advisorId: string | null;
 
   @Column({ name: 'origin', type: 'enum', enum: AppointmentOriginEnum })
   origin: AppointmentOriginEnum;
@@ -104,6 +113,10 @@ export class Appointment {
   @ManyToOne(() => User, { onDelete: 'NO ACTION' })
   @JoinColumn({ name: 'mechanic_id' })
   mechanic?: User;
+
+  @ManyToOne(() => User, { onDelete: 'NO ACTION' })
+  @JoinColumn({ name: 'advisor_id' })
+  advisor?: User;
 
   @ManyToOne(() => ServiceType, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'service_type_id' })

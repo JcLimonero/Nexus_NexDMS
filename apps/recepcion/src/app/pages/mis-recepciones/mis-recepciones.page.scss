@@ -1,0 +1,184 @@
+/* Pensado para una tablet en el mostrador: una columna, objetivos grandes. */
+.pantalla {
+  min-height: 100dvh;
+  background: var(--bg, #f1f5f9);
+  padding-bottom: 24px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(to bottom, var(--navy-600, #203848), var(--navy-800, #16283a));
+  color: #fff;
+
+  .quien {
+    font-weight: 600;
+  }
+  .sub {
+    font-size: 12px;
+    opacity: 0.75;
+
+    /* `capitalize` pondría mayúscula en cada palabra —"Jueves 13 De Agosto"—.
+       Solo la primera letra de la frase. */
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+}
+
+.salir {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  font-size: 18px;
+}
+
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+
+  input,
+  select {
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  /* Sin acotar el ancho, el campo de fecha se lleva toda la línea y parte la
+     fila en tres. 160px alcanzan para dd/mm/aaaa en cualquier motor. */
+  input[type="date"] {
+    flex: 0 0 160px;
+    width: 160px;
+  }
+
+  select {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+}
+
+.dia {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 18px;
+}
+
+.alcance {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+
+  &.activo {
+    background: var(--navy-600, #203848);
+    border-color: var(--navy-600, #203848);
+    color: #fff;
+  }
+}
+
+.aviso {
+  margin: 24px 16px;
+  color: #64748b;
+
+  &.error {
+    color: #b91c1c;
+  }
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cita {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  /* La ya recibida se atenúa pero no se esconde: sirve de historial del día. */
+  &.recibida {
+    opacity: 0.6;
+  }
+}
+
+.hora {
+  flex: 0 0 56px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy-600, #203848);
+}
+
+.datos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .unidad,
+  .servicio {
+    font-size: 13px;
+    color: #64748b;
+  }
+}
+
+.etiquetas {
+  margin-top: 4px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e2e8f0;
+  color: #475569;
+
+  &.libre {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  &.mia {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  &.hecha {
+    background: #d1fae5;
+    color: #047857;
+  }
+}
+
+.accion {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary, #105078);
+  color: #fff;
+  font-weight: 600;
+}

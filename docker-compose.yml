@@ -137,6 +137,28 @@ services:
     networks:
       - nexDMS_net
 
+  # ─── Portal de recepción (asesores de servicio) ───────────────
+  recepcion:
+    profiles:
+      - frontend
+    build:
+      context: ./apps/recepcion
+      dockerfile: Dockerfile
+      target: development
+    container_name: nexDMS_recepcion
+    restart: unless-stopped
+    volumes:
+      - ./apps/recepcion:/app
+      - /app/node_modules
+    ports:
+      - '4203:4200'
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+      - PROXY_API_TARGET=http://api:3000
+    command: npm run start -- --host 0.0.0.0 --poll 1000
+    networks:
+      - nexDMS_net
+
   # ─── Nginx reverse proxy ──────────────────────────────────────
   nginx:
     profiles:
