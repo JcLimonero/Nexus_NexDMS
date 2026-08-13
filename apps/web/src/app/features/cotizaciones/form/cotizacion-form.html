@@ -36,7 +36,7 @@
                   </select>
                 </div>
               }
-              <div class="col-md-3 mb-3">
+              <div class="col-md-2 mb-3">
                 <label class="form-label">Cliente</label>
                 <select class="form-select" formControlName="clientId">
                   <option value="">Sin cliente</option>
@@ -45,7 +45,7 @@
                   }
                 </select>
               </div>
-              <div class="col-md-1 mb-3">
+              <div class="col-md-2 mb-3">
                 <label class="form-label">Desc. %</label>
                 <input type="number" class="form-control" formControlName="discountPct" min="0" max="100" step="0.01" />
               </div>
@@ -63,11 +63,23 @@
             <h6 class="mt-4 mb-2">Ítems</h6>
             <div formArrayName="items">
               @for (item of items.controls; track $index; let i = $index) {
-                <div class="row align-items-end mb-2" [formGroupName]="i">
+                @if (i === 0) {
+                  <div class="row items-head">
+                    <div class="col-md-3">Parte</div>
+                    <div class="col-md-3">Unidad</div>
+                    <div class="col-md-2">Descripción</div>
+                    <div class="col-md-1 text-end">Cant.</div>
+                    <div class="col-md-1 text-end">Precio</div>
+                    <div class="col-md-1 text-end">Desc.</div>
+                    <div class="col-md-1"></div>
+                  </div>
+                }
+                <div class="row align-items-center mb-2" [formGroupName]="i">
                   <div class="col-md-3">
                     <select
-                      class="form-select form-select-sm"
+                      class="form-select"
                       formControlName="partId"
+                      aria-label="Parte"
                       (change)="onPartSelect(i)"
                     >
                       <option value="">Parte (opcional)</option>
@@ -78,8 +90,9 @@
                   </div>
                   <div class="col-md-3">
                     <select
-                      class="form-select form-select-sm"
+                      class="form-select"
                       formControlName="catalogUnitId"
+                      aria-label="Unidad"
                       (change)="onUnitSelect(i)"
                     >
                       <option value="">Unidad (opcional)</option>
@@ -89,19 +102,19 @@
                     </select>
                   </div>
                   <div class="col-md-2">
-                    <input type="text" class="form-control form-control-sm" formControlName="description" placeholder="Descripción manual" />
+                    <input type="text" class="form-control" formControlName="description" aria-label="Descripción" placeholder="Descripción manual" />
                   </div>
                   <div class="col-md-1">
-                    <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1" />
-                  </div>
-                  <div class="col-md-2">
-                    <input type="number" class="form-control form-control-sm" formControlName="unitPrice" min="0" step="0.01" />
+                    <input type="number" class="form-control text-end" formControlName="quantity" aria-label="Cantidad" min="1" />
                   </div>
                   <div class="col-md-1">
-                    <input type="number" class="form-control form-control-sm" formControlName="discount" min="0" step="0.01" />
+                    <input type="number" class="form-control text-end" formControlName="unitPrice" aria-label="Precio unitario" min="0" step="0.01" />
                   </div>
                   <div class="col-md-1">
-                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeItem(i)" [disabled]="items.length <= 1">
+                    <input type="number" class="form-control text-end" formControlName="discount" aria-label="Descuento" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-icon" title="Quitar ítem" (click)="removeItem(i)" [disabled]="items.length <= 1">
                       <i class="icofont icofont-trash"></i>
                     </button>
                   </div>

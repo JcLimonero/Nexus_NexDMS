@@ -84,13 +84,14 @@ export class CustomizerService {
     localStorage.setItem("layoutVersion", this.data.color.layout_version);
   }
 
-  // Create style sheet append in head
-  createStyle(color: string) {
-    var head = document.head;
-    var link = document.createElement("link");
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    link.href = window.location.origin + "/assets/css/" + color + ".css";
-    head.appendChild(link);
+  /**
+   * Los esquemas `assets/css/color-N.css` del template quedaron
+   * desactivados: cada uno es una copia recoloreada (~1.1 MB) del mismo
+   * tema que ya viene compilado en styles.css, y al inyectarse en runtime
+   * pisaba la paleta Nexus Q Tech (de ahí los botones cian/azul brillante).
+   * El color de la app lo define el design system en src/styles/.
+   */
+  createStyle(_color: string) {
+    return;
   }
 }

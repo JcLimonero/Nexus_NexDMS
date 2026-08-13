@@ -1,9 +1,23 @@
 /**
  * NexDMS Design System — Layout
- * App shell: sidebar + topbar + content
+ * Rejilla de 12 columnas y utilidades. Sustituye al grid de Bootstrap.
+ *
+ * Importante: las páginas usan col-1..12 en los cuatro breakpoints. Si una
+ * variante no está definida, la columna se queda sin ancho y los controles
+ * de esa fila salen de tamaños arbitrarios (origen del desalineo histórico).
  */
 
-/* Grid utilities (Bootstrap replacement) */
+@use "sass:math";
+
+$gutter: 12px;
+$breakpoints: (
+  sm: 576px,
+  md: 768px,
+  lg: 992px,
+  xl: 1200px,
+);
+
+/* ── Contenedores ──────────────────────────────────────── */
 .container-fluid {
   width: 100%;
   padding-right: var(--space-24);
@@ -12,41 +26,136 @@
   margin-left: auto;
 }
 
+/* ── Rejilla ───────────────────────────────────────────── */
 .row {
   display: flex;
   flex-wrap: wrap;
-  margin-right: -12px;
-  margin-left: -12px;
+  margin-right: -#{$gutter};
+  margin-left: -#{$gutter};
 }
 
-.col, .col-auto, .col-sm-12, .col-md-4, .col-md-6 {
-  padding-right: 12px;
-  padding-left: 12px;
+/* Todas las columnas comparten el gutter y el box-sizing */
+[class^="col-"],
+[class*=" col-"],
+.col {
+  position: relative;
+  width: 100%;
+  padding-right: $gutter;
+  padding-left: $gutter;
+  box-sizing: border-box;
 }
 
-.col { flex: 1; }
-.col-auto { flex: 0 0 auto; }
-.col-sm-12 { flex: 0 0 100%; max-width: 100%; }
-.col-md-4 { flex: 0 0 33.333%; max-width: 33.333%; }
-.col-md-6 { flex: 0 0 50%; max-width: 50%; }
-
-@media (max-width: 768px) {
-  .col-md-4, .col-md-6 { flex: 0 0 100%; max-width: 100%; }
+.col {
+  flex: 1 0 0%;
+  width: auto;
 }
 
-/* Flex utilities */
+.col-auto {
+  flex: 0 0 auto;
+  width: auto;
+}
+
+/* Base (sin breakpoint) */
+@for $i from 1 through 12 {
+  .col-#{$i} {
+    flex: 0 0 percentage(math.div($i, 12));
+    max-width: percentage(math.div($i, 12));
+  }
+}
+
+/* Por breakpoint */
+@each $name, $min in $breakpoints {
+  @media (min-width: $min) {
+    .col-#{$name} {
+      flex: 1 0 0%;
+      width: auto;
+      max-width: 100%;
+    }
+
+    .col-#{$name}-auto {
+      flex: 0 0 auto;
+      width: auto;
+      max-width: none;
+    }
+
+    @for $i from 1 through 12 {
+      .col-#{$name}-#{$i} {
+        flex: 0 0 percentage(math.div($i, 12));
+        max-width: percentage(math.div($i, 12));
+      }
+    }
+  }
+}
+
+/* Fuera del breakpoint las columnas ocupan el ancho completo (mobile-first) */
+@media (max-width: 767.98px) {
+  [class^="col-md-"],
+  [class^="col-lg-"],
+  [class^="col-xl-"] {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+/* ── Utilidades de flex ────────────────────────────────── */
 .d-flex { display: flex; }
+.d-inline-flex { display: inline-flex; }
+.d-block { display: block; }
+.d-none { display: none; }
 .flex-wrap { flex-wrap: wrap; }
-.gap-2 { gap: var(--space-8); }
+.flex-column { flex-direction: column; }
+.flex-grow-1 { flex: 1 1 auto; }
+.flex-shrink-0 { flex-shrink: 0; }
+
+.justify-content-start { justify-content: flex-start; }
+.justify-content-center { justify-content: center; }
+.justify-content-end { justify-content: flex-end; }
 .justify-content-between { justify-content: space-between; }
+
+.align-items-start { align-items: flex-start; }
 .align-items-center { align-items: center; }
+.align-items-end { align-items: flex-end; }
+.align-items-baseline { align-items: baseline; }
+
+/* Gaps — la separación entre controles sale de la escala de espaciado */
+.gap-1 { gap: var(--space-4); }
+.gap-2 { gap: var(--space-8); }
+.gap-3 { gap: var(--space-12); }
+.gap-4 { gap: var(--space-16); }
+
+/* ── Espaciado ─────────────────────────────────────────── */
+.m-0 { margin: 0; }
 .mb-0 { margin-bottom: 0; }
+.mb-1 { margin-bottom: var(--space-4); }
+.mb-2 { margin-bottom: var(--space-8); }
 .mb-3 { margin-bottom: var(--space-16); }
 .mb-4 { margin-bottom: var(--space-24); }
+.mt-1 { margin-top: var(--space-4); }
+.mt-2 { margin-top: var(--space-8); }
 .mt-3 { margin-top: var(--space-16); }
+.mt-4 { margin-top: var(--space-24); }
+.me-1 { margin-right: var(--space-4); }
+.me-2 { margin-right: var(--space-8); }
+.ms-auto { margin-left: auto; }
+
+.p-0 { padding: 0; }
+.py-2 { padding-top: var(--space-8); padding-bottom: var(--space-8); }
+.py-3 { padding-top: var(--space-16); padding-bottom: var(--space-16); }
+.py-4 { padding-top: var(--space-24); padding-bottom: var(--space-24); }
+.py-5 { padding-top: var(--space-32); padding-bottom: var(--space-32); }
+
+/* ── Texto ─────────────────────────────────────────────── */
+.text-start { text-align: left; }
 .text-center { text-align: center; }
 .text-end { text-align: right; }
 .text-muted { color: var(--text-muted); }
+.text-nowrap { white-space: nowrap; }
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .small { font-size: var(--text-xs); }
-.py-4 { padding-top: var(--space-24); padding-bottom: var(--space-24); }
-.py-5 { padding-top: var(--space-32); padding-bottom: var(--space-32); }
+.fw-500 { font-weight: var(--font-medium); }
+.fw-600 { font-weight: var(--font-semibold); }
+.w-100 { width: 100%; }

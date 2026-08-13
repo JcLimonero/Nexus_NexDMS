@@ -1,10 +1,10 @@
 // NexDMS Design System — neutral SaaS admin
 $theme-font-color: #111827;
-$theme-body-font-color: #111827;
+$theme-body-font-color: #16262F;
 $theme-body-sub-title-color: #6B7280;
 
-$primary-color: #111827;
-$secondary-color: #6B7280;
+$primary-color: #105078;   // Nexus Q Tech
+$secondary-color: #5A6B78;
 $success-color: #16A34A;
 $info-color: #3B82F6;
 $warning-color: #F59E0B;
@@ -164,7 +164,7 @@ $btn-xs-padding: 0.05rem 0.4rem;
 $card-padding: 24px;
 $card-margin-bottom: 24px;
 $card-border-width: 1px;
-$card-border-color: #E5E7EB;
+$card-border-color: #DDE3E9;
 $card-border-radious: 12px;
 $card-box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 $card-header-font-weight: 600;
@@ -200,7 +200,7 @@ $tour-color: $primary-color;
 //sidabr main settings
 $sidebar-width: 260px;
 $sidebar-position: fixed;
-$sidebar-background-color: #111827;
+$sidebar-background-color: #203848;  // navy Nexus
 $sidebar-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
 $sidebar-overflow: auto;
 $sidebar-z-index: 1000;

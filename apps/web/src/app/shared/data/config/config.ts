@@ -32,8 +32,8 @@ export class ConfigDB {
  color: {
     layout_version: 'light',
     color: 'color-2',
-    primary_color: '#0288d1',
-    secondary_color: '#26c6da',
+    primary_color: '#105078',
+    secondary_color: '#203848',
     mix_layout: 'dark-header-sidebar-mix'
 
  },

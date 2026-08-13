@@ -1,5 +1,17 @@
-.cotizacion-form {
-  .form-label.small {
-    font-size: 0.875rem;
+/* Encabezado de la tabla de ítems: da contexto a los campos numéricos */
+.items-head {
+  margin-bottom: var(--space-4);
+
+  > [class^="col-"] {
+    font-size: var(--text-overline);
+    font-weight: var(--text-overline-weight);
+    text-transform: uppercase;
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
+  }
+
+  /* En móvil las columnas se apilan; el encabezado deja de tener sentido */
+  @media (max-width: 767.98px) {
+    display: none;
   }
 }
