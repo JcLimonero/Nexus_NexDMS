@@ -12,6 +12,9 @@
 %control-base {
   box-sizing: border-box;
   height: var(--control-h);
+  /* Sin margen propio: la separación la pone el layout (gap/grid), nunca el
+     control. Si un control trae margen, se desalinea de sus vecinos. */
+  margin: 0;
   padding: 0 var(--control-px);
   font-family: var(--font-sans);
   font-size: var(--control-font);

@@ -197,6 +197,10 @@ input[type="month"],
 input[type="time"] {
   border-radius: var(--control-radius) !important;
   font-size: var(--control-font) !important;
+  /* El template trae `select.form-select { margin: 6px 6px 0 0 }`, con más
+     especificidad que el contrato: bajaba los selects 6px respecto de los
+     inputs vecinos. La separación la define el layout, no el control. */
+  margin: 0 !important;
 }
 
 textarea,
