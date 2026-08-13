@@ -34,6 +34,8 @@ import {
   Client,
   ClientTypeEnum,
 } from '../clients/entities/client.entity';
+import { ModulesModule } from '../modules/modules.module';
+import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 
 // ─── Entidades ─────────────────────────────────────
 
@@ -243,8 +245,9 @@ export class LeadsService {
 
 @ApiTags('Leads')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard, ModuleGuard)
 @Controller('leads')
+@RequiresModule('leads')
 export class LeadsController {
   constructor(private readonly leadsService: LeadsService) {}
 
@@ -310,7 +313,10 @@ export class LeadsController {
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Lead, LeadActivity, Client])],
+  imports: [
+    TypeOrmModule.forFeature([Lead, LeadActivity, Client]),
+    ModulesModule,
+  ],
   controllers: [LeadsController],
   providers: [LeadsService],
 })

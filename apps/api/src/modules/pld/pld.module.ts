@@ -36,6 +36,8 @@ import {
   UnitSaleStatusEnum,
 } from '../unit-sales/entities/unit-sale.entity';
 import { Client } from '../clients/entities/client.entity';
+import { ModulesModule } from '../modules/modules.module';
+import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 
 /**
  * Configuración PLD por tenant. Los umbrales de la LFPIORPI para venta de
@@ -263,8 +265,9 @@ export class PldService {
 
 @ApiTags('PLD')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard, ModuleGuard)
 @Controller('pld')
+@RequiresModule('pld')
 export class PldController {
   constructor(private readonly pldService: PldService) {}
 
@@ -328,7 +331,10 @@ export class PldController {
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([PldOperation, Tenant, UnitSale, Client])],
+  imports: [
+    TypeOrmModule.forFeature([PldOperation, Tenant, UnitSale, Client]),
+    ModulesModule,
+  ],
   controllers: [PldController],
   providers: [PldService],
 })

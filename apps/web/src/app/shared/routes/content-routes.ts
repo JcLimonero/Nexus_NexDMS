@@ -1,4 +1,5 @@
 import { Routes } from "@angular/router";
+import { moduleGuard } from "../guard/module.guard";
 
 export const content: Routes = [
   {
@@ -19,7 +20,8 @@ export const content: Routes = [
   },
   {
     path: "catalog",
-    data: { breadcrumb: "Catálogo" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Catálogo" , module: "catalog" },
     loadChildren: () =>
       import("../../../app/features/catalogo/catalogo.routes").then(
         (r) => r.catalogRoutes,
@@ -27,7 +29,8 @@ export const content: Routes = [
   },
   {
     path: "parts-inventory",
-    data: { breadcrumb: "Inventario refacciones" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Inventario refacciones" , module: "parts-inventory" },
     loadChildren: () =>
       import("../../../app/features/inventario-refacciones/inventario-refacciones.routes").then(
         (r) => r.partsInventoryRoutes,
@@ -35,7 +38,8 @@ export const content: Routes = [
   },
   {
     path: "units-inventory",
-    data: { breadcrumb: "Inventario unidades" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Inventario unidades" , module: "units-inventory" },
     loadChildren: () =>
       import("../../../app/features/inventario-unidades/inventario-unidades.routes").then(
         (r) => r.unitsInventoryRoutes,
@@ -43,7 +47,8 @@ export const content: Routes = [
   },
   {
     path: "purchases",
-    data: { breadcrumb: "Compras" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Compras" , module: "purchases" },
     loadChildren: () =>
       import("../../../app/features/compras/compras.routes").then(
         (r) => r.purchasesRoutes,
@@ -51,7 +56,8 @@ export const content: Routes = [
   },
   {
     path: "warehouse",
-    data: { breadcrumb: "Almacén" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Almacén" , module: "warehouse" },
     loadChildren: () =>
       import("../../../app/features/almacen/almacen.routes").then(
         (r) => r.warehouseRoutes,
@@ -59,7 +65,8 @@ export const content: Routes = [
   },
   {
     path: "cash-register",
-    data: { breadcrumb: "Caja y ventas" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Caja y ventas" , module: "cash-register" },
     loadChildren: () =>
       import("../../../app/features/caja-ventas/caja-ventas.routes").then(
         (r) => r.cashRegisterRoutes,
@@ -67,7 +74,8 @@ export const content: Routes = [
   },
   {
     path: "sales",
-    data: { breadcrumb: "Ventas de unidades" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Ventas de unidades" , module: "sales" },
     loadChildren: () =>
       import("../../../app/features/ventas-unidades/ventas-unidades.routes").then(
         (r) => r.unitSalesRoutes
@@ -75,7 +83,8 @@ export const content: Routes = [
   },
   {
     path: "quotes",
-    data: { breadcrumb: "Cotizaciones" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Cotizaciones" , module: "quotes" },
     loadChildren: () =>
       import("../../../app/features/cotizaciones/cotizaciones.routes").then(
         (r) => r.quotesRoutes,
@@ -83,7 +92,8 @@ export const content: Routes = [
   },
   {
     path: "workshop",
-    data: { breadcrumb: "Taller" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Taller" , module: "workshop" },
     loadChildren: () =>
       import("../../../app/features/taller/taller.routes").then(
         (r) => r.workshopRoutes,
@@ -91,7 +101,8 @@ export const content: Routes = [
   },
   {
     path: "warranties",
-    data: { breadcrumb: "Garantías" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Garantías" , module: "warranties" },
     loadChildren: () =>
       import("../../../app/features/garantias/garantias.routes").then(
         (r) => r.warrantiesRoutes,
@@ -99,7 +110,8 @@ export const content: Routes = [
   },
   {
     path: "cfdi",
-    data: { breadcrumb: "CFDI" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "CFDI" , module: "cfdi" },
     loadChildren: () =>
       import("../../../app/features/cfdi/cfdi.routes").then(
         (r) => r.cfdiRoutes,
@@ -107,45 +119,81 @@ export const content: Routes = [
   },
   {
     path: "reports",
-    data: { breadcrumb: "Reportes" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Reportes" , module: "reports" },
     loadChildren: () =>
       import("../../../app/features/reportes/reportes.routes").then(
         (r) => r.reportsRoutes,
       ),
   },
+  // ── Dashboards por módulo y administración de licencia ──
+  {
+    path: "m/:key",
+    canActivate: [moduleGuard],
+    loadComponent: () =>
+      import("../../../app/features/modulos/module-dashboard").then(
+        (m) => m.ModuleDashboard,
+      ),
+    data: { title: "Dashboard de módulo", breadcrumb: "Módulo" },
+  },
+  {
+    path: "modulos",
+    loadComponent: () =>
+      import("../../../app/features/modulos/admin-modulos").then(
+        (m) => m.AdminModulos,
+      ),
+    data: { title: "Módulos", breadcrumb: "Módulos" },
+  },
+  {
+    path: "sin-acceso",
+    loadComponent: () =>
+      import("../../../app/features/modulos/sin-acceso").then(
+        (m) => m.SinAcceso,
+      ),
+    data: { title: "Sin acceso", breadcrumb: "Sin acceso" },
+  },
   {
     path: "finance",
+    canActivate: [moduleGuard],
     loadComponent: () =>
       import("../../../app/features/finanzas/finanzas-page").then(
         (m) => m.FinanzasPage,
       ),
-    data: { title: "Finanzas", breadcrumb: "Finanzas" },
+    data: { title: "Finanzas", breadcrumb: "Finanzas", module: "finance" },
   },
   {
     path: "leads",
+    canActivate: [moduleGuard],
     loadComponent: () =>
       import("../../../app/features/leads/leads-page").then(
         (m) => m.LeadsPage,
       ),
-    data: { title: "Leads", breadcrumb: "Leads" },
+    data: { title: "Leads", breadcrumb: "Leads", module: "leads" },
   },
   {
     path: "used-units",
+    canActivate: [moduleGuard],
     loadComponent: () =>
       import("../../../app/features/seminuevos/seminuevos-page").then(
         (m) => m.SeminuevosPage,
       ),
-    data: { title: "Seminuevos", breadcrumb: "Seminuevos" },
+    data: {
+      title: "Seminuevos",
+      breadcrumb: "Seminuevos",
+      module: "used-units",
+    },
   },
   {
     path: "pld",
+    canActivate: [moduleGuard],
     loadComponent: () =>
       import("../../../app/features/pld/pld-page").then((m) => m.PldPage),
-    data: { title: "Cumplimiento PLD", breadcrumb: "PLD" },
+    data: { title: "Cumplimiento PLD", breadcrumb: "PLD" , module: "pld" },
   },
   {
     path: "billing",
-    data: { breadcrumb: "Facturación" },
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Facturación" , module: "billing" },
     loadChildren: () =>
       import("../../../app/features/billing/billing.routes").then(
         (r) => r.billingRoutes,

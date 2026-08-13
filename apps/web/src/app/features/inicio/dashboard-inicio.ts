@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { RouterModule } from "@angular/router";
@@ -6,6 +6,7 @@ import { RouterModule } from "@angular/router";
 import { BranchesService } from "../inventario-refacciones/services/branches.service";
 import { FormsModule } from "@angular/forms";
 import { FeatherIcons } from "../../shared/components/feather-icons/feather-icons";
+import { ModulesService } from "../../shared/services/modules.service";
 
 interface DashboardSummary {
   taller: {
@@ -38,6 +39,12 @@ const STATUS_LABELS: Record<string, string> = {
 export class DashboardInicio implements OnInit {
   private http = inject(HttpClient);
   private branchesService = inject(BranchesService);
+  modulesService = inject(ModulesService);
+
+  /** Módulos con dashboard propio, para los accesos del inicio. */
+  modulosConDashboard = computed(() =>
+    this.modulesService.modules().filter((m) => m.hasDashboard),
+  );
 
   loading = signal(true);
   error = signal<string | null>(null);

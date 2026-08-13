@@ -77,6 +77,7 @@ import { FinanceModule } from './modules/finance/finance.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { UsedUnitsModule } from './modules/used-units/used-units.module';
 import { PldModule } from './modules/pld/pld.module';
+import { ModulesModule } from './modules/modules/modules.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
 
@@ -168,6 +169,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     LeadsModule,
     UsedUnitsModule,
     PldModule,
+    ModulesModule,
   ],
   controllers: [AppController],
   providers: [

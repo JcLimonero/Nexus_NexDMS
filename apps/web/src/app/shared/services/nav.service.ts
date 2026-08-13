@@ -200,6 +200,7 @@ export class NavService {
         { path: "/settings", title: "Inicio", type: "link" },
         { path: "/settings/sucursales", title: "Sucursales", type: "link" },
         { path: "/settings/general", title: "General", type: "link" },
+        { path: "/modulos", title: "Módulos y licencia", type: "link" },
       ],
     },
   ];

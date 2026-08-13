@@ -55,6 +55,29 @@
       </a>
     </div>
 
+    <!-- Accesos a los dashboards de cada módulo licenciado -->
+    @if (modulosConDashboard().length > 0) {
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Mis módulos</h5>
+          <span>
+            Plan {{ modulesService.plan() }} ·
+            {{ modulosConDashboard().length }} módulos con indicadores
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="mod-links">
+            @for (m of modulosConDashboard(); track m.key) {
+              <a class="mod-link" [routerLink]="['/m', m.key]">
+                <app-feather-icons [icon]="m.icon" />
+                <span>{{ m.name }}</span>
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
     <div class="row">
       <!-- Taller por estatus -->
       <div class="col-md-6 mb-4">

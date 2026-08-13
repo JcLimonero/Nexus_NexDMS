@@ -15,13 +15,15 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 
 const KINDS = { receivables: 'receivable', payables: 'payable' } as const;
 
 @ApiTags('Finance')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard, ModuleGuard)
 @Controller('finance')
+@RequiresModule('finance')
 export class FinanceController {
   constructor(private readonly financeService: FinanceService) {}
 

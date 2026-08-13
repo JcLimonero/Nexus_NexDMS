@@ -31,6 +31,8 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { FinanceModule } from '../finance/finance.module';
 import { FinanceService } from '../finance/finance.service';
+import { ModulesModule } from '../modules/modules.module';
+import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 
 export type IntakeStatus =
   | 'DRAFT'
@@ -179,8 +181,9 @@ export class UsedUnitsService {
 
 @ApiTags('Used Units')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RolesGuard, ModuleGuard)
 @Controller('used-units')
+@RequiresModule('used-units')
 export class UsedUnitsController {
   constructor(private readonly usedUnitsService: UsedUnitsService) {}
 
@@ -221,7 +224,11 @@ export class UsedUnitsController {
 }
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UsedUnitIntake]), FinanceModule],
+  imports: [
+    TypeOrmModule.forFeature([UsedUnitIntake]),
+    FinanceModule,
+    ModulesModule,
+  ],
   controllers: [UsedUnitsController],
   providers: [UsedUnitsService],
 })
