@@ -29,7 +29,7 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
-          "options": {"buildTarget": "admin:build"},
+          "options": {"buildTarget": "admin:build", "proxyConfig": "proxy.conf.js"},
           "configurations": {
             "production": {"buildTarget": "admin:build:production"},
             "development": {"buildTarget": "admin:build:development"}

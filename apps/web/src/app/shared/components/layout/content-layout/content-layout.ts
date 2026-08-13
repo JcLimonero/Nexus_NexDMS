@@ -17,7 +17,6 @@ import { NavService } from "../../../services/nav.service";
 import { Customizer } from "../../customizer/customizer";
 import { Footer } from "../../footer/footer";
 import { Header } from "../../header/header";
-import { RightSidebar } from "../../right-sidebar/right-sidebar";
 import { Sidebar } from "../../sidebar/sidebar";
 
 @Component({
@@ -25,7 +24,6 @@ import { Sidebar } from "../../sidebar/sidebar";
   imports: [
     Header,
     Sidebar,
-    RightSidebar,
     RouterModule,
     Footer,
     Customizer,
@@ -49,8 +47,6 @@ export class ContentLayout implements AfterViewInit {
   navServices = inject(NavService);
   customizer = inject(CustomizerService);
   private cd = inject(ChangeDetectorRef);
-
-  public right_side_bar: boolean;
 
   ngAfterViewInit() {
     this.cd.detectChanges();
@@ -79,7 +75,4 @@ export class ContentLayout implements AfterViewInit {
     return outlet.isActivated ? outlet.activatedRoute : "";
   }
 
-  public rightSidebar($event: boolean) {
-    this.right_side_bar = $event;
-  }
 }

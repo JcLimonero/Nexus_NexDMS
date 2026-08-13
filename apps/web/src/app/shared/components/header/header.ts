@@ -32,12 +32,9 @@ export class Header implements OnInit, OnDestroy {
   public searchResult = false;
   public searchResultEmpty = false;
   public openNav = false;
-  public right_sidebar = false;
   public text = "";
   public elem: HTMLElement;
   public isOpenMobile = false;
-
-  readonly rightSidebarEvent = output<boolean>();
 
   ngOnInit(): void {
     this.elem = this.document.documentElement;
@@ -48,11 +45,6 @@ export class Header implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.removeFix();
-  }
-
-  right_side_bar(): void {
-    this.right_sidebar = !this.right_sidebar;
-    this.rightSidebarEvent.emit(this.right_sidebar);
   }
 
   collapseSidebar(): void {

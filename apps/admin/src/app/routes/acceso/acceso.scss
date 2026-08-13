@@ -1,0 +1,92 @@
+.acceso {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0f172a;
+  padding: 24px;
+}
+
+.tarjeta {
+  width: 100%;
+  max-width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 32px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 20px 40px rgb(0 0 0 / 30%);
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  strong {
+    display: block;
+  }
+}
+
+.marca-icono {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: #105078;
+  color: #fff;
+  font-weight: 700;
+}
+
+.marca-sub {
+  font-size: 12px;
+  color: #64748b;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  color: #475569;
+
+  input {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0f172a;
+
+    &:focus {
+      outline: none;
+      border-color: #105078;
+      box-shadow: 0 0 0 3px rgb(16 80 120 / 15%);
+    }
+  }
+}
+
+.error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 13px;
+}
+
+button {
+  height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: #105078;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}

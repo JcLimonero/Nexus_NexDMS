@@ -51,6 +51,27 @@ export class TenantsController {
     );
   }
 
+  /**
+   * Módulos de CUALQUIER tenant, desde el portal de administración.
+   *
+   * Va aparte de `me/modules` porque el destinatario es distinto: aquí el
+   * superadmin ajusta la licencia de un cliente del SaaS, no la suya.
+   */
+  @Get(':id/modules')
+  @Roles('SUPERADMIN')
+  getTenantModules(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.getEnabledModules(id);
+  }
+
+  @Patch(':id/modules')
+  @Roles('SUPERADMIN')
+  updateTenantModules(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { enabledModules: string[] | null },
+  ) {
+    return this.tenantsService.setEnabledModules(id, body.enabledModules);
+  }
+
   /** Flujo de estatus de taller del tenant (configurable). */
   @Get('me/service-flow')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
