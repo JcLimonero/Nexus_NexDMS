@@ -410,7 +410,7 @@ export class ServiceOrdersService {
       so.status === ServiceOrderStatusEnum.CANCELLED
     ) {
       throw new BadRequestException(
-        'No se puede asignar mecánico a una OS entregada o cancelada',
+        'No se puede asignar técnico a una OS entregada o cancelada',
       );
     }
     await this.soRepo.update(id, { mechanicId });

@@ -17,7 +17,7 @@ const ROLE_LABELS: Record<string, string> = {
   MANAGER: "Gerente",
   WAREHOUSE: "Almacén",
   CASHIER: "Cajero",
-  MECHANIC: "Mecánico",
+  MECHANIC: "Técnico",
   SELLER: "Vendedor",
 };
 

@@ -47,7 +47,7 @@ export interface TimeEntry {
   minutes: number;
 }
 
-/** El endpoint /time regresa un resumen por mecánico. */
+/** El endpoint /time regresa un resumen por técnico. */
 export interface TimeSummary {
   mechanicId: string;
   totalMinutes: number;
@@ -65,7 +65,7 @@ export interface OrderUpdate {
 export class MecanicoApiService {
   private http = inject(HttpClient);
 
-  /** Citas del día — la API filtra por el mecánico logueado (rol MECHANIC). */
+  /** Citas del día — la API filtra por el técnico logueado (rol MECHANIC). */
   getMyAppointmentsToday(): Observable<{ data: MyAppointment[] }> {
     const today = new Date().toISOString().slice(0, 10);
     const params = new HttpParams()
@@ -75,7 +75,7 @@ export class MecanicoApiService {
     return this.http.get<{ data: MyAppointment[] }>(APPT_URL, { params });
   }
 
-  /** Órdenes activas — la API limita a las del mecánico logueado. */
+  /** Órdenes activas — la API limita a las del técnico logueado. */
   getMyOrders(): Observable<{ data: MyServiceOrder[] }> {
     const params = new HttpParams().set("limit", "50");
     return this.http.get<{ data: MyServiceOrder[] }>(SO_URL, { params });

@@ -47,7 +47,7 @@
                 [ngModel]="mechanicFilter()"
                 (ngModelChange)="mechanicFilter.set($event); onFilterChange()"
               >
-                <option value="">Todos los mecánicos</option>
+                <option value="">Todos los técnicos</option>
                 @for (m of mechanics(); track m.id) {
                   <option [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
                 }
@@ -78,7 +78,7 @@
                     <th>Cliente</th>
                     <th>Vehículo</th>
                     <th>Sucursal</th>
-                    <th>Mecánico</th>
+                    <th>Técnico</th>
                     <th>Falla reportada</th>
                     <th>Fecha</th>
                     <th class="text-center">Estado</th>

@@ -43,7 +43,7 @@ export class Login implements OnInit {
       detalle: "Acceso completo al sistema",
     },
     {
-      rol: "Mecánico",
+      rol: "Técnico",
       email: "mecanico1@demo.local",
       password: "demo123",
       detalle: "Para la app del taller",
@@ -52,7 +52,7 @@ export class Login implements OnInit {
 
   public readonly demoPortales = [
     {
-      nombre: "App del mecánico",
+      nombre: "App del técnico",
       descripcion: "Órdenes, cronómetro y hallazgos",
       url: "http://localhost:4201",
     },

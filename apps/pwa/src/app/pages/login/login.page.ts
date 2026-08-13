@@ -15,7 +15,7 @@ import { AuthService } from "../../core/auth.service";
           <span class="brand-mark">N</span>
           <div>
             <div class="brand-name">NexDMS</div>
-            <div class="brand-sub">Mecánico</div>
+            <div class="brand-sub">Técnico</div>
           </div>
         </div>
         <h1>Iniciar sesión</h1>

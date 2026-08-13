@@ -7,7 +7,7 @@
   <div class="alert alert-danger">{{ error() }}</div>
 } @else if (rows().length === 0) {
   <div class="matrix-empty">
-    No hay mecánicos asignados a esta sucursal.
+    No hay técnicos asignados a esta sucursal.
   </div>
 } @else if (hours().length === 0) {
   <div class="matrix-empty">
@@ -18,7 +18,7 @@
     <table class="matrix-table">
       <thead>
         <tr>
-          <th class="mech-col">Mecánico</th>
+          <th class="mech-col">Técnico</th>
           @for (h of hours(); track h) {
             <th class="hour-col">{{ formatHour(h) }}</th>
           }
@@ -44,6 +44,6 @@
   </div>
   <p class="matrix-hint">
     Los números indican huecos disponibles por hora. Haz clic en una celda
-    para asignar mecánico y hora.
+    para asignar técnico y hora.
   </p>
 }

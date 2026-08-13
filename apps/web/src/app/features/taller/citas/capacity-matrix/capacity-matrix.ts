@@ -30,9 +30,9 @@ interface MatrixRow {
 }
 
 /**
- * Matriz de capacidad mecánico × hora ("Visión Diaria").
+ * Matriz de capacidad técnico × hora ("Visión Diaria").
  * Cada celda muestra los huecos restantes; clic selecciona el primer
- * slot de esa hora para ese mecánico.
+ * slot de esa hora para ese técnico.
  */
 @Component({
   selector: "app-capacity-matrix",

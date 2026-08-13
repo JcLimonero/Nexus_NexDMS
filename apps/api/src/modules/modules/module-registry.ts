@@ -80,7 +80,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   {
     key: 'workshop',
     name: 'Taller',
-    description: 'Órdenes de servicio, citas y planificador de mecánicos.',
+    description: 'Órdenes de servicio, citas y planificador de técnicos.',
     icon: 'tool',
     route: '/workshop/service-orders',
     minPlan: TenantPlanEnum.BASIC,

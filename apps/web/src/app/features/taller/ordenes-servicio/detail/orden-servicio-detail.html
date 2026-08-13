@@ -33,7 +33,7 @@
                       <td>{{ getBranchName(o.branchId) }}</td>
                     </tr>
                     <tr>
-                      <th class="text-muted">Mecánico</th>
+                      <th class="text-muted">Técnico</th>
                       <td>{{ getMechanicLabel(o) }}</td>
                     </tr>
                     <tr>
@@ -138,7 +138,7 @@
                     [ngModel]="selectedMechanicId()"
                     (ngModelChange)="selectedMechanicId.set($event)"
                   >
-                    <option value="">Asignar mecánico</option>
+                    <option value="">Asignar técnico</option>
                     @for (m of mechanics(); track m.id) {
                       <option [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
                     }

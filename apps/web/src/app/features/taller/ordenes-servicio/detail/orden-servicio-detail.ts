@@ -153,11 +153,11 @@ export class OrdenServicioDetail implements OnInit {
       next: (updated) => {
         this.orden.set(updated);
         this.selectedMechanicId.set("");
-        this.toastr.success("Mecánico asignado");
+        this.toastr.success("Técnico asignado");
         this.assigningMechanic.set(false);
       },
       error: (err) => {
-        this.toastr.error(err?.error?.message || "Error al asignar mecánico");
+        this.toastr.error(err?.error?.message || "Error al asignar técnico");
         this.assigningMechanic.set(false);
       },
     });

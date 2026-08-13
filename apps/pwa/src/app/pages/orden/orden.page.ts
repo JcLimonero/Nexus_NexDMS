@@ -37,7 +37,7 @@ export class OrdenPage implements OnInit {
   nuevoHallazgo = "";
   hallazgoFile: File | null = null;
 
-  /** Registro de tiempo del mecánico logueado */
+  /** Registro de tiempo del técnico logueado */
   myTime = computed(() => {
     const uid = this.auth.user()?.id;
     return this.timeSummaries().find((t) => t.mechanicId === uid) ?? null;

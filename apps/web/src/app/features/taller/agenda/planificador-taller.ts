@@ -28,8 +28,8 @@ interface MechanicLane {
 }
 
 /**
- * Planificador de taller — timeline mecánico × hora.
- * Cada mecánico es una fila; sus citas del día se pintan como bloques
+ * Planificador de taller — timeline técnico × hora.
+ * Cada técnico es una fila; sus citas del día se pintan como bloques
  * proporcionales a su duración (estilo "Planificador de trabajos").
  */
 @Component({
@@ -147,7 +147,7 @@ export class PlanificadorTaller implements OnInit {
       };
     });
 
-    // Sin asignar al final (citas del día sin mecánico)
+    // Sin asignar al final (citas del día sin técnico)
     const unassigned = active.filter((c) => !c.mechanicId);
     if (unassigned.length > 0) {
       lanes.push({

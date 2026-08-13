@@ -102,7 +102,7 @@ export class CitasService {
     );
   }
 
-  /** Slots disponibles del día por mecánico (sin mechanicId regresa todos). */
+  /** Slots disponibles del día por técnico (sin mechanicId regresa todos). */
   getSlots(
     branchId: string,
     date: string,
