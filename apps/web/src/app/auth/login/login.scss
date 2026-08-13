@@ -1,3 +1,56 @@
+/* ── Fondo de marca Nexus Q Tech ─────────────────────────
+   El isotipo de Nexus es una red de nodos conectados; el fondo
+   retoma ese lenguaje: base navy de marca (#203848 → #16262F) con
+   una retícula de nodos en el azul de marca y el isotipo como
+   filigrana. Sustituye al mosaico genérico del template. */
+.auth-bg {
+  position: relative;
+  background: radial-gradient(
+      120% 120% at 15% 10%,
+      #2A4459 0%,
+      var(--navy-600) 45%,
+      var(--navy-800) 100%
+    ) !important;
+  overflow: hidden;
+
+  /* Retícula de nodos: evoca la conexión del isotipo */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%234589B5' stroke-opacity='0.22' stroke-width='1'%3E%3Cpath d='M80 12 L148 50 L148 110 L80 148 L12 110 L12 50 Z'/%3E%3Cpath d='M80 12 L80 148 M12 50 L148 110 M148 50 L12 110'/%3E%3C/g%3E%3Cg fill='%234589B5' fill-opacity='0.4'%3E%3Ccircle cx='80' cy='12' r='2.5'/%3E%3Ccircle cx='148' cy='50' r='2.5'/%3E%3Ccircle cx='148' cy='110' r='2.5'/%3E%3Ccircle cx='80' cy='148' r='2.5'/%3E%3Ccircle cx='12' cy='110' r='2.5'/%3E%3Ccircle cx='12' cy='50' r='2.5'/%3E%3Ccircle cx='80' cy='80' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    /* Se desvanece hacia el centro para no competir con la tarjeta */
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, transparent 22%, #000 62%);
+    mask-image: radial-gradient(circle at 50% 45%, transparent 22%, #000 62%);
+    pointer-events: none;
+  }
+
+  /* Filigrana del isotipo */
+  &::after {
+    content: "";
+    position: absolute;
+    right: -6vw;
+    bottom: -8vh;
+    width: min(46vw, 620px);
+    aspect-ratio: 1;
+    background: url("/assets/nexus_images/isotipo/isotipo.png") no-repeat
+      center / contain;
+    opacity: 0.05;
+    pointer-events: none;
+  }
+
+  @media (max-width: 767.98px) {
+    &::after { display: none; }
+  }
+}
+
+/* La tarjeta se despega del fondo oscuro */
+.login-authentication-box .card {
+  box-shadow: var(--shadow-lg);
+  border-color: transparent;
+}
+
 /* Responsive: evita overflow en móvil */
 .login-authentication-box {
   max-width: 100%;
