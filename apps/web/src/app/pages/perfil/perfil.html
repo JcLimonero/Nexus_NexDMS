@@ -1,0 +1,96 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Mi perfil</h5>
+          <span>Tus datos de acceso y tu contraseña</span>
+        </div>
+
+        <div class="card-body">
+          @if (cargando()) {
+            <p class="text-muted">Cargando…</p>
+          } @else if (perfil(); as p) {
+            <div class="perfil-cabecera">
+              <div class="perfil-avatar">{{ iniciales() }}</div>
+              <div>
+                <h6>{{ nombre() }}</h6>
+                <p class="text-muted mb-0">{{ p.email }}</p>
+              </div>
+            </div>
+
+            <dl class="perfil-datos">
+              <div>
+                <dt>Rol</dt>
+                <dd>{{ rolTexto() }}</dd>
+              </div>
+              <div>
+                <dt>Alcance</dt>
+                <dd>{{ alcanceTexto() }}</dd>
+              </div>
+              <div>
+                <dt>Sucursal</dt>
+                <dd>{{ p.branch?.name || "—" }}</dd>
+              </div>
+              <div>
+                <dt>Razón social</dt>
+                <dd>{{ p.legalEntity?.name || "—" }}</dd>
+              </div>
+            </dl>
+            <p class="text-muted small">
+              El rol, el alcance y la sucursal los administra quien gestiona
+              usuarios; aquí se muestran solo para que sepas con qué permisos
+              estás trabajando.
+            </p>
+
+            <hr />
+
+            <h6>Cambiar contraseña</h6>
+            <p class="text-muted small">
+              Debe tener al menos 8 caracteres e incluir un número.
+            </p>
+            <div class="perfil-form">
+              <label>
+                <span>Contraseña actual</span>
+                <input
+                  class="form-control field-lg"
+                  type="password"
+                  autocomplete="current-password"
+                  [(ngModel)]="actual"
+                />
+              </label>
+              <label>
+                <span>Nueva contraseña</span>
+                <input
+                  class="form-control field-lg"
+                  type="password"
+                  autocomplete="new-password"
+                  [(ngModel)]="nueva"
+                />
+              </label>
+              <label>
+                <span>Confirmar nueva</span>
+                <input
+                  class="form-control field-lg"
+                  type="password"
+                  autocomplete="new-password"
+                  [(ngModel)]="confirmar"
+                />
+              </label>
+            </div>
+            <button
+              type="button"
+              class="btn btn-primary mt-3"
+              [disabled]="guardando() || !actual || !nueva || !confirmar"
+              (click)="cambiarContrasena()"
+            >
+              {{ guardando() ? "Guardando…" : "Actualizar contraseña" }}
+            </button>
+          } @else {
+            <p class="text-danger">No se pudo cargar tu perfil.</p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

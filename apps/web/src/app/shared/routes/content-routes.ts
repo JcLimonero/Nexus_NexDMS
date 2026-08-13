@@ -200,6 +200,12 @@ export const content: Routes = [
       ),
   },
   {
+    path: "perfil",
+    loadComponent: () =>
+      import("../../../app/pages/perfil/perfil").then((m) => m.Perfil),
+    data: { title: "Mi perfil", breadcrumb: "Perfil" },
+  },
+  {
     path: "settings",
     data: { breadcrumb: "Configuración" },
     loadChildren: () =>

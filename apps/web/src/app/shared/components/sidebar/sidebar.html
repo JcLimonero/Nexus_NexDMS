@@ -301,22 +301,12 @@
     </div>
     <ul ngbDropdownMenu class="dropdown-menu dropdown-menu-end">
       <li>
-        <a class="dropdown-item" href="javascript:void(0)">
-          <app-feather-icons [icon]="'user'" /> Editar perfil
+        <a class="dropdown-item" routerLink="/perfil">
+          <app-feather-icons [icon]="'user'" /> Mi perfil
         </a>
       </li>
       <li>
-        <a class="dropdown-item" href="javascript:void(0)">
-          <app-feather-icons [icon]="'mail'" /> Bandeja de entrada
-        </a>
-      </li>
-      <li>
-        <a class="dropdown-item" href="javascript:void(0)">
-          <app-feather-icons [icon]="'lock'" /> Bloquear pantalla
-        </a>
-      </li>
-      <li>
-        <a class="dropdown-item" href="javascript:void(0)">
+        <a class="dropdown-item" routerLink="/settings">
           <app-feather-icons [icon]="'settings'" /> Configuración
         </a>
       </li>
