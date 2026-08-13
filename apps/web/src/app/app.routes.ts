@@ -53,6 +53,17 @@ export const routes: Routes = [
         (m) => m.ForgetPwd,
       ),
   },
+  // Portal de recepción: fuera del layout del DMS a propósito, para que en el
+  // iPad no aparezca el menú de módulos. Pide sesión igual que el resto.
+  {
+    path: "recepcion",
+    loadComponent: () =>
+      import("./pages/portal-recepcion/portal-recepcion").then(
+        (m) => m.PortalRecepcion,
+      ),
+    canActivate: [AdminGuard],
+    data: { title: "Portal de recepción" },
+  },
   {
     path: "",
     loadComponent: () =>

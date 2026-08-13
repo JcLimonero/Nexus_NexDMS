@@ -1,4 +1,4 @@
-import { Component, inject, signal } from "@angular/core";
+import { Component, inject, isDevMode, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -45,6 +45,19 @@ import { AuthService } from "../../core/auth.service";
         <button class="btn-primary" [disabled]="loading()" (click)="submit()">
           {{ loading() ? "Entrando…" : "Entrar" }}
         </button>
+
+        <!-- Solo en compilaciones de desarrollo (ver modoDemo) -->
+        @if (modoDemo) {
+          <div class="demo">
+            <div class="demo-titulo">Técnicos de demostración</div>
+            @for (t of tecnicosDemo; track t.email) {
+              <button type="button" class="demo-fila" (click)="usar(t)">
+                <span class="demo-nombre">{{ t.nombre }}</span>
+                <span class="demo-cred">{{ t.email }} · {{ t.password }}</span>
+              </button>
+            }
+          </div>
+        }
       </div>
     </div>
   `,
@@ -71,6 +84,41 @@ import { AuthService } from "../../core/auth.service";
         align-items: center;
         gap: 10px;
         margin-bottom: 20px;
+      }
+      .demo {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid #e2e8f0;
+      }
+      .demo-titulo {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #94a3b8;
+        margin-bottom: 8px;
+      }
+      /* Toda la fila es pulsable: el técnico entra de un toque, sin teclear. */
+      .demo-fila {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 6px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: #f8fafc;
+        text-align: left;
+        cursor: pointer;
+      }
+      .demo-nombre {
+        font-size: 14px;
+        font-weight: 600;
+        color: #0f172a;
+      }
+      .demo-cred {
+        font-size: 12px;
+        color: #64748b;
       }
       .brand-mark {
         width: 40px;
@@ -159,6 +207,27 @@ export class LoginPage {
   password = "";
   loading = signal(false);
   error = signal<string | null>(null);
+
+  /**
+   * Credenciales a la vista para la demostración. Solo aparecen en
+   * compilaciones de desarrollo: `ng build` de producción evalúa `isDevMode()`
+   * como falso y elimina el bloque, porque publicar cuentas en la pantalla de
+   * acceso de un taller real lo dejaría abierto a cualquiera.
+   */
+  readonly modoDemo = isDevMode();
+
+  readonly tecnicosDemo = [
+    { nombre: "Hugo Martínez", email: "mecanico1@demo.local", password: "demo123" },
+    { nombre: "Luis Ramos", email: "mecanico2@demo.local", password: "demo123" },
+    { nombre: "Ricardo Pérez", email: "mecanico3@demo.local", password: "demo123" },
+  ];
+
+  /** Llena el formulario y entra: en el taller nadie teclea un correo largo. */
+  usar(t: { email: string; password: string }): void {
+    this.email = t.email;
+    this.password = t.password;
+    this.submit();
+  }
 
   submit(): void {
     if (!this.email || !this.password || this.loading()) return;

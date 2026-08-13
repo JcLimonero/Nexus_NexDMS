@@ -1,4 +1,4 @@
-import { Component, inject, signal } from "@angular/core";
+import { Component, inject, isDevMode, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -7,9 +7,10 @@ import { AuthService } from "../../core/auth/auth.service";
 /**
  * Acceso al portal de administración del SaaS.
  *
- * A diferencia del DMS, aquí no se publican credenciales de demostración:
- * este portal da de alta y suspende clientes, así que quien entra debería
- * saber ya con qué cuenta hacerlo.
+ * Muestra la cuenta de demostración, pero solo en compilaciones de desarrollo:
+ * este portal da de alta y suspende clientes, así que publicar la credencial
+ * en un despliegue real sería entregar el control del SaaS. `ng build` de
+ * producción evalúa `isDevMode()` como falso y elimina el bloque.
  */
 @Component({
   selector: "app-acceso",
@@ -26,6 +27,20 @@ export class Acceso {
   password = "";
   entrando = signal(false);
   error = signal<string | null>(null);
+
+  readonly modoDemo = isDevMode();
+  readonly cuentaDemo = {
+    nombre: "Superadministrador",
+    email: "admin@nexusqtech.com",
+    password: "00@Limonero",
+  };
+
+  /** Llena el formulario y entra, para no teclearlo en cada demostración. */
+  usarDemo(): void {
+    this.email = this.cuentaDemo.email;
+    this.password = this.cuentaDemo.password;
+    this.entrar();
+  }
 
   entrar(): void {
     if (!this.email.trim() || !this.password) {

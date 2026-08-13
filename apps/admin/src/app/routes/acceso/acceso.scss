@@ -90,3 +90,44 @@ button {
     opacity: 0.6;
   }
 }
+
+/* Panel de demostración; el bloque completo desaparece en producción. */
+.demo {
+  padding-top: 16px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.demo-titulo {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  margin-bottom: 8px;
+}
+
+.demo-fila {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  height: auto;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: inherit;
+  font-weight: 400;
+  text-align: left;
+  cursor: pointer;
+}
+
+.demo-nombre {
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f172a;
+}
+
+.demo-cred {
+  font-size: 12px;
+  color: #64748b;
+}
