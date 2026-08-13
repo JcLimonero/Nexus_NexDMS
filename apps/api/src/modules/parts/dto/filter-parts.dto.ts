@@ -59,9 +59,16 @@ export class FilterPartsDto {
   @Min(1)
   page?: number;
 
+  /**
+   * Tope alineado con el resto de catálogos (proveedores, unidades). Los
+   * formularios que arman un selector de refacciones —cotización, orden de
+   * compra, traspaso y venta de mostrador— piden el catálogo de la sucursal
+   * de una vez; con el tope anterior de 100 la petición se rechazaba y el
+   * combo se quedaba vacío sin explicación.
+   */
   @IsOptional()
   @Type(() => Number)
   @Min(1)
-  @Max(100)
+  @Max(500)
   limit?: number;
 }
