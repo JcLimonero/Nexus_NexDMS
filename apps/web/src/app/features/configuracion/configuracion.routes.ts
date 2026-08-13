@@ -31,6 +31,12 @@ export const settingsRoutes: Routes = [
     ],
   },
   {
+    path: "razones-sociales",
+    loadComponent: () =>
+      import("./razones-sociales/razones-sociales").then((m) => m.RazonesSociales),
+    data: { title: "Razones sociales", breadcrumb: "Razones sociales" },
+  },
+  {
     path: "general",
     loadComponent: () =>
       import("../../components/placeholder/placeholder").then(

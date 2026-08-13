@@ -7,6 +7,8 @@ export interface Branch {
   name: string;
   slug: string;
   isActive: boolean;
+  /** Razón social de la que cuelga la sucursal. */
+  legalEntityId?: string | null;
 }
 
 export interface BranchesResponse {

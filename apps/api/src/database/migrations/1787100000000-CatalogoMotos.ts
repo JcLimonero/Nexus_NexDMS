@@ -45,9 +45,9 @@ export class CatalogoMotos1787100000000 implements MigrationInterface {
   private readonly colores = ['Negro', 'Rojo', 'Blanco', 'Azul'];
 
   public async up(q: QueryRunner): Promise<void> {
-    const tipo = await q.query<{ id: string }[]>(
+    const tipo = (await q.query(
       `SELECT id FROM vehicle_types WHERE code = 'MOTORCYCLE' LIMIT 1`,
-    );
+    )) as { id: string }[];
     if (!tipo.length) {
       // Sin el tipo de vehículo no hay dónde colgar los modelos; se sale sin
       // romper la migración porque el catálogo de tipos es responsabilidad
@@ -65,10 +65,10 @@ export class CatalogoMotos1787100000000 implements MigrationInterface {
             SELECT 1 FROM global_brands WHERE lower("name") = lower($1::varchar))`,
         [marca],
       );
-      const [{ id: brandId }] = await q.query<{ id: string }[]>(
+      const [{ id: brandId }] = (await q.query(
         `SELECT id FROM global_brands WHERE lower("name") = lower($1) LIMIT 1`,
         [marca],
-      );
+      )) as { id: string }[];
 
       for (const [modelo, version, cc] of modelos) {
         await q.query(
@@ -93,11 +93,11 @@ export class CatalogoMotos1787100000000 implements MigrationInterface {
                WHERE brand_id = $1::uuid AND lower("name") = lower($2::varchar))`,
           [brandId, modelo],
         );
-        const [{ id: modelId }] = await q.query<{ id: string }[]>(
+        const [{ id: modelId }] = (await q.query(
           `SELECT id FROM vehicle_models
             WHERE brand_id = $1::uuid AND lower("name") = lower($2::varchar) LIMIT 1`,
           [brandId, modelo],
-        );
+        )) as { id: string }[];
 
         await q.query(
           `INSERT INTO vehicle_versions ("brand_id","model_id","year","name")
@@ -107,10 +107,10 @@ export class CatalogoMotos1787100000000 implements MigrationInterface {
                WHERE model_id = $2::uuid AND lower("name") = lower($4::varchar))`,
           [brandId, modelId, anio, version],
         );
-        const [{ id: versionId }] = await q.query<{ id: string }[]>(
+        const [{ id: versionId }] = (await q.query(
           `SELECT id FROM vehicle_versions WHERE model_id = $1::uuid LIMIT 1`,
           [modelId],
-        );
+        )) as { id: string }[];
 
         for (const color of this.colores) {
           await q.query(

@@ -279,11 +279,16 @@ export class AuthService {
       },
       [] as Array<{ id: string; name: string }>,
     );
+    // La sucursal activa es la del token, no la de por defecto: al cambiar de
+    // contexto con `switch-branch` se emite un token nuevo, y devolver aquí la
+    // predeterminada hacía que el cambio pareciera no surtir efecto.
+    const activa =
+      branches.find((b) => b.branchId === user.branchId) ?? defaultBranch;
     return {
       id: dbUser.id,
       tenantId: dbUser.tenantId,
-      branchId: defaultBranch?.branchId ?? null,
-      legalEntityId: defaultBranch?.legalEntityId ?? null,
+      branchId: activa?.branchId ?? null,
+      legalEntityId: activa?.legalEntityId ?? null,
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       email: dbUser.email,

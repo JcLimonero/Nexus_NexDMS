@@ -10,6 +10,7 @@ import { TranslateModule } from "@ngx-translate/core";
 import { AuthService } from "../../../auth/auth.service";
 import { Menu, NavService } from "../../services/nav.service";
 import { FeatherIcons } from "../feather-icons/feather-icons";
+import { SelectorContexto } from "../selector-contexto/selector-contexto";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPERADMIN: "Super administrador",
@@ -23,7 +24,7 @@ const ROLE_LABELS: Record<string, string> = {
 
 @Component({
   selector: "app-sidebar",
-  imports: [RouterModule, FeatherIcons, NgbModule, TranslateModule],
+  imports: [SelectorContexto, RouterModule, FeatherIcons, NgbModule, TranslateModule],
   templateUrl: "./sidebar.html",
   styleUrls: ["./sidebar.scss"],
 })
