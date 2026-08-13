@@ -93,6 +93,29 @@ export const TIPOS_UNIDAD = [
   { value: "VAN", label: "Van" },
 ];
 
+/** Un kit ya resuelto contra el almacén: trae precio real y disponibilidad. */
+export interface KitResuelto {
+  id: string;
+  code: string;
+  kitType: string;
+  name: string;
+  laborMinutes: number;
+  laborPrice: number;
+  partsTotal: number;
+  total: number;
+  stock: "VERDE" | "AMBAR" | "ROJO";
+  faltantes: string[];
+  items: {
+    sku: string | null;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    subtotal: number;
+    stockQuantity: number | null;
+    suficiente: boolean;
+  }[];
+}
+
 export interface ServicioPredefinido {
   id: string;
   name: string;
@@ -168,6 +191,18 @@ export class RecepcionService {
 
   removeMark(id: string): Observable<unknown> {
     return this.http.delete(`${URL}/marks/${id}`);
+  }
+
+  /**
+   * Kits de servicio disponibles. El backend los resuelve contra el almacén,
+   * así que el asesor ve el precio real y si hay existencias antes de
+   * prometer una fecha de entrega.
+   */
+  kits(branchId?: string, vehicleType?: string): Observable<KitResuelto[]> {
+    let params = new HttpParams();
+    if (branchId) params = params.set("branchId", branchId);
+    if (vehicleType) params = params.set("vehicleType", vehicleType);
+    return this.http.get<KitResuelto[]>("/api/v1/service-kits", { params });
   }
 
   serviciosPredefinidos(branchId?: string): Observable<ServicioPredefinido[]> {

@@ -37,6 +37,10 @@ import { UnitSalesModule } from './modules/unit-sales/unit-sales.module';
 import { QuotationsModule } from './modules/quotations/quotations.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
+import { ServiceKitsModule } from './modules/service-kits/service-kits.module';
+import { SignaturesModule } from './modules/signatures/signatures.module';
+import { ClientPortalModule } from './modules/client-portal/client-portal.module';
+import { ExportModule } from './modules/export/export.module';
 import { WarrantiesModule } from './modules/warranties/warranties.module';
 import { CommissionsModule } from './modules/commissions/commissions.module';
 import { BranchPrintersModule } from './modules/branch-printers/branch-printers.module';
@@ -150,6 +154,10 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     UnitReturnsModule,
     UnitReturnDocumentsModule,
     ServiceOrdersModule,
+    ServiceKitsModule,
+    SignaturesModule,
+    ClientPortalModule,
+    ExportModule,
     WarrantiesModule,
     CommissionsModule,
     BranchPrintersModule,

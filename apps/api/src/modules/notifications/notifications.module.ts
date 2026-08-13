@@ -27,6 +27,6 @@ import { UsersModule } from '../users/users.module';
     EmailProvider,
     SmsProvider,
   ],
-  exports: [NotificationsService],
+  exports: [NotificationsService, WhatsAppProvider],
 })
 export class NotificationsModule {}

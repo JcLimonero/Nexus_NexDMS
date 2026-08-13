@@ -1,0 +1,482 @@
+<div class="card panel-servicio">
+  <div class="card-header">
+    <nav class="pestanas" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="pestana() === 'trabajos'"
+        [class.activa]="pestana() === 'trabajos'"
+        (click)="ir('trabajos')"
+      >
+        Trabajos
+        @if (operaciones().length) {
+          <span class="cuenta">{{ operaciones().length }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="pestana() === 'adicionales'"
+        [class.activa]="pestana() === 'adicionales'"
+        (click)="ir('adicionales')"
+      >
+        Trabajos adicionales
+        @if (pendientes().length) {
+          <span class="cuenta alerta">{{ pendientes().length }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="pestana() === 'firmas'"
+        [class.activa]="pestana() === 'firmas'"
+        (click)="ir('firmas')"
+      >
+        Firmas
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="pestana() === 'mensajes'"
+        [class.activa]="pestana() === 'mensajes'"
+        (click)="ir('mensajes')"
+      >
+        Mensajes
+        @if (sinLeer()) {
+          <span class="cuenta alerta">{{ sinLeer() }}</span>
+        }
+      </button>
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="pestana() === 'unidad'"
+        [class.activa]="pestana() === 'unidad'"
+        (click)="ir('unidad')"
+      >
+        Unidad de sustitución
+      </button>
+    </nav>
+  </div>
+
+  <div class="card-body">
+    <!-- ═══ Trabajos y fichaje ═══ -->
+    @if (pestana() === "trabajos") {
+      @if (productividad(); as p) {
+        <div class="productividad">
+          <div>
+            <span class="k">Tiempo real</span>
+            <strong>{{ hm(p.minutosReales) }}</strong>
+          </div>
+          <div>
+            <span class="k">Baremo</span>
+            <strong>{{ hm(p.minutosBaremo) }}</strong>
+          </div>
+          <div>
+            <span class="k">Eficiencia</span>
+            <strong [class.ok]="(p.eficiencia ?? 0) >= 100">
+              {{ p.eficiencia !== null ? p.eficiencia + " %" : "—" }}
+            </strong>
+          </div>
+        </div>
+      }
+
+      @if (operaciones().length === 0) {
+        <p class="vacio">
+          Todavía no hay operaciones. Desglosa el trabajo para que el técnico
+          pueda fichar contra cada una.
+        </p>
+      } @else {
+        <div class="tabla-scroll">
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Código</th>
+                <th>Operación</th>
+                <th>Cargo</th>
+                <th class="num">Baremo</th>
+                <th class="num">Real</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (op of operaciones(); track op.id) {
+                <tr [class.corriendo]="op.running">
+                  <td class="mono">{{ op.code || "—" }}</td>
+                  <td>
+                    {{ op.description }}
+                    @if (op.mechanicName) {
+                      <span class="sub">{{ op.mechanicName }}</span>
+                    }
+                  </td>
+                  <td>{{ etiquetaCargo(op.chargeType) }}</td>
+                  <td class="num">{{ hm(op.standardMinutes) }}</td>
+                  <td class="num">
+                    {{ hm(op.totalMinutes) }}
+                    @if (op.deviationMinutes !== null && op.deviationMinutes > 0) {
+                      <span class="sub alerta">+{{ hm(op.deviationMinutes) }}</span>
+                    }
+                  </td>
+                  <td>
+                    <span class="estado" [attr.data-estado]="op.status">
+                      {{
+                        op.status === "DONE"
+                          ? "Terminada"
+                          : op.status === "IN_PROGRESS"
+                            ? "En curso"
+                            : "Pendiente"
+                      }}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-ghost"
+                      (click)="quitarOperacion(op)"
+                    >
+                      Quitar
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <h6 class="sub-titulo">Agregar operación</h6>
+      <div class="control-row">
+        <input
+          class="form-control field-sm"
+          placeholder="Código M.O."
+          [(ngModel)]="nuevaOp.code"
+        />
+        <input
+          class="form-control field-lg"
+          placeholder="Descripción del trabajo"
+          [(ngModel)]="nuevaOp.description"
+        />
+        <input
+          class="form-control field-xs text-end"
+          type="number"
+          min="0"
+          step="15"
+          [(ngModel)]="nuevaOp.standardMinutes"
+          aria-label="Minutos de baremo"
+        />
+        <select class="form-control field-md" [(ngModel)]="nuevaOp.chargeType">
+          @for (t of tiposCargo(); track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+        <input
+          class="form-control field-sm"
+          placeholder="Cuenta de cargo"
+          [(ngModel)]="nuevaOp.chargeAccount"
+        />
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="guardando() || !nuevaOp.description.trim()"
+          (click)="agregarOperacion()"
+        >
+          Agregar
+        </button>
+      </div>
+    }
+
+    <!-- ═══ Trabajos adicionales ═══ -->
+    @if (pestana() === "adicionales") {
+      @if (hallazgos().length === 0) {
+        <p class="vacio">
+          El técnico no ha reportado trabajos adicionales en esta orden.
+        </p>
+      }
+
+      <div class="hallazgos">
+        @for (h of hallazgos(); track h.id) {
+          <article class="hallazgo" [class.elegido]="seleccionados().has(h.id)">
+            <div class="evidencia">
+              @if (urls()[h.mediaKey]; as url) {
+                @if (h.mediaType === "VIDEO") {
+                  <video [src]="url" controls></video>
+                } @else {
+                  <img [src]="url" [alt]="'Evidencia: ' + h.description" />
+                }
+              } @else {
+                <div class="sin-imagen">Evidencia adjunta</div>
+              }
+            </div>
+
+            <div class="datos">
+              <div class="fila-top">
+                <span
+                  class="criticidad"
+                  [attr.data-tono]="tonoCriticidad(h.criticality)"
+                >
+                  {{
+                    h.criticality === "ALTA"
+                      ? "Urgente"
+                      : h.criticality === "MEDIA"
+                        ? "Conviene hacerlo"
+                        : "Puede esperar"
+                  }}
+                </span>
+                <span class="estado" [attr.data-estado]="h.status">
+                  {{ h.status | titlecase }}
+                </span>
+              </div>
+              <p class="desc">{{ h.description }}</p>
+              <p class="meta">
+                {{ h.tecnico || "Técnico" }} · estimado
+                {{ hm(h.estimatedMinutes) }}
+              </p>
+
+              @if (h.cotizacion; as c) {
+                <p class="meta">
+                  {{ c.folio }} · {{ money(c.total) }} ·
+                  {{ c.respondida ? "respondida" : "esperando al cliente" }}
+                </p>
+              } @else {
+                <label class="elegir">
+                  <input
+                    type="checkbox"
+                    [checked]="seleccionados().has(h.id)"
+                    (change)="alternarSeleccion(h)"
+                  />
+                  Incluir en la cotización
+                </label>
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (seleccionados().size) {
+        <h6 class="sub-titulo">
+          Cotización de {{ seleccionados().size }} trabajo(s)
+        </h6>
+        @for (l of lineas(); track $index) {
+          <div class="control-row mb-2">
+            <input
+              class="form-control field-lg"
+              placeholder="Concepto"
+              [(ngModel)]="l.description"
+            />
+            <input
+              class="form-control field-xs text-end"
+              type="number"
+              min="1"
+              [(ngModel)]="l.quantity"
+              aria-label="Cantidad"
+            />
+            <input
+              class="form-control field-sm text-end"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="l.unitPrice"
+              aria-label="Precio unitario"
+            />
+            <button
+              type="button"
+              class="btn btn-ghost"
+              (click)="quitarLinea($index)"
+            >
+              Quitar
+            </button>
+          </div>
+        }
+        <div class="control-row">
+          <button type="button" class="btn btn-secondary" (click)="agregarLinea()">
+            + Concepto
+          </button>
+          <input
+            class="form-control field-lg"
+            placeholder="Condiciones (vigencia, garantía…)"
+            [(ngModel)]="condiciones"
+          />
+          <span class="total">Total: {{ money(totalCotizacion()) }}</span>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="guardando()"
+            (click)="enviarCotizacion()"
+          >
+            Enviar al cliente
+          </button>
+        </div>
+      }
+    }
+
+    <!-- ═══ Firmas ═══ -->
+    @if (pestana() === "firmas") {
+      <div class="firmas">
+        @for (f of firmas(); track f.kind) {
+          <article class="firma">
+            <div class="firma-datos">
+              <strong>{{ f.label }}</strong>
+              @if (f.firmada) {
+                <span class="meta">
+                  Firmada {{ f.signedAt | date: "dd/MM/yyyy HH:mm" }}
+                  @if (f.signerName) {
+                    · {{ f.signerName }}
+                  }
+                  · {{ f.mode === "REMOTA" ? "remota" : "presencial" }}
+                </span>
+              } @else if (f.token) {
+                <span class="meta">Enlace enviado, esperando al cliente</span>
+              } @else {
+                <span class="meta">Pendiente</span>
+              }
+            </div>
+            <div class="firma-acciones">
+              @if (!f.firmada) {
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="abrirPad(f)"
+                >
+                  Firmar aquí
+                </button>
+                @if (f.kind !== "ADVISOR") {
+                  @if (f.token) {
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      (click)="copiarEnlace(f)"
+                    >
+                      Copiar enlace
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-secondary btn-sm"
+                      [disabled]="guardando()"
+                      (click)="pedirFirmaRemota(f)"
+                    >
+                      Enviar por WhatsApp
+                    </button>
+                  }
+                }
+              }
+            </div>
+          </article>
+        }
+      </div>
+
+      @if (firmaActiva(); as fa) {
+        <div class="pad-zona">
+          <h6 class="sub-titulo">{{ fa.label }}</h6>
+          <canvas
+            #pad
+            class="pad"
+            (pointerdown)="padDown($event)"
+            (pointermove)="padMove($event)"
+            (pointerup)="padUp()"
+            (pointerleave)="padUp()"
+          ></canvas>
+          <div class="control-row">
+            <input
+              class="form-control field-lg"
+              placeholder="Nombre de quien firma"
+              [(ngModel)]="firmanteNombre"
+            />
+            <button type="button" class="btn btn-ghost" (click)="limpiarPad()">
+              Limpiar
+            </button>
+            <button type="button" class="btn btn-secondary" (click)="cerrarPad()">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              [disabled]="guardando()"
+              (click)="guardarFirma()"
+            >
+              Guardar firma
+            </button>
+          </div>
+        </div>
+      }
+    }
+
+    <!-- ═══ Mensajes ═══ -->
+    @if (pestana() === "mensajes") {
+      <div class="hilo">
+        @if (mensajes().length === 0) {
+          <p class="vacio">Sin mensajes con el cliente todavía.</p>
+        }
+        @for (m of mensajes(); track m.id) {
+          <div class="mensaje" [class.propio]="m.sender === 'STAFF'">
+            <p>{{ m.body }}</p>
+            <span class="meta">
+              {{ m.sender === "STAFF" ? "Tú" : "Cliente" }} ·
+              {{ m.createdAt | date: "dd/MM HH:mm" }}
+            </span>
+          </div>
+        }
+      </div>
+      <div class="control-row">
+        <input
+          class="form-control field-full"
+          placeholder="Escribe al cliente…"
+          [(ngModel)]="nuevoMensaje"
+          (keyup.enter)="responder()"
+        />
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="guardando() || !nuevoMensaje.trim()"
+          (click)="responder()"
+        >
+          Enviar
+        </button>
+      </div>
+      <p class="meta">
+        Al enviar, al cliente le llega un aviso por WhatsApp con el mensaje.
+      </p>
+    }
+
+    <!-- ═══ Unidad de sustitución ═══ -->
+    @if (pestana() === "unidad") {
+      @if (sustitucionActiva) {
+        <p class="vacio">
+          Esta orden tiene una unidad de cortesía prestada.
+        </p>
+        <button
+          type="button"
+          class="btn btn-primary"
+          [disabled]="guardando()"
+          (click)="devolver()"
+        >
+          Registrar devolución
+        </button>
+      } @else {
+        <div class="control-row">
+          <select class="form-control field-lg" [(ngModel)]="unidadElegida">
+            <option value="">Elige una unidad disponible…</option>
+            @for (u of unidades(); track u.id) {
+              <option [value]="u.id">
+                {{ u.descripcion }}{{ u.placa ? " · " + u.placa : "" }}
+              </option>
+            }
+          </select>
+          <button
+            type="button"
+            class="btn btn-primary"
+            [disabled]="guardando() || !unidadElegida"
+            (click)="prestar()"
+          >
+            Prestar unidad
+          </button>
+        </div>
+        @if (unidades().length === 0) {
+          <p class="vacio">
+            No hay unidades libres en el inventario para prestar.
+          </p>
+        }
+      }
+    }
+  </div>
+</div>

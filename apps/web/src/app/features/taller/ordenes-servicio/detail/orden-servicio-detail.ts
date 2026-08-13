@@ -5,6 +5,7 @@ import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { TallerService } from "../../taller.service";
+import { PanelServicio } from "./panel-servicio";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import {
   ServiceOrder,
@@ -26,7 +27,7 @@ const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
 @Component({
   selector: "app-orden-servicio-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PanelServicio],
   templateUrl: "./orden-servicio-detail.html",
   styleUrls: ["./orden-servicio-detail.scss"],
 })

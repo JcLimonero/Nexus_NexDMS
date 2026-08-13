@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { AdditionalWorkService } from './additional-work.service';
 import { DataSource, IsNull, Repository } from 'typeorm';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import {
@@ -72,6 +73,7 @@ export class ReceptionService {
     private readonly dataSource: DataSource,
     private readonly storage: StorageService,
     private readonly events: EventEmitter2,
+    private readonly additionalWork: AdditionalWorkService,
   ) {}
 
   // ─── Catálogo de fotos ───────────────────────────
@@ -721,6 +723,23 @@ export class ReceptionService {
       });
     }
 
-    return { ok: true, aceptada: dto.acepta };
+    // La misma pantalla pública sirve para la cotización de recepción y para
+    // los trabajos adicionales. Si esta cotización venía de hallazgos, hay
+    // que resolverlos y convertirlos en operaciones de la orden.
+    const adicionales = await this.additionalWork.aplicarRespuesta(
+      q.id,
+      dto.acepta,
+    );
+
+    return {
+      ok: true,
+      aceptada: dto.acepta,
+      ...(adicionales.hallazgos > 0
+        ? {
+            trabajosAdicionales: adicionales.hallazgos,
+            operacionesCreadas: adicionales.operaciones,
+          }
+        : {}),
+    };
   }
 }

@@ -27,6 +27,19 @@ export const routes: Routes = [
       import("./pages/public/cotizacion-publica").then((m) => m.CotizacionPublica),
     data: { title: "Autorizar cotización" },
   },
+  // El portal del cliente: sesión propia por código, sin login del taller.
+  {
+    path: "portal",
+    loadComponent: () =>
+      import("./pages/portal/portal-cliente").then((m) => m.PortalCliente),
+    data: { title: "Portal del cliente" },
+  },
+  {
+    path: "f/:token",
+    loadComponent: () =>
+      import("./pages/public/firma-publica").then((m) => m.FirmaPublica),
+    data: { title: "Firmar documento" },
+  },
   {
     path: "s/:token",
     loadComponent: () =>

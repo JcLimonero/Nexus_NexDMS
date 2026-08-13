@@ -39,6 +39,10 @@ export interface ServiceOrder {
   total: number;
   receivedAt: string;
   promisedAt: string | null;
+  /** Unidad de cortesía prestada mientras la del cliente está en el taller. */
+  substituteUnitId?: string | null;
+  substituteDeliveredAt?: string | null;
+  substituteReturnedAt?: string | null;
   readyAt: string | null;
   deliveredAt: string | null;
   createdAt: string;

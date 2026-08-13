@@ -12,11 +12,12 @@ import {
   ServiceOrderStatus,
 } from "../../models/service-order.model";
 import { FeatherIcons } from "../../../../shared/components/feather-icons/feather-icons";
+import { Exportar } from "../../../../shared/components/exportar/exportar";
 
 @Component({
   selector: "app-ordenes-servicio-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons, Exportar],
   templateUrl: "./ordenes-servicio-list.html",
   styleUrls: ["./ordenes-servicio-list.scss"],
 })

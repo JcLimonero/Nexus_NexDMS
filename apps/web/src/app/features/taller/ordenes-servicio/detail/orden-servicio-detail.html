@@ -173,6 +173,15 @@
           }
         </div>
       </div>
+
+      <!-- Trabajo de la orden: operaciones, adicionales, firmas, mensajes
+           y unidad de cortesía. Solo tiene sentido con la orden cargada. -->
+      @if (orden(); as o) {
+        <app-panel-servicio
+          [serviceOrderId]="o.id"
+          [sustitucionActiva]="!!o.substituteUnitId && !o.substituteReturnedAt"
+        />
+      }
     </div>
   </div>
 </div>

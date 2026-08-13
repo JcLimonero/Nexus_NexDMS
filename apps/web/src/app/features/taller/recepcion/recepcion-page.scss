@@ -206,3 +206,73 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* ── Kits de servicio ──────────────────────────────────────
+   El semáforo va como punto de color y además como texto: el color solo
+   no basta para quien no lo distingue, y el asesor necesita saber qué
+   falta, no solo que falta algo. */
+.kits {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-8);
+}
+
+.kit-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  padding: var(--space-12);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+
+  &:hover {
+    border-color: var(--primary);
+    box-shadow: var(--shadow-sm);
+  }
+
+  /* Sin existencias no se bloquea: hay talleres que piden la pieza al
+     cotizar. Solo se advierte. */
+  &[data-stock="ROJO"] {
+    border-style: dashed;
+  }
+}
+
+.kit-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+}
+
+.kit-nombre {
+  font-weight: var(--font-semibold);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.kit-semaforo {
+  flex: 0 0 auto;
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-pill);
+  background: var(--border);
+
+  &[data-stock="VERDE"] { background: var(--success); }
+  &[data-stock="AMBAR"] { background: var(--warning); }
+  &[data-stock="ROJO"] { background: var(--danger); }
+}
+
+.kit-meta {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.kit-stock {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

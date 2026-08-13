@@ -336,6 +336,32 @@
             </div>
           }
 
+          <!-- Kits: entran con su mano de obra y sus refacciones de una vez,
+               y muestran si hay existencias antes de prometer la entrega -->
+          @if (kits().length) {
+            <label>Kits de servicio</label>
+            <div class="kits mb-3">
+              @for (k of kits(); track k.id) {
+                <button
+                  type="button"
+                  class="kit-card"
+                  [attr.data-stock]="k.stock"
+                  [title]="stockTexto(k)"
+                  (click)="agregarKit(k)"
+                >
+                  <span class="kit-top">
+                    <span class="kit-nombre">{{ k.name }}</span>
+                    <span class="kit-semaforo" [attr.data-stock]="k.stock"></span>
+                  </span>
+                  <span class="kit-meta">
+                    {{ money(k.total) }} · {{ k.laborMinutes }} min
+                  </span>
+                  <span class="kit-stock">{{ stockTexto(k) }}</span>
+                </button>
+              }
+            </div>
+          }
+
           <label>Conceptos de la cotización</label>
           @for (l of lineas(); track $index) {
             <div class="control-row mb-2">

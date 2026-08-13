@@ -4,6 +4,34 @@ import { Observable } from "rxjs";
 
 const SO_URL = "/api/v1/service-orders";
 const APPT_URL = "/api/v1/appointments";
+const OPS_URL = "/api/v1/operations";
+
+/** Una línea de trabajo de la orden, con el tiempo ya acumulado. */
+export interface Operacion {
+  id: string;
+  code: string | null;
+  description: string;
+  status: "PENDING" | "IN_PROGRESS" | "DONE";
+  chargeType: string;
+  standardMinutes: number;
+  ownMinutes: number;
+  othersMinutes: number;
+  totalMinutes: number;
+  deviationMinutes: number | null;
+  running: boolean;
+  runningSince: string | null;
+  mechanicName: string | null;
+}
+
+export interface FichajeActual {
+  fichado: boolean;
+  serviceOrderId?: string;
+  folio?: string;
+  operationId?: string | null;
+  operacion?: string;
+  desde?: string;
+  minutos?: number;
+}
 
 export interface MyAppointment {
   id: string;
@@ -103,6 +131,30 @@ export class MecanicoApiService {
     return this.http.get<TimeSummary[]>(`${SO_URL}/${id}/time`);
   }
 
+  // ─── Operaciones y fichaje ────────────────────────────────
+  // El tiempo se lleva por operación, no por orden: es lo que permite
+  // comparar contra el baremo y saber quién más está en el mismo trabajo.
+
+  getOperaciones(serviceOrderId: string): Observable<Operacion[]> {
+    return this.http.get<Operacion[]>(`${OPS_URL}/order/${serviceOrderId}`);
+  }
+
+  fichajeActual(): Observable<FichajeActual> {
+    return this.http.get<FichajeActual>(`${OPS_URL}/fichaje-actual`);
+  }
+
+  ficharOperacion(operationId: string): Observable<unknown> {
+    return this.http.post(`${OPS_URL}/${operationId}/fichar`, {});
+  }
+
+  pausarOperacion(operationId: string): Observable<unknown> {
+    return this.http.post(`${OPS_URL}/${operationId}/pausar`, {});
+  }
+
+  terminarOperacion(operationId: string): Observable<unknown> {
+    return this.http.post(`${OPS_URL}/${operationId}/terminar`, {});
+  }
+
   getUpdates(id: string): Observable<OrderUpdate[]> {
     return this.http.get<OrderUpdate[]>(`${SO_URL}/${id}/updates`);
   }
@@ -111,15 +163,24 @@ export class MecanicoApiService {
     return this.http.post(`${SO_URL}/${id}/updates`, { message });
   }
 
-  /** El hallazgo exige evidencia: multipart con campo `file`. */
+  /**
+   * El hallazgo exige evidencia: multipart con campo `file`.
+   * La criticidad y el tiempo estimado son lo que el asesor necesita para
+   * defender el trabajo adicional por teléfono y replanificar la entrega.
+   */
   addFinding(
     id: string,
     description: string,
     file: File,
+    extra?: { criticality?: string; estimatedMinutes?: number },
   ): Observable<unknown> {
     const form = new FormData();
     form.append("description", description);
     form.append("file", file);
+    if (extra?.criticality) form.append("criticality", extra.criticality);
+    if (extra?.estimatedMinutes != null) {
+      form.append("estimatedMinutes", String(extra.estimatedMinutes));
+    }
     return this.http.post(`${SO_URL}/${id}/findings`, form);
   }
 

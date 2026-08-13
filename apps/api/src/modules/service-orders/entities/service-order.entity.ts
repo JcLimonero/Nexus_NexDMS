@@ -112,6 +112,16 @@ export class ServiceOrder {
   })
   trackingToken: string;
 
+  /** Unidad de cortesía prestada mientras la del cliente está en el taller. */
+  @Column({ name: 'substitute_unit_id', type: 'uuid', nullable: true })
+  substituteUnitId: string | null;
+
+  @Column({ name: 'substitute_delivered_at', type: 'timestamp', nullable: true })
+  substituteDeliveredAt: Date | null;
+
+  @Column({ name: 'substitute_returned_at', type: 'timestamp', nullable: true })
+  substituteReturnedAt: Date | null;
+
   @Column({ name: 'status', type: 'enum', enum: ServiceOrderStatusEnum })
   status: ServiceOrderStatusEnum;
 

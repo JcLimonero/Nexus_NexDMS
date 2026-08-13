@@ -5,12 +5,22 @@ import { ActivatedRoute, RouterModule } from "@angular/router";
 import { forkJoin } from "rxjs";
 
 import { AuthService } from "../../core/auth.service";
+import { DictadoService } from "../../core/dictado.service";
 import {
+  FichajeActual,
   MecanicoApiService,
   MyServiceOrder,
+  Operacion,
   OrderUpdate,
   TimeSummary,
 } from "../../core/mecanico-api.service";
+
+/** Lo que el técnico elige al reportar un trabajo adicional. */
+const CRITICIDADES = [
+  { value: "BAJA", label: "Puede esperar" },
+  { value: "MEDIA", label: "Conviene hacerlo" },
+  { value: "ALTA", label: "Urgente / seguridad" },
+];
 
 @Component({
   selector: "app-orden-page",
@@ -22,6 +32,7 @@ import {
 export class OrdenPage implements OnInit {
   private api = inject(MecanicoApiService);
   private auth = inject(AuthService);
+  readonly dictado = inject(DictadoService);
   private route = inject(ActivatedRoute);
 
   id = "";
@@ -36,6 +47,13 @@ export class OrdenPage implements OnInit {
   nuevaNota = "";
   nuevoHallazgo = "";
   hallazgoFile: File | null = null;
+  readonly criticidades = CRITICIDADES;
+  hallazgoCriticidad = "MEDIA";
+  hallazgoMinutos = 30;
+
+  /** Operaciones de la orden y dónde estoy fichado. */
+  operaciones = signal<Operacion[]>([]);
+  fichaje = signal<FichajeActual | null>(null);
 
   /** Registro de tiempo del técnico logueado */
   myTime = computed(() => {
@@ -61,11 +79,15 @@ export class OrdenPage implements OnInit {
       orden: this.api.getOrder(this.id),
       updates: this.api.getUpdates(this.id),
       time: this.api.getTimeSummary(this.id),
+      operaciones: this.api.getOperaciones(this.id),
+      fichaje: this.api.fichajeActual(),
     }).subscribe({
-      next: ({ orden, updates, time }) => {
+      next: ({ orden, updates, time, operaciones, fichaje }) => {
         this.orden.set(orden);
         this.updates.set(updates);
         this.timeSummaries.set(time);
+        this.operaciones.set(operaciones);
+        this.fichaje.set(fichaje);
         this.loading.set(false);
         this.error.set(null);
       },
@@ -151,18 +173,109 @@ export class OrdenPage implements OnInit {
     const desc = this.nuevoHallazgo.trim();
     if (!desc || !this.hallazgoFile || this.busy()) return;
     this.busy.set(true);
-    this.api.addFinding(this.id, desc, this.hallazgoFile).subscribe({
-      next: () => {
+    this.api
+      .addFinding(this.id, desc, this.hallazgoFile, {
+        criticality: this.hallazgoCriticidad,
+        estimatedMinutes: this.hallazgoMinutos,
+      })
+      .subscribe({
+        next: () => {
+          this.busy.set(false);
+          this.nuevoHallazgo = "";
+          this.hallazgoFile = null;
+          this.hallazgoCriticidad = "MEDIA";
+          this.hallazgoMinutos = 30;
+          this.showToast("Hallazgo enviado al asesor para cotizar");
+        },
+        error: (err) => {
+          this.busy.set(false);
+          this.showToast(err?.error?.message || "No se pudo reportar");
+        },
+      });
+  }
+
+  // ─── Fichaje por operación ─────────────────────────────────
+
+  private refrescarOperaciones(): void {
+    this.api.getOperaciones(this.id).subscribe({
+      next: (ops) => this.operaciones.set(ops),
+    });
+    this.api.fichajeActual().subscribe({ next: (f) => this.fichaje.set(f) });
+  }
+
+  fichar(op: Operacion): void {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.api.ficharOperacion(op.id).subscribe({
+      next: (r) => {
         this.busy.set(false);
-        this.nuevoHallazgo = "";
-        this.hallazgoFile = null;
-        this.showToast("Hallazgo reportado al asesor");
+        // Si venía fichado en otra, la API la cerró sola: hay que decirlo,
+        // porque el técnico necesita saber dónde quedó su tiempo.
+        const cerro = (r as { cerroAnterior?: string | null })?.cerroAnterior;
+        this.showToast(
+          cerro ? "Se cerró tu operación anterior" : "Fichaje iniciado",
+        );
+        this.refrescarOperaciones();
       },
       error: (err) => {
         this.busy.set(false);
-        this.showToast(err?.error?.message || "No se pudo reportar");
+        this.showToast(err?.error?.message || "No se pudo fichar");
       },
     });
+  }
+
+  pausar(op: Operacion): void {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.api.pausarOperacion(op.id).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.showToast("Fichaje pausado");
+        this.refrescarOperaciones();
+      },
+      error: (err) => {
+        this.busy.set(false);
+        this.showToast(err?.error?.message || "No se pudo pausar");
+      },
+    });
+  }
+
+  terminar(op: Operacion): void {
+    if (this.busy()) return;
+    this.busy.set(true);
+    this.api.terminarOperacion(op.id).subscribe({
+      next: () => {
+        this.busy.set(false);
+        this.showToast("Operación terminada");
+        this.refrescarOperaciones();
+      },
+      error: (err) => {
+        this.busy.set(false);
+        this.showToast(err?.error?.message || "No se pudo terminar");
+      },
+    });
+  }
+
+  /** "1 h 20 min" — el técnico no lee minutos sueltos de tres dígitos. */
+  /** Dicta el hallazgo en vez de escribirlo. */
+  dictarHallazgo(): void {
+    this.dictado.alternar((texto) => (this.nuevoHallazgo = texto));
+  }
+
+  hm(min: number): string {
+    const h = Math.floor(min / 60);
+    const m = min % 60;
+    return h > 0 ? `${h} h ${m} min` : `${m} min`;
+  }
+
+  /** Cómo va contra el baremo: es la lectura que importa de un vistazo. */
+  desvio(op: Operacion): { texto: string; tono: "ok" | "alerta" } | null {
+    if (op.deviationMinutes === null) return null;
+    const d = op.deviationMinutes;
+    if (d <= 0) {
+      return { texto: `${this.hm(-d)} bajo baremo`, tono: "ok" };
+    }
+    return { texto: `${this.hm(d)} sobre baremo`, tono: "alerta" };
   }
 
   // ─── Helpers ───

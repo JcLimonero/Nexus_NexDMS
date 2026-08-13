@@ -7,9 +7,12 @@
             <h5>Órdenes de servicio</h5>
             <span>Gestión de órdenes de taller</span>
           </div>
-          <a class="btn btn-primary" routerLink="/workshop/service-orders/nueva">
-            <i class="icofont icofont-plus me-1"></i> Nueva orden
-          </a>
+          <div class="d-flex align-items-center gap-2">
+            <app-exportar dataset="ordenes-servicio" />
+            <a class="btn btn-primary" routerLink="/workshop/service-orders/nueva">
+              <i class="icofont icofont-plus me-1"></i> Nueva orden
+            </a>
+          </div>
         </div>
         <div class="card-body">
           <div class="row g-2">

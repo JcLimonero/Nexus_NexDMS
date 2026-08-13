@@ -7,6 +7,7 @@ import { ToastrService } from "ngx-toastr";
 import {
   CitaAgenda,
   DatosUnidad,
+  KitResuelto,
   MARK_TYPES,
   TIPOS_UNIDAD,
   Reception,
@@ -88,6 +89,7 @@ export class RecepcionPage implements OnInit {
 
   // Cotización
   servicios = signal<ServicioPredefinido[]>([]);
+  kits = signal<KitResuelto[]>([]);
   lineas = signal<LineaCotizacion[]>([]);
   condiciones = "";
 
@@ -108,6 +110,9 @@ export class RecepcionPage implements OnInit {
           this.load();
           this.srv.serviciosPredefinidos(res.data[0].id).subscribe({
             next: (s) => this.servicios.set(s),
+          });
+          this.srv.kits(res.data[0].id).subscribe({
+            next: (k) => this.kits.set(k),
           });
         }
       },
@@ -314,6 +319,37 @@ export class RecepcionPage implements OnInit {
       ...l,
       { description: s.name, quantity: 1, unitPrice: s.price ?? 0 },
     ]);
+  }
+
+  /**
+   * Un kit entra como varias líneas: la mano de obra y cada refacción por
+   * separado. El cliente tiene derecho a ver de qué se compone el precio, y
+   * el asesor puede quitar una pieza sin rehacer todo.
+   */
+  agregarKit(k: KitResuelto): void {
+    const nuevas: LineaCotizacion[] = [];
+    if (k.laborPrice > 0) {
+      nuevas.push({
+        description: `${k.name} — mano de obra`,
+        quantity: 1,
+        unitPrice: k.laborPrice,
+      });
+    }
+    for (const i of k.items) {
+      nuevas.push({
+        description: i.description,
+        quantity: i.quantity,
+        unitPrice: i.unitPrice,
+      });
+    }
+    this.lineas.update((l) => [...l, ...nuevas]);
+  }
+
+  /** Texto del semáforo, para no repetirlo en la plantilla. */
+  stockTexto(k: KitResuelto): string {
+    if (k.stock === "VERDE") return "Hay existencias";
+    if (k.stock === "AMBAR") return `Falta: ${k.faltantes.join(", ")}`;
+    return "Sin existencias";
   }
 
   agregarExtra(): void {

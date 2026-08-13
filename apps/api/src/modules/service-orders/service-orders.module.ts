@@ -32,6 +32,12 @@ import { ServiceType } from '../service-types/entities/service-type.entity';
 import { Quotation } from '../quotations/entities/quotation.entity';
 import { QuotationItem } from '../quotations/entities/quotation-item.entity';
 import { ModulesModule } from '../modules/modules.module';
+import { ServiceOrderOperation } from './entities/service-order-operation.entity';
+import { OperationsController } from './operations.controller';
+import { OperationsService } from './operations.service';
+import { User } from '../users/entities/user.entity';
+import { AdditionalWorkController } from './additional-work.controller';
+import { AdditionalWorkService } from './additional-work.service';
 
 @Module({
   imports: [
@@ -44,7 +50,9 @@ import { ModulesModule } from '../modules/modules.module';
       ServiceOrderUpdate,
       ServiceOrderFinding,
       ServiceOrderFolioSeq,
+      ServiceOrderOperation,
       ServiceSurvey,
+      User,
       ReceptionPhotoSpec,
       ReceptionPhotoMark,
       ServiceType,
@@ -64,8 +72,23 @@ import { ModulesModule } from '../modules/modules.module';
     MechanicChecklistModule,
     ModulesModule,
   ],
-  controllers: [ServiceOrdersController, ReceptionController],
-  providers: [ServiceOrdersService, ReceptionService],
-  exports: [ServiceOrdersService, ReceptionService],
+  controllers: [
+    ServiceOrdersController,
+    ReceptionController,
+    OperationsController,
+    AdditionalWorkController,
+  ],
+  providers: [
+    ServiceOrdersService,
+    ReceptionService,
+    OperationsService,
+    AdditionalWorkService,
+  ],
+  exports: [
+    ServiceOrdersService,
+    ReceptionService,
+    OperationsService,
+    AdditionalWorkService,
+  ],
 })
 export class ServiceOrdersModule {}

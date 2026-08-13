@@ -16,7 +16,11 @@ import { ServiceOrderPart } from './entities/service-order-part.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { ServiceOrderUpdate } from './entities/service-order-update.entity';
 import { ServiceOrderFinding } from './entities/service-order-finding.entity';
-import { ServiceOrderFindingMediaTypeEnum } from './entities/service-order-finding.entity';
+import {
+  FindingCriticalityEnum,
+  FindingStatusEnum,
+  ServiceOrderFindingMediaTypeEnum,
+} from './entities/service-order-finding.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
@@ -743,6 +747,10 @@ export class ServiceOrdersService {
       userId: user.sub,
       description: dto.description,
       requiresQuotation: dto.requiresQuotation ?? true,
+      criticality: dto.criticality ?? FindingCriticalityEnum.MEDIA,
+      estimatedMinutes: dto.estimatedMinutes ?? 0,
+      estimatedAmount: dto.estimatedAmount ?? 0,
+      status: FindingStatusEnum.PENDIENTE,
       mediaType,
       mediaKey: key,
     });
