@@ -23,9 +23,30 @@
                   <div class="text-danger small mt-1">La sucursal es obligatoria</div>
                 }
               </div>
+              <!-- La categoría abre la cascada: de ella dependen los tipos de
+                   unidad y, a través del tipo, las marcas y los modelos. -->
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Categoría <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="vehicleCategoryId">
+                  <option value="">Selecciona…</option>
+                  @for (c of vehicleCategories(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.label }}</option>
+                  }
+                </select>
+                @if (form.get('vehicleCategoryId')?.invalid && form.get('vehicleCategoryId')?.touched) {
+                  <div class="text-danger small mt-1">La categoría es obligatoria</div>
+                }
+              </div>
               <div class="col-md-3 mb-3">
                 <label class="form-label">Tipo vehículo <span class="text-danger">*</span></label>
                 <select class="form-select" formControlName="vehicleType">
+                  <option value="">
+                    {{
+                      form.get("vehicleCategoryId")?.value
+                        ? "Selecciona…"
+                        : "Elige primero la categoría"
+                    }}
+                  </option>
                   @for (vt of vehicleTypes(); track vt.value) {
                     <option [ngValue]="vt.value">{{ vt.label }}</option>
                   }
