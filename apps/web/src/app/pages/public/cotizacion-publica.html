@@ -1,0 +1,75 @@
+<div class="public-wrap">
+  <div class="public-card">
+    <div class="public-brand">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">NexDMS</span>
+    </div>
+
+    @if (loading()) {
+      <p class="muted center">Cargando cotización…</p>
+    } @else if (error()) {
+      <p class="error-box">{{ error() }}</p>
+    } @else if (resultado(); as r) {
+      <div class="thanks">
+        <div class="thanks-icon">{{ r === "aceptada" ? "✅" : "📝" }}</div>
+        <h1>
+          {{ r === "aceptada" ? "¡Autorización recibida!" : "Cotización rechazada" }}
+        </h1>
+        <p class="muted">
+          @if (r === "aceptada") {
+            El taller ya puede iniciar el servicio. Te avisaremos cuando tu
+            unidad esté lista.
+          } @else {
+            Registramos tu respuesta. La sucursal se pondrá en contacto contigo.
+          }
+        </p>
+      </div>
+    } @else if (data(); as d) {
+      <h1>Cotización {{ d.folio }}</h1>
+      <p class="muted">{{ vehiculoLabel() }}</p>
+
+      @if (d.respondida) {
+        <p class="status-banner">Esta cotización ya fue respondida.</p>
+      } @else {
+        <h2>Servicios propuestos</h2>
+        <div class="conceptos">
+          @for (c of d.conceptos; track c.descripcion) {
+            <div class="concepto">
+              <div class="c-desc">
+                {{ c.descripcion }}
+                @if (c.cantidad > 1) {
+                  <span class="c-cant">× {{ c.cantidad }}</span>
+                }
+              </div>
+              <div class="c-monto">{{ money(c.subtotal) }}</div>
+            </div>
+          }
+        </div>
+
+        <div class="totales">
+          <div><span>Subtotal</span><span>{{ money(d.subtotal) }}</span></div>
+          <div><span>IVA</span><span>{{ money(d.taxAmount) }}</span></div>
+          <div class="total"><span>Total</span><span>{{ money(d.total) }}</span></div>
+        </div>
+
+        @if (d.conditions) {
+          <p class="muted small">{{ d.conditions }}</p>
+        }
+
+        <label class="comment-label">¿Algún comentario? (opcional)</label>
+        <textarea rows="2" [(ngModel)]="nota" placeholder="Escribe aquí si tienes alguna indicación"></textarea>
+
+        <button class="btn-send" [disabled]="enviando()" (click)="responder(true)">
+          {{ enviando() ? "Enviando…" : "Autorizar el servicio" }}
+        </button>
+        <button class="btn-reject" [disabled]="enviando()" (click)="responder(false)">
+          No autorizar
+        </button>
+      }
+
+      @if (d.sucursal) {
+        <div class="branch-foot">{{ d.sucursal }}</div>
+      }
+    }
+  </div>
+</div>

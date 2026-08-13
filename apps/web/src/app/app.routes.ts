@@ -22,6 +22,12 @@ export const routes: Routes = [
     data: { title: "Seguimiento de orden" },
   },
   {
+    path: "c/:token",
+    loadComponent: () =>
+      import("./pages/public/cotizacion-publica").then((m) => m.CotizacionPublica),
+    data: { title: "Autorizar cotización" },
+  },
+  {
     path: "s/:token",
     loadComponent: () =>
       import("./pages/public/encuesta-publica").then((m) => m.EncuestaPublica),

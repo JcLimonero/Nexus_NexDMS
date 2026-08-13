@@ -242,3 +242,72 @@ h2 {
 
   .thanks-icon { font-size: 44px; margin-bottom: var(--space-8); }
 }
+
+/* ── Cotización pública ── */
+.conceptos {
+  display: grid;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+
+.concepto {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.c-desc { color: var(--text-primary); }
+
+.c-cant {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.c-monto {
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totales {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-16);
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total {
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--border);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+  }
+}
+
+.btn-reject {
+  width: 100%;
+  margin-top: var(--space-8);
+  height: var(--control-h);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}

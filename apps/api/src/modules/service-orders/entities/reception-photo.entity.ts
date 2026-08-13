@@ -35,6 +35,14 @@ export class ReceptionPhoto {
   @Column({ name: 'storage_key', type: 'varchar', length: 500 })
   storageKey: string;
 
+  /** PHOTO o VIDEO: la recepción admite un video opcional. */
+  @Column({ name: 'media_type', type: 'varchar', length: 10, default: 'PHOTO' })
+  mediaType: string;
+
+  /** Código del catálogo al que responde esta foto (ReceptionPhotoSpec). */
+  @Column({ name: 'spec_code', type: 'varchar', length: 40, nullable: true })
+  specCode: string | null;
+
   @Column({ name: 'mime_type', type: 'varchar', length: 100 })
   mimeType: string;
 

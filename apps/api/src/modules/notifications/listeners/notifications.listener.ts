@@ -100,6 +100,35 @@ export class NotificationsListener {
     }
   }
 
+  /** Cotización de la recepción: el cliente la autoriza desde el enlace. */
+  @OnEvent('recepcion.cotizacion_enviada')
+  async onRecepcionCotizacion(event: {
+    quotationId: string;
+    folio: string;
+    total: number;
+    clientToken: string;
+    tenantId: string;
+    branchId: string;
+    client?: { phone?: string };
+  }): Promise<void> {
+    if (!event.client?.phone) return;
+    const base = process.env.APP_PUBLIC_URL ?? 'http://localhost:4200';
+    await this.notificationsQueue.add('send', {
+      channel: NotificationChannelEnum.WHATSAPP,
+      templateKey: 'cotizacion_servicio',
+      referenceType: 'Quotation',
+      referenceId: event.quotationId,
+      recipient: event.client.phone,
+      tenantId: event.tenantId,
+      branchId: event.branchId,
+      templateParams: {
+        folio: event.folio,
+        total: event.total.toFixed(2),
+        url: `${base}/c/${event.clientToken}`,
+      },
+    });
+  }
+
   @OnEvent('os.entregada')
   async onOsEntregada(event: OsEntregadaEvent): Promise<void> {
     if (!event.client?.phone) return;

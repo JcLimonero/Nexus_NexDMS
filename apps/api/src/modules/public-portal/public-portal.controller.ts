@@ -3,6 +3,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { PublicPortalService } from './public-portal.service';
 import { AnswerSurveyDto } from './dto/answer-survey.dto';
+import { ReceptionService } from '../service-orders/reception.service';
 
 /**
  * Endpoints públicos (sin auth) accesibles por token:
@@ -11,7 +12,10 @@ import { AnswerSurveyDto } from './dto/answer-survey.dto';
 @ApiTags('Public Portal')
 @Controller('public')
 export class PublicPortalController {
-  constructor(private readonly publicPortalService: PublicPortalService) {}
+  constructor(
+    private readonly publicPortalService: PublicPortalService,
+    private readonly receptionService: ReceptionService,
+  ) {}
 
   @Get('tracking/:token')
   @Throttle({ short: { limit: 20, ttl: 60000 } })
@@ -32,5 +36,21 @@ export class PublicPortalController {
     @Body() dto: AnswerSurveyDto,
   ) {
     return this.publicPortalService.answerSurvey(token, dto);
+  }
+
+  /** Cotización de recepción que el cliente debe autorizar. */
+  @Get('quotations/:token')
+  @Throttle({ short: { limit: 20, ttl: 60000 } })
+  getQuotation(@Param('token', ParseUUIDPipe) token: string) {
+    return this.receptionService.cotizacionPublica(token);
+  }
+
+  @Post('quotations/:token')
+  @Throttle({ short: { limit: 5, ttl: 60000 } })
+  answerQuotation(
+    @Param('token', ParseUUIDPipe) token: string,
+    @Body() dto: { acepta: boolean; nota?: string },
+  ) {
+    return this.receptionService.responderCotizacion(token, dto);
   }
 }

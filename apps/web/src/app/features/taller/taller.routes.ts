@@ -36,6 +36,12 @@ export const workshopRoutes: Routes = [
     ],
   },
   {
+    path: "recepcion",
+    loadComponent: () =>
+      import("./recepcion/recepcion-page").then((m) => m.RecepcionPage),
+    data: { title: "Recepción de unidades", breadcrumb: "Recepción" },
+  },
+  {
     path: "agenda",
     loadComponent: () =>
       import("./agenda/planificador-taller").then((m) => m.PlanificadorTaller),

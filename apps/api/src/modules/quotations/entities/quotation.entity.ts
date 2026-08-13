@@ -65,6 +65,20 @@ export class Quotation {
   @Column({ name: 'type', type: 'enum', enum: QuotationTypeEnum })
   type: QuotationTypeEnum;
 
+  /** Token del enlace público con el que el cliente acepta o rechaza. */
+  @Column({
+    name: 'client_token',
+    type: 'uuid',
+    default: () => 'uuid_generate_v4()',
+  })
+  clientToken: string;
+
+  @Column({ name: 'client_responded_at', type: 'timestamp', nullable: true })
+  clientRespondedAt: Date | null;
+
+  @Column({ name: 'client_response_note', type: 'text', nullable: true })
+  clientResponseNote: string | null;
+
   @Column({ name: 'folio', type: 'varchar', length: 50 })
   folio: string;
 

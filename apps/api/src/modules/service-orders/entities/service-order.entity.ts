@@ -100,6 +100,10 @@ export class ServiceOrder {
   @Column({ name: 'folio', type: 'varchar', length: 50 })
   folio: string;
 
+  /** Cotización generada en la recepción y que el cliente debe aceptar. */
+  @Column({ name: 'reception_quotation_id', type: 'uuid', nullable: true })
+  receptionQuotationId: string | null;
+
   /** Token para el link público de seguimiento (sin auth). */
   @Column({
     name: 'tracking_token',

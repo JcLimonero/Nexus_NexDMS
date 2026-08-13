@@ -130,6 +130,7 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
+        { path: "/workshop/recepcion", title: "Recepción de unidades", type: "link" },
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/workshop/citas", title: "Citas", type: "link" },

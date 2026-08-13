@@ -22,6 +22,16 @@ import { Appointment } from '../appointments/entities/appointment.entity';
 import { CfdiModule } from '../cfdi/cfdi.module';
 import { BranchesModule } from '../branches/branches.module';
 import { MechanicChecklistModule } from '../mechanic-checklist/mechanic-checklist.module';
+import { ReceptionController } from './reception.controller';
+import { ReceptionService } from './reception.service';
+import {
+  ReceptionPhotoMark,
+  ReceptionPhotoSpec,
+} from './entities/reception-catalog.entities';
+import { ServiceType } from '../service-types/entities/service-type.entity';
+import { Quotation } from '../quotations/entities/quotation.entity';
+import { QuotationItem } from '../quotations/entities/quotation-item.entity';
+import { ModulesModule } from '../modules/modules.module';
 
 @Module({
   imports: [
@@ -35,6 +45,11 @@ import { MechanicChecklistModule } from '../mechanic-checklist/mechanic-checklis
       ServiceOrderFinding,
       ServiceOrderFolioSeq,
       ServiceSurvey,
+      ReceptionPhotoSpec,
+      ReceptionPhotoMark,
+      ServiceType,
+      Quotation,
+      QuotationItem,
       Tenant,
       Branch,
       Part,
@@ -47,9 +62,10 @@ import { MechanicChecklistModule } from '../mechanic-checklist/mechanic-checklis
     CfdiModule,
     BranchesModule,
     MechanicChecklistModule,
+    ModulesModule,
   ],
-  controllers: [ServiceOrdersController],
-  providers: [ServiceOrdersService],
-  exports: [ServiceOrdersService],
+  controllers: [ServiceOrdersController, ReceptionController],
+  providers: [ServiceOrdersService, ReceptionService],
+  exports: [ServiceOrdersService, ReceptionService],
 })
 export class ServiceOrdersModule {}
