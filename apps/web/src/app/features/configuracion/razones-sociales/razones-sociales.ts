@@ -42,7 +42,7 @@ export class RazonesSociales implements OnInit {
 
   /** Fila en edición; null = alta nueva. */
   editando = signal<RazonSocial | null>(null);
-  form: NuevaRazonSocial = { name: "", type: "BOTH", isActive: true };
+  form: NuevaRazonSocial = { name: "", type: "BOTH", isActive: true, rfc: "", taxRegime: "", taxPostalCode: "", facturaapiOrgId: "" };
 
   ngOnInit(): void {
     this.cargar();
@@ -80,12 +80,20 @@ export class RazonesSociales implements OnInit {
 
   nueva(): void {
     this.editando.set(null);
-    this.form = { name: "", type: "BOTH", isActive: true };
+    this.form = { name: "", type: "BOTH", isActive: true, rfc: "", taxRegime: "", taxPostalCode: "", facturaapiOrgId: "" };
   }
 
   editar(r: RazonSocial): void {
     this.editando.set(r);
-    this.form = { name: r.name, type: r.type, isActive: r.isActive };
+    this.form = {
+      name: r.name,
+      type: r.type,
+      isActive: r.isActive,
+      rfc: r.rfc ?? "",
+      taxRegime: r.taxRegime ?? "",
+      taxPostalCode: r.taxPostalCode ?? "",
+      facturaapiOrgId: r.facturaapiOrgId ?? "",
+    };
   }
 
   guardar(): void {

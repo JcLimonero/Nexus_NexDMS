@@ -77,6 +77,10 @@ async function runSeeds() {
       name: 'Demo',
       type: LegalEntityTypeEnum.BOTH,
       isActive: true,
+      // Los datos fiscales son de la razón social, no de la sucursal
+      rfc: 'DEM123456ABC',
+      taxRegime: '601',
+      taxPostalCode: '01000',
     });
     const savedLegalEntity = await legalEntityRepo.save(legalEntity);
 
@@ -85,10 +89,6 @@ async function runSeeds() {
       legalEntityId: savedLegalEntity.id,
       name: 'Sucursal Central',
       slug: 'central',
-      rfc: 'DEM123456ABC',
-      legalName: 'Demo Sucursal Central S.A. de C.V.',
-      taxRegime: '601',
-      taxPostalCode: '01000',
       address: 'Av. Demo 123, Col. Centro',
       city: 'Ciudad de México',
       state: 'CDMX',

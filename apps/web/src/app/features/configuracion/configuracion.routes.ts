@@ -21,6 +21,18 @@ export const settingsRoutes: Routes = [
         data: { title: "Sucursales", breadcrumb: "Sucursales" },
       },
       {
+        path: "nueva",
+        loadComponent: () =>
+          import("./sucursal-form/sucursal-form").then((m) => m.SucursalForm),
+        data: { title: "Nueva sucursal", breadcrumb: "Nueva" },
+      },
+      {
+        path: ":id/editar",
+        loadComponent: () =>
+          import("./sucursal-form/sucursal-form").then((m) => m.SucursalForm),
+        data: { title: "Editar sucursal", breadcrumb: "Editar" },
+      },
+      {
         path: ":id",
         loadComponent: () =>
           import("./sucursal-config/sucursal-config").then(

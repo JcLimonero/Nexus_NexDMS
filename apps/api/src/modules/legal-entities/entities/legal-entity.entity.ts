@@ -31,6 +31,23 @@ export class LegalEntity {
   @Column({ name: 'logo_key', type: 'varchar', length: 500, nullable: true })
   logoKey: string | null;
 
+  /**
+   * Datos fiscales ante el SAT. Viven aquí y no en la sucursal porque quien
+   * está dado de alta es la persona moral; el local solo es punto de atención.
+   */
+  @Column({ name: 'rfc', type: 'varchar', length: 13, nullable: true })
+  rfc: string | null;
+
+  @Column({ name: 'tax_regime', type: 'varchar', length: 10, nullable: true })
+  taxRegime: string | null;
+
+  @Column({ name: 'tax_postal_code', type: 'varchar', length: 10, nullable: true })
+  taxPostalCode: string | null;
+
+  /** Organización en FacturAPI con la que se timbra a nombre de esta razón social. */
+  @Column({ name: 'facturaapi_org_id', type: 'varchar', length: 100, nullable: true })
+  facturaapiOrgId: string | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

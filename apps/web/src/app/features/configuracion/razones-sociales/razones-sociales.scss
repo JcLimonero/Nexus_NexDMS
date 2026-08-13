@@ -51,3 +51,8 @@
   gap: var(--space-8);
   white-space: nowrap;
 }
+
+.mono {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+}

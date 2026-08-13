@@ -38,6 +38,33 @@
             }
           </div>
 
+          <!-- Datos fiscales: son de la razón social, no de la sucursal -->
+          <div class="control-row mb-3">
+            <input
+              class="form-control field-sm"
+              placeholder="RFC"
+              maxlength="13"
+              [(ngModel)]="form.rfc"
+            />
+            <input
+              class="form-control field-xs"
+              placeholder="Régimen"
+              maxlength="10"
+              [(ngModel)]="form.taxRegime"
+            />
+            <input
+              class="form-control field-xs"
+              placeholder="CP fiscal"
+              maxlength="10"
+              [(ngModel)]="form.taxPostalCode"
+            />
+            <input
+              class="form-control field-md"
+              placeholder="Organización FacturAPI"
+              [(ngModel)]="form.facturaapiOrgId"
+            />
+          </div>
+
           @if (cargando()) {
             <p class="text-muted">Cargando…</p>
           } @else if (razones().length === 0) {
@@ -51,6 +78,7 @@
                 <thead>
                   <tr>
                     <th>Razón social</th>
+                    <th>RFC</th>
                     <th>Giro</th>
                     <th class="num">Sucursales</th>
                     <th>Estado</th>
@@ -61,6 +89,7 @@
                   @for (r of razones(); track r.id) {
                     <tr [class.inactiva]="!r.isActive">
                       <td>{{ r.name }}</td>
+                      <td class="mono">{{ r.rfc || "—" }}</td>
                       <td>{{ etiquetaTipo(r.type) }}</td>
                       <td class="num">{{ sucursales(r) }}</td>
                       <td>

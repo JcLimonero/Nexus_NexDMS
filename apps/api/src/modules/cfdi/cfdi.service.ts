@@ -106,7 +106,9 @@ export class CfdiService {
       : 'Público general';
     const taxId = client?.rfc ?? 'XAXX010101000';
     const taxSystem = client?.taxRegime ?? '616';
-    const zip = client?.taxPostalCode ?? branch.taxPostalCode ?? '00000';
+    // El respaldo del CP es el fiscal de la razón social de la sucursal.
+    const zip =
+      client?.taxPostalCode ?? branch.legalEntity?.taxPostalCode ?? '00000';
     const address = client?.address ?? branch.address;
     const city = client?.city ?? branch.city;
     const state = client?.state ?? branch.state;

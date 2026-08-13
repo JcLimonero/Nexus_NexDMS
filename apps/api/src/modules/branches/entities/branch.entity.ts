@@ -1,4 +1,6 @@
 import {
+  JoinColumn,
+  ManyToOne,
   Column,
   CreateDateColumn,
   Entity,
@@ -6,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { LegalEntity } from '../../legal-entities/entities/legal-entity.entity';
 
 @Entity('branches')
 @Index(['tenantId', 'slug'], { unique: true })
@@ -22,23 +25,23 @@ export class Branch {
   @Column({ name: 'legal_entity_id', type: 'uuid' })
   legalEntityId: string;
 
+  /**
+   * Razón social de la que cuelga. Es donde viven los datos fiscales, así que
+   * cualquier operación que timbre necesita esta relación cargada.
+   */
+  @ManyToOne(() => LegalEntity, { onDelete: 'NO ACTION' })
+  @JoinColumn({ name: 'legal_entity_id' })
+  legalEntity?: LegalEntity;
+
   @Column({ name: 'name', length: 200 })
   name: string;
 
   @Column({ name: 'slug', length: 100 })
   slug: string;
 
-  @Column({ name: 'rfc', length: 13 })
-  rfc: string;
 
-  @Column({ name: 'legal_name', length: 300 })
-  legalName: string;
 
-  @Column({ name: 'tax_regime', length: 10 })
-  taxRegime: string;
 
-  @Column({ name: 'tax_postal_code', length: 10 })
-  taxPostalCode: string;
 
   @Column({ name: 'address', length: 500 })
   address: string;
@@ -80,13 +83,6 @@ export class Branch {
   @Column({ name: 'logo_key', type: 'varchar', length: 500, nullable: true })
   logoKey: string | null;
 
-  @Column({
-    name: 'facturaapi_org_id',
-    type: 'varchar',
-    length: 200,
-    nullable: true,
-  })
-  facturaapiOrgId: string | null;
 
   @Column({
     name: 'timezone',

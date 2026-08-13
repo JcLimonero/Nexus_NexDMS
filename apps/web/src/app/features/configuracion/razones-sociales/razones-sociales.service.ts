@@ -20,6 +20,12 @@ export interface RazonSocial {
   name: string;
   type: TipoRazonSocial;
   logoKey: string | null;
+  /** Datos fiscales: viven aquí porque quien está dado de alta ante el SAT
+      es la persona moral, no la sucursal. */
+  rfc: string | null;
+  taxRegime: string | null;
+  taxPostalCode: string | null;
+  facturaapiOrgId: string | null;
   isActive: boolean;
   createdAt: string;
 }
@@ -27,6 +33,10 @@ export interface RazonSocial {
 export interface NuevaRazonSocial {
   name: string;
   type: TipoRazonSocial;
+  rfc?: string;
+  taxRegime?: string;
+  taxPostalCode?: string;
+  facturaapiOrgId?: string;
   isActive?: boolean;
 }
 

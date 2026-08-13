@@ -22,21 +22,9 @@ export class CreateBranchDto {
   @MaxLength(100)
   slug: string;
 
-  @IsString()
-  @MaxLength(13)
-  rfc: string;
 
-  @IsString()
-  @MaxLength(300)
-  legalName: string;
 
-  @IsString()
-  @MaxLength(10)
-  taxRegime: string;
 
-  @IsString()
-  @MaxLength(10)
-  taxPostalCode: string;
 
   @IsString()
   @MaxLength(500)
@@ -81,10 +69,6 @@ export class CreateBranchDto {
   @MaxLength(500)
   logoKey?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  facturaapiOrgId?: string;
 
   @IsOptional()
   @IsString()
