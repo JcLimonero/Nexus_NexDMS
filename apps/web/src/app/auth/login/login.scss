@@ -56,16 +56,6 @@
   max-width: 100%;
 }
 
-/* Logo: mantiene proporciones y tamaño adecuado */
-.login-logo-wrapper {
-  .login-logo {
-    max-width: 220px;
-    width: 100%;
-    height: auto;
-    object-fit: contain;
-  }
-}
-
 /* Focus visible para cumplir WCAG 2.4.7 */
 .login-authentication-box {
   .form-control:focus-visible,
