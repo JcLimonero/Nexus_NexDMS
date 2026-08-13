@@ -91,6 +91,18 @@ export const content: Routes = [
       ),
   },
   {
+    // Módulo independiente: hay talleres que contratan solo la recepción, y el
+    // asesor que la opera no necesita el resto del taller.
+    path: "reception",
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Recepción", module: "reception" },
+    loadComponent: () =>
+      import(
+        "../../../app/features/taller/recepcion/recepcion-page"
+      ).then((m) => m.RecepcionPage),
+    title: "Recepción de unidades",
+  },
+  {
     path: "workshop",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Taller" , module: "workshop" },

@@ -25,6 +25,7 @@ export type ModuleKey =
   | 'sales'
   | 'quotes'
   | 'workshop'
+  | 'reception'
   | 'warranties'
   | 'finance'
   | 'cfdi'
@@ -85,6 +86,16 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     route: '/workshop/service-orders',
     minPlan: TenantPlanEnum.BASIC,
     hasDashboard: true,
+  },
+  {
+    key: 'reception',
+    name: 'Recepción de unidades',
+    description:
+      'Recibe la unidad, documenta su estado con fotos y cotiza al cliente.',
+    icon: 'clipboard',
+    route: '/reception',
+    minPlan: TenantPlanEnum.BASIC,
+    hasDashboard: false,
   },
   {
     key: 'cash-register',

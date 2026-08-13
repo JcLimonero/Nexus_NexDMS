@@ -33,13 +33,15 @@ import {
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard, ModuleGuard)
 @Controller('reception')
-@RequiresModule('workshop')
+// Módulo propio: quien recibe unidades no necesita el resto del taller, y hay
+// talleres que contratan solo esta parte.
+@RequiresModule('reception')
 export class ReceptionController {
   constructor(private readonly reception: ReceptionService) {}
 
   /** Citas del día con su estado de recepción. */
   @Get('agenda')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   agenda(
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId: string,
@@ -50,7 +52,7 @@ export class ReceptionController {
 
   /** Catálogo de fotos aplicable (opcionalmente por tipo de vehículo). */
   @Get('photo-specs')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   specs(
     @CurrentUser() user: UserPayload,
     @Query('vehicleType') vehicleType?: string,
@@ -78,7 +80,7 @@ export class ReceptionController {
 
   /** Servicios predefinidos para cotizar. */
   @Get('service-types')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   serviceTypes(
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId?: string,
@@ -88,7 +90,7 @@ export class ReceptionController {
 
   /** Abre la recepción de una cita creando su orden de servicio. */
   @Post('from-appointment/:appointmentId')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   recibirCita(
     @CurrentUser() user: UserPayload,
     @Param('appointmentId', ParseUUIDPipe) appointmentId: string,
@@ -113,7 +115,7 @@ export class ReceptionController {
 
   /** Estado completo de la recepción de una orden. */
   @Get(':serviceOrderId')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   get(
     @CurrentUser() user: UserPayload,
     @Param('serviceOrderId', ParseUUIDPipe) id: string,
@@ -122,7 +124,7 @@ export class ReceptionController {
   }
 
   @Post(':serviceOrderId/checklist')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   saveChecklist(
     @CurrentUser() user: UserPayload,
     @Param('serviceOrderId', ParseUUIDPipe) id: string,
@@ -142,7 +144,7 @@ export class ReceptionController {
   }
 
   @Post(':serviceOrderId/media/:specCode')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   @UseInterceptors(FileInterceptor('file'))
   upload(
     @CurrentUser() user: UserPayload,
@@ -154,7 +156,7 @@ export class ReceptionController {
   }
 
   @Post('photos/:photoId/marks')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   addMark(
     @CurrentUser() user: UserPayload,
     @Param('photoId', ParseUUIDPipe) photoId: string,
@@ -165,14 +167,14 @@ export class ReceptionController {
   }
 
   @Delete('marks/:id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   removeMark(@Param('id', ParseUUIDPipe) id: string) {
     return this.reception.removeMark(id);
   }
 
   /** Genera la cotización de la recepción y avisa al cliente. */
   @Post(':serviceOrderId/quote')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   quote(
     @CurrentUser() user: UserPayload,
     @Param('serviceOrderId', ParseUUIDPipe) id: string,

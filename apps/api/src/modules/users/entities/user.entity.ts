@@ -17,6 +17,11 @@ export enum RoleEnum {
   WAREHOUSE = 'WAREHOUSE',
   CASHIER = 'CASHIER',
   MECHANIC = 'MECHANIC',
+  /**
+   * Recibe unidades en la rampa: cita → estado → fotos → cotización. Su
+   * portal es la recepción, no el DMS completo.
+   */
+  RECEPTIONIST = 'RECEPTIONIST',
   SELLER = 'SELLER',
   EXECUTIVE = 'EXECUTIVE',
   LEGAL_ENTITY_MANAGER = 'LEGAL_ENTITY_MANAGER',

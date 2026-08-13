@@ -23,20 +23,23 @@ import { CreateServiceKitDto } from './dto/create-service-kit.dto';
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard, ModuleGuard)
 @Controller('service-kits')
-@RequiresModule('workshop')
+// Los kits se consumen desde la cotización de recepción, que es quien los
+// necesita para armar el presupuesto; por eso cuelgan de ese módulo y no del
+// taller. Un tenant que contrate solo recepción sigue pudiendo cotizar.
+@RequiresModule('reception')
 export class ServiceKitsController {
   constructor(private readonly kits: ServiceKitsService) {}
 
   /** Familias de kit para el combo, incluidas las de fábrica. */
   @Get('tipos')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   tipos(@CurrentUser() user: UserPayload) {
     return this.kits.tipos(user.tenantId);
   }
 
   /** Kits ya resueltos contra el almacén: traen precio y semáforo de stock. */
   @Get()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   buscar(
     @CurrentUser() user: UserPayload,
     @Query('q') q?: string,

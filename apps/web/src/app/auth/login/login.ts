@@ -28,6 +28,12 @@ export class Login implements OnInit {
    * en el tablero teniendo que buscar de nuevo lo que ya había pedido.
    */
   private destino(): string {
+    // Quien recibe unidades entra directo a su portal: el DMS completo no es
+    // su herramienta y obligarlo a navegar hasta ahí cada mañana sobra.
+    const roles = this.auth.getUser()?.roles ?? [];
+    if (roles.includes("RECEPTIONIST") && !roles.includes("ADMIN")) {
+      return "/recepcion";
+    }
     const url = this.route.snapshot.queryParamMap.get("returnUrl");
     // Solo rutas internas: un returnUrl absoluto podría mandar al usuario a
     // otro sitio tras autenticarse.

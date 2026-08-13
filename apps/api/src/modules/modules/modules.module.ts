@@ -180,7 +180,17 @@ export class ModulesController {
 
   /** Módulos activos del tenant (menú y rutas del web). */
   @Get('me')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'SELLER')
+  // Cualquiera que entre al DMS necesita saber qué módulos tiene: sin esto el
+  // menú sale vacío y el guard de rutas lo devuelve al inicio.
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'MECHANIC',
+    'SELLER',
+    'RECEPTIONIST',
+  )
   myModules(@CurrentUser() user: UserPayload) {
     return this.modulesService.myModules(user.tenantId);
   }

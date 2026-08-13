@@ -36,10 +36,11 @@ export const workshopRoutes: Routes = [
     ],
   },
   {
+    // La recepción se movió a `/reception`, que es su propio módulo. Se deja
+    // el redirect para no romper los enlaces ya repartidos.
     path: "recepcion",
-    loadComponent: () =>
-      import("./recepcion/recepcion-page").then((m) => m.RecepcionPage),
-    data: { title: "Recepción de unidades", breadcrumb: "Recepción" },
+    redirectTo: "/reception",
+    pathMatch: "full",
   },
   {
     path: "agenda",
