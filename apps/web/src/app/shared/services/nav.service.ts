@@ -210,13 +210,24 @@ export class NavService {
    * parts-inventory…), así que cada hoja se evalúa por su propia ruta.
    * Un grupo se conserva solo si le queda al menos un hijo visible.
    */
-  applyEnabledModules(mods: string[] | null): void {
-    if (!mods || mods.length === 0) {
+  applyEnabledModules(mods: string[] | null, roles: string[] = []): void {
+    // Hay roles operativos que solo trabajan una parte del sistema. Mostrarles
+    // el menú completo no es un detalle estético: al pulsar cualquier otra
+    // entrada la API responde 403, así que el menú prometería algo que no es.
+    const soloEstos = this.MODULOS_POR_ROL(roles);
+
+    if (!soloEstos && (!mods || mods.length === 0)) {
       this.items.next(this.MENUITEMS);
       return;
     }
-    // dashboard, settings y modulos son parte del armazón: nunca se filtran
-    const allowed = new Set([...mods, "dashboard", "settings", "modulos"]);
+    // dashboard, settings y modulos son parte del armazón y no dependen de la
+    // licencia. Pero a un rol acotado solo se le deja el inicio: configuración
+    // y licencias son pantallas de administración que tampoco podría abrir.
+    const armazon = soloEstos
+      ? ["dashboard"]
+      : ["dashboard", "settings", "modulos"];
+    const base = soloEstos ?? [...(mods ?? [])];
+    const allowed = new Set([...base, ...armazon]);
     const keyOf = (path?: string): string =>
       (path ?? "").split("/")[1] ?? "";
 
@@ -232,5 +243,14 @@ export class NavService {
       }, []);
 
     this.items.next(prune(this.MENUITEMS));
+  }
+
+  /**
+   * Módulos que un rol puede tocar, cuando su alcance es más estrecho que el
+   * del tenant. `null` = sin restricción propia; manda la licencia.
+   */
+  private MODULOS_POR_ROL(roles: string[]): string[] | null {
+    if (roles.includes("RECEPTIONIST")) return ["reception"];
+    return null;
   }
 }

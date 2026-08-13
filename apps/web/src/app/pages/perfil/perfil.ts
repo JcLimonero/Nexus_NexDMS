@@ -73,6 +73,7 @@ export class Perfil implements OnInit {
       MANAGER: "Gerente",
       CASHIER: "Cajero",
       MECHANIC: "Técnico",
+      RECEPTIONIST: "Recepción",
       SALES: "Ventas",
     };
     return roles.map((r) => m[r] ?? r).join(", ") || "—";

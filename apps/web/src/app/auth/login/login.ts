@@ -64,6 +64,12 @@ export class Login implements OnInit {
       detalle: "Acceso completo al sistema",
     },
     {
+      rol: "Recepción",
+      email: "recepcion@demo.local",
+      password: "demo1234",
+      detalle: "Solo el módulo de recepción de unidades",
+    },
+    {
       rol: "Técnico",
       email: "mecanico1@demo.local",
       password: "demo123",

@@ -19,6 +19,7 @@ const ROLE_LABELS: Record<string, string> = {
   WAREHOUSE: "Almacén",
   CASHIER: "Cajero",
   MECHANIC: "Técnico",
+  RECEPTIONIST: "Recepción",
   SELLER: "Vendedor",
 };
 
@@ -67,7 +68,10 @@ export class Sidebar {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (mods) =>
-          this.navServices.applyEnabledModules(mods.map((m) => m.key)),
+          this.navServices.applyEnabledModules(
+            mods.map((m) => m.key),
+            this.auth.getUser()?.roles ?? [],
+          ),
         error: () => {}, // ante fallo se deja el menú completo
       });
 

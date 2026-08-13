@@ -140,6 +140,47 @@ async function runSeeds() {
     console.log('  - Usuario: admin@demo.local / ' + DEMO_PASSWORD);
   }
 
+  // Usuario de recepción: opera solo el módulo de recepción de unidades.
+  const RECEP_EMAIL = 'recepcion@demo.local';
+  const RECEP_PASSWORD = 'demo1234';
+  const existingRecep = await userRepo.findOne({
+    where: { email: RECEP_EMAIL, tenantId: tenant.id },
+  });
+  if (!existingRecep) {
+    const recepBranch = await branchRepo.findOne({
+      where: { tenantId: tenant.id },
+    });
+    if (recepBranch) {
+      const recepUser = userRepo.create({
+        tenantId: tenant.id,
+        firstName: 'Andrés',
+        lastName: 'Recepción',
+        email: RECEP_EMAIL,
+        passwordHash: await bcrypt.hash(RECEP_PASSWORD, BCRYPT_ROUNDS),
+        // Alcance de sucursal: recibe en su rampa, no en todo el grupo.
+        scope: ScopeEnum.SUCURSAL,
+        isActive: true,
+      });
+      const savedRecep = await userRepo.save(recepUser);
+      await userRoleRepo.save(
+        userRoleRepo.create({
+          userId: savedRecep.id,
+          role: RoleEnum.RECEPTIONIST,
+        }),
+      );
+      await userBranchRepo.save(
+        userBranchRepo.create({
+          userId: savedRecep.id,
+          branchId: recepBranch.id,
+          isDefault: true,
+        }),
+      );
+      console.log(
+        '  - Usuario recepción: ' + RECEP_EMAIL + ' / ' + RECEP_PASSWORD,
+      );
+    }
+  }
+
   // Usuario de pruebas con máximo acceso (SUPERADMIN)
   const NEXUS_EMAIL = 'admin@nexusqtech.com';
   const NEXUS_PASSWORD = '00@Limonero';
