@@ -52,6 +52,12 @@ export class Login implements OnInit {
 
   public readonly demoPortales = [
     {
+      // Va primero porque es el que se usa a diario y desde el iPad del taller
+      nombre: "Portal de recepción",
+      descripcion: "Recibir unidades desde el iPad, con cámara",
+      url: "/recepcion",
+    },
+    {
       nombre: "App del técnico",
       descripcion: "Órdenes, cronómetro y hallazgos",
       url: "http://localhost:4201",
