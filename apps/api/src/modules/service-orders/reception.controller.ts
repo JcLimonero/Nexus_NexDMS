@@ -92,8 +92,23 @@ export class ReceptionController {
   recibirCita(
     @CurrentUser() user: UserPayload,
     @Param('appointmentId', ParseUUIDPipe) appointmentId: string,
+    @Body()
+    datos?: {
+      clientId?: string;
+      vehicleId?: string;
+      vehiculo?: {
+        vehicleType: string;
+        make: string;
+        model: string;
+        year: number;
+        plate?: string;
+        vin?: string;
+        mileage?: number;
+        color?: string;
+      };
+    },
   ) {
-    return this.reception.recibirCita(user, appointmentId);
+    return this.reception.recibirCita(user, appointmentId, datos);
   }
 
   /** Estado completo de la recepción de una orden. */

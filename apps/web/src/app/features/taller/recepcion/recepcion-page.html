@@ -33,6 +33,65 @@
       </div>
     </div>
 
+    <!-- Alta de unidad: citas del bot que llegan sin vehículo -->
+    @if (citaSinUnidad(); as c) {
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Datos de la unidad</h5>
+          <span>
+            {{ c.clientName }} · {{ c.serviceType }} — la cita se agendó por
+            WhatsApp, captura la unidad que llegó al taller
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label>Tipo de unidad *</label>
+              <select class="form-control" [(ngModel)]="unidad.vehicleType">
+                @for (t of tiposUnidad; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Marca *</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.make" placeholder="Ej. Italika" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Modelo *</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.model" placeholder="Ej. FT150" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Año</label>
+              <input type="number" class="form-control" [(ngModel)]="unidad.year" min="1950" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Placa</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.plate" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Color</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.color" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Kilometraje</label>
+              <input type="number" class="form-control" [(ngModel)]="unidad.mileage" min="0" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Número de serie</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.vin" />
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" [disabled]="guardando()" (click)="altaUnidadYRecibir()">
+              {{ guardando() ? "Guardando…" : "Dar de alta y recibir" }}
+            </button>
+            <button class="btn btn-light" (click)="cancelarAltaUnidad()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    }
+
     <div class="card">
       @if (loading()) {
         <div class="card-body text-center py-5"><span class="spinner-border"></span></div>
@@ -81,7 +140,7 @@
                       </button>
                     } @else {
                       <button class="btn btn-primary btn-sm" (click)="recibir(c)">
-                        Recibir unidad
+                        {{ c.vehicle ? "Recibir unidad" : "Capturar unidad" }}
                       </button>
                     }
                   </td>

@@ -31,7 +31,10 @@ import {
   QuotationTypeEnum,
 } from '../quotations/entities/quotation.entity';
 import { QuotationItem } from '../quotations/entities/quotation-item.entity';
-import { Client } from '../clients/entities/client.entity';
+import {
+  Client,
+  ClientTypeEnum,
+} from '../clients/entities/client.entity';
 import { StorageService } from '../../common/storage/storage.service';
 
 export interface ReceptionServiceLine {
@@ -212,7 +215,24 @@ export class ReceptionService {
    * RECIBIDA y confirma la cita. Si ya se había recibido, devuelve la orden
    * existente en lugar de duplicarla.
    */
-  async recibirCita(user: UserPayload, appointmentId: string) {
+  async recibirCita(
+    user: UserPayload,
+    appointmentId: string,
+    datos?: {
+      clientId?: string;
+      vehicleId?: string;
+      vehiculo?: {
+        vehicleType: string;
+        make: string;
+        model: string;
+        year: number;
+        plate?: string;
+        vin?: string;
+        mileage?: number;
+        color?: string;
+      };
+    },
+  ) {
     const cita = await this.apptRepo.findOne({
       where: { id: appointmentId, tenantId: user.tenantId },
     });
@@ -221,10 +241,57 @@ export class ReceptionService {
     const previa = await this.soRepo.findOne({ where: { appointmentId } });
     if (previa) return previa;
 
-    if (!cita.clientId || !cita.vehicleId) {
-      throw new BadRequestException(
-        'La cita necesita cliente y vehículo para poder recibir la unidad',
+    // Las citas del bot llegan sin cliente ni unidad: se dan de alta aquí,
+    // que es el momento en que el asesor tiene la unidad enfrente.
+    let clientId = cita.clientId ?? datos?.clientId ?? null;
+    if (!clientId) {
+      const [nombre, ...resto] = (cita.clientName || 'Cliente').trim().split(/\s+/);
+      const nuevo = await this.clientRepo.save(
+        this.clientRepo.create({
+          tenantId: user.tenantId,
+          clientType: ClientTypeEnum.INDIVIDUAL,
+          isCompany: false,
+          firstName: nombre,
+          lastName: resto.join(' ') || '—',
+          phone: cita.clientPhone || '',
+        } as never),
       );
+      clientId = (nuevo as unknown as { id: string }).id;
+    }
+
+    let vehicleId = cita.vehicleId ?? datos?.vehicleId ?? null;
+    if (!vehicleId) {
+      if (!datos?.vehiculo) {
+        throw new BadRequestException(
+          'Captura primero los datos de la unidad para poder recibirla',
+        );
+      }
+      const v = datos.vehiculo;
+      if (!v.make || !v.model || !v.vehicleType) {
+        throw new BadRequestException(
+          'La unidad necesita al menos tipo, marca y modelo',
+        );
+      }
+      const nueva = await this.vehicleRepo.save(
+        this.vehicleRepo.create({
+          tenantId: user.tenantId,
+          ownerId: clientId,
+          vehicleType: v.vehicleType,
+          make: v.make,
+          model: v.model,
+          year: v.year || new Date().getFullYear(),
+          plate: v.plate || null,
+          vin: v.vin || null,
+          color: v.color || null,
+          mileage: v.mileage ?? 0,
+        } as never),
+      );
+      vehicleId = (nueva as unknown as { id: string }).id;
+    }
+
+    // La cita queda enlazada, para que el historial del cliente sea uno solo
+    if (!cita.clientId || !cita.vehicleId) {
+      await this.apptRepo.update(cita.id, { clientId, vehicleId });
     }
 
     const folio = await this.dataSource
@@ -245,8 +312,8 @@ export class ReceptionService {
       this.soRepo.create({
         tenantId: user.tenantId,
         branchId: cita.branchId,
-        ownerId: cita.clientId,
-        vehicleId: cita.vehicleId,
+        ownerId: clientId,
+        vehicleId,
         userId: user.sub,
         mechanicId: cita.mechanicId ?? null,
         appointmentId: cita.id,

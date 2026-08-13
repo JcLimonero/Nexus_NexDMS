@@ -6,7 +6,9 @@ import { ToastrService } from "ngx-toastr";
 
 import {
   CitaAgenda,
+  DatosUnidad,
   MARK_TYPES,
+  TIPOS_UNIDAD,
   Reception,
   ReceptionPhoto,
   RecepcionService,
@@ -41,6 +43,20 @@ export class RecepcionPage implements OnInit {
   private toastr = inject(ToastrService);
 
   readonly markTypes = MARK_TYPES;
+  readonly tiposUnidad = TIPOS_UNIDAD;
+
+  /** Cita del bot en proceso de alta de unidad; null = nadie pendiente. */
+  citaSinUnidad = signal<CitaAgenda | null>(null);
+  unidad: DatosUnidad = {
+    vehicleType: "MOTORCYCLE",
+    make: "",
+    model: "",
+    year: new Date().getFullYear(),
+    plate: "",
+    vin: "",
+    mileage: 0,
+    color: "",
+  };
 
   branches = signal<{ id: string; name: string }[]>([]);
   branchId = signal<string>("");
@@ -120,10 +136,42 @@ export class RecepcionPage implements OnInit {
   // ─── Recepción ───────────────────────────────────
 
   recibir(cita: CitaAgenda): void {
+    // Las citas del bot llegan sin unidad: primero se dan de alta sus datos
+    if (!cita.vehicle) {
+      this.citaSinUnidad.set(cita);
+      return;
+    }
     this.srv.recibirCita(cita.id).subscribe({
       next: (orden) => this.abrirRecepcion(orden.id),
       error: (err) =>
         this.toastr.error(err?.error?.message || "No se pudo abrir la recepción"),
+    });
+  }
+
+  cancelarAltaUnidad(): void {
+    this.citaSinUnidad.set(null);
+  }
+
+  /** Da de alta la unidad y abre la recepción de esa cita. */
+  altaUnidadYRecibir(): void {
+    const cita = this.citaSinUnidad();
+    if (!cita) return;
+    if (!this.unidad.make.trim() || !this.unidad.model.trim()) {
+      this.toastr.warning("Captura al menos marca y modelo de la unidad");
+      return;
+    }
+    this.guardando.set(true);
+    this.srv.recibirCita(cita.id, { vehiculo: this.unidad }).subscribe({
+      next: (orden) => {
+        this.guardando.set(false);
+        this.citaSinUnidad.set(null);
+        this.toastr.success("Unidad dada de alta");
+        this.abrirRecepcion(orden.id);
+      },
+      error: (err) => {
+        this.guardando.set(false);
+        this.toastr.error(err?.error?.message || "No se pudo dar de alta la unidad");
+      },
     });
   }
 

@@ -72,6 +72,27 @@ export interface Reception {
   fotos: ReceptionPhoto[];
 }
 
+export interface DatosUnidad {
+  vehicleType: string;
+  make: string;
+  model: string;
+  year: number;
+  plate?: string;
+  vin?: string;
+  mileage?: number;
+  color?: string;
+}
+
+/** Tipos de unidad que puede recibir el taller. */
+export const TIPOS_UNIDAD = [
+  { value: "MOTORCYCLE", label: "Motocicleta" },
+  { value: "CAR", label: "Automóvil" },
+  { value: "SUV", label: "SUV" },
+  { value: "MINIVAN", label: "Minivan" },
+  { value: "TRUCK", label: "Camioneta" },
+  { value: "VAN", label: "Van" },
+];
+
 export interface ServicioPredefinido {
   id: string;
   name: string;
@@ -99,11 +120,18 @@ export class RecepcionService {
     return this.http.get<CitaAgenda[]>(`${URL}/agenda`, { params });
   }
 
-  /** Crea (o recupera) la orden de servicio de una cita. */
-  recibirCita(appointmentId: string): Observable<{ id: string; folio: string }> {
+  /**
+   * Crea (o recupera) la orden de servicio de una cita.
+   * Las citas del bot llegan sin unidad: en ese caso se envían sus datos,
+   * que es cuando el asesor tiene la unidad enfrente.
+   */
+  recibirCita(
+    appointmentId: string,
+    datos?: { vehiculo?: DatosUnidad },
+  ): Observable<{ id: string; folio: string }> {
     return this.http.post<{ id: string; folio: string }>(
       `${URL}/from-appointment/${appointmentId}`,
-      {},
+      datos ?? {},
     );
   }
 
