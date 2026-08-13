@@ -142,6 +142,11 @@
   --field-sm: 130px;
   --field-md: 190px;
   --field-lg: 260px;
+  /* Las fechas necesitan medida propia: cada motor dibuja el valor a su
+     manera —Firefox separa con espacios, Chrome reserva sitio para su
+     selector— y con 130px el año se cortaba. 154px es lo que pide el motor
+     más ancho de los tres medidos. */
+  --field-date: 154px;
 
   /* Alias heredados — apuntan a la escala única */
   --input-height: var(--control-h);

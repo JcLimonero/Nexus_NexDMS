@@ -90,6 +90,78 @@ textarea.form-control {
   resize: vertical;
 }
 
+/* Fecha y hora: emparejar Safari con Chrome ──────────────
+   WebKit no pinta el valor como texto normal, lo mete en el pseudo-elemento
+   ::-webkit-date-and-time-value. Con altura fija y padding vertical 0 —que es
+   como está definido %control-base— ese pseudo-elemento se pega al borde
+   superior, así que en Safari la fecha aparecía arriba y no centrada. Y el
+   `appearance: none` del bloque de campos, que en Chrome no toca el icono de
+   calendario, en Safari sí lo elimina. Aquí se corrigen las dos cosas. */
+input[type="date"],
+input[type="month"],
+input[type="time"],
+input[type="datetime-local"] {
+  /* Centra el pseudo-elemento en Safari. En Chrome no cambia nada:
+     su valor ya venía centrado por la altura del control. */
+  display: inline-flex;
+  align-items: center;
+
+  /* Ancla del indicador nativo, que se reposiciona más abajo. */
+  position: relative;
+
+  &::-webkit-date-and-time-value {
+    margin: 0;
+    text-align: left;
+    /* `line-height: 1` recorta los dígitos en WebKit */
+    line-height: normal;
+  }
+}
+
+/* Icono de calendario propio, por la misma razón que el chevron del select:
+   Safari, con `appearance: none`, no dibuja ninguno y el campo queda sin
+   señal de que es una fecha.
+
+   El indicador nativo de Chrome se deja transparente y estirado sobre el
+   nuestro, para que el clic siga abriendo el calendario. */
+input[type="date"],
+input[type="month"],
+input[type="datetime-local"] {
+  /* Suelo de ancho para que ningún motor corte el año, gane la clase
+     `field-*` que gane. La hora queda fuera: es más corta y no lo necesita. */
+  min-width: var(--field-date);
+  padding-right: calc(var(--control-px) + 20px);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235A6B78' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'%3e%3crect x='3' y='4.5' width='18' height='17' rx='2'/%3e%3cpath d='M16 2.5v4M8 2.5v4M3 10.5h18'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right var(--control-px) center;
+  background-size: 14px 14px;
+
+  &::-webkit-calendar-picker-indicator {
+    position: absolute;
+    inset: 0 0 0 auto;
+    width: calc(var(--control-px) + 20px);
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+/* Firefox es el único que trae icono nativo sin pseudo-elemento para
+   ocultarlo, así que ahí el nuestro sobra: saldrían dos, encimados sobre el
+   año. `-moz-appearance` solo lo entiende Firefox, y ese es justamente el
+   motor que hay que excluir. (Se intentó al revés —envolver el icono en
+   `@supports selector(::-webkit-calendar-picker-indicator)`— pero esa
+   consulta también la rechaza Safari, que es a quien queremos servirlo.) */
+@supports (-moz-appearance: none) {
+  input[type="date"],
+  input[type="month"],
+  input[type="datetime-local"] {
+    padding-right: var(--control-px);
+    background-image: none;
+  }
+}
+
 /* Select: chevron propio (appearance:none arriba lo quitó) */
 select,
 select.form-control,
@@ -285,12 +357,28 @@ select.form-control-sm {
   flex-wrap: wrap;
 }
 
-/* ── Anchos de campo homologados ───────────────────────── */
-.field-xs { width: var(--field-xs); flex: 0 0 auto; }
-.field-sm { width: var(--field-sm); flex: 0 0 auto; }
-.field-md { width: var(--field-md); flex: 0 0 auto; }
-.field-lg { width: var(--field-lg); flex: 0 0 auto; }
-.field-full { width: 100%; }
+/* ── Anchos de campo homologados ─────────────────────────
+   Van calificados con el elemento (`input.field-sm`) a propósito: los
+   selectores por atributo de arriba (`input[type="date"]`, `[type="number"]`…)
+   pesan lo mismo que una clase, así que un `.field-sm` a secas perdía
+   contra su `width: 100%` y el campo se estiraba a toda la fila. Con
+   `input.field-sm` empatan en especificidad y gana este bloque por venir
+   después. `select` y `textarea` no lo necesitaban, pero se incluyen para
+   que las cuatro medidas se comporten igual en cualquier control. */
+@each $size in (xs, sm, md, lg) {
+  .field-#{$size},
+  input.field-#{$size},
+  select.field-#{$size},
+  textarea.field-#{$size} {
+    width: var(--field-#{$size});
+    flex: 0 0 auto;
+  }
+}
+
+.field-full,
+input.field-full,
+select.field-full,
+textarea.field-full { width: 100%; }
 
 /* ── Etiquetas ─────────────────────────────────────────── */
 .form-label,
