@@ -65,18 +65,15 @@
     </div>
   } @else {
     <!-- ═══ Con sesión ═══ -->
-    <!-- `div` en vez de `header`: la plantilla del back office estiliza el
-         elemento `header` a secas y aquí eso deforma la cabecera. El rol
-         conserva la semántica para lectores de pantalla. -->
-    <div class="portal-top" role="banner">
+    <header class="portal-top">
       <div class="portal-quien">
         <span class="saludo">Hola</span>
         <strong>{{ srv.nombre() }}</strong>
       </div>
       <button type="button" class="btn-texto" (click)="salir()">Salir</button>
-    </div>
+    </header>
 
-    <main class="portal-card" role="main">
+    <main class="portal-card">
       @if (cargando()) {
         <p class="muted center">Cargando…</p>
       }

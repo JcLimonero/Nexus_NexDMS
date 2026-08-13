@@ -304,12 +304,3 @@
   &[data-tono="malo"] { background: var(--danger); color: var(--card); }
   &[data-tono="neutro"] { background: var(--nexus-600, var(--primary)); color: var(--card); }
 }
-
-/* Se declara el fondo en vez de heredarlo: `styles.css` estiliza contenedores
-   genéricos con el navy del back office. */
-.detalle-top {
-  background: transparent;
-  color: var(--text-primary);
-  padding: 0;
-  border: none;
-}

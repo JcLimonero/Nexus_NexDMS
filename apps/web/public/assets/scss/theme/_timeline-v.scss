@@ -165,7 +165,11 @@ vertical-timeline {
   display: table;
   clear: both;
 }
-header {
+/* Acotado a la demo. Iba como `header` a secas y alcanzaba a cualquier
+   <header> de la aplicación: lo pintaba con el fondo oscuro y le imponía
+   200px de alto, lo que deformaba cabeceras que no tienen nada que ver con
+   esta pantalla. Si se recupera la demo, su contenedor necesita esta clase. */
+.cd-timeline-demo header {
   height: 200px;
   line-height: 200px;
   text-align: center;
@@ -177,7 +181,7 @@ header {
 }
 
 @media only screen and (min-width: 1170px) {
-  header {
+  .cd-timeline-demo header {
     height: 300px;
     line-height: 300px;
     h1 {

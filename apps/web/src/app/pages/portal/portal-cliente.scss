@@ -61,19 +61,12 @@
   color: var(--text-primary);
 }
 
-/* `styles.css` trae una regla de plantilla sobre `header` a secas que lo pinta
-   con el navy del back office. El portal es una superficie propia del cliente,
-   así que declara su fondo y su color en vez de heredar el cromo interno. */
 .portal-top {
   width: 100%;
   max-width: 460px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: transparent;
-  color: var(--text-primary);
-  padding: 0;
-  border: none;
 
   .saludo {
     display: block;
