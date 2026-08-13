@@ -26,29 +26,23 @@
     pointer-events: none;
   }
 
-  /* Filigrana del isotipo */
-  &::after {
-    content: "";
-    position: absolute;
-    right: -6vw;
-    bottom: -8vh;
-    width: min(46vw, 620px);
-    aspect-ratio: 1;
-    background: url("/assets/nexus_images/isotipo/isotipo.png") no-repeat
-      center / contain;
-    opacity: 0.05;
-    pointer-events: none;
-  }
 
-  @media (max-width: 767.98px) {
-    &::after { display: none; }
-  }
 }
 
 /* La tarjeta se despega del fondo oscuro */
 .login-authentication-box .card {
   box-shadow: var(--shadow-lg);
   border-color: transparent;
+}
+
+/* Logo: mantiene proporciones y tamaño adecuado */
+.login-logo-wrapper {
+  .login-logo {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
 }
 
 /* Responsive: evita overflow en móvil */
