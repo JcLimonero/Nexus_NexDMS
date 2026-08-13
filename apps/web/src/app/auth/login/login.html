@@ -126,6 +126,42 @@
               </div>
             </form>
           }
+
+          <!-- Solo en compilaciones de desarrollo (ver demoMode) -->
+          @if (demoMode) {
+            <div class="demo-panel">
+              <div class="demo-title">Cuentas de demostración</div>
+              <div class="demo-accounts">
+                @for (c of demoCuentas; track c.email) {
+                  <button
+                    type="button"
+                    class="demo-account"
+                    (click)="usarCuenta(c)"
+                    [title]="'Usar la cuenta de ' + c.rol"
+                  >
+                    <span class="demo-rol">{{ c.rol }}</span>
+                    <span class="demo-cred">{{ c.email }} · {{ c.password }}</span>
+                    <span class="demo-detalle">{{ c.detalle }}</span>
+                  </button>
+                }
+              </div>
+
+              <div class="demo-title">Otros portales</div>
+              <div class="demo-links">
+                @for (p of demoPortales; track p.url) {
+                  <a
+                    class="demo-link"
+                    [href]="p.url"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    <span class="demo-link-name">{{ p.nombre }} ↗</span>
+                    <span class="demo-detalle">{{ p.descripcion }}</span>
+                  </a>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
     </div>

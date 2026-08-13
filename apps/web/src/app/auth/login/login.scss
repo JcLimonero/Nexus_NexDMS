@@ -27,3 +27,77 @@
     border-radius: 2px;
   }
 }
+
+/* ── Panel de demostración (solo en desarrollo) ──────────
+   Credenciales y accesos a los demás portales para las demos.
+   El componente lo oculta con isDevMode(), así que no llega a
+   una compilación de producción. */
+.demo-panel {
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px dashed var(--border);
+}
+
+.demo-title {
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-muted);
+  margin-bottom: var(--space-8);
+
+  &:not(:first-child) {
+    margin-top: var(--space-16);
+  }
+}
+
+.demo-accounts,
+.demo-links {
+  display: grid;
+  gap: var(--space-8);
+}
+
+.demo-account,
+.demo-link {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  height: auto;
+  padding: var(--space-8) var(--space-12);
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.demo-rol,
+.demo-link-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.demo-cred {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--primary);
+}
+
+.demo-detalle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}

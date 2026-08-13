@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, inject, isDevMode, OnInit } from "@angular/core";
 import {
   FormBuilder,
   Validators,
@@ -25,6 +25,56 @@ export class Login implements OnInit {
   public loginForm: FormGroup;
   public loading = false;
   public error: string | null = null;
+
+  /**
+   * Panel de demostración: credenciales y accesos a los otros portales.
+   *
+   * Solo aparece en compilaciones de desarrollo (`ng build` de producción
+   * lo elimina). Publicar credenciales en la pantalla de acceso de un
+   * entorno real dejaría el sistema abierto a cualquiera.
+   */
+  public readonly demoMode = isDevMode();
+
+  public readonly demoCuentas = [
+    {
+      rol: "Administrador",
+      email: "admin@demo.local",
+      password: "demo123",
+      detalle: "Acceso completo al sistema",
+    },
+    {
+      rol: "Mecánico",
+      email: "mecanico1@demo.local",
+      password: "demo123",
+      detalle: "Para la app del taller",
+    },
+  ];
+
+  public readonly demoPortales = [
+    {
+      nombre: "App del mecánico",
+      descripcion: "Órdenes, cronómetro y hallazgos",
+      url: "http://localhost:4201",
+    },
+    {
+      nombre: "Panel superadmin",
+      descripcion: "Administración de Nexus Q Tech",
+      url: "http://localhost:4202",
+    },
+    {
+      nombre: "Documentación de la API",
+      descripcion: "Swagger con todos los endpoints",
+      url: "http://localhost:3010/api/docs",
+    },
+  ];
+
+  /** Rellena el formulario con una cuenta de demostración. */
+  usarCuenta(cuenta: { email: string; password: string }): void {
+    this.loginForm.patchValue({
+      email: cuenta.email,
+      password: cuenta.password,
+    });
+  }
 
   constructor() {
     this.loginForm = this.fb.group({
