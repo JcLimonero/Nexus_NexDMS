@@ -1,5 +1,11 @@
 import { Routes } from "@angular/router";
 
+/**
+ * Se retiraron las rutas de dashboards demo del template (e-commerce,
+ * university, bitcoin, server, project): no forman parte del producto,
+ * estaban en inglés y eran alcanzables escribiendo la URL.
+ * Los dashboards del producto viven en /dashboard/default y /m/:key.
+ */
 export const dashboard: Routes = [
   {
     path: "",
@@ -15,48 +21,7 @@ export const dashboard: Routes = [
           breadcrumb: "Inicio",
         },
       },
-      {
-        path: "e-commerce",
-        loadComponent: () =>
-          import("./e-commerce/e-commerce").then((m) => m.ECommerce),
-        data: {
-          title: "E-commerce",
-          breadcrumb: "E-commerce",
-        },
-      },
-      {
-        path: "university",
-        loadComponent: () =>
-          import("./university/university").then((m) => m.University),
-        data: {
-          title: "University",
-          breadcrumb: "University",
-        },
-      },
-      {
-        path: "bitcoin",
-        loadComponent: () => import("./bitcoin/bitcoin").then((m) => m.Bitcoin),
-        data: {
-          title: "Crypto",
-          breadcrumb: "Crypto",
-        },
-      },
-      {
-        path: "server",
-        loadComponent: () => import("./server/server").then((m) => m.Server),
-        data: {
-          title: "Server",
-          breadcrumb: "Server",
-        },
-      },
-      {
-        path: "project",
-        loadComponent: () => import("./project/project").then((m) => m.Project),
-        data: {
-          title: "Project",
-          breadcrumb: "Project",
-        },
-      },
+      { path: "**", redirectTo: "default" },
     ],
   },
 ];

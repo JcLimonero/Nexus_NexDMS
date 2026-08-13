@@ -31,17 +31,17 @@
   <div class="tab-content" id="c-pills-tabContent">
     <div class="customizer-header">
       <i class="icofont-close icon-close" (click)="customizer = ''"></i>
-      <h5>Customizer</h5>
+      <h5>Apariencia</h5>
       <p class="mb-0">Customize &amp; Preview Real Time</p>
       <button
         class="btn btn-primary plus-popup mt-2"
         (click)="copyConfig(popup, data)"
       >
-        Configuration
+        Configuración
       </button>
       <ng-template #popup let-modal>
         <div class="modal-header modal-copy-header">
-          <h5 class="headerTitle mb-0">Customizer configuration</h5>
+          <h5 class="headerTitle mb-0">Configuración de apariencia</h5>
           <button
             type="button"
             class="btn-close"
@@ -101,7 +101,7 @@ router_animation&#58; 'fadeIn'
         role="tabpanel"
         aria-labelledby="c-pills-home-tab"
       >
-        <h6>Layout Type</h6>
+        <h6>Tipo de diseño</h6>
         <ul class="main-layout layout-grid">
           <li
             data-attr="ltr"
@@ -146,7 +146,7 @@ router_animation&#58; 'fadeIn'
             </div>
           </li>
         </ul>
-        <h6 class="">Sidebar Type</h6>
+        <h6 class="">Tipo de menú lateral</h6>
         <ul class="sidebar-type layout-grid">
           <li
             data-attr="normal-sidebar"
@@ -206,7 +206,7 @@ router_animation&#58; 'fadeIn'
             </div>
           </li>
         </ul>
-        <h6 class="">Sidebar settings</h6>
+        <h6 class="">Ajustes del menú lateral</h6>
         <ul class="sidebar-setting layout-grid">
           <li
             data-attr="default-sidebar"
@@ -221,7 +221,7 @@ router_animation&#58; 'fadeIn'
               </ul>
             </div>
             <div class="body bg-light">
-              <span class="badge badge-dark">Default</span>
+              <span class="badge badge-dark">Predeterminado</span>
             </div>
           </li>
           <li
@@ -237,7 +237,7 @@ router_animation&#58; 'fadeIn'
               </ul>
             </div>
             <div class="body bg-light">
-              <span class="badge badge-dark">Border</span>
+              <span class="badge badge-dark">Borde</span>
             </div>
           </li>
           <li
@@ -253,7 +253,7 @@ router_animation&#58; 'fadeIn'
               </ul>
             </div>
             <div class="body bg-light">
-              <span class="badge badge-dark">icon Color</span>
+              <span class="badge badge-dark">Color de icono</span>
             </div>
           </li>
         </ul>
@@ -265,7 +265,7 @@ router_animation&#58; 'fadeIn'
         role="tabpanel"
         aria-labelledby="c-pills-profile-tab"
       >
-        <h6>Light layout</h6>
+        <h6>Tema claro</h6>
         <ul class="layout-grid customizer-color">
           <li
             class="color-layout"
@@ -322,7 +322,7 @@ router_animation&#58; 'fadeIn'
             <div></div>
           </li>
         </ul>
-        <h6 class="">Dark Layout</h6>
+        <h6 class="">Tema oscuro</h6>
         <ul class="layout-grid customizer-color dark">
           <li
             class="color-layout"
@@ -379,7 +379,7 @@ router_animation&#58; 'fadeIn'
             <div></div>
           </li>
         </ul>
-        <h6 class="">Mix Layout</h6>
+        <h6 class="">Tema mixto</h6>
         <ul class="layout-grid customizer-mix">
           <li
             class="color-layout"
@@ -496,7 +496,7 @@ router_animation&#58; 'fadeIn'
             </div>
           </li>
         </ul>
-        <h6 class="">Sidebar background setting</h6>
+        <h6 class="">Fondo del menú lateral</h6>
         <ul class="nav nac-pills" id="pills-tab" role="tablist">
           <li class="nav-item">
             <a
@@ -515,7 +515,7 @@ router_animation&#58; 'fadeIn'
               [ngClass]="{ 'active show': sidebarSetting === 'pattern' }"
               id="pills-profile-tab"
               (click)="customizerSetting('pattern')"
-              >Pattern</a
+              >Patrón</a
             >
           </li>
           <li class="nav-item">

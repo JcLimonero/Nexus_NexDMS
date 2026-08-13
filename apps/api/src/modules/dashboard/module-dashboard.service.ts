@@ -56,13 +56,51 @@ export interface ModuleDashboard {
   breakdown?: Breakdown;
 }
 
+/**
+ * Etiquetas en español de los enums que se muestran al usuario.
+ * La API entrega el texto ya traducido: el enum es detalle interno y no
+ * debe llegar a pantalla (antes salían "WON", "PURCHASED", etc.).
+ */
 const SO_LABELS: Record<string, string> = {
   RECEIVED: 'Recibidas',
   DIAGNOSIS: 'Diagnóstico',
   IN_PROGRESS: 'En progreso',
   WAITING_PARTS: 'Esperando refacciones',
   READY: 'Listas',
+  DELIVERED: 'Entregadas',
+  CANCELLED: 'Canceladas',
 };
+
+const LEAD_LABELS: Record<string, string> = {
+  NEW: 'Nuevos',
+  CONTACTED: 'Contactados',
+  QUALIFIED: 'Calificados',
+  OPPORTUNITY: 'Oportunidad',
+  WON: 'Ganados',
+  LOST: 'Perdidos',
+};
+
+const INTAKE_LABELS: Record<string, string> = {
+  DRAFT: 'Borrador',
+  APPRAISED: 'Avaluada',
+  OFFERED: 'Ofertada',
+  ACCEPTED: 'Aceptada',
+  PURCHASED: 'Comprada',
+  REJECTED: 'Rechazada',
+};
+
+/** Valores de CatalogUnitStatusEnum. */
+const UNIT_LABELS: Record<string, string> = {
+  AVAILABLE: 'Disponible',
+  RESERVED: 'Apartada',
+  SOLD: 'Vendida',
+  WRITTEN_OFF: 'Dada de baja',
+  PENDING_EXPEDIENTE: 'Expediente pendiente',
+};
+
+/** Traduce un enum a español; si no hay etiqueta, deja el valor tal cual. */
+const label = (map: Record<string, string>, key: string): string =>
+  map[key] ?? key;
 
 @Injectable()
 export class ModuleDashboardService {
@@ -187,7 +225,7 @@ export class ModuleDashboardService {
           {
             title: 'Órdenes por estatus',
             items: porEstatus.map((r) => ({
-              label: SO_LABELS[r.status] ?? r.status,
+              label: label(SO_LABELS, r.status),
               value: Number(r.count),
             })),
           },
@@ -311,7 +349,10 @@ export class ModuleDashboardService {
           [{ label: 'Unidades en inventario', value: total, format: 'number', link: '/units-inventory' }],
           {
             title: 'Unidades por estado',
-            items: porEstado.map((r) => ({ label: r.status, value: Number(r.count) })),
+            items: porEstado.map((r) => ({
+              label: label(UNIT_LABELS, r.status),
+              value: Number(r.count),
+            })),
           },
         );
       }
@@ -390,7 +431,10 @@ export class ModuleDashboardService {
           ],
           {
             title: 'Pipeline por etapa',
-            items: rows.map((r) => ({ label: r.status, value: Number(r.count) })),
+            items: rows.map((r) => ({
+              label: label(LEAD_LABELS, r.status),
+              value: Number(r.count),
+            })),
           },
         );
       }
@@ -412,7 +456,10 @@ export class ModuleDashboardService {
           ],
           {
             title: 'Tomas por estatus',
-            items: rows.map((r) => ({ label: r.status, value: Number(r.count) })),
+            items: rows.map((r) => ({
+              label: label(INTAKE_LABELS, r.status),
+              value: Number(r.count),
+            })),
           },
         );
       }

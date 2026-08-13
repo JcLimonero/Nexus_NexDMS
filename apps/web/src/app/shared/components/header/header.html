@@ -34,7 +34,7 @@
                 (keyup)="searchTerm(text)"
                 type="text"
                 autocomplete="off"
-                placeholder="Search.."
+                placeholder="Buscar…"
               />
               <span class="d-sm-none mobile-search">
                 <app-feather-icons
@@ -90,59 +90,9 @@
         <li class="onhover-dropdown">
           <app-feather-icons [icon]="'bell'" /><span class="dot"></span>
           <ul class="notification-dropdown onhover-show-div">
-            <li>
-              Notification
-              <span class="badge rounded-pill badge-primary pull-right">3</span>
-            </li>
-            <li>
-              <div class="media">
-                <div class="flex-grow-1">
-                  <h6 class="mt-0">
-                    <span>
-                      <app-feather-icons
-                        class="shopping-color"
-                        [icon]="'shopping-bag'"
-                      /> </span
-                    >Your order ready for Ship..!<small class="pull-right"
-                      >9:00 AM</small
-                    >
-                  </h6>
-                  <p class="mb-0">Lorem ipsum dolor sit amet, consectetuer.</p>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div class="media">
-                <div class="flex-grow-1">
-                  <h6 class="mt-0 txt-success">
-                    <span>
-                      <app-feather-icons
-                        class="download-color font-success"
-                        [icon]="'download'"
-                      /> </span
-                    >Download Complete<small class="pull-right">2:30 PM</small>
-                  </h6>
-                  <p class="mb-0">Lorem ipsum dolor sit amet, consectetuer.</p>
-                </div>
-              </div>
-            </li>
-            <li>
-              <div class="media">
-                <div class="flex-grow-1">
-                  <h6 class="mt-0 txt-danger">
-                    <span>
-                      <app-feather-icons
-                        class="alert-color font-danger"
-                        [icon]="'alert-circle'"
-                      /> </span
-                    >250 MB trush files<small class="pull-right">5:00 PM</small>
-                  </h6>
-                  <p class="mb-0">Lorem ipsum dolor sit amet, consectetuer.</p>
-                </div>
-              </div>
-            </li>
-            <li class="bg-light txt-dark">
-              <a href="javascript:void(0)">All</a> notification
+            <li>Notificaciones</li>
+            <li class="empty-note">
+              <p class="mb-0">No tienes notificaciones nuevas.</p>
             </li>
           </ul>
         </li>
