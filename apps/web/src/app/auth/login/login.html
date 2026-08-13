@@ -149,15 +149,24 @@
               <div class="demo-title">Otros portales</div>
               <div class="demo-links">
                 @for (p of demoPortales; track p.url) {
-                  <a
-                    class="demo-link"
-                    [href]="p.url"
-                    target="_blank"
-                    rel="noopener"
-                  >
-                    <span class="demo-link-name">{{ p.nombre }} ↗</span>
-                    <span class="demo-detalle">{{ p.descripcion }}</span>
-                  </a>
+                  @if (p.interno) {
+                    <!-- Ruta de esta misma aplicación: se abre aquí para que
+                         el acceso pida la sesión y luego lleve al portal -->
+                    <a class="demo-link" [routerLink]="p.url">
+                      <span class="demo-link-name">{{ p.nombre }}</span>
+                      <span class="demo-detalle">{{ p.descripcion }}</span>
+                    </a>
+                  } @else {
+                    <a
+                      class="demo-link"
+                      [href]="p.url"
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      <span class="demo-link-name">{{ p.nombre }} ↗</span>
+                      <span class="demo-detalle">{{ p.descripcion }}</span>
+                    </a>
+                  }
                 }
               </div>
             </div>

@@ -6,7 +6,7 @@ import {
   FormsModule,
   ReactiveFormsModule,
 } from "@angular/forms";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 
 import { AuthService } from "../auth.service";
 
@@ -20,6 +20,21 @@ export class Login implements OnInit {
   private fb = inject(FormBuilder);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
+
+  /**
+   * A dónde ir tras entrar. Lo pone el guard cuando alguien abre un enlace
+   * directo sin sesión —el portal de recepción, por ejemplo— para no dejarlo
+   * en el tablero teniendo que buscar de nuevo lo que ya había pedido.
+   */
+  private destino(): string {
+    const url = this.route.snapshot.queryParamMap.get("returnUrl");
+    // Solo rutas internas: un returnUrl absoluto podría mandar al usuario a
+    // otro sitio tras autenticarse.
+    return url && url.startsWith("/") && !url.startsWith("//")
+      ? url
+      : "/dashboard/default";
+  }
 
   public newUser = false;
   public loginForm: FormGroup;
@@ -52,25 +67,31 @@ export class Login implements OnInit {
 
   public readonly demoPortales = [
     {
-      // Va primero porque es el que se usa a diario y desde el iPad del taller
+      // Va primero porque es el que se usa a diario y desde el iPad del taller.
+      // `interno` lo abre en esta misma pestaña: así el guard puede pedir la
+      // sesión y devolver al portal, en vez de dejar una pestaña huérfana.
       nombre: "Portal de recepción",
       descripcion: "Recibir unidades desde el iPad, con cámara",
       url: "/recepcion",
+      interno: true,
     },
     {
       nombre: "App del técnico",
       descripcion: "Órdenes, cronómetro y hallazgos",
       url: "http://localhost:4201",
+      interno: false,
     },
     {
       nombre: "Panel superadmin",
       descripcion: "Administración de Nexus Q Tech",
       url: "http://localhost:4202",
+      interno: false,
     },
     {
       nombre: "Documentación de la API",
       descripcion: "Swagger con todos los endpoints",
       url: "http://localhost:3010/api/docs",
+      interno: false,
     },
   ];
 
@@ -91,7 +112,7 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     if (this.auth.isAuthenticated()) {
-      this.router.navigate(["/dashboard/default"]);
+      this.router.navigateByUrl(this.destino());
     }
   }
 
@@ -112,7 +133,7 @@ export class Login implements OnInit {
             this.error = res.message;
             return;
           }
-          this.router.navigate(["/dashboard/default"]);
+          this.router.navigateByUrl(this.destino());
         },
         error: (err) => {
           this.loading = false;
