@@ -1,4 +1,11 @@
-import { Component, OnInit, computed, inject, signal } from "@angular/core";
+import {
+  Component,
+  HostListener,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
@@ -239,5 +246,75 @@ export class PlanificadorTaller implements OnInit {
   blockTooltip(b: TimelineBlock): string {
     const c = b.appointment;
     return `${b.label} — ${b.sublabel}\n${this.hourLabel(c.scheduledAt)} · ${c.durationMin || 60} min`;
+  }
+
+  // ─── Detalle de la cita ─────────────────────────────────────
+
+  /** Bloque abierto en el diálogo; null = cerrado. */
+  detalle = signal<TimelineBlock | null>(null);
+
+  abrirDetalle(b: TimelineBlock): void {
+    this.detalle.set(b);
+  }
+
+  cerrarDetalle(): void {
+    this.detalle.set(null);
+  }
+
+  /** Escape cierra el diálogo, como en cualquier modal. */
+  @HostListener("document:keydown.escape")
+  onEscape(): void {
+    if (this.detalle()) this.cerrarDetalle();
+  }
+
+  rangoHorario(c: Appointment): string {
+    const inicio = new Date(c.scheduledAt);
+    const fin = new Date(inicio.getTime() + (c.durationMin || 60) * 60000);
+    const hora = (d: Date) =>
+      d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit" });
+    return `${hora(inicio)} – ${hora(fin)}`;
+  }
+
+  clienteTexto(c: Appointment): string {
+    const cl = c.client;
+    const registrado =
+      cl?.companyName ||
+      [cl?.firstName, cl?.lastName].filter(Boolean).join(" ").trim();
+    // Las citas del bot llegan sin cliente dado de alta: se muestra el nombre
+    // que dejó en WhatsApp en vez de un hueco.
+    return registrado || c.clientName || "—";
+  }
+
+  unidadTexto(c: Appointment): string {
+    const v = c.vehicle;
+    if (!v) return "Sin unidad capturada";
+    const desc = [v.brand, v.model].filter(Boolean).join(" ");
+    return v.plate ? `${desc} · ${v.plate}`.trim() : desc || "—";
+  }
+
+  tecnicoTexto(c: Appointment): string {
+    return c.mechanic
+      ? `${c.mechanic.firstName} ${c.mechanic.lastName}`.trim()
+      : "Sin asignar";
+  }
+
+  /** Tono de la etiqueta de estado, propio del diálogo. */
+  estadoTono(status: string): string {
+    if (status === "CONFIRMED" || status === "COMPLETED") return "ok";
+    if (status === "CANCELLED" || status === "NO_SHOW") return "malo";
+    if (status === "PENDING_CONFIRMATION") return "aviso";
+    return "neutro";
+  }
+
+  estadoTexto(status: string): string {
+    const m: Record<string, string> = {
+      PENDING_CONFIRMATION: "Por confirmar",
+      SCHEDULED: "Agendada",
+      CONFIRMED: "Confirmada",
+      COMPLETED: "Completada",
+      CANCELLED: "Cancelada",
+      NO_SHOW: "No se presentó",
+    };
+    return m[status] ?? status;
   }
 }

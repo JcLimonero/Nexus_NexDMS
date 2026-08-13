@@ -82,15 +82,18 @@
                   <div class="hour-cell"></div>
                 }
                 @for (b of lane.blocks; track b.appointment.id) {
-                  <div
+                  <button
+                    type="button"
                     class="job-block {{ b.statusClass }}"
                     [style.left.%]="b.leftPct"
                     [style.width.%]="b.widthPct"
                     [title]="blockTooltip(b)"
+                    [attr.aria-label]="'Ver detalle de ' + b.label"
+                    (click)="abrirDetalle(b)"
                   >
                     <span class="job-label">{{ b.label }}</span>
                     <span class="job-sublabel">{{ b.sublabel }}</span>
-                  </div>
+                  </button>
                 }
               </div>
             </div>
@@ -109,3 +112,87 @@
     }
   </div>
 </div>
+
+<!-- Detalle de la cita. Se arma con lo que ya trae el bloque: el planificador
+     carga las citas completas, así que abrirlo no cuesta otra petición. -->
+@if (detalle(); as d) {
+  <div class="detalle-fondo" (click)="cerrarDetalle()"></div>
+  <div
+    class="detalle"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'Detalle de la cita ' + d.label"
+  >
+    <div class="detalle-top">
+      <div>
+        <span class="detalle-estado" [attr.data-tono]="estadoTono(d.appointment.status)">
+          {{ estadoTexto(d.appointment.status) }}
+        </span>
+        <h5>{{ d.label }}</h5>
+        <p class="detalle-sub">{{ d.appointment.serviceType }}</p>
+      </div>
+      <button
+        type="button"
+        class="detalle-cerrar"
+        aria-label="Cerrar"
+        (click)="cerrarDetalle()"
+      >
+        ×
+      </button>
+    </div>
+
+    <dl class="detalle-datos">
+      <div>
+        <dt>Horario</dt>
+        <dd>{{ rangoHorario(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Duración</dt>
+        <dd>{{ d.appointment.durationMin }} min</dd>
+      </div>
+      <div>
+        <dt>Cliente</dt>
+        <dd>{{ clienteTexto(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Teléfono</dt>
+        <dd>
+          @if (d.appointment.clientPhone) {
+            <a [href]="'tel:' + d.appointment.clientPhone">
+              {{ d.appointment.clientPhone }}
+            </a>
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Unidad</dt>
+        <dd>{{ unidadTexto(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Técnico</dt>
+        <dd>{{ tecnicoTexto(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Origen</dt>
+        <dd>
+          {{ d.appointment.origin === "PUBLIC_PORTAL" ? "Portal del cliente" : "Mostrador" }}
+        </dd>
+      </div>
+    </dl>
+
+    @if (d.appointment.notes) {
+      <p class="detalle-notas">{{ d.appointment.notes }}</p>
+    }
+
+    <div class="detalle-acciones">
+      <button type="button" class="btn btn-secondary" (click)="cerrarDetalle()">
+        Cerrar
+      </button>
+      <a class="btn btn-primary" [routerLink]="['/workshop/recepcion']">
+        Ir a recepción
+      </a>
+    </div>
+  </div>
+}
