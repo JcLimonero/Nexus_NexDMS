@@ -13,12 +13,21 @@ import { getB2Config } from '../../config/b2.config';
 export class StorageService {
   private readonly client: S3Client;
   private readonly bucketName: string;
+  /**
+   * Prefijo que la llave de aplicación tiene permitido tocar.
+   *
+   * Se aplica aquí y no en cada sitio que sube un archivo: son media docena
+   * de módulos, y basta que uno lo olvide para que su subida falle con un
+   * error de permisos que no menciona el nombre del objeto.
+   */
+  private readonly keyPrefix: string;
 
   constructor(private readonly configService: ConfigService) {
     const config = getB2Config(configService);
     this.bucketName = config.bucketName;
+    this.keyPrefix = config.keyPrefix;
     this.client = new S3Client({
-      region: 'us-west-004',
+      region: config.region,
       endpoint: config.endpoint || undefined,
       credentials:
         config.keyId && config.appKey
@@ -31,6 +40,11 @@ export class StorageService {
     });
   }
 
+  /** Nombre completo del objeto, con el prefijo que exige la llave. */
+  private objeto(key: string): string {
+    return key.startsWith(this.keyPrefix) ? key : `${this.keyPrefix}${key}`;
+  }
+
   async upload(
     buffer: Buffer,
     key: string,
@@ -39,7 +53,7 @@ export class StorageService {
     await this.client.send(
       new PutObjectCommand({
         Bucket: this.bucketName,
-        Key: key,
+        Key: this.objeto(key),
         Body: buffer,
         ContentType: contentType ?? 'application/octet-stream',
       }),
@@ -51,7 +65,7 @@ export class StorageService {
     const response = await this.client.send(
       new GetObjectCommand({
         Bucket: this.bucketName,
-        Key: key,
+        Key: this.objeto(key),
       }),
     );
     const stream = response.Body;
@@ -68,7 +82,7 @@ export class StorageService {
   async getSignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucketName,
-      Key: key,
+      Key: this.objeto(key),
     });
     return getSignedUrl(this.client, command, { expiresIn: expiresInSeconds });
   }
@@ -77,7 +91,7 @@ export class StorageService {
     await this.client.send(
       new DeleteObjectCommand({
         Bucket: this.bucketName,
-        Key: key,
+        Key: this.objeto(key),
       }),
     );
   }
