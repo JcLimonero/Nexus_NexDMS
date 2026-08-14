@@ -39,6 +39,22 @@ SELECT
 FROM tenants t
 WHERE t.slug = 'demo';
 
+-- ── Contacto del personal ────────────────────────────────────────────
+-- El cliente ve el teléfono de su asesor en la liga de seguimiento. Sin esto
+-- solo vería el conmutador del taller, que es justo lo que la pantalla quiere
+-- evitar: que tenga que contar su caso otra vez a quien conteste.
+UPDATE users SET phone = v.tel
+FROM (VALUES
+  ('recepcion@demo.local', '3346160927'),
+  ('marisol@demo.local',   '3312004501'),
+  ('asesor2@demo.local',   '3312004502'),
+  ('asesor3@demo.local',   '3312004503'),
+  ('mecanico1@demo.local', '3312004511'),
+  ('mecanico2@demo.local', '3312004512'),
+  ('mecanico3@demo.local', '3312004513')
+) AS v(correo, tel)
+WHERE users.email = v.correo AND users.phone IS NULL;
+
 -- ── Limpieza de lo operativo ─────────────────────────────────────────
 -- El orden va de lo más dependiente a lo menos; las llaves con ON DELETE
 -- CASCADE harían casi todo solas, pero dejarlo explícito documenta qué se

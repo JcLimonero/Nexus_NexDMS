@@ -390,7 +390,7 @@ export class ReceptionService {
   async getReception(user: UserPayload, serviceOrderId: string) {
     const so = await this.soRepo.findOne({
       where: { id: serviceOrderId, tenantId: user.tenantId },
-      relations: ['vehicle', 'owner', 'branch'],
+      relations: ['vehicle', 'owner', 'branch', 'user'],
     });
     if (!so) throw new NotFoundException('Orden no encontrada');
 
@@ -428,6 +428,19 @@ export class ReceptionService {
         reportedFault: so.reportedFault,
         kmIn: so.kmIn,
         receptionQuotationId: so.receptionQuotationId,
+        // Para darle al cliente su liga de seguimiento en el mostrador, con
+        // la unidad recién recibida: es el momento en que está delante y en
+        // que la evidencia de cómo llegó todavía le importa.
+        trackingToken: so.trackingToken,
+        clientName: so.owner
+          ? [so.owner.firstName, so.owner.lastName].filter(Boolean).join(' ') ||
+            so.owner.companyName
+          : so.receptionName,
+        clientPhone: so.owner?.phone ?? so.receptionPhone ?? null,
+        /** Quien recibió la unidad: es a quien el cliente va a buscar. */
+        advisorName: so.user
+          ? [so.user.firstName, so.user.lastName].filter(Boolean).join(' ')
+          : null,
       },
       checklist,
       specs: specs.map((s) => ({
@@ -464,6 +477,176 @@ export class ReceptionService {
         })),
       ),
     };
+  }
+
+  // ─── Consulta de la evidencia ────────────────────
+
+  /**
+   * Fotos y marcas de una recepción, para consultar.
+   *
+   * Separado de `getReception` a propósito: aquella arma la pantalla de
+   * captura —catálogo de fotos, cuáles faltan, el checklist editable— y solo
+   * se alcanza desde la agenda del día. Esto es lo que se mira meses después,
+   * al entregar la unidad o cuando el cliente dice que ese golpe no venía:
+   * quien pregunta no va a capturar nada, así que no se le manda con qué.
+   */
+  private async evidenciaDeChecklist(checklistId: string) {
+    const fotos = await this.photoRepo.find({
+      where: { receptionChecklistId: checklistId },
+      order: { createdAt: 'ASC' },
+    });
+    if (!fotos.length) return [];
+
+    const marcas = await this.markRepo
+      .createQueryBuilder('m')
+      .where('m.reception_photo_id IN (:...ids)', {
+        ids: fotos.map((f) => f.id),
+      })
+      // Mismo orden que en la captura: la numeración de las marcas tiene que
+      // coincidir con la que vio quien recibió la unidad.
+      .orderBy('m.created_at', 'ASC')
+      .getMany();
+
+    return Promise.all(
+      fotos.map(async (f) => ({
+        id: f.id,
+        specCode: f.specCode,
+        mediaType: f.mediaType,
+        url: await this.ligaDeFoto(f.storageKey),
+        marks: marcas
+          .filter((m) => m.receptionPhotoId === f.id)
+          .map((m) => ({
+            id: m.id,
+            type: m.markType,
+            shape: m.shape,
+            note: m.note,
+            x: Number(m.x),
+            y: Number(m.y),
+            radius: m.radius === null ? null : Number(m.radius),
+          })),
+      })),
+    );
+  }
+
+  /** Nombres del catálogo, para que la foto no se anuncie como "FRONT". */
+  private async nombresDeSpecs(tenantId: string): Promise<Map<string, string>> {
+    const specs = await this.specsForVehicleType(tenantId);
+    return new Map(specs.map((s) => [s.code, s.name]));
+  }
+
+  /** Evidencia de una sola orden. */
+  async evidenciaDeOrden(tenantId: string, serviceOrderId: string) {
+    const so = await this.soRepo.findOne({
+      where: { id: serviceOrderId, tenantId },
+      relations: ['vehicle'],
+    });
+    if (!so) throw new NotFoundException('Orden no encontrada');
+
+    const checklist = await this.checklistRepo.findOne({
+      where: { serviceOrderId },
+    });
+    // Sin recepción no hay evidencia, y eso no es un error: hay órdenes que
+    // se abren en el mostrador sin pasar por la recepción guiada.
+    if (!checklist) {
+      return { folio: so.folio, recibidaEl: so.receivedAt, checklist: null, fotos: [] };
+    }
+
+    const nombres = await this.nombresDeSpecs(tenantId);
+    const fotos = await this.evidenciaDeChecklist(checklist.id);
+    return {
+      folio: so.folio,
+      recibidaEl: so.receivedAt,
+      checklist: {
+        kmIn: checklist.kmIn,
+        fuelLevel: checklist.fuelLevel,
+        hasSpareTire: checklist.hasSpareTire,
+        hasTools: checklist.hasTools,
+        hasDocuments: checklist.hasDocuments,
+        hasMats: checklist.hasMats,
+        observations: checklist.observations,
+        damageDescription: checklist.damageDescription,
+      },
+      fotos: fotos.map((f) => ({
+        ...f,
+        nombre: nombres.get(f.specCode ?? '') ?? f.specCode,
+      })),
+    };
+  }
+
+  /**
+   * Todas las recepciones de un vehículo, de la más reciente a la más vieja.
+   *
+   * Es la vista que resuelve la discusión de verdad: si el golpe ya venía en
+   * la visita anterior, aquí se ve sin abrir orden por orden.
+   */
+  async evidenciaDeVehiculo(tenantId: string, vehicleId: string) {
+    const ordenes = await this.soRepo.find({
+      where: { tenantId, vehicleId },
+      order: { createdAt: 'DESC' },
+    });
+    if (!ordenes.length) return [];
+
+    const checklists = await this.checklistRepo
+      .createQueryBuilder('c')
+      .where('c.service_order_id IN (:...ids)', {
+        ids: ordenes.map((o) => o.id),
+      })
+      .getMany();
+    if (!checklists.length) return [];
+
+    const nombres = await this.nombresDeSpecs(tenantId);
+    const porOrden = new Map(checklists.map((c) => [c.serviceOrderId, c]));
+
+    const visitas = await Promise.all(
+      ordenes
+        .filter((o) => porOrden.has(o.id))
+        .map(async (o) => {
+          const c = porOrden.get(o.id)!;
+          const fotos = await this.evidenciaDeChecklist(c.id);
+          return {
+            serviceOrderId: o.id,
+            folio: o.folio,
+            recibidaEl: o.receivedAt ?? o.createdAt,
+            kmIn: c.kmIn,
+            damageDescription: c.damageDescription,
+            fotos: fotos.map((f) => ({
+              ...f,
+              nombre: nombres.get(f.specCode ?? '') ?? f.specCode,
+            })),
+          };
+        }),
+    );
+    // Una recepción sin una sola foto no aporta nada a la consulta.
+    return visitas.filter((v) => v.fotos.length);
+  }
+
+  /** Evidencia de todas las unidades de un cliente, agrupada por unidad. */
+  async evidenciaDeCliente(tenantId: string, clientId: string) {
+    const vehiculos = await this.vehicleRepo.find({
+      where: { tenantId, ownerId: clientId },
+    });
+    const grupos = await Promise.all(
+      vehiculos.map(async (v) => ({
+        vehicleId: v.id,
+        descripcion: [v.make, v.model, v.year].filter(Boolean).join(' '),
+        plate: v.plate,
+        visitas: await this.evidenciaDeVehiculo(tenantId, v.id),
+      })),
+    );
+    return grupos.filter((g) => g.visitas.length);
+  }
+
+  /**
+   * Evidencia para el cliente, por la liga de seguimiento que ya recibe.
+   *
+   * Va por el token de la orden y no por su identificador: el token es lo
+   * único que el cliente tiene, y limita lo que puede pedir a su propia
+   * unidad. Solo se entrega la recepción de esa orden, nunca su historial.
+   */
+  async evidenciaPublica(trackingToken: string) {
+    const so = await this.soRepo.findOne({ where: { trackingToken } });
+    if (!so) throw new NotFoundException('Orden no encontrada');
+    return this.evidenciaDeOrden(so.tenantId, so.id);
   }
 
   /** Guarda o actualiza los datos de recepción de la unidad. */

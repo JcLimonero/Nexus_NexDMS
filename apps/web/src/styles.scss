@@ -16,6 +16,10 @@
 /* Skin Nexus Q Tech — identidad de marca sobre la estructura del template */
 @import "styles/nexus-theme";
 
+/* Daños marcados sobre una foto: se pintan en cuatro pantallas y tienen que
+   verse iguales en todas, así que la paleta y el marcador viven aquí. */
+@import "styles/danos";
+
 /* Sidebar: usuario fijo en la parte inferior */
 .page-wrapper .page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
   display: flex !important;

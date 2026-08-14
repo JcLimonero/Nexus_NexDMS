@@ -62,6 +62,11 @@ export interface Reception {
     reportedFault: string;
     kmIn: number;
     receptionQuotationId: string | null;
+    /** Token de la liga pública de seguimiento del cliente. */
+    trackingToken: string | null;
+    clientName: string | null;
+    clientPhone: string | null;
+    advisorName: string | null;
   };
   checklist: {
     kmIn: number;

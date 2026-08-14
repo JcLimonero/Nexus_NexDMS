@@ -47,7 +47,7 @@ export class PublicPortalService {
   async getTracking(token: string) {
     const so = await this.soRepo.findOne({
       where: { trackingToken: token },
-      relations: ['vehicle', 'branch', 'owner'],
+      relations: ['vehicle', 'branch', 'owner', 'user'],
     });
     if (!so) throw new NotFoundException('Orden no encontrada');
 
@@ -86,6 +86,26 @@ export class PublicPortalService {
         ? {
             name: so.branch.name,
             phone: so.branch.aftersalesPhone ?? so.branch.counterPhone ?? null,
+          }
+        : null,
+      /*
+       * Quién atiende su unidad.
+       *
+       * Es `user` y no el asesor de la cita porque `user` es quien la recibió,
+       * es decir con quien el cliente habló en el mostrador; si la cita se
+       * repartió a otro y al final la tomó éste, el cliente busca a éste.
+       *
+       * El teléfono y el correo salen solo si están capturados en la ficha del
+       * empleado. En un taller ahí va la extensión o el móvil de trabajo, no
+       * el personal; si está vacío queda el de la sucursal, que siempre está.
+       */
+      advisor: so.user
+        ? {
+            name: [so.user.firstName, so.user.lastName]
+              .filter(Boolean)
+              .join(' '),
+            phone: so.user.phone ?? null,
+            email: so.user.email ?? null,
           }
         : null,
       steps,

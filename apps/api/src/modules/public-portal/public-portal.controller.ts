@@ -23,6 +23,22 @@ export class PublicPortalController {
     return this.publicPortalService.getTracking(token);
   }
 
+  /**
+   * Cómo llegó su unidad: fotos de recepción y daños marcados.
+   *
+   * Es la misma evidencia que ve el taller, y es del cliente. Se entrega solo
+   * la de ESTA orden —nunca el historial de la unidad, que puede ser de un
+   * dueño anterior— y por el token, que es lo único que él tiene.
+   *
+   * Las ligas de las fotos caducan en una hora, así que reenviar la dirección
+   * de una imagen a un tercero no le sirve de mucho pasado ese rato.
+   */
+  @Get('tracking/:token/evidencia')
+  @Throttle({ short: { limit: 20, ttl: 60000 } })
+  getEvidencia(@Param('token', ParseUUIDPipe) token: string) {
+    return this.receptionService.evidenciaPublica(token);
+  }
+
   @Get('surveys/:token')
   @Throttle({ short: { limit: 20, ttl: 60000 } })
   getSurvey(@Param('token', ParseUUIDPipe) token: string) {

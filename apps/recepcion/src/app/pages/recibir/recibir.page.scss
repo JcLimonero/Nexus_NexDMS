@@ -574,3 +574,33 @@ input[type="range"] {
   gap: 8px;
   margin-top: 12px;
 }
+
+/* ── Liga de seguimiento del cliente ──────────────── */
+.liga-cliente {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.liga-cliente button {
+  /* Dedo, no ratón: se toca de pie y a veces con guantes. */
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.liga-cliente .wa {
+  border: none;
+  background: #128c7e;
+  color: #fff;
+}
+
+.liga-cliente .liga-sec {
+  border: 1px solid rgb(255 255 255 / 35%);
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+}

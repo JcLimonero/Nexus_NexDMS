@@ -7,11 +7,12 @@ import { ClientesService } from "../clientes.service";
 import { ClientTypesService } from "../client-types.service";
 import { ClientTypeOption } from "../models/client-type.model";
 import { ClientDetail } from "../models/client.model";
+import { EvidenciaRecepcion } from "../../../shared/components/evidencia-recepcion/evidencia-recepcion";
 
 @Component({
   selector: "app-cliente-detail",
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, EvidenciaRecepcion],
   templateUrl: "./cliente-detail.html",
   styleUrls: ["./cliente-detail.scss"],
 })

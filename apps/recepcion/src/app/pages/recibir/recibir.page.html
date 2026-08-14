@@ -9,6 +9,20 @@
         <div class="sub">{{ r.serviceOrder.reportedFault }}</div>
       }
     </div>
+
+    <!-- La liga se entrega aquí, con el cliente todavía en el mostrador: es
+         cuando le importa ver cómo llegó su unidad y cuando trae el teléfono
+         en la mano. -->
+    @if (ligaCliente()) {
+      <div class="liga-cliente">
+        <button type="button" class="wa" (click)="enviarLigaPorWhatsApp()">
+          WhatsApp
+        </button>
+        <button type="button" class="liga-sec" (click)="copiarLigaCliente()">
+          Copiar liga
+        </button>
+      </div>
+    }
   </header>
 
   @if (aviso(); as a) {

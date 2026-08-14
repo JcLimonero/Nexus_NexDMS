@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 
 import { ClientesService } from "../clientes.service";
+import { EvidenciaRecepcion } from "../../../shared/components/evidencia-recepcion/evidencia-recepcion";
 import { Client } from "../models/client.model";
 import {
   FichaVehiculo,
@@ -24,7 +25,7 @@ import {
 @Component({
   selector: "app-relaciones",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, EvidenciaRecepcion],
   templateUrl: "./relaciones.html",
   styleUrls: ["./relaciones.scss"],
 })

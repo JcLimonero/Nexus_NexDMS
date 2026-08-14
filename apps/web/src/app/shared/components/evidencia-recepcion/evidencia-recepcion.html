@@ -1,0 +1,137 @@
+@if (cargando()) {
+  <p class="vacio">Cargando la evidencia…</p>
+} @else if (hayAlgo()) {
+  <div class="evidencia" [class.en-tarjeta]="!!titulo()">
+    @if (titulo()) {
+      <div class="evidencia-titulo">
+        <h6>{{ titulo() }}</h6>
+        @if (subtitulo()) { <span>{{ subtitulo() }}</span> }
+      </div>
+    }
+
+    <!-- Por cliente: cada unidad con sus visitas. Por orden o por unidad, las
+         visitas van sueltas y este bloque no se dibuja. -->
+    @for (u of unidades(); track u.vehicleId) {
+      <div class="unidad">
+        <div class="unidad-nombre">
+          {{ u.descripcion }}
+          @if (u.plate) { <span class="placa">{{ u.plate }}</span> }
+        </div>
+        <ng-container
+          *ngTemplateOutlet="listaVisitas; context: { $implicit: u.visitas }"
+        />
+      </div>
+    }
+
+    <ng-container
+      *ngTemplateOutlet="listaVisitas; context: { $implicit: visitas() }"
+    />
+  </div>
+}
+
+<ng-template #listaVisitas let-lista>
+  @for (v of lista; track v.serviceOrderId) {
+    <section class="visita">
+      <header class="visita-cabecera">
+        <strong>{{ v.folio }}</strong>
+        @if (v.recibidaEl) {
+          <span>{{ v.recibidaEl | date: "dd/MM/yyyy HH:mm" }}</span>
+        }
+        @if (v.kmIn !== null) {
+          <span>{{ v.kmIn | number }} km</span>
+        }
+      </header>
+
+      @if (v.damageDescription) {
+        <p class="danos-texto">{{ v.damageDescription }}</p>
+      }
+
+      <div class="fotos">
+        @for (f of v.fotos; track f.id) {
+          <figure class="foto">
+            <figcaption>
+              {{ f.nombre }}
+              @if (f.marks.length) {
+                <span class="cuantas">{{ f.marks.length }} daño(s)</span>
+              }
+            </figcaption>
+
+            <!-- El globo va FUERA del lienzo: el lienzo recorta para que un
+                 área pegada al borde no se salga de la foto, y ese mismo
+                 recorte cortaría el detalle de una marca alta. El marco mide
+                 exactamente lo mismo, así que los porcentajes siguen valiendo. -->
+            <div class="lienzo-marco">
+              <div class="lienzo">
+              @if (f.url && f.mediaType === "VIDEO") {
+                <video [src]="f.url" controls playsinline></video>
+              } @else if (f.url) {
+                <img [src]="f.url" [alt]="f.nombre || ''" loading="lazy" />
+              } @else {
+                <div class="sin-imagen">No se pudo cargar la imagen</div>
+              }
+
+              @for (m of f.marks; track m.id; let i = $index) {
+                <!-- Botón y no adorno: aquí no se edita, pero tocar una marca
+                     tiene que decir qué es sin obligar a bajar a la lista. -->
+                <button
+                  type="button"
+                  class="marca"
+                  [class.area]="m.shape === 'CIRCLE'"
+                  [class.resaltada]="marcaAbierta() === m.id"
+                  [attr.data-tipo]="m.type"
+                  [style.left.%]="m.x * 100"
+                  [style.top.%]="m.y * 100"
+                  [style.width.%]="m.shape === 'CIRCLE' ? m.radius! * 200 : null"
+                  [attr.aria-label]="
+                    etiqueta(m.type) + (m.note ? ': ' + m.note : '')
+                  "
+                  (click)="alternarMarca(m)"
+                >
+                  <b class="marca-num">{{ i + 1 }}</b>
+                </button>
+
+              }
+              </div>
+
+              @for (m of f.marks; track m.id; let i = $index) {
+                @if (marcaAbierta() === m.id) {
+                  <span
+                    class="globo"
+                    [style.left.%]="m.x * 100"
+                    [style.top.%]="m.y * 100"
+                  >
+                    <b>{{ i + 1 }}. {{ etiqueta(m.type) }}</b>
+                    {{ m.note || "Sin nota" }}
+                  </span>
+                }
+              }
+            </div>
+
+            @if (f.marks.length) {
+              <ul class="danos">
+                @for (m of f.marks; track m.id; let i = $index) {
+                  <li
+                    [class.resaltada]="marcaAbierta() === m.id"
+                    (mouseenter)="marcaAbierta.set(m.id)"
+                    (mouseleave)="marcaAbierta.set(null)"
+                  >
+                    <span class="marca-num en-lista" [attr.data-tipo]="m.type">
+                      {{ i + 1 }}
+                    </span>
+                    <span class="tipo-marca" [attr.data-tipo]="m.type">
+                      {{ etiqueta(m.type) }}
+                    </span>
+                    <span class="forma">
+                      {{ m.shape === "CIRCLE" ? "Área" : "Punto" }}
+                    </span>
+                    <span class="nota">{{ m.note || "Sin nota" }}</span>
+                  </li>
+                }
+              </ul>
+            }
+          </figure>
+        }
+      </div>
+    </section>
+  }
+</ng-template>

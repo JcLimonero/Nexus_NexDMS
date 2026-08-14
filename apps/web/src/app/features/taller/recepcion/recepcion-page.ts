@@ -9,6 +9,7 @@ import {
   DatosUnidad,
   KitResuelto,
   MARK_TYPES,
+  PhotoMark,
   TIPOS_UNIDAD,
   Reception,
   ReceptionPhoto,
@@ -17,6 +18,13 @@ import {
 } from "./recepcion.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { FeatherIcons } from "../../../shared/components/feather-icons/feather-icons";
+import {
+  copiarAlPortapapeles,
+  ligaDeSeguimiento,
+  ligaWhatsApp,
+  mensajeDeSeguimiento,
+  telefonoParaWhatsApp,
+} from "../../../shared/utils/liga-cliente";
 
 interface LineaCotizacion {
   description: string;
@@ -119,6 +127,8 @@ export class RecepcionPage implements OnInit {
   herramienta = signal<MarkShape>("POINT");
   /** Marca que se resalta en la foto y en la lista a la vez. */
   marcaResaltada = signal<string | null>(null);
+  /** Marca cuyo detalle está desplegado sobre la foto; null = ninguna. */
+  detalleAbierto = signal<string | null>(null);
   marcaPendiente = signal<MarcaPendiente | null>(null);
   marcaTipo = "SCRATCH";
   marcaNota = "";
@@ -238,6 +248,53 @@ export class RecepcionPage implements OnInit {
     });
   }
 
+  // ─── Liga de seguimiento para el cliente ─────────
+
+  /** Dirección pública de la orden; vacía si aún no tiene token. */
+  ligaCliente = computed(() => {
+    const t = this.recepcion()?.serviceOrder.trackingToken;
+    return t ? ligaDeSeguimiento(t) : "";
+  });
+
+  private mensajeCliente(): string {
+    const so = this.recepcion()!.serviceOrder;
+    return mensajeDeSeguimiento(
+      so.folio,
+      this.ligaCliente(),
+      so.clientName,
+      so.advisorName,
+    );
+  }
+
+  abrirLigaCliente(): void {
+    const liga = this.ligaCliente();
+    if (liga) window.open(liga, "_blank", "noopener");
+  }
+
+  async copiarLigaCliente(): Promise<void> {
+    const liga = this.ligaCliente();
+    if (!liga) return;
+    if (await copiarAlPortapapeles(liga)) {
+      this.toastr.success("Liga copiada");
+    } else {
+      // Sin portapapeles no se deja al asesor sin salida: se le enseña la
+      // liga para que la copie a mano.
+      this.toastr.info(liga, "Copia la liga", { disableTimeOut: true });
+    }
+  }
+
+  enviarLigaPorWhatsApp(): void {
+    const so = this.recepcion()?.serviceOrder;
+    if (!so || !this.ligaCliente()) return;
+    const tel = telefonoParaWhatsApp(so.clientPhone);
+    if (!tel) {
+      this.toastr.info(
+        "El cliente no tiene teléfono capturado; elige el contacto en WhatsApp",
+      );
+    }
+    window.open(ligaWhatsApp(tel, this.mensajeCliente()), "_blank", "noopener");
+  }
+
   cerrarRecepcion(): void {
     this.recepcion.set(null);
     this.fotoActiva.set(null);
@@ -289,6 +346,7 @@ export class RecepcionPage implements OnInit {
     this.fotoActiva.set(foto);
     this.marcaPendiente.set(null);
     this.marcaResaltada.set(null);
+    this.detalleAbierto.set(null);
     this.modo.set("ver");
   }
 
@@ -370,6 +428,17 @@ export class RecepcionPage implements OnInit {
   onPointerUp(): void {
     this.arrastrando = false;
     this.cajaFoto = null;
+  }
+
+  /**
+   * Un toque sobre la marca abre su detalle; otro lo cierra.
+   *
+   * Se corta la propagación para que el toque no llegue al lienzo: en modo
+   * marcar, consultar una marca dejaría además una marca nueva encima.
+   */
+  alternarDetalle(m: PhotoMark, ev: Event): void {
+    ev.stopPropagation();
+    this.detalleAbierto.update((abierta) => (abierta === m.id ? null : m.id));
   }
 
   confirmarMarca(): void {

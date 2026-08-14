@@ -189,6 +189,16 @@
           </div>
         </div>
       </div>
+
+      <!-- Cómo llegaron sus unidades, agrupado por unidad. Sirve para atender
+           un reclamo sin saber de antemano de qué orden hablaba el cliente. -->
+      <div class="col-12">
+        <app-evidencia-recepcion
+          [clientId]="c.id"
+          titulo="Cómo llegaron sus unidades"
+          subtitulo="Fotos y daños registrados al recibirlas"
+        />
+      </div>
     </div>
   }
 </div>

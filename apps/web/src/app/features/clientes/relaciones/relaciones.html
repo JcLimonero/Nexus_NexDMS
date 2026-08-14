@@ -261,6 +261,17 @@
                   </table>
                 </div>
               }
+
+              <!-- Cómo llegó en cada visita. Aquí es donde se resuelve la
+                   discusión de verdad: si el golpe ya venía de la vez
+                   anterior, se ve sin abrir orden por orden. -->
+              <div class="mt-4">
+                <app-evidencia-recepcion
+                  [vehicleId]="ficha()!.vehiculo.id"
+                  titulo="Cómo llegó en cada visita"
+                  subtitulo="Fotos y daños registrados al recibirla"
+                />
+              </div>
             </div>
           </div>
         }

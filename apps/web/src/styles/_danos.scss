@@ -1,0 +1,105 @@
+/**
+ * Paleta de los daños marcados sobre una foto de recepción.
+ *
+ * Vive aquí y no en cada pantalla porque el mismo daño se pinta en cuatro
+ * sitios —la recepción, la orden de servicio, la ficha del vehículo y el
+ * expediente del cliente— y si el rojo del "golpe" no fuera el mismo en todos,
+ * el color dejaría de significar nada.
+ *
+ * Seis tonos separados en el círculo cromático, saturados para que aguanten
+ * sobre una foto de taller: mal iluminada y con la unidad sucia. El color
+ * nunca va solo, cada marca lleva además su número, porque dos golpes
+ * comparten color y porque hay quien no distingue el ámbar del verde.
+ *
+ * Solo quien lleva el tipo define el color. Si esto alcanzara también al
+ * número de dentro de un área, le fijaría su propio `--color-marca` y dejaría
+ * de heredar el de su marca: todas las áreas saldrían del mismo tono.
+ */
+.marca,
+.marca-num.en-lista {
+  --color-marca: var(--danger);
+
+  &[data-tipo="SCRATCH"] { --color-marca: #c2410c; }
+  &[data-tipo="DENT"]    { --color-marca: #b3261e; }
+  &[data-tipo="BROKEN"]  { --color-marca: #9d174d; }
+  &[data-tipo="MISSING"] { --color-marca: #6d28d9; }
+  &[data-tipo="WEAR"]    { --color-marca: #0f766e; }
+  &[data-tipo="OTHER"]   { --color-marca: var(--navy-600); }
+}
+
+/* ── Marcador sobre la foto ──────────────────────────
+   Se comparte igual que la paleta: la marca tiene que caer en el mismo sitio
+   y con el mismo tamaño se mire donde se mire, o dos pantallas contarían
+   historias distintas del mismo daño. La posición llega en porcentajes desde
+   la plantilla; aquí solo va la forma. */
+.marca {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-pill);
+  background: var(--color-marca);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgb(0 0 0 / 45%);
+  display: grid;
+  place-items: center;
+
+  .marca-num {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+  }
+}
+
+/* Un área: círculo hueco, para no tapar el daño que señala. `aspect-ratio` lo
+   mantiene redondo porque el ancho ya viene medido sobre el ancho de la foto;
+   darle un alto en porcentaje lo volvería un óvalo distinto en cada pantalla. */
+.marca.area {
+  height: auto;
+  aspect-ratio: 1;
+  background: color-mix(in srgb, var(--color-marca) 14%, transparent);
+  border: 2px solid var(--color-marca);
+  box-shadow: 0 0 0 1px rgb(255 255 255 / 70%);
+  place-items: start;
+
+  .marca-num {
+    /* El número se sale al borde para dejar ver lo que el círculo encierra. */
+    margin: -10px 0 0 -10px;
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    background: var(--color-marca);
+    border: 2px solid #fff;
+    border-radius: var(--radius-pill);
+  }
+}
+
+.marca.resaltada {
+  z-index: 2;
+  box-shadow:
+    0 0 0 3px #fff,
+    0 0 0 6px var(--color-marca);
+}
+
+/* El mismo número que lleva el marcador sobre la foto: es lo que permite
+   decir "el 3" y que dos personas miren lo mismo. */
+.marca-num.en-lista {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--color-marca);
+  color: #fff;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tipo-marca {
+  font-weight: 600;
+  color: var(--color-marca);
+}

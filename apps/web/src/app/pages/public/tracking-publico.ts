@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute } from "@angular/router";
+import { EvidenciaRecepcion } from "../../shared/components/evidencia-recepcion/evidencia-recepcion";
 
 interface TrackingData {
   folio: string;
@@ -13,6 +14,8 @@ interface TrackingData {
   deliveredAt: string | null;
   vehicle: { brand: string | null; model: string | null; plate: string | null } | null;
   branch: { name: string; phone: string | null } | null;
+  /** Quién recibió la unidad: a quién le pregunta el cliente. */
+  advisor: { name: string; phone: string | null; email: string | null } | null;
   steps: { status: string; label: string; done: boolean; current: boolean }[];
   updates: { message: string; createdAt: string }[];
 }
@@ -21,7 +24,7 @@ interface TrackingData {
 @Component({
   selector: "app-tracking-publico",
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, EvidenciaRecepcion],
   templateUrl: "./tracking-publico.html",
   styleUrls: ["./public-pages.scss"],
 })
@@ -32,9 +35,12 @@ export class TrackingPublico implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   data = signal<TrackingData | null>(null);
+  /** El mismo token de la liga, para pedir la evidencia de su unidad. */
+  token = signal<string | null>(null);
 
   ngOnInit(): void {
     const token = this.route.snapshot.paramMap.get("token");
+    this.token.set(token);
     this.http.get<TrackingData>(`/api/v1/public/tracking/${token}`).subscribe({
       next: (d) => {
         this.data.set(d);

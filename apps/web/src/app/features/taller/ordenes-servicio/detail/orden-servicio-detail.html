@@ -181,6 +181,17 @@
           [serviceOrderId]="o.id"
           [sustitucionActiva]="!!o.substituteUnitId && !o.substituteReturnedAt"
         />
+
+        <!-- Cómo llegó la unidad. Es lo que se mira al entregarla, o cuando
+             el cliente dice que ese golpe no venía. Si la orden se abrió en
+             mostrador, sin recepción guiada, no se dibuja nada. -->
+        <div class="mt-4">
+          <app-evidencia-recepcion
+            [serviceOrderId]="o.id"
+            titulo="Cómo llegó la unidad"
+            subtitulo="Fotos y daños registrados al recibirla"
+          />
+        </div>
       }
     </div>
   </div>

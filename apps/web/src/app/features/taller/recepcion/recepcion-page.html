@@ -160,9 +160,40 @@
             <h5>Recibiendo {{ r.serviceOrder.folio }}</h5>
             <span>{{ r.serviceOrder.reportedFault }}</span>
           </div>
-          <button class="btn btn-outline-secondary" (click)="cerrarRecepcion()">
-            Volver a la agenda
-          </button>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <!-- La liga del cliente se entrega aquí, con la unidad recién
+                 recibida y el cliente todavía en el mostrador: es cuando le
+                 importa ver cómo llegó y cuando tiene el teléfono en la mano. -->
+            @if (ligaCliente()) {
+              <div class="liga-cliente">
+                <span class="liga-rotulo">Liga del cliente</span>
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  (click)="enviarLigaPorWhatsApp()"
+                >
+                  Enviar por WhatsApp
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-light btn-sm"
+                  (click)="copiarLigaCliente()"
+                >
+                  Copiar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-light btn-sm"
+                  (click)="abrirLigaCliente()"
+                >
+                  Abrir
+                </button>
+              </div>
+            }
+            <button class="btn btn-outline-secondary" (click)="cerrarRecepcion()">
+              Volver a la agenda
+            </button>
+          </div>
         </div>
       </div>
 
@@ -317,6 +348,11 @@
             </div>
           </div>
           <div class="card-body">
+            <!-- El detalle de la marca va fuera del recuadro: el recuadro
+                 recorta para que un área pegada al borde no se salga de la
+                 foto, y ese mismo recorte cortaría el globo de una marca
+                 alta. El marco mide lo mismo, así que los porcentajes valen. -->
+            <div class="foto-marco">
             <div
               class="foto-wrap"
               [class.con-media]="!!f.url"
@@ -349,9 +385,11 @@
                   [title]="etiquetaMarca(m.type) + (m.note ? ': ' + m.note : '')"
                   (pointerenter)="marcaResaltada.set(m.id)"
                   (pointerleave)="marcaResaltada.set(null)"
+                  (click)="alternarDetalle(m, $event)"
                 >
                   <b class="marca-num">{{ i + 1 }}</b>
                 </span>
+
               }
 
               @if (marcaPendiente(); as p) {
@@ -366,6 +404,22 @@
                   <b class="marca-num">{{ f.marks.length + 1 }}</b>
                 </span>
               }
+            </div>
+
+            <!-- Detalle de la marca tocada: hay que saber qué es sin bajar la
+                 vista a la lista y volver a subirla contando números. -->
+            @for (m of f.marks; track m.id; let i = $index) {
+              @if (detalleAbierto() === m.id) {
+                <span
+                  class="globo-marca"
+                  [style.left.%]="m.x * 100"
+                  [style.top.%]="m.y * 100"
+                >
+                  <b>{{ i + 1 }}. {{ etiquetaMarca(m.type) }}</b>
+                  {{ m.note || "Sin nota" }}
+                </span>
+              }
+            }
             </div>
 
             @if (marcaPendiente(); as p) {

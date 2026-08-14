@@ -12,6 +12,13 @@ import {
   ServicioPredefinido,
   TIPOS_UNIDAD,
 } from "../../core/recepcion-flujo.service";
+import {
+  copiarAlPortapapeles,
+  ligaDeSeguimiento,
+  ligaWhatsApp,
+  mensajeDeSeguimiento,
+  telefonoParaWhatsApp,
+} from "../../core/liga-cliente";
 
 interface LineaCotizacion {
   description: string;
@@ -288,6 +295,56 @@ export class RecibirPage implements OnInit {
       },
     });
     input.value = "";
+  }
+
+  // ─── Liga de seguimiento para el cliente ─────────
+
+  /** Dirección pública de la orden; vacía si aún no tiene token. */
+  ligaCliente = computed(() => {
+    const t = this.recepcion()?.serviceOrder.trackingToken;
+    return t ? ligaDeSeguimiento(t) : "";
+  });
+
+  abrirLigaCliente(): void {
+    const liga = this.ligaCliente();
+    if (liga) window.open(liga, "_blank", "noopener");
+  }
+
+  async copiarLigaCliente(): Promise<void> {
+    const liga = this.ligaCliente();
+    if (!liga) return;
+    if (await copiarAlPortapapeles(liga)) {
+      this.avisar("Liga copiada", "ok");
+    } else {
+      // Sin portapapeles no se deja al asesor sin salida: se le enseña la
+      // liga para que la copie a mano.
+      this.avisar(liga, "ok");
+    }
+  }
+
+  enviarLigaPorWhatsApp(): void {
+    const so = this.recepcion()?.serviceOrder;
+    if (!so || !this.ligaCliente()) return;
+    const tel = telefonoParaWhatsApp(so.clientPhone);
+    if (!tel) {
+      this.avisar(
+        "El cliente no tiene teléfono capturado; elige el contacto en WhatsApp",
+        "ok",
+      );
+    }
+    window.open(
+      ligaWhatsApp(
+        tel,
+        mensajeDeSeguimiento(
+          so.folio,
+          this.ligaCliente(),
+          so.clientName,
+          so.advisorName,
+        ),
+      ),
+      "_blank",
+      "noopener",
+    );
   }
 
   abrirMarcado(foto: ReceptionPhoto): void {

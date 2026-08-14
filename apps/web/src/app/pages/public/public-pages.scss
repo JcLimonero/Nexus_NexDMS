@@ -336,3 +336,39 @@ h2 {
     flex: 1;
   }
 }
+
+/* ── Asesor que atiende la unidad ──────────────────
+   El cliente pregunta por una persona, no por un conmutador: el nombre va
+   primero y el contacto debajo, tocable desde el teléfono. */
+.asesor {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--bg, #f8fafc);
+}
+
+.asesor-rotulo {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary, #64748b);
+}
+
+.asesor strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.asesor-contacto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.asesor-contacto .via {
+  color: var(--text-muted, #94a3b8);
+  font-size: 12px;
+}

@@ -115,6 +115,67 @@ export class ReceptionController {
     return this.reception.recibirCita(user, appointmentId, datos);
   }
 
+  // ─── Consulta de la evidencia ────────────────────
+  //
+  // Van antes de `:serviceOrderId` porque Nest resuelve las rutas por orden
+  // de declaración: debajo, `evidencia` se tomaría por el id de una orden y
+  // reventaría en el ParseUUIDPipe.
+  //
+  // El mecánico entra aquí y no al resto de la recepción: necesita ver cómo
+  // llegó la unidad antes de tocarla —para que no le achaquen un golpe que
+  // ya venía— pero no captura ni cotiza.
+
+  /** Fotos y marcas de una recepción, en solo lectura. */
+  @Get('evidencia/orden/:serviceOrderId')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'RECEPTIONIST',
+    'MECHANIC',
+  )
+  evidenciaOrden(
+    @CurrentUser() user: UserPayload,
+    @Param('serviceOrderId', ParseUUIDPipe) id: string,
+  ) {
+    return this.reception.evidenciaDeOrden(user.tenantId, id);
+  }
+
+  /** Cómo llegó esta unidad en cada visita, de la más reciente a la más vieja. */
+  @Get('evidencia/vehiculo/:vehicleId')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'RECEPTIONIST',
+    'MECHANIC',
+  )
+  evidenciaVehiculo(
+    @CurrentUser() user: UserPayload,
+    @Param('vehicleId', ParseUUIDPipe) id: string,
+  ) {
+    return this.reception.evidenciaDeVehiculo(user.tenantId, id);
+  }
+
+  /** Evidencia de todas las unidades de un cliente, agrupada por unidad. */
+  @Get('evidencia/cliente/:clientId')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'RECEPTIONIST',
+    'MECHANIC',
+  )
+  evidenciaCliente(
+    @CurrentUser() user: UserPayload,
+    @Param('clientId', ParseUUIDPipe) id: string,
+  ) {
+    return this.reception.evidenciaDeCliente(user.tenantId, id);
+  }
+
   /** Estado completo de la recepción de una orden. */
   @Get(':serviceOrderId')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
