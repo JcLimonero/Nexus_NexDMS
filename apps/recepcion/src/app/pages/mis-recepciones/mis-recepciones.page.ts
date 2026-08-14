@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 
+import { Router } from "@angular/router";
+
 import { AuthService } from "../../core/auth.service";
 import {
   CitaDelDia,
@@ -26,6 +28,7 @@ import {
 })
 export class MisRecepcionesPage implements OnInit {
   private api = inject(RecepcionApiService);
+  private router = inject(Router);
   readonly auth = inject(AuthService);
 
   cargando = signal(true);
@@ -106,15 +109,13 @@ export class MisRecepcionesPage implements OnInit {
       : c.vehicle.label;
   }
 
-  /**
-   * El flujo de recepción vive en el DMS; el portal lleva ahí con la orden ya
-   * abierta en vez de duplicar la pantalla y arriesgar que las dos se separen.
-   */
+  /** El flujo completo vive en este mismo portal. */
   abrir(c: CitaDelDia): void {
-    const destino = c.serviceOrderId
-      ? `/reception?orden=${c.serviceOrderId}`
-      : `/reception?cita=${c.id}`;
-    location.href = `${location.protocol}//${location.hostname}:4200${destino}`;
+    if (c.serviceOrderId) {
+      void this.router.navigate(["/recibir", c.serviceOrderId]);
+    } else {
+      void this.router.navigate(["/recibir"], { queryParams: { cita: c.id } });
+    }
   }
 
   pendientes(): number {

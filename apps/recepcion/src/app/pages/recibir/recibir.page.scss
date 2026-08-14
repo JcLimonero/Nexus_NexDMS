@@ -1,0 +1,406 @@
+/**
+ * Recepción en tablet: el asesor la usa de pie, con la unidad delante y una
+ * mano ocupada. Una columna, objetivos grandes y nada que obligue a hacer zoom.
+ */
+.pantalla {
+  min-height: 100dvh;
+  background: #f1f5f9;
+  padding-bottom: 32px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: linear-gradient(to bottom, #203848, #16283a);
+  color: #fff;
+
+  .titulo {
+    font-weight: 600;
+  }
+  .sub {
+    font-size: 12px;
+    opacity: 0.75;
+  }
+}
+
+.volver {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.aviso {
+  margin: 12px 16px 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+
+  &[data-tono="ok"] {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  &[data-tono="error"] {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}
+
+.cargando {
+  margin: 24px 16px;
+  color: #64748b;
+}
+
+/* Progreso de los tres pasos */
+.pasos {
+  display: flex;
+  gap: 8px;
+  list-style: none;
+  margin: 16px;
+  padding: 0;
+
+  li {
+    flex: 1;
+    padding: 8px;
+    text-align: center;
+    font-size: 13px;
+    border-radius: 8px;
+    background: #e2e8f0;
+    color: #64748b;
+
+    &.hecho {
+      background: #d1fae5;
+      color: #047857;
+    }
+    &.activo {
+      background: #203848;
+      color: #fff;
+      font-weight: 600;
+    }
+  }
+}
+
+.tarjeta {
+  margin: 0 16px 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  h2 {
+    margin: 0 0 4px;
+    font-size: 17px;
+    color: #0f172a;
+  }
+}
+
+.pista {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #64748b;
+}
+
+/* La separación la pone la rejilla, nunca el control. */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #475569;
+
+  &.ancho {
+    margin-bottom: 12px;
+  }
+}
+
+input,
+select,
+textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #0f172a;
+  background: #fff;
+  font-family: inherit;
+}
+
+input[type="range"] {
+  min-height: 32px;
+  padding: 0;
+}
+
+.inventario {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.check {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+
+  input {
+    min-height: auto;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.principal,
+.secundario {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.principal {
+  border: none;
+  background: #105078;
+  color: #fff;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.secundario {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-weight: 400;
+}
+
+/* ── Fotos ── */
+.fotos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.foto {
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+
+  &.lista {
+    border-color: #6ee7b7;
+    background: #f0fdf4;
+  }
+}
+
+.foto-nombre {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
+.obligatoria {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.foto-pista {
+  font-size: 12px;
+  color: #64748b;
+  margin-bottom: 8px;
+}
+
+.capturar,
+.marcar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  border: 1px dashed #cbd5e1;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 14px;
+  color: #0f172a;
+  cursor: pointer;
+}
+
+.marcar {
+  border-style: solid;
+  border-color: #6ee7b7;
+  background: #fff;
+}
+
+.faltan {
+  margin: 12px 0 0;
+  color: #b45309;
+  font-size: 13px;
+}
+
+/* ── Cotización ── */
+.servicios {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.servicio {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  text-align: left;
+  font-size: 13px;
+  color: #64748b;
+  cursor: pointer;
+
+  strong {
+    color: #0f172a;
+    font-size: 14px;
+  }
+}
+
+.linea {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+
+  .desc {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .cant {
+    flex: 0 0 70px;
+  }
+  .precio {
+    flex: 0 0 110px;
+  }
+}
+
+.quitar {
+  flex: 0 0 44px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 18px;
+  color: #b91c1c;
+}
+
+.total {
+  margin-top: 12px;
+  text-align: right;
+  font-size: 18px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Marcado sobre la foto ── */
+.fondo {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 55%);
+  z-index: 40;
+}
+
+.marcador {
+  position: fixed;
+  inset: 16px;
+  z-index: 50;
+  overflow-y: auto;
+  padding: 16px;
+  background: #fff;
+  border-radius: 12px;
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+}
+
+.cerrar {
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 8px;
+  background: #f1f5f9;
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* El lienzo no muestra la imagen: sin credenciales de almacenamiento no se
+   puede descargar, y el marcado depende de la posición, no de verla. */
+.lienzo {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.lienzo-fondo {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #94a3b8;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.marca {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 28px;
+  height: 28px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: #dc2626;
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+
+  &.pendiente {
+    background: #2563eb;
+  }
+}
+
+.marca-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}

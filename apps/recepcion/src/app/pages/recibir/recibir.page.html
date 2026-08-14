@@ -1,0 +1,279 @@
+<div class="pantalla">
+  <header class="cabecera">
+    <button type="button" class="volver" (click)="volver()" aria-label="Volver">‹</button>
+    <div>
+      <div class="titulo">
+        {{ recepcion()?.serviceOrder?.folio || "Recepción de unidad" }}
+      </div>
+      @if (recepcion(); as r) {
+        <div class="sub">{{ r.serviceOrder.reportedFault }}</div>
+      }
+    </div>
+  </header>
+
+  @if (aviso(); as a) {
+    <p class="aviso" [attr.data-tono]="a.tono">{{ a.texto }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="cargando">Cargando…</p>
+  } @else {
+    <!-- Progreso: el asesor sabe cuánto le falta con la unidad delante -->
+    @if (paso() !== "unidad") {
+      <ol class="pasos">
+        <li [class.activo]="paso() === 'estado'" [class.hecho]="paso() !== 'estado'">
+          Estado
+        </li>
+        <li
+          [class.activo]="paso() === 'fotos'"
+          [class.hecho]="paso() === 'cotizacion'"
+        >
+          Fotos
+        </li>
+        <li [class.activo]="paso() === 'cotizacion'">Cotización</li>
+      </ol>
+    }
+
+    <!-- ═══ Alta de la unidad (citas del bot) ═══ -->
+    @if (paso() === "unidad") {
+      <section class="tarjeta">
+        <h2>Datos de la unidad</h2>
+        <p class="pista">
+          Esta cita se agendó sin unidad. Captura lo que llegó al taller.
+        </p>
+        <div class="rejilla">
+          <label>
+            <span>Tipo</span>
+            <select [(ngModel)]="unidad.vehicleType">
+              @for (t of tiposUnidad; track t.value) {
+                <option [value]="t.value">{{ t.label }}</option>
+              }
+            </select>
+          </label>
+          <label><span>Marca</span><input [(ngModel)]="unidad.make" /></label>
+          <label><span>Modelo</span><input [(ngModel)]="unidad.model" /></label>
+          <label>
+            <span>Año</span>
+            <input type="number" [(ngModel)]="unidad.year" />
+          </label>
+          <label><span>Placa</span><input [(ngModel)]="unidad.plate" /></label>
+          <label><span>Color</span><input [(ngModel)]="unidad.color" /></label>
+          <label>
+            <span>Kilometraje</span>
+            <input type="number" [(ngModel)]="unidad.mileage" />
+          </label>
+          <label><span>Número de serie</span><input [(ngModel)]="unidad.vin" /></label>
+        </div>
+        <button class="principal" [disabled]="guardando()" (click)="altaUnidad()">
+          Dar de alta y recibir
+        </button>
+      </section>
+    }
+
+    <!-- ═══ Estado de la unidad ═══ -->
+    @if (paso() === "estado") {
+      <section class="tarjeta">
+        <h2>¿Cómo llega la unidad?</h2>
+        <div class="rejilla">
+          <label>
+            <span>Kilometraje</span>
+            <input type="number" [(ngModel)]="checklist.kmIn" />
+          </label>
+          <label>
+            <span>Combustible: {{ checklist.fuelLevel }}%</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              step="5"
+              [(ngModel)]="checklist.fuelLevel"
+            />
+          </label>
+        </div>
+
+        <div class="inventario">
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="checklist.hasSpareTire" />
+            Llanta de refacción
+          </label>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="checklist.hasTools" />
+            Herramienta
+          </label>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="checklist.hasDocuments" />
+            Documentos
+          </label>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="checklist.hasMats" />
+            Tapetes
+          </label>
+        </div>
+
+        <label class="ancho">
+          <span>Daños visibles</span>
+          <textarea rows="2" [(ngModel)]="checklist.damageDescription"></textarea>
+        </label>
+        <label class="ancho">
+          <span>Observaciones</span>
+          <textarea rows="2" [(ngModel)]="checklist.observations"></textarea>
+        </label>
+
+        <button class="principal" [disabled]="guardando()" (click)="guardarEstado()">
+          {{ guardando() ? "Guardando…" : "Continuar a fotos" }}
+        </button>
+      </section>
+    }
+
+    <!-- ═══ Fotos guiadas ═══ -->
+    @if (paso() === "fotos" && recepcion(); as r) {
+      <section class="tarjeta">
+        <h2>Fotos de la unidad</h2>
+        <p class="pista">
+          Toca cada recuadro para capturar. Después puedes marcar los daños
+          sobre la foto.
+        </p>
+
+        <div class="fotos">
+          @for (spec of r.specs; track spec.code) {
+            <div class="foto" [class.lista]="spec.tomada">
+              <div class="foto-nombre">
+                {{ spec.name }}
+                @if (spec.required) {
+                  <span class="obligatoria">obligatoria</span>
+                }
+              </div>
+              @if (spec.hint) {
+                <div class="foto-pista">{{ spec.hint }}</div>
+              }
+
+              @if (fotoDe(spec.code); as f) {
+                <button type="button" class="marcar" (click)="abrirMarcado(f)">
+                  ✓ Capturada — marcar daños ({{ f.marks.length }})
+                </button>
+              } @else {
+                <label class="capturar">
+                  📷 Tomar foto
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    hidden
+                    (change)="onArchivo($event, spec.code)"
+                  />
+                </label>
+              }
+            </div>
+          }
+        </div>
+
+        @if (pendientes().length) {
+          <p class="faltan">Faltan: {{ pendientes().join(", ") }}</p>
+        }
+        <button class="principal" (click)="irACotizar()">
+          Continuar a cotización
+        </button>
+      </section>
+    }
+
+    <!-- ═══ Cotización ═══ -->
+    @if (paso() === "cotizacion") {
+      <section class="tarjeta">
+        <h2>¿Qué se le va a hacer?</h2>
+
+        @if (servicios().length) {
+          <div class="servicios">
+            @for (s of servicios(); track s.id) {
+              <button type="button" class="servicio" (click)="agregarServicio(s)">
+                <strong>{{ s.name }}</strong>
+                <span>{{ s.price ? dinero(s.price) : "Sin precio" }}</span>
+              </button>
+            }
+          </div>
+        }
+
+        @for (l of lineas(); track $index) {
+          <div class="linea">
+            <input class="desc" placeholder="Concepto" [(ngModel)]="l.description" />
+            <input class="cant" type="number" min="1" [(ngModel)]="l.quantity" />
+            <input
+              class="precio"
+              type="number"
+              min="0"
+              step="0.01"
+              [(ngModel)]="l.unitPrice"
+            />
+            <button type="button" class="quitar" (click)="quitarLinea($index)">×</button>
+          </div>
+        }
+
+        <button type="button" class="secundario" (click)="agregarLinea()">
+          + Servicio extra
+        </button>
+
+        <label class="ancho">
+          <span>Condiciones</span>
+          <input [(ngModel)]="condiciones" placeholder="Vigencia, garantía…" />
+        </label>
+
+        <div class="total">Total: {{ dinero(total()) }}</div>
+        <button
+          class="principal"
+          [disabled]="guardando() || lineas().length === 0"
+          (click)="enviarCotizacion()"
+        >
+          {{ guardando() ? "Enviando…" : "Enviar al cliente para autorizar" }}
+        </button>
+      </section>
+    }
+  }
+</div>
+
+<!-- ═══ Marcado sobre la foto ═══ -->
+@if (fotoActiva(); as f) {
+  <div class="fondo" (click)="cerrarMarcado()"></div>
+  <div class="marcador" role="dialog" aria-modal="true" aria-label="Marcar daños">
+    <header>
+      <strong>Marca los daños</strong>
+      <button type="button" class="cerrar" (click)="cerrarMarcado()">×</button>
+    </header>
+
+    <p class="pista">Toca la foto donde esté el daño.</p>
+    <div class="lienzo" (click)="onTocarFoto($event)">
+      <div class="lienzo-fondo">Foto {{ f.specCode }}</div>
+      @for (m of f.marks; track m.id) {
+        <button
+          type="button"
+          class="marca"
+          [style.left.%]="m.x * 100"
+          [style.top.%]="m.y * 100"
+          [title]="etiquetaMarca(m.type) + (m.note ? ': ' + m.note : '')"
+          (click)="quitarMarca(m.id); $event.stopPropagation()"
+        >
+          ✕
+        </button>
+      }
+      @if (marcaPendiente(); as p) {
+        <span
+          class="marca pendiente"
+          [style.left.%]="p.x * 100"
+          [style.top.%]="p.y * 100"
+        ></span>
+      }
+    </div>
+
+    @if (marcaPendiente()) {
+      <div class="marca-datos">
+        <select [(ngModel)]="marcaTipo">
+          @for (t of markTypes; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+        <input placeholder="Nota (opcional)" [(ngModel)]="marcaNota" />
+        <button class="principal" [disabled]="guardando()" (click)="confirmarMarca()">
+          Guardar marca
+        </button>
+      </div>
+    }
+  </div>
+}
