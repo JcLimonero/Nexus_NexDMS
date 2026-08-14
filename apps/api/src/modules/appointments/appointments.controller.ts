@@ -83,7 +83,7 @@ export class AppointmentsController {
     @Query('branchId') branchId: string,
     @Query('date') date: string,
   ) {
-    return this.appointmentsService.findCalendar(user, branchId, date, date);
+    return this.appointmentsService.tableroDelDia(user, branchId, date);
   }
 
   @Get('availability')

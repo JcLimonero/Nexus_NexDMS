@@ -11,13 +11,41 @@ import { ActivatedRoute } from "@angular/router";
 import { Title } from "@angular/platform-browser";
 
 import { BranchesService } from "../../features/inventario-refacciones/services/branches.service";
-import { CitaDelDia, MonitorService } from "./monitor.service";
+import { CitaEnTablero, MonitorService, TableroCitas } from "./monitor.service";
+import { LineaDeTiempo } from "./linea-de-tiempo";
+
+/** Una cita ya colocada sobre la línea de tiempo, en porcentaje. */
+interface CitaColocada {
+  id: string;
+  hora: string;
+  cliente: string;
+  servicio: string;
+  estado: string;
+  etiqueta: string;
+  /** Pasó su hora y sigue esperándose. */
+  tarde: boolean;
+  llego: boolean;
+  izquierda: number;
+  ancho: number;
+}
+
+interface CarrilAsesor {
+  id: string;
+  nombre: string;
+  iniciales: string;
+  disponible: boolean;
+  motivo: string | null;
+  franjas: { izquierda: number; ancho: number }[];
+  citas: CitaColocada[];
+}
 
 /**
- * Las citas de hoy, para colgar junto a la recepción.
+ * La agenda del día, para colgar junto a la recepción.
  *
- * Misma regla que el tablero del taller: se lee de lejos, se refresca sola y
- * la sucursal viene en la URL para dejar la pantalla fija.
+ * Mismo tablero que el del taller cambiando el recurso: allí son técnicos y
+ * trabajos, aquí asesores y citas. Comparten el eje de horas —está en un
+ * solo sitio— porque colgados uno al lado del otro, dos ejes distintos
+ * dibujarían la misma hora en sitios distintos.
  */
 @Component({
   selector: "app-monitor-citas",
@@ -33,36 +61,103 @@ export class MonitorCitas implements OnInit, OnDestroy {
   private titulo = inject(Title);
 
   private static readonly REFRESCO_MS = 60_000;
+  private static readonly LATIDO_MS = 15_000;
   private temporizador?: ReturnType<typeof setInterval>;
+  private latido?: ReturnType<typeof setInterval>;
 
-  citas = signal<CitaDelDia[]>([]);
+  readonly eje = new LineaDeTiempo();
+  readonly horas = this.eje.horas;
+  lineaAhora = computed(() => this.eje.posicionAhora());
+
+  datos = signal<TableroCitas | null>(null);
   sucursal = signal<string>("");
   nombreSucursal = signal<string>("");
+  /** Para poder cambiar de taller desde la propia pantalla. */
+  sucursales = signal<{ id: string; name: string }[]>([]);
   actualizado = signal<Date>(new Date());
   sinConexion = signal(false);
 
   /** Las que ya no se esperan: llegaron, se cancelaron o no se presentaron. */
-  private cerrada(c: CitaDelDia): boolean {
-    return ["ARRIVED", "IN_SERVICE", "COMPLETED", "CANCELLED", "NO_SHOW"].includes(
-      c.status,
-    );
+  private cerrada(estado: string): boolean {
+    return [
+      "ARRIVED",
+      "IN_SERVICE",
+      "COMPLETED",
+      "CANCELLED",
+      "NO_SHOW",
+    ].includes(estado);
   }
 
+  private llego(estado: string): boolean {
+    return ["ARRIVED", "IN_SERVICE", "COMPLETED"].includes(estado);
+  }
+
+  private todas = computed<CitaEnTablero[]>(() => {
+    const d = this.datos();
+    if (!d) return [];
+    // Se toleran listas ausentes: durante un despliegue la pantalla puede
+    // recibir una respuesta con otra forma, y un monitor que se queda en
+    // blanco por eso es peor que uno que muestra de menos un minuto.
+    return [
+      ...(d.asesores ?? []).flatMap((a) => a.bloques ?? []),
+      ...(d.sinAsignar ?? []),
+    ];
+  });
+
+  total = computed(() => this.todas().length);
+  llegadas = computed(() => this.todas().filter((c) => this.llego(c.estado)).length);
   pendientes = computed(
-    () => this.citas().filter((c) => !this.cerrada(c)).length,
+    () => this.todas().filter((c) => !this.cerrada(c.estado)).length,
   );
-  llegadas = computed(
-    () =>
-      this.citas().filter((c) =>
-        ["ARRIVED", "IN_SERVICE", "COMPLETED"].includes(c.status),
-      ).length,
+  /** Las que ya pasaron de su hora y siguen sin llegar. */
+  retrasadas = computed(
+    () => this.todas().filter((c) => this.tarde(c)).length,
   );
 
-  /** Por hora: es una agenda, y cualquier otro orden obliga a buscar. */
-  ordenadas = computed(() =>
-    [...this.citas()].sort((a, b) =>
-      a.scheduledAt.localeCompare(b.scheduledAt),
-    ),
+  private tarde(c: CitaEnTablero): boolean {
+    if (this.cerrada(c.estado)) return false;
+    return new Date(c.inicio) < new Date();
+  }
+
+  private colocar(c: CitaEnTablero): CitaColocada {
+    const inicio = new Date(c.inicio);
+    const izquierda = this.eje.posicion(inicio);
+    return {
+      id: c.id,
+      hora: `${String(inicio.getHours()).padStart(2, "0")}:${String(inicio.getMinutes()).padStart(2, "0")}`,
+      cliente: c.cliente,
+      servicio: c.servicio,
+      estado: c.estado,
+      etiqueta: this.etiquetaEstado(c),
+      tarde: this.tarde(c),
+      llego: this.llego(c.estado),
+      izquierda,
+      ancho: this.eje.ancho(izquierda, c.duracionMin),
+    };
+  }
+
+  carriles = computed<CarrilAsesor[]>(() => {
+    const d = this.datos();
+    if (!d) return [];
+    return (d.asesores ?? []).map((a) => ({
+      id: a.id,
+      nombre: a.nombre,
+      iniciales: a.iniciales,
+      disponible: a.disponible,
+      motivo: a.motivo,
+      franjas: (a.ventanas ?? []).map((v) => {
+        const izquierda = this.eje.posicionHora(v.inicio);
+        return {
+          izquierda,
+          ancho: Math.max(0, this.eje.posicionHora(v.fin) - izquierda),
+        };
+      }),
+      citas: (a.bloques ?? []).map((b) => this.colocar(b)),
+    }));
+  });
+
+  sinAsignar = computed<CitaColocada[]>(() =>
+    (this.datos()?.sinAsignar ?? []).map((c) => this.colocar(c)),
   );
 
   ngOnInit(): void {
@@ -74,6 +169,7 @@ export class MonitorCitas implements OnInit, OnDestroy {
     this.branchesSrv.getAll(1, 100).subscribe({
       next: (res) => {
         const lista = res.data ?? [];
+        this.sucursales.set(lista);
         if (!this.sucursal() && lista.length) {
           this.sucursal.set(lista[0].id);
           this.cargar();
@@ -88,10 +184,31 @@ export class MonitorCitas implements OnInit, OnDestroy {
       () => this.cargar(),
       MonitorCitas.REFRESCO_MS,
     );
+    // La línea avanza aunque no lleguen datos nuevos: entre refrescos el
+    // tiempo sigue corriendo y una línea parada envejece mal.
+    this.latido = setInterval(() => this.eje.mover(), MonitorCitas.LATIDO_MS);
+  }
+
+  /**
+   * Cambia de sucursal sin recargar.
+   *
+   * La dirección se reescribe con la elegida para que, si alguien deja la
+   * pantalla puesta y luego la marca, el marcador ya arranque en ese taller.
+   */
+  cambiarSucursal(id: string): void {
+    if (!id || id === this.sucursal()) return;
+    this.sucursal.set(id);
+    this.nombreSucursal.set(
+      this.sucursales().find((b) => b.id === id)?.name ?? "",
+    );
+    this.ponerTitulo();
+    history.replaceState({}, "", `${location.pathname}?branch=${id}`);
+    this.cargar();
   }
 
   ngOnDestroy(): void {
     if (this.temporizador) clearInterval(this.temporizador);
+    if (this.latido) clearInterval(this.latido);
   }
 
   private hoy(): string {
@@ -103,26 +220,19 @@ export class MonitorCitas implements OnInit, OnDestroy {
     const b = this.sucursal();
     if (!b) return;
     this.srv.citasDelDia(b, this.hoy()).subscribe({
-      next: (c) => {
-        this.citas.set(c ?? []);
+      next: (d) => {
+        this.datos.set(d);
         this.actualizado.set(new Date());
         this.sinConexion.set(false);
+        // La hora viene del servidor: si el reloj de la pantalla está mal,
+        // la línea seguiría cuadrando con las citas.
+        this.eje.mover(new Date(d.ahora));
       },
       error: () => this.sinConexion.set(true),
     });
   }
 
-  llego(c: CitaDelDia): boolean {
-    return ["ARRIVED", "IN_SERVICE", "COMPLETED"].includes(c.status);
-  }
-
-  /** Pasó su hora y sigue esperándose: es lo que hay que mirar. */
-  tarde(c: CitaDelDia): boolean {
-    if (this.cerrada(c)) return false;
-    return new Date(c.scheduledAt) < new Date();
-  }
-
-  etiquetaEstado(c: CitaDelDia): string {
+  etiquetaEstado(c: CitaEnTablero): string {
     return (
       {
         SCHEDULED: this.tarde(c) ? "no ha llegado" : "esperada",
@@ -132,9 +242,10 @@ export class MonitorCitas implements OnInit, OnDestroy {
         COMPLETED: "terminada",
         CANCELLED: "cancelada",
         NO_SHOW: "no se presentó",
-      }[c.status] ?? c.status
+      }[c.estado] ?? c.estado
     );
   }
+
   /**
    * El nombre de la pantalla y su sucursal, en la pestaña.
    *
@@ -143,9 +254,6 @@ export class MonitorCitas implements OnInit, OnDestroy {
    */
   private ponerTitulo(): void {
     const suc = this.nombreSucursal();
-    this.titulo.setTitle(
-      suc ? `Citas · ${suc} — NexDMS` : `Citas — NexDMS`,
-    );
+    this.titulo.setTitle(suc ? `Citas · ${suc} — NexDMS` : `Citas — NexDMS`);
   }
-
 }

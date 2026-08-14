@@ -7,7 +7,7 @@
 
     <div class="monitor-resumen">
       <div class="resumen-dato">
-        <strong>{{ citas().length }}</strong>
+        <strong>{{ total() }}</strong>
         <span>agendadas</span>
       </div>
       <div class="resumen-dato">
@@ -18,9 +18,27 @@
         <strong>{{ pendientes() }}</strong>
         <span>por llegar</span>
       </div>
+      <div class="resumen-dato" [class.critico]="retrasadas() > 0">
+        <strong>{{ retrasadas() }}</strong>
+        <span>pasadas de hora</span>
+      </div>
     </div>
 
     <div class="monitor-hora">
+      @if (sucursales().length > 1) {
+        <!-- Lo único que se pulsa en la pantalla: cambiar de taller sin
+             tener que ir a escribir la dirección. -->
+        <select
+          class="selector-sucursal"
+          [value]="sucursal()"
+          (change)="cambiarSucursal($any($event.target).value)"
+          aria-label="Sucursal"
+        >
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+      }
       @if (sinConexion()) {
         <span class="sin-conexion">Sin conexión</span>
       }
@@ -28,20 +46,122 @@
     </div>
   </header>
 
-  @if (!citas().length) {
-    <p class="monitor-vacio">No hay citas para hoy.</p>
-  } @else {
-    <div class="citas">
-      @for (c of ordenadas(); track c.id) {
-        <article class="cita" [class.llegada]="llego(c)" [class.tarde]="tarde(c)">
-          <span class="cita-hora">{{ c.scheduledAt | date: "HH:mm" }}</span>
-          <span class="cita-datos">
-            <strong>{{ c.clientName }}</strong>
-            <span>{{ c.serviceType }}</span>
-          </span>
-          <span class="cita-marca">{{ etiquetaEstado(c) }}</span>
-        </article>
+  <!-- Mismo tablero que el del taller: una fila por asesor, la hora en el eje -->
+  <div class="tablero">
+    <div class="tablero-cabecera">
+      <div class="tablero-recurso">Asesor</div>
+      <div class="tablero-pista">
+        @for (h of horas; track h) {
+          <span class="marca-hora">{{ eje.etiqueta(h) }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="tablero-cuerpo">
+      @if (!carriles().length) {
+        <p class="monitor-vacio">
+          No hay asesores de servicio en esta sucursal.
+        </p>
+      }
+
+      @for (c of carriles(); track c.id) {
+        <div class="carril" [class.fuera-turno]="!c.disponible">
+          <div class="tablero-recurso">
+            <span class="avatar">{{ c.iniciales }}</span>
+            <span class="recurso-datos">
+              <strong>{{ c.nombre }}</strong>
+              @if (!c.disponible) {
+                <small>{{ c.motivo === "ausente" ? "Ausente" : "Fuera de turno" }}</small>
+              } @else {
+                <small>
+                  {{ c.citas.length }}
+                  {{ c.citas.length === 1 ? "cita" : "citas" }}
+                </small>
+              }
+            </span>
+          </div>
+
+          <div class="tablero-pista">
+            <!-- La franja del turno primero: fuera de ella no hay quien
+                 reciba, y se ve sin tener que preguntarlo. -->
+            @for (f of c.franjas; track $index) {
+              <div
+                class="franja-turno"
+                [style.left.%]="f.izquierda"
+                [style.width.%]="f.ancho"
+              ></div>
+            }
+            @for (h of horas; track h) {
+              <div class="linea-hora"></div>
+            }
+
+            @for (cita of c.citas; track cita.id) {
+              <div
+                class="bloque cita-bloque"
+                [class.llegada]="cita.llego"
+                [class.tarde]="cita.tarde"
+                [style.left.%]="cita.izquierda"
+                [style.width.%]="cita.ancho"
+                [title]="
+                  cita.hora + ' · ' + cita.cliente + ' · ' + cita.servicio +
+                  ' · ' + cita.etiqueta
+                "
+              >
+                <span class="bloque-texto">
+                  <strong>{{ cita.cliente }}</strong>
+                  <small>{{ cita.hora }} · {{ cita.servicio }}</small>
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (sinAsignar().length) {
+        <div class="carril sin-tecnico">
+          <div class="tablero-recurso">
+            <span class="avatar vacio">?</span>
+            <span class="recurso-datos">
+              <strong>Sin asignar</strong>
+              <small>Citas sin asesor</small>
+            </span>
+          </div>
+          <div class="tablero-pista">
+            @for (h of horas; track h) {
+              <div class="linea-hora"></div>
+            }
+            @for (cita of sinAsignar(); track cita.id) {
+              <div
+                class="bloque cita-bloque"
+                [class.llegada]="cita.llego"
+                [class.tarde]="cita.tarde"
+                [style.left.%]="cita.izquierda"
+                [style.width.%]="cita.ancho"
+                [title]="cita.hora + ' · ' + cita.cliente + ' · ' + cita.servicio"
+              >
+                <span class="bloque-texto">
+                  <strong>{{ cita.cliente }}</strong>
+                  <small>{{ cita.hora }} · {{ cita.servicio }}</small>
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- La línea de la hora cruza todos los carriles -->
+      @if (lineaAhora(); as x) {
+        <div
+          class="linea-ahora"
+          [style.left]="
+            'calc(var(--ancho-recurso) + (100% - var(--ancho-recurso)) * ' +
+            x / 100 +
+            ')'
+          "
+        >
+          <span class="linea-ahora-punta"></span>
+        </div>
       }
     </div>
-  }
+  </div>
 </div>

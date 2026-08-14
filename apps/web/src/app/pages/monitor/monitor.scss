@@ -397,72 +397,24 @@
   }
 }
 
-/* ── Monitor de citas ── */
-.citas {
-  display: grid;
-  /* Ancho suficiente para que un nombre largo no se parta en tres líneas:
-     la hora ya se lleva 100px y la marca de estado otro tanto. */
-  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: var(--space-16);
-}
+/* ── Bloques de cita ──
+   Mismo bloque que el del taller, pero el color no dice tiempo consumido
+   sino si la persona ya llegó: aquí no hay nada que cronometrar hasta que
+   la unidad entra. */
+.cita-bloque {
+  border-left-color: var(--primary);
 
-.cita {
-  display: flex;
-  gap: var(--space-16);
-  align-items: center;
-  padding: var(--space-16) 20px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-left: 8px solid var(--text-muted);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-
-  /* Ya llegó: deja de ser una espera y se atenúa para no competir con las
-     que faltan, que es lo que hay que vigilar. */
   &.llegada {
     border-left-color: var(--success);
+    /* Ya llegó: deja de ser una espera y se atenúa para no competir con las
+       que faltan, que es lo que hay que vigilar. */
     opacity: 0.6;
   }
 
-  /* Pasó su hora y no ha llegado. */
   &.tarde {
     border-left-color: var(--danger);
     background: var(--danger-bg);
   }
-}
-
-.cita-hora {
-  font-size: 34px;
-  font-weight: var(--font-semibold);
-  font-variant-numeric: tabular-nums;
-  min-width: 100px;
-}
-
-.cita-datos {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-  flex: 1 1 auto;
-
-  strong {
-    font-size: 21px;
-    font-weight: var(--font-medium);
-  }
-
-  span {
-    font-size: 17px;
-    color: var(--text-secondary);
-  }
-}
-
-.cita-marca {
-  margin-left: auto;
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: var(--text-overline-tracking);
-  color: var(--text-secondary);
-  white-space: nowrap;
 }
 
 /* ── Acceso de las pantallas ── */
@@ -618,4 +570,29 @@
 .cuenta-detalle {
   font-size: var(--text-caption);
   color: var(--text-muted);
+}
+
+/* Lo único que se pulsa en un monitor: elegir taller. Discreto a propósito,
+   que no compita con los datos. */
+.selector-sucursal {
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  background: var(--card);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+  }
 }

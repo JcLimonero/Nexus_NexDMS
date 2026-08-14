@@ -12,6 +12,7 @@ import { Title } from "@angular/platform-browser";
 
 import { BranchesService } from "../../features/inventario-refacciones/services/branches.service";
 import { Magneto, MonitorService, Semaforo } from "./monitor.service";
+import { LineaDeTiempo } from "./linea-de-tiempo";
 
 /** Un trabajo ya colocado sobre la línea de tiempo, en porcentaje. */
 interface BloqueColocado {
@@ -72,56 +73,36 @@ export class MonitorTaller implements OnInit, OnDestroy {
   private temporizador?: ReturnType<typeof setInterval>;
   private latido?: ReturnType<typeof setInterval>;
 
-  /** Ventana del tablero. Un taller no abre a medianoche. */
-  private static readonly HORA_INICIO = 7;
-  private static readonly HORA_FIN = 20;
-
   datos = signal<Magneto | null>(null);
   sucursal = signal<string>("");
   nombreSucursal = signal<string>("");
+  /** Para poder cambiar de taller desde la propia pantalla. */
+  sucursales = signal<{ id: string; name: string }[]>([]);
   actualizado = signal<Date>(new Date());
   sinConexion = signal(false);
-  /** Minutos desde el inicio del tablero; lo mueve el latido. */
-  private ahoraMin = signal<number>(0);
-
-  readonly horas = Array.from(
-    { length: MonitorTaller.HORA_FIN - MonitorTaller.HORA_INICIO + 1 },
-    (_, i) => MonitorTaller.HORA_INICIO + i,
-  );
-
-  private get rangoMin(): number {
-    return (MonitorTaller.HORA_FIN - MonitorTaller.HORA_INICIO) * 60;
-  }
-
-  private aPorcentaje(fecha: Date): number {
-    const min =
-      (fecha.getHours() - MonitorTaller.HORA_INICIO) * 60 + fecha.getMinutes();
-    return (min / this.rangoMin) * 100;
-  }
-
-  /** Dónde va la línea de la hora. Fuera de la ventana no se dibuja. */
-  lineaAhora = computed(() => {
-    const pct = (this.ahoraMin() / this.rangoMin) * 100;
-    return pct >= 0 && pct <= 100 ? pct : null;
-  });
+  /** El eje de horas, compartido con el tablero de citas. */
+  readonly eje = new LineaDeTiempo();
+  readonly horas = this.eje.horas;
+  /** Se relee en cada latido gracias a la señal interna del eje. */
+  lineaAhora = computed(() => this.eje.posicionAhora());
 
   carriles = computed<CarrilTecnico[]>(() => {
     const d = this.datos();
     if (!d) return [];
-    return d.tecnicos.map((t) => ({
+    return (d.tecnicos ?? []).map((t) => ({
       id: t.id,
       nombre: t.nombre,
       iniciales: t.iniciales,
       disponible: t.disponible,
       motivo: t.motivo,
-      franjas: t.ventanas.map((v) => {
-        const izquierda = this.horaAPorcentaje(v.inicio);
+      franjas: (t.ventanas ?? []).map((v) => {
+        const izquierda = this.eje.posicionHora(v.inicio);
         return {
           izquierda,
-          ancho: Math.max(0, this.horaAPorcentaje(v.fin) - izquierda),
+          ancho: Math.max(0, this.eje.posicionHora(v.fin) - izquierda),
         };
       }),
-      bloques: t.bloques.map((b) => this.colocar(b)),
+      bloques: (t.bloques ?? []).map((b) => this.colocar(b)),
     }));
   });
 
@@ -143,29 +124,19 @@ export class MonitorTaller implements OnInit, OnDestroy {
     const d = this.datos();
     if (!d) return 0;
     const conTrabajo = new Set(
-      [...d.tecnicos.flatMap((t) => t.bloques), ...d.sinAsignar].map(
-        (b) => b.ordenId,
-      ),
+      [
+        ...(d.tecnicos ?? []).flatMap((t) => t.bloques ?? []),
+        ...(d.sinAsignar ?? []),
+      ].map((b) => b.ordenId),
     );
-    return conTrabajo.size + d.enEspera.length;
+    return conTrabajo.size + (d.enEspera?.length ?? 0);
   });
 
-  private horaAPorcentaje(hhmm: string): number {
-    const [h, m] = hhmm.split(":").map(Number);
-    const min = (h - MonitorTaller.HORA_INICIO) * 60 + m;
-    return Math.max(0, Math.min(100, (min / this.rangoMin) * 100));
-  }
-
   private colocar(b: Magneto["sinAsignar"][number]): BloqueColocado {
-    const inicio = new Date(b.inicio);
-    const izquierda = Math.max(0, Math.min(100, this.aPorcentaje(inicio)));
+    const izquierda = this.eje.posicion(new Date(b.inicio));
     // El ancho es lo estimado, no lo transcurrido: el bloque representa el
     // hueco que el trabajo debía ocupar, y el relleno dice cuánto lleva.
-    // Con un mínimo visible, o una fase de cinco minutos sería una raya.
-    const ancho = Math.min(
-      100 - izquierda,
-      Math.max(1.5, (b.estimadoMin / this.rangoMin) * 100),
-    );
+    const ancho = this.eje.ancho(izquierda, b.estimadoMin);
     return {
       faseId: b.faseId,
       folio: b.folio,
@@ -193,6 +164,7 @@ export class MonitorTaller implements OnInit, OnDestroy {
     this.branchesSrv.getAll(1, 100).subscribe({
       next: (res) => {
         const lista = res.data ?? [];
+        this.sucursales.set(lista);
         if (!this.sucursal() && lista.length) {
           this.sucursal.set(lista[0].id);
           this.cargar();
@@ -209,22 +181,29 @@ export class MonitorTaller implements OnInit, OnDestroy {
     );
     // La línea avanza aunque no lleguen datos nuevos: entre refrescos el
     // tiempo sigue corriendo y una línea parada envejece mal.
-    this.latido = setInterval(
-      () => this.moverLinea(),
-      MonitorTaller.LATIDO_MS,
+    this.latido = setInterval(() => this.eje.mover(), MonitorTaller.LATIDO_MS);
+  }
+
+  /**
+   * Cambia de sucursal sin recargar.
+   *
+   * La dirección se reescribe con la elegida para que, si alguien deja la
+   * pantalla puesta y luego la marca, el marcador ya arranque en ese taller.
+   */
+  cambiarSucursal(id: string): void {
+    if (!id || id === this.sucursal()) return;
+    this.sucursal.set(id);
+    this.nombreSucursal.set(
+      this.sucursales().find((b) => b.id === id)?.name ?? "",
     );
+    this.ponerTitulo();
+    history.replaceState({}, "", `${location.pathname}?branch=${id}`);
+    this.cargar();
   }
 
   ngOnDestroy(): void {
     if (this.temporizador) clearInterval(this.temporizador);
     if (this.latido) clearInterval(this.latido);
-  }
-
-  private moverLinea(desde?: Date): void {
-    const ahora = desde ?? new Date();
-    this.ahoraMin.set(
-      (ahora.getHours() - MonitorTaller.HORA_INICIO) * 60 + ahora.getMinutes(),
-    );
   }
 
   cargar(): void {
@@ -239,21 +218,10 @@ export class MonitorTaller implements OnInit, OnDestroy {
         this.sinConexion.set(false);
         // La hora viene del servidor: si el reloj del monitor está mal, la
         // línea seguiría cuadrando con los bloques.
-        this.moverLinea(new Date(d.ahora));
+        this.eje.mover(new Date(d.ahora));
       },
       error: () => this.sinConexion.set(true),
     });
-  }
-
-  /**
-   * Solo la hora, sin los minutos.
-   *
-   * Con "07:00" en cada columna las etiquetas se tocaban entre sí en cuanto
-   * la pantalla no era enorme, y en un eje de horas en punto los dos ceros
-   * no aportan nada.
-   */
-  etiquetaHora(h: number): string {
-    return String(h).padStart(2, "0");
   }
 
   duracion(min: number): string {

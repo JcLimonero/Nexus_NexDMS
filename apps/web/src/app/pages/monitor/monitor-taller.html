@@ -21,6 +21,20 @@
     </div>
 
     <div class="monitor-hora">
+      @if (sucursales().length > 1) {
+        <!-- Lo único que se pulsa en la pantalla: cambiar de taller sin
+             tener que ir a escribir la dirección. -->
+        <select
+          class="selector-sucursal"
+          [value]="sucursal()"
+          (change)="cambiarSucursal($any($event.target).value)"
+          aria-label="Sucursal"
+        >
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+      }
       @if (sinConexion()) {
         <span class="sin-conexion">Sin conexión</span>
       }
@@ -34,7 +48,7 @@
       <div class="tablero-recurso">Técnico</div>
       <div class="tablero-pista">
         @for (h of horas; track h) {
-          <span class="marca-hora">{{ etiquetaHora(h) }}</span>
+          <span class="marca-hora">{{ eje.etiqueta(h) }}</span>
         }
       </div>
     </div>

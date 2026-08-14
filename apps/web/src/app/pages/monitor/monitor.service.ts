@@ -25,14 +25,32 @@ export interface UnidadEnTablero {
   retraso: number;
 }
 
-export interface CitaDelDia {
+/** Una cita colocada en la hora en que se espera. */
+export interface CitaEnTablero {
   id: string;
-  scheduledAt: string;
-  clientName: string;
-  serviceType: string;
-  status: string;
-  vehiculo?: string;
-  advisorId?: string | null;
+  inicio: string;
+  duracionMin: number;
+  cliente: string;
+  servicio: string;
+  estado: string;
+  vehiculo: string | null;
+  asesorId: string | null;
+}
+
+export interface TableroCitas {
+  fecha: string;
+  /** Hora del servidor: la pantalla no se fía de su propio reloj. */
+  ahora: string;
+  asesores: {
+    id: string;
+    nombre: string;
+    iniciales: string;
+    disponible: boolean;
+    motivo: string | null;
+    ventanas: { inicio: string; fin: string }[];
+    bloques: CitaEnTablero[];
+  }[];
+  sinAsignar: CitaEnTablero[];
 }
 
 /** Un trabajo colocado en la hora en que ocurrió. */
@@ -96,9 +114,14 @@ export class MonitorService {
     );
   }
 
-  citasDelDia(branchId: string, date: string): Observable<CitaDelDia[]> {
-    return this.http.get<CitaDelDia[]>(
-      `/api/v1/appointments/calendar?branchId=${branchId}&dateFrom=${date}&dateTo=${date}`,
+  /**
+   * Endpoint propio de la pantalla, no el calendario general: devuelve el
+   * tablero ya armado —asesores con su turno y sus citas— y lleva su
+   * restricción de rol, que el técnico no alcanza.
+   */
+  citasDelDia(branchId: string, date: string): Observable<TableroCitas> {
+    return this.http.get<TableroCitas>(
+      `/api/v1/appointments/monitor?branchId=${branchId}&date=${date}`,
     );
   }
 }

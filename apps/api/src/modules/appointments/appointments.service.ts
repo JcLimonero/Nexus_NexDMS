@@ -521,4 +521,62 @@ export class AppointmentsService {
     );
     return slots.map(({ start, end }) => ({ start, end }));
   }
+  /**
+   * La agenda del día como tablero: asesor por hora.
+   *
+   * Mismo tablero que el del taller, cambiando el recurso: allí son técnicos
+   * y trabajos, aquí asesores y citas. Se resuelve en el servidor por la
+   * misma razón —la pantalla no debe fiarse de su propio reloj— y devuelve
+   * también la franja del turno de cada asesor, para que se vea a qué hora
+   * deja de haber quien reciba.
+   */
+  async tableroDelDia(user: UserPayload, branchId: string, fecha: string) {
+    const dia = new Date(`${fecha}T12:00:00`);
+    const citas = await this.findCalendar(user, branchId, fecha, fecha);
+    const asesores = await this.asesoresDeSucursal(user.tenantId, branchId);
+    const turnos = await this.userAvailabilityService.disponibilidadDelDia(
+      asesores.map((a) => a.id),
+      branchId,
+      dia,
+    );
+
+    const bloque = (c: Appointment) => ({
+      id: c.id,
+      inicio: c.scheduledAt.toISOString(),
+      duracionMin: c.durationMin ?? 60,
+      cliente: c.clientName,
+      servicio: c.serviceType,
+      estado: c.status,
+      vehiculo: c.vehicle
+        ? `${c.vehicle.make} ${c.vehicle.model}`.trim()
+        : null,
+      asesorId: c.advisorId ?? null,
+    });
+
+    const bloques = citas.map(bloque);
+
+    return {
+      fecha,
+      // La hora del servidor: la pantalla dibuja la línea de "ahora" con
+      // ella y no con el reloj del equipo donde esté colgada.
+      ahora: new Date().toISOString(),
+      asesores: asesores.map((a) => {
+        const d = turnos.get(a.id);
+        const partes = a.nombre.split(" ").filter(Boolean);
+        return {
+          id: a.id,
+          nombre: a.nombre,
+          iniciales: `${partes[0]?.[0] ?? ""}${partes[1]?.[0] ?? ""}`.toUpperCase(),
+          disponible: d?.disponible ?? false,
+          motivo: d?.motivo ?? null,
+          ventanas: d?.ventanas ?? [],
+          bloques: bloques.filter((b) => b.asesorId === a.id),
+        };
+      }),
+      // Las citas sin asesor se ven aparte: son las que hay que repartir, y
+      // esconderlas sería esconder justo el trabajo pendiente.
+      sinAsignar: bloques.filter((b) => !b.asesorId),
+    };
+  }
+
 }
