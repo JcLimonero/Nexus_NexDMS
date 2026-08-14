@@ -62,6 +62,7 @@ export class SucursalForm implements OnInit {
     taxRate: 0.16,
     maxDiscountPct: 10,
     quotationValidityDays: 15,
+    noShowToleranceMin: 30,
     isActive: true,
   };
   horario: Record<string, string> = {};

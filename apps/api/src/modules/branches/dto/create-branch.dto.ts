@@ -1,11 +1,13 @@
 import {
   IsBoolean,
   IsEmail,
+  IsInt,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -63,6 +65,16 @@ export class CreateBranchDto {
 
   @IsObject()
   schedule: Record<string, string>;
+
+  /**
+   * Minutos que se espera a un cliente antes de dar la cita por perdida.
+   * `0` apaga la regla en esta sucursal.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(240)
+  noShowToleranceMin?: number;
 
   @IsOptional()
   @IsString()

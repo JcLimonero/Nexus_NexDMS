@@ -7,6 +7,7 @@ import {
   Appointment,
   AppointmentStatusEnum,
 } from '../../appointments/entities/appointment.entity';
+import { Branch } from '../../branches/entities/branch.entity';
 import { CitaNoSePresentoEvent } from '../../../events/domain-events';
 
 /**
@@ -19,33 +20,44 @@ import { CitaNoSePresentoEvent } from '../../../events/domain-events';
  *
  * Se corre cada cinco minutos y no una vez al día porque el seguimiento
  * sirve mientras el hueco todavía se puede reutilizar; mañana ya no.
+ *
+ * Cuánto se espera lo decide cada sucursal: un taller de ciudad con tráfico
+ * da más margen que uno de carretera. Con `0` la regla queda apagada ahí.
  */
 @Injectable()
 export class AppointmentNoShowJob {
   private readonly logger = new Logger(AppointmentNoShowJob.name);
 
-  /**
-   * Cuánto se espera antes de darla por perdida. Media hora es lo que
-   * tarda un cliente en avisar de que va en camino; menos convertiría el
-   * tráfico en un no-show.
-   */
-  private static readonly TOLERANCIA_MIN = 30;
-
   constructor(
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
+    @InjectRepository(Branch)
+    private readonly branchRepo: Repository<Branch>,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @Cron('*/5 * * * *', { timeZone: 'America/Mexico_City' })
   async handleCron(): Promise<void> {
-    const limite = new Date(
-      Date.now() - AppointmentNoShowJob.TOLERANCIA_MIN * 60_000,
+    const sucursales = await this.branchRepo.find({
+      select: ['id', 'noShowToleranceMin'],
+    });
+    const tolerancia = new Map(
+      sucursales.map((b) => [b.id, b.noShowToleranceMin ?? 30]),
     );
+    // Las que la tienen apagada no entran siquiera a la consulta.
+    const activas = sucursales.filter((b) => (b.noShowToleranceMin ?? 30) > 0);
+    if (!activas.length) return;
 
-    const vencidas = await this.appointmentRepo.find({
+    // Se pide una sola vez con el margen más corto y luego se filtra por el
+    // de cada sucursal: una consulta por sucursal serían tantas como
+    // talleres tenga el grupo, cada cinco minutos.
+    const margenMinimo = Math.min(
+      ...activas.map((b) => b.noShowToleranceMin ?? 30),
+    );
+    const candidatas = await this.appointmentRepo.find({
       where: {
-        scheduledAt: LessThan(limite),
+        branchId: In(activas.map((b) => b.id)),
+        scheduledAt: LessThan(new Date(Date.now() - margenMinimo * 60_000)),
         // Solo las que seguían esperándose. Una cita ya recibida, cancelada
         // o completada no se toca, y la que ya se marcó no se vuelve a
         // marcar —eso dispararía el aviso cada cinco minutos.
@@ -55,6 +67,12 @@ export class AppointmentNoShowJob {
         ]),
       },
       relations: ['client'],
+    });
+
+    const ahora = Date.now();
+    const vencidas = candidatas.filter((c) => {
+      const margen = tolerancia.get(c.branchId) ?? 30;
+      return ahora - c.scheduledAt.getTime() >= margen * 60_000;
     });
     if (!vencidas.length) return;
 
@@ -80,8 +98,6 @@ export class AppointmentNoShowJob {
       );
     }
 
-    this.logger.log(
-      `${vencidas.length} cita(s) sin presentarse tras ${AppointmentNoShowJob.TOLERANCIA_MIN} min`,
-    );
+    this.logger.log(`${vencidas.length} cita(s) dadas por no presentadas`);
   }
 }

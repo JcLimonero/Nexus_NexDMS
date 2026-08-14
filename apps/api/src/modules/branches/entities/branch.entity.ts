@@ -77,6 +77,13 @@ export class Branch {
   @Column({ name: 'email', length: 200 })
   email: string;
 
+  /**
+   * Minutos que se espera a un cliente antes de dar la cita por perdida.
+   * `0` apaga la regla en esta sucursal y deja el cierre a mano.
+   */
+  @Column({ name: 'no_show_tolerance_min', type: 'int', default: 30 })
+  noShowToleranceMin: number;
+
   @Column({ name: 'horario', type: 'jsonb' })
   schedule: object;
 

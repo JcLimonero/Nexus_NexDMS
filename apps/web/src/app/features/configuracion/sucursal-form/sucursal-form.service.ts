@@ -30,6 +30,11 @@ export interface Sucursal {
   taxRate?: number;
   maxDiscountPct?: number;
   quotationValidityDays?: number;
+  /**
+   * Minutos que se espera a un cliente antes de dar la cita por perdida.
+   * `0` apaga la regla en esta sucursal.
+   */
+  noShowToleranceMin?: number;
   cfdiSerie?: string;
   isPrimary?: boolean;
   isActive?: boolean;

@@ -125,6 +125,23 @@
                 <span>Serie CFDI</span>
                 <input class="form-control" [(ngModel)]="form.cfdiSerie" />
               </label>
+              <label>
+                <span>Tolerancia de cita (min)</span>
+                <input
+                  class="form-control"
+                  type="number"
+                  min="0"
+                  max="240"
+                  [(ngModel)]="form.noShowToleranceMin"
+                />
+                <!-- Se explica porque el número solo no dice qué provoca:
+                     pasado ese margen la cita se cierra sola y se avisa. -->
+                <small class="text-muted">
+                  Pasado este margen, la cita a la que nadie llegó se marca
+                  como no presentada y se avisa para contactar al cliente.
+                  Con 0 no se cierra sola.
+                </small>
+              </label>
             </div>
 
             <div class="opciones">
