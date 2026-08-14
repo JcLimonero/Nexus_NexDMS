@@ -43,6 +43,12 @@ export const settingsRoutes: Routes = [
     ],
   },
   {
+    path: "usuarios",
+    loadComponent: () =>
+      import("./usuarios/usuarios").then((m) => m.Usuarios),
+    data: { title: "Usuarios y roles", breadcrumb: "Usuarios" },
+  },
+  {
     path: "razones-sociales",
     loadComponent: () =>
       import("./razones-sociales/razones-sociales").then((m) => m.RazonesSociales),

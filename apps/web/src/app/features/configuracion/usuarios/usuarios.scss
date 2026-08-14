@@ -1,0 +1,222 @@
+/**
+ * Usuarios y roles. Los diálogos son propios y no del tema: los del tema
+ * arrastran su propio armazón de cabecera, y aquí el contenido es un
+ * formulario largo que necesita desplazarse solo.
+ */
+
+.usuarios {
+  tr.inactivo td {
+    opacity: 0.55;
+  }
+
+  .btn-xs {
+    padding: 2px 8px;
+    font-size: 12px;
+  }
+}
+
+/* ── Quién está hoy ── */
+.turno-hoy {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border: 1px solid var(--bs-border-color, #e2e8f0);
+  border-radius: 10px;
+  background: var(--bs-tertiary-bg, #f8fafc);
+}
+
+.turno-resumen {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  white-space: nowrap;
+
+  strong {
+    font-size: 22px;
+    line-height: 1;
+  }
+
+  span {
+    font-size: 13px;
+    color: var(--bs-secondary-color, #64748b);
+  }
+}
+
+.turno-gente {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.badge-turno {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  background: #d1fae5;
+  color: #065f46;
+
+  small {
+    font-size: 11px;
+    opacity: 0.8;
+  }
+
+  /* Quien no está se distingue por color y por el texto, no solo por color. */
+  &.fuera {
+    background: var(--bs-secondary-bg, #e2e8f0);
+    color: var(--bs-secondary-color, #64748b);
+  }
+}
+
+/* ── Diálogos ── */
+.fondo-modal {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 45%);
+  z-index: 1040;
+}
+
+.panel-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(820px, calc(100vw - 32px));
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 1050;
+  background: var(--bs-body-bg, #fff);
+  border-radius: 12px;
+  box-shadow: 0 24px 48px rgb(15 23 42 / 25%);
+}
+
+.panel-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 12px;
+
+  h5 {
+    margin: 0;
+  }
+}
+
+/* El cuerpo se desplaza solo: el pie con los botones queda siempre a la vista. */
+.panel-cuerpo {
+  padding: 0 24px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  /* Sin esto no encoge por debajo de su contenido —el mínimo de un elemento
+     flexible es su contenido—, así que nunca desplazaría: el contenido se
+     saldría del diálogo y la rueda movería la página de atrás. */
+  min-height: 0;
+}
+
+.panel-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--bs-border-color, #e2e8f0);
+}
+
+.rejilla-roles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+}
+
+.opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--bs-border-color, #e2e8f0);
+  border-radius: 8px;
+  cursor: pointer;
+
+  span {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.3;
+  }
+
+  small {
+    font-size: 12px;
+    color: var(--bs-secondary-color, #64748b);
+  }
+
+  &.marcada {
+    border-color: var(--bs-primary, #105078);
+    background: rgb(16 80 120 / 4%);
+  }
+}
+
+/* ── Semana ── */
+.semana {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dia {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 1px solid var(--bs-border-color, #e2e8f0);
+  border-radius: 8px;
+
+  &.trabaja {
+    border-color: var(--bs-primary, #105078);
+  }
+}
+
+.dia-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 150px;
+  margin: 0;
+  cursor: pointer;
+}
+
+.dia-horas {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  input {
+    width: 130px;
+  }
+}
+
+.dia-descanso {
+  font-size: 13px;
+  color: var(--bs-secondary-color, #94a3b8);
+}
+
+.lista-ausencias {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--bs-border-color, #e2e8f0);
+    border-radius: 8px;
+    font-size: 14px;
+  }
+}
