@@ -8,6 +8,13 @@ export const partsInventoryRoutes: Routes = [
     data: { title: "Partes", breadcrumb: "Partes" },
   },
   {
+    // Antes que cualquier `:id`, o se la comería como si fuera un parámetro.
+    path: "accesorios",
+    loadComponent: () =>
+      import("./accesorios/accesorios").then((m) => m.Accesorios),
+    data: { title: "Accesorios", breadcrumb: "Accesorios" },
+  },
+  {
     path: "nuevo",
     loadComponent: () =>
       import("./partes/form/parte-form").then((m) => m.ParteForm),
