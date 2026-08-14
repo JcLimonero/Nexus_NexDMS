@@ -78,6 +78,13 @@ DELETE FROM receivables;
 DELETE FROM payable_payments;
 DELETE FROM payables;
 DELETE FROM pld_operations;
+DELETE FROM contacts;
+DELETE FROM catalog_units;
+DELETE FROM stock_movements;
+DELETE FROM stock_locations;
+DELETE FROM part_categories;
+DELETE FROM suppliers;
+DELETE FROM warranties;
 DELETE FROM service_type_parts;
 DELETE FROM service_types;
 DELETE FROM stock_movements;
@@ -150,34 +157,74 @@ SELECT r.tenant_id,
        r.hoy - 690, r.hoy - 95, 'MANUAL', 'Vendida a Ana Ruiz'
 FROM ref r;
 
+-- ── Almacén: categorías, ubicaciones y proveedores ───────────────────
+-- Sin esto las refacciones son una lista plana: no se pueden filtrar por
+-- familia ni se sabe de qué anaquel bajarlas.
+INSERT INTO part_categories (id, tenant_id, name, description, is_active)
+SELECT gen_random_uuid(), r.tenant_id, c.nombre, c.descr, true
+FROM ref r, (VALUES
+  ('Lubricantes',   'Aceites y líquidos'),
+  ('Filtros',       'Aceite, aire y gasolina'),
+  ('Frenos',        'Balatas, discos y líquidos'),
+  ('Transmisión',   'Cadenas, catarinas y piñones'),
+  ('Llantas',       'Delanteras y traseras'),
+  ('Eléctrico',     'Baterías, focos y bujías'),
+  ('Motor',         'Empaques y componentes internos'),
+  ('Carrocería',    'Espejos, escapes y cubiertas')
+) AS c(nombre, descr);
+
+INSERT INTO stock_locations (id, tenant_id, branch_id, code, zone, aisle, shelf, level, description, is_active)
+SELECT gen_random_uuid(), r.tenant_id, r.central, u.codigo, u.zona, u.pasillo, u.anaquel, u.nivel, u.descr, true
+FROM ref r, (VALUES
+  ('A-01-1', 'Almacén', 'A', '01', '1', 'Lubricantes a granel'),
+  ('A-02-1', 'Almacén', 'A', '02', '1', 'Filtros'),
+  ('B-01-2', 'Almacén', 'B', '01', '2', 'Frenos'),
+  ('B-03-1', 'Almacén', 'B', '03', '1', 'Transmisión'),
+  ('C-01-1', 'Almacén', 'C', '01', '1', 'Llantas'),
+  ('D-02-3', 'Almacén', 'D', '02', '3', 'Eléctrico y menudeo')
+) AS u(codigo, zona, pasillo, anaquel, nivel, descr);
+
+INSERT INTO suppliers (id, tenant_id, name, contact_name, phone, email, rfc, payment_terms, credit_days, is_active)
+SELECT gen_random_uuid(), r.tenant_id, p.nombre, p.contacto, p.tel, p.correo, p.rfc, p.terminos, p.dias, true
+FROM ref r, (VALUES
+  ('Refaccionaria Central de Motos SA', 'Ing. Óscar Medina', '5552001010', 'ventas@refaccionariacentral.mx', 'RCM090812AB4', 'CREDITO', 30),
+  ('Distribuidora Honda Nacional',      'Lic. Marcela Ponce','5552001011', 'pedidos@hondanacional.mx',      'DHN050303CD7', 'CREDITO', 45),
+  ('Llantas y Rines del Valle',         'Sr. Julio Ramírez', '5552001012', 'mostrador@llantasvalle.mx',     'LRV120620EF9', 'CONTADO',  0),
+  ('Lubricantes Industriales del Norte','Ing. Paola Cruz',   '5552001013', 'contacto@lubrinorte.mx',        'LIN140505GH2', 'CREDITO', 15)
+) AS p(nombre, contacto, tel, correo, rfc, terminos, dias);
+
 -- ── Refacciones ──────────────────────────────────────────────────────
 -- Precios de mostrador de motocicleta. Dos quedan por debajo del mínimo a
 -- propósito: el filtro de aire en cero y las balatas traseras al límite.
-INSERT INTO parts (id, tenant_id, branch_id, sku, name, description, vehicle_type,
-                   unit_of_measure, purchase_price, public_price, wholesale_price,
-                   business_price, stock_quantity, min_stock, max_stock, is_active)
-SELECT gen_random_uuid(), r.tenant_id, r.central, p.sku, p.nombre, p.descr, 'MOTORCYCLE',
+INSERT INTO parts (id, tenant_id, branch_id, category_id, location_id, sku, name,
+                   description, vehicle_type, unit_of_measure, purchase_price,
+                   public_price, wholesale_price, business_price,
+                   stock_quantity, min_stock, max_stock, is_active)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM part_categories WHERE name = p.familia),
+       (SELECT id FROM stock_locations WHERE code = p.ubicacion),
+       p.sku, p.nombre, p.descr, 'MOTORCYCLE',
        p.unidad, p.compra, p.publico, p.mayoreo, p.empresa, p.stock, p.minimo, p.maximo, true
 FROM ref r, (VALUES
-  ('ACE-10W40', 'Aceite 10W-40 mineral (litro)', 'Para motor de 4 tiempos', 'LITRO', 92,  165, 148, 140, 48, 12, 80),
-  ('ACE-20W50', 'Aceite 20W-50 semisintético (litro)', 'Alta temperatura', 'LITRO', 118, 210, 189, 178, 26, 10, 60),
-  ('FIL-ACE',   'Filtro de aceite', 'CB/XR/Cargo', 'PIEZA', 68,  135, 121, 115, 22, 8,  40),
-  ('FIL-AIRE',  'Filtro de aire', 'CB190R / XR150L', 'PIEZA', 145, 285, 256, 242, 0,  6,  30),
-  ('BUJ-CR8',   'Bujía NGK CR8E', 'Estándar', 'PIEZA', 78,  155, 139, 132, 34, 12, 60),
-  ('BAL-DEL',   'Balatas delanteras', 'Juego', 'JUEGO', 210, 420, 378, 357, 14, 6,  30),
-  ('BAL-TRA',   'Balatas traseras', 'Juego', 'JUEGO', 185, 370, 333, 315, 5,  6,  30),
-  ('KIT-ARR',   'Kit de arrastre completo', 'Catarina, piñón y cadena', 'JUEGO', 890, 1650, 1485, 1402, 9,  4,  20),
-  ('CAD-428',   'Cadena 428H x 122', 'Reforzada', 'PIEZA', 320, 610, 549, 518, 12, 5,  25),
-  ('LLA-DEL',   'Llanta delantera 90/90-19', 'Uso mixto', 'PIEZA', 640, 1180, 1062, 1003, 8,  4,  20),
-  ('LLA-TRA',   'Llanta trasera 110/90-17', 'Uso mixto', 'PIEZA', 720, 1320, 1188, 1122, 7,  4,  20),
-  ('BAT-YTX7',  'Batería YTX7L-BS', '12V 6Ah', 'PIEZA', 480, 890, 801, 756, 11, 4,  20),
-  ('LIQ-FRE',   'Líquido de frenos DOT-4 (355 ml)', NULL, 'PIEZA', 95,  190, 171, 161, 18, 6,  30),
-  ('FOC-H4',    'Foco halógeno H4', 'Faro principal', 'PIEZA', 85,  175, 158, 149, 16, 6,  30),
-  ('CAB-EMB',   'Cable de embrague', 'CB190R', 'PIEZA', 130, 265, 239, 225, 9,  4,  20),
-  ('ESP-JUEGO', 'Espejos laterales (par)', 'Universal rosca 10mm', 'JUEGO', 175, 340, 306, 289, 13, 4,  20),
-  ('EMP-CUL',   'Empaque de culata', 'CB/XR 150-190', 'PIEZA', 110, 225, 203, 191, 7,  3,  15),
-  ('SIL-ESC',   'Silenciador de escape', 'Original', 'PIEZA', 1450, 2680, 2412, 2278, 3,  2,  10)
-) AS p(sku, nombre, descr, unidad, compra, publico, mayoreo, empresa, stock, minimo, maximo);
+  ('ACE-10W40', 'Aceite 10W-40 mineral (litro)', 'Para motor de 4 tiempos', 'LITRO', 92,  165, 148, 140, 48, 12, 80, 'Lubricantes', 'A-01-1'),
+  ('ACE-20W50', 'Aceite 20W-50 semisintético (litro)', 'Alta temperatura', 'LITRO', 118, 210, 189, 178, 26, 10, 60, 'Lubricantes', 'A-01-1'),
+  ('FIL-ACE',   'Filtro de aceite', 'CB/XR/Cargo', 'PIEZA', 68,  135, 121, 115, 22, 8,  40, 'Filtros', 'A-02-1'),
+  ('FIL-AIRE',  'Filtro de aire', 'CB190R / XR150L', 'PIEZA', 145, 285, 256, 242, 0,  6,  30, 'Filtros', 'A-02-1'),
+  ('BUJ-CR8',   'Bujía NGK CR8E', 'Estándar', 'PIEZA', 78,  155, 139, 132, 34, 12, 60, 'Eléctrico', 'D-02-3'),
+  ('BAL-DEL',   'Balatas delanteras', 'Juego', 'JUEGO', 210, 420, 378, 357, 14, 6,  30, 'Frenos', 'B-01-2'),
+  ('BAL-TRA',   'Balatas traseras', 'Juego', 'JUEGO', 185, 370, 333, 315, 5,  6,  30, 'Frenos', 'B-01-2'),
+  ('KIT-ARR',   'Kit de arrastre completo', 'Catarina, piñón y cadena', 'JUEGO', 890, 1650, 1485, 1402, 9,  4,  20, 'Transmisión', 'B-03-1'),
+  ('CAD-428',   'Cadena 428H x 122', 'Reforzada', 'PIEZA', 320, 610, 549, 518, 12, 5,  25, 'Transmisión', 'B-03-1'),
+  ('LLA-DEL',   'Llanta delantera 90/90-19', 'Uso mixto', 'PIEZA', 640, 1180, 1062, 1003, 8,  4,  20, 'Llantas', 'C-01-1'),
+  ('LLA-TRA',   'Llanta trasera 110/90-17', 'Uso mixto', 'PIEZA', 720, 1320, 1188, 1122, 7,  4,  20, 'Llantas', 'C-01-1'),
+  ('BAT-YTX7',  'Batería YTX7L-BS', '12V 6Ah', 'PIEZA', 480, 890, 801, 756, 11, 4,  20, 'Eléctrico', 'D-02-3'),
+  ('LIQ-FRE',   'Líquido de frenos DOT-4 (355 ml)', NULL, 'PIEZA', 95,  190, 171, 161, 18, 6,  30, 'Frenos', 'B-01-2'),
+  ('FOC-H4',    'Foco halógeno H4', 'Faro principal', 'PIEZA', 85,  175, 158, 149, 16, 6,  30, 'Eléctrico', 'D-02-3'),
+  ('CAB-EMB',   'Cable de embrague', 'CB190R', 'PIEZA', 130, 265, 239, 225, 9,  4,  20, 'Carrocería', 'D-02-3'),
+  ('ESP-JUEGO', 'Espejos laterales (par)', 'Universal rosca 10mm', 'JUEGO', 175, 340, 306, 289, 13, 4,  20, 'Carrocería', 'D-02-3'),
+  ('EMP-CUL',   'Empaque de culata', 'CB/XR 150-190', 'PIEZA', 110, 225, 203, 191, 7,  3,  15, 'Motor', 'D-02-3'),
+  ('SIL-ESC',   'Silenciador de escape', 'Original', 'PIEZA', 1450, 2680, 2412, 2278, 3,  2,  10, 'Carrocería', 'D-02-3')
+) AS p(sku, nombre, descr, unidad, compra, publico, mayoreo, empresa, stock, minimo, maximo, familia, ubicacion);
 
 -- ── Tipos de servicio ────────────────────────────────────────────────
 INSERT INTO service_types (id, tenant_id, branch_id, code, name, description, category,
@@ -400,5 +447,242 @@ FROM ref r, (VALUES
   ('Verónica Palma Ruiz', '5551003003', 'veronica.palma@correo.mx','TELEFONO', 'Cargo 150 para reparto, dos unidades',     'COTIZADO'),
   ('Grupo Logístico Sur', '5551003004', 'compras@logisticosur.mx','REFERIDO',  'Flotilla de cinco Cargo 150',              'NUEVO')
 ) AS l(nombre, tel, correo, origen, interes, estado);
+
+-- ── Inventario de unidades ───────────────────────────────────────────
+-- Piso de venta: lo que hay disponible, lo apartado y lo ya vendido. Sin
+-- unidades el módulo de ventas no tiene de dónde partir, y los accesorios
+-- por modelo no tienen a qué aplicarse.
+INSERT INTO catalog_units (id, tenant_id, branch_id, global_model_id, vehicle_type,
+                           brand, model, year, version, color, serial_number,
+                           engine_number, displacement, cost_price, list_price,
+                           sale_price, status, condition_type, acquisition_date)
+SELECT gen_random_uuid(), r.tenant_id, r.central, gm.id, 'MOTORCYCLE',
+       u.marca, u.modelo, u.anio, gm.version, u.color, u.serie, u.motor, u.cc,
+       u.costo, u.lista, u.venta, u.estado::catalog_units_status_enum,
+       u.condicion::catalog_units_condition_type_enum, r.hoy - u.dias_en_piso
+FROM ref r, (VALUES
+  ('Honda', 'CB500F',    2026, 'Rojo',   '3H1JC6110TD500101', 'PC58E5100101', 471, 118000, 139900, 139900, 'AVAILABLE', 'NEW',  35),
+  ('Honda', 'CB500F',    2026, 'Negro',  '3H1JC6110TD500102', 'PC58E5100102', 471, 118000, 139900, 139900, 'AVAILABLE', 'NEW',  35),
+  ('Honda', 'XR150L',    2026, 'Azul',   '3H1KD0810TD500201', 'KD08E5100201', 149, 41000,  51900,  51900,  'AVAILABLE', 'NEW',  22),
+  ('Honda', 'Cargo 150', 2026, 'Rojo',   '3H1KE0910TD500202', 'KE09E5100202', 149, 39000,  48900,  47500,  'RESERVED',  'NEW',  22),
+  ('Honda', 'XR150L',    2026, 'Blanco', '3H1KD0810TD500301', 'KD08E5100301', 149, 41000,  51900,  51900,  'AVAILABLE', 'NEW',  14),
+  ('Honda', 'XR150L',    2026, 'Rojo',   '3H1KD0810TD500302', 'KD08E5100302', 149, 41000,  51900,  49900,  'SOLD',      'NEW',  48),
+  ('Honda', 'Cargo 150', 2026, 'Blanco', '3H1KE0910TD500401', 'KE09E5100401', 149, 39000,  48900,  48900,  'AVAILABLE', 'NEW',  9),
+  ('Honda', 'Cargo 150', 2026, 'Blanco', '3H1KE0910TD500402', 'KE09E5100402', 149, 39000,  48900,  46900,  'SOLD',      'NEW',  60),
+  ('Honda', 'Cargo 150', 2026, 'Azul',   '3H1KE0910TD500403', 'KE09E5100403', 149, 39000,  48900,  48900,  'AVAILABLE', 'NEW',  9),
+  ('Italika','FT150',    2026, 'Negro',  'LXYJCML05TA050501',  'FT15E5100501', 149, 21000,  27900,  27900,  'AVAILABLE', 'NEW',  27),
+  ('Honda', 'CB500F',    2023, 'Gris',   '3H1JC6110PD180901', 'PC58E1800901', 471, 78000,  99900,  99900,  'AVAILABLE', 'USED', 18),
+  ('Honda', 'XR150L',    2023, 'Negro',  '3H1KD0810PD150902', 'KD08E1500902', 149, 29000,  39900,  39900,  'AVAILABLE', 'USED', 41)
+) AS u(marca, modelo, anio, color, serie, motor, cc, costo, lista, venta, estado, condicion, dias_en_piso)
+JOIN global_brands gb ON gb.name = u.marca
+JOIN global_models gm ON gm.brand_id = gb.id AND gm.model = u.modelo;
+
+-- El JOIN de arriba descarta en silencio cualquier unidad cuyo modelo no
+-- esté en el catálogo global. Pasó con una que no existía y desapareció sin
+-- avisar: mejor que la semilla se caiga a que deje el piso de venta corto.
+DO $$
+DECLARE faltan int;
+BEGIN
+  SELECT 12 - count(*) INTO faltan FROM catalog_units;
+  IF faltan <> 0 THEN
+    RAISE EXCEPTION 'Faltan % unidades: algún modelo no existe en global_models', faltan;
+  END IF;
+END $$;
+
+-- Los accesorios específicos se atan a los modelos que de verdad se venden.
+DELETE FROM unit_accessory_compatibilities;
+INSERT INTO unit_accessory_compatibilities (accessory_id, global_model_id)
+SELECT a.id, gm.id
+FROM unit_accessories a
+JOIN global_brands gb ON gb.name = 'Honda'
+JOIN global_models gm ON gm.brand_id = gb.id
+WHERE a.is_universal = false
+  AND gm.model IN ('CB500F', 'CB190R', 'XR150L');
+
+-- ── Ventas de unidades ───────────────────────────────────────────────
+INSERT INTO unit_sales (id, tenant_id, catalog_unit_id, client_id, user_id, folio,
+                        list_price, final_price, down_payment, financing_type,
+                        bank_financier, status, delivery_date, notes)
+SELECT gen_random_uuid(), r.tenant_id, cu.id,
+       (SELECT id FROM clients WHERE coalesce(company_name, last_name) = v.cliente LIMIT 1),
+       r.admin, v.folio, cu.list_price, cu.sale_price, v.enganche,
+       v.financiamiento::unit_sales_financing_type_enum, v.banco,
+       'COMPLETED', r.hoy - v.dias, v.nota
+FROM ref r, (VALUES
+  ('VU-2026-0001', '3H1KD0810TD500302', 'Ramos Beltrán', 15000, 'BANK_CREDIT',   'BBVA',  45, 'Financiada a 24 meses'),
+  ('VU-2026-0002', '3H1KE0910TD500402', 'Mensajería Rápida del Centro SA de CV', 46900, 'CASH', NULL, 57, 'Flotilla: pago de contado')
+) AS v(folio, serie, cliente, enganche, financiamiento, banco, dias, nota)
+JOIN catalog_units cu ON cu.serial_number = v.serie;
+
+-- Accesorios que se llevaron con la unidad: es lo que hace que el módulo
+-- de accesorios se vea conectado a la venta y no como un catálogo suelto.
+INSERT INTO unit_sale_accessories (unit_sale_id, accessory_id, quantity, unit_price)
+SELECT us.id, a.id, x.cant, a.price
+FROM (VALUES
+  ('VU-2026-0001', 'ACC-CASCO',   1),
+  ('VU-2026-0001', 'ACC-CANDADO', 1),
+  ('VU-2026-0002', 'ACC-BARRAS',  1),
+  ('VU-2026-0002', 'ACC-TOPCASE', 1)
+) AS x(folio, sku, cant)
+JOIN unit_sales us       ON us.folio = x.folio
+JOIN unit_accessories a  ON a.sku    = x.sku;
+
+-- ── Contactos de las empresas ────────────────────────────────────────
+-- Una flota no la trae el dueño: la trae quien la opera, y es a quien hay
+-- que llamar cuando la unidad está lista.
+INSERT INTO contacts (id, tenant_id, client_id, first_name, last_name, phone, email,
+                      position, department, is_authorized, is_active)
+SELECT gen_random_uuid(), r.tenant_id,
+       (SELECT id FROM clients WHERE company_name = c.empresa),
+       c.nombre, c.apellido, c.tel, c.correo, c.puesto, c.area, c.autorizado, true
+FROM ref r, (VALUES
+  ('Mensajería Rápida del Centro SA de CV', 'Ricardo', 'Aguilar Sosa', '5551002042', 'ricardo.aguilar@mensajeriarapida.mx', 'Jefe de flotilla', 'Operaciones', true),
+  ('Mensajería Rápida del Centro SA de CV', 'Norma',   'Téllez Cano',  '5551002043', 'norma.tellez@mensajeriarapida.mx',   'Compras',          'Administración', false),
+  ('Distribuidora Ferretera del Bajío SA',  'Alberto', 'Quiroz Mena',  '5551002044', 'alberto.quiroz@ferreterabajio.mx',   'Encargado de reparto', 'Logística', true)
+) AS c(empresa, nombre, apellido, tel, correo, puesto, area, autorizado);
+
+-- ── Prospectos con seguimiento ───────────────────────────────────────
+INSERT INTO lead_activities (lead_id, user_id, type, notes, created_at)
+SELECT l.id, r.asesor1, a.tipo, a.nota,
+       (now() AT TIME ZONE 'America/Mexico_City') - (a.dias || ' days')::interval
+FROM ref r, (VALUES
+  ('Sofía Delgado Marín',  'LLAMADA', 'Pidió cotización de CB190R con enganche de 15,000', 2),
+  ('Sofía Delgado Marín',  'CORREO',  'Se envió cotización con dos planes de financiamiento', 1),
+  ('Raúl Ibáñez Cortés',   'VISITA',  'Vino a mostrador, probó la XR150L', 5),
+  ('Raúl Ibáñez Cortés',   'LLAMADA', 'Sigue comparando contra Italika DM200', 3),
+  ('Verónica Palma Ruiz',  'LLAMADA', 'Cotizó dos Cargo 150 para reparto', 8),
+  ('Verónica Palma Ruiz',  'CORREO',  'Solicitó factura a nombre de la empresa', 6),
+  ('Grupo Logístico Sur',  'CORREO',  'Pidió propuesta por cinco unidades con descuento', 1)
+) AS a(prospecto, tipo, nota, dias)
+JOIN leads l ON l.name = a.prospecto;
+
+-- ── Cotizaciones ─────────────────────────────────────────────────────
+INSERT INTO quotation_folio_seq (tenant_id, year, last_value)
+SELECT tenant_id, extract(year FROM hoy)::int, 3 FROM ref;
+
+INSERT INTO quotations (id, tenant_id, branch_id, client_id, user_id, type, folio,
+                        status, price_list, subtotal, discount_pct, discount_amount,
+                        tax_amount, total, conditions, validity_date, created_at)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM clients WHERE coalesce(company_name, last_name) = q.cliente LIMIT 1),
+       r.admin, q.tipo::quotations_type_enum, q.folio, q.estado::quotations_status_enum,
+       q.lista::quotations_price_list_enum, q.subtotal, q.desc_pct,
+       round(q.subtotal * q.desc_pct / 100, 2),
+       round((q.subtotal - q.subtotal * q.desc_pct / 100) * 0.16, 2),
+       round((q.subtotal - q.subtotal * q.desc_pct / 100) * 1.16, 2),
+       q.condiciones, r.hoy + 15,
+       (now() AT TIME ZONE 'America/Mexico_City') - (q.dias || ' days')::interval
+FROM ref r, (VALUES
+  ('COT-2026-0001', 'Silva Ortega',  'PARTS',   'SENT',     'PUBLIC',   2075, 0, 'Precios vigentes 15 días. No incluye mano de obra.', 3),
+  ('COT-2026-0002', 'Mensajería Rápida del Centro SA de CV', 'SERVICE', 'ACCEPTED', 'BUSINESS', 6800, 8, 'Servicio de flotilla, tres unidades.', 6),
+  ('COT-2026-0003', 'Nava Estrada',  'PARTS',   'DRAFT',    'PUBLIC',   1650, 0, NULL, 1)
+) AS q(folio, cliente, tipo, estado, lista, subtotal, desc_pct, condiciones, dias);
+
+INSERT INTO quotation_items (quotation_id, part_id, description, quantity, unit_price, discount, subtotal)
+SELECT q.id, p.id, p.name, x.cant, p.public_price, 0, p.public_price * x.cant
+FROM (VALUES
+  ('COT-2026-0001', 'BAL-DEL',   1),
+  ('COT-2026-0001', 'BAL-TRA',   1),
+  ('COT-2026-0001', 'LIQ-FRE',   1),
+  ('COT-2026-0001', 'ACE-10W40', 2),
+  ('COT-2026-0002', 'ACE-20W50', 3),
+  ('COT-2026-0002', 'FIL-ACE',   3),
+  ('COT-2026-0002', 'BUJ-CR8',   3),
+  ('COT-2026-0003', 'KIT-ARR',   1)
+) AS x(folio, sku, cant)
+JOIN quotations q ON q.folio = x.folio
+JOIN parts p      ON p.sku   = x.sku;
+
+-- ── Cuentas por cobrar ───────────────────────────────────────────────
+-- Lo que dejó a crédito la flotilla: es lo que da contenido a finanzas.
+INSERT INTO receivables (id, tenant_id, branch_id, client_id, reference_type,
+                         concept, total, paid_amount, due_date, status)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM clients WHERE company_name = c.empresa),
+       'ServiceOrder', c.concepto, c.total, c.pagado, r.hoy + c.vence, c.estado
+FROM ref r, (VALUES
+  ('Mensajería Rápida del Centro SA de CV', 'Servicio de flotilla, tres unidades', 7888, 3000, 12, 'PARCIAL'),
+  ('Distribuidora Ferretera del Bajío SA',  'Refacciones a crédito 30 días',        4250, 0,    -5, 'VENCIDA')
+) AS c(empresa, concepto, total, pagado, vence, estado);
+
+-- ── Historial de servicio ────────────────────────────────────────────
+-- Órdenes cerradas de meses anteriores. Sin ellas la ficha de un cliente
+-- se ve como la de alguien que acaba de llegar, y la relación entre cliente,
+-- vehículo y servicio no tiene nada que enseñar.
+INSERT INTO service_orders (id, tenant_id, branch_id, owner_id, vehicle_id, user_id,
+                            mechanic_id, folio, status, reported_fault, diagnosis,
+                            work_performed, km_in, km_out, labor_cost, parts_cost,
+                            discount, total, received_at, promised_at, ready_at,
+                            delivered_at, tracking_token)
+SELECT gen_random_uuid(), r.tenant_id, r.central, v.owner_id, v.id, r.asesor1,
+       CASE (row_number() OVER (ORDER BY h.folio)) % 3
+         WHEN 0 THEN r.tecnico1 WHEN 1 THEN r.tecnico2 ELSE r.tecnico3 END,
+       h.folio, 'DELIVERED', h.falla, h.diagnostico, h.trabajo,
+       -- Al kilometraje de hoy se le resta lo recorrido desde entonces, para
+       -- que el historial suba y no baje con el tiempo.
+       greatest(0, v.mileage - h.km_atras),
+       greatest(0, v.mileage - h.km_atras) + 12,
+       h.mano_obra, h.refacciones, 0,
+       round((h.mano_obra + h.refacciones) * 1.16, 2),
+       (r.hoy - h.dias) + time '09:00',
+       (r.hoy - h.dias) + time '17:00',
+       (r.hoy - h.dias) + time '16:20',
+       (r.hoy - h.dias) + time '17:10',
+       gen_random_uuid()
+FROM ref r, (VALUES
+  ('OS-2025-0140', 'NGZ-4401', 'Servicio de 1,000 km',   'Ajustes de fábrica',            'Aceite, filtro y torques',          210,  4200,  850,  480),
+  ('OS-2025-0155', 'MPT-2210', 'Servicio de 5,000 km',   'Mantenimiento programado',      'Aceite, filtro y bujía',            170,  5100,  900,  455),
+  ('OS-2025-0161', 'QWE-3344', 'Ruido en cadena',        'Cadena fuera de tensión',       'Ajuste y lubricación',              155,  3800,  400,  0),
+  ('OS-2025-0168', 'QWE-3344', 'Servicio de 10,000 km',  'Mantenimiento programado',      'Aceite, filtros, bujía y frenos',   130, 10200, 1200, 1580),
+  ('OS-2025-0177', 'ZXC-1188', 'Servicio de 5,000 km',   'Mantenimiento de flotilla',     'Aceite, filtro y revisión',         115,  6400,  900,  455),
+  ('OS-2025-0182', 'FLT-1001', 'Cambio de llanta trasera','Llanta con desgaste irregular','Reemplazo y balanceo',              100,  5900,  350, 1320),
+  ('OS-2025-0190', 'FLT-1002', 'Servicio de 5,000 km',   'Mantenimiento de flotilla',     'Aceite, filtro y revisión',          92,  5800,  900,  455),
+  ('OS-2025-0198', 'BNM-7766', 'Servicio de 1,000 km',   'Primer servicio',               'Aceite, filtro y torques',           85,  4100,  850,  480),
+  ('OS-2025-0205', 'JKL-5512', 'Falla de arranque',      'Batería sulfatada',             'Reemplazo de batería',               70,  3200,  300,  890),
+  ('OS-2025-0211', 'FER-2001', 'Servicio de 10,000 km',  'Mantenimiento programado',      'Aceite, filtros, bujía y kit',       62, 11000, 1200, 2100),
+  ('OS-2026-0130', 'POI-9922', 'Revisión de garantía',   'Sin falla encontrada',          'Revisión y ajuste general',          45,  1200,  350,  0),
+  ('OS-2026-0136', 'RTS-8890', 'Espejo roto',            'Golpe en estacionamiento',      'Reemplazo de espejos',               30,  2600,  200,  340),
+  ('OS-2026-0142', 'FLT-1003', 'Servicio de 1,000 km',   'Primer servicio de flotilla',   'Aceite, filtro y torques',           25,  4300,  850,  480),
+  ('OS-2026-0149', 'MPT-2210', 'Cambio de llantas',      'Ambas al límite',               'Reemplazo delantera y trasera',      18,  3100,  500, 2500)
+) AS h(folio, placa, falla, diagnostico, trabajo, dias, km_atras, mano_obra, refacciones)
+JOIN customer_vehicles v ON v.plate = h.placa;
+
+-- Y las refacciones que consumieron, para que el almacén cuadre con la
+-- historia y los reportes de consumo no salgan en cero.
+INSERT INTO service_order_parts (service_order_id, part_id, quantity, unit_price, subtotal)
+SELECT so.id, p.id, x.cant, p.public_price, p.public_price * x.cant
+FROM (VALUES
+  ('OS-2025-0140', 'ACE-10W40', 2), ('OS-2025-0140', 'FIL-ACE', 1),
+  ('OS-2025-0155', 'ACE-10W40', 2), ('OS-2025-0155', 'FIL-ACE', 1), ('OS-2025-0155', 'BUJ-CR8', 1),
+  ('OS-2025-0168', 'ACE-20W50', 2), ('OS-2025-0168', 'FIL-ACE', 1), ('OS-2025-0168', 'BAL-DEL', 1),
+  ('OS-2025-0177', 'ACE-10W40', 2), ('OS-2025-0177', 'FIL-ACE', 1),
+  ('OS-2025-0182', 'LLA-TRA', 1),
+  ('OS-2025-0190', 'ACE-10W40', 2), ('OS-2025-0190', 'FIL-ACE', 1),
+  ('OS-2025-0198', 'ACE-10W40', 2), ('OS-2025-0198', 'FIL-ACE', 1),
+  ('OS-2025-0205', 'BAT-YTX7', 1),
+  ('OS-2025-0211', 'ACE-20W50', 2), ('OS-2025-0211', 'KIT-ARR', 1),
+  ('OS-2026-0136', 'ESP-JUEGO', 1),
+  ('OS-2026-0142', 'ACE-10W40', 2), ('OS-2026-0142', 'FIL-ACE', 1),
+  ('OS-2026-0149', 'LLA-DEL', 1), ('OS-2026-0149', 'LLA-TRA', 1)
+) AS x(folio, sku, cant)
+JOIN service_orders so ON so.folio = x.folio
+JOIN parts p           ON p.sku    = x.sku;
+
+-- ── Fichaje de los técnicos ──────────────────────────────────────────
+-- Lo que alimenta el rendimiento del taller: tiempo real contra baremo.
+INSERT INTO service_order_times (service_order_id, mechanic_id, started_at, ended_at,
+                                 minutes, notes)
+SELECT so.id, so.mechanic_id,
+       so.received_at + interval '25 minutes',
+       so.received_at + interval '25 minutes' + (t.minutos || ' minutes')::interval,
+       t.minutos, 'Trabajo registrado por el técnico'
+FROM service_orders so
+JOIN (VALUES
+  ('OS-2025-0140', 55), ('OS-2025-0155', 70), ('OS-2025-0161', 35),
+  ('OS-2025-0168', 130), ('OS-2025-0177', 65), ('OS-2025-0182', 45),
+  ('OS-2025-0190', 68), ('OS-2025-0198', 52), ('OS-2025-0205', 40),
+  ('OS-2025-0211', 145), ('OS-2026-0130', 30), ('OS-2026-0136', 25),
+  ('OS-2026-0142', 58), ('OS-2026-0149', 50)
+) AS t(folio, minutos) ON t.folio = so.folio;
 
 COMMIT;
