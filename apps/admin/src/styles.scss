@@ -1,2 +1,8 @@
+// `@use` va antes que cualquier regla: Sass lo exige.
+@use "styles/panel";
+
 /* Admin styles */
-body { margin: 0; font-family: system-ui, sans-serif; }
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+}

@@ -1,0 +1,442 @@
+/**
+ * Estilos del portal de administración.
+ *
+ * Viven aquí y no en cada pantalla porque son el mismo panel: al abrir la
+ * segunda pantalla habría que copiar trescientas líneas, y a la tercera ya
+ * no coincidirían entre sí.
+ */
+
+.panel {
+  min-height: 100vh;
+  background: #f1f5f9;
+  padding: 24px;
+}
+
+.barra {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+
+  h1 {
+    margin: 0;
+    font-size: 22px;
+    color: #0f172a;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 14px;
+    color: #64748b;
+  }
+}
+
+.barra-derecha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quien {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.aviso {
+  margin: 0 0 16px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+
+  &[data-tono="ok"] {
+    background: #ecfdf5;
+    color: #047857;
+  }
+  &[data-tono="error"] {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}
+
+.tarjeta {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+
+  h2 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    color: #0f172a;
+  }
+}
+
+/* La separación la pone la rejilla, nunca el control. */
+.fila {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  align-items: end;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #475569;
+  }
+
+  input,
+  select {
+    height: 38px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0f172a;
+    background: #fff;
+  }
+}
+
+.acciones-fila {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-principal,
+.btn-secundario,
+.btn-chico,
+.btn-texto {
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-principal {
+  height: 38px;
+  padding: 0 16px;
+  border: none;
+  background: #105078;
+  color: #fff;
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+.btn-secundario {
+  height: 38px;
+  padding: 0 16px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+}
+
+.btn-chico {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.btn-texto {
+  border: none;
+  background: none;
+  color: #105078;
+  padding: 4px;
+}
+
+.vacio {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+
+  th,
+  td {
+    padding: 10px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    text-align: left;
+  }
+
+  th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #64748b;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .mono {
+    font-family: ui-monospace, monospace;
+    font-size: 13px;
+    color: #475569;
+  }
+
+  /* El suspendido sigue visible pero atenuado: su historial no desaparece. */
+  tr.suspendido td {
+    opacity: 0.55;
+  }
+}
+
+.acciones {
+  display: flex;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.plan,
+.estado {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.plan {
+  &[data-plan="PRO"] {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  &[data-plan="ENTERPRISE"] {
+    background: #ede9fe;
+    color: #5b21b6;
+  }
+}
+
+.estado[data-activo="true"] {
+  background: #d1fae5;
+  color: #047857;
+}
+
+
+/* ── Diálogo de módulos ── */
+.fondo {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 45%);
+  z-index: 40;
+}
+
+.dialogo {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(720px, calc(100vw - 32px));
+  max-height: 85vh;
+  overflow-y: auto;
+  z-index: 50;
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 24px 48px rgb(15 23 42 / 25%);
+}
+
+.dialogo-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 18px;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 13px;
+    color: #64748b;
+  }
+}
+
+.btn-cerrar {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 8px;
+  background: #f1f5f9;
+  color: #475569;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+
+/* ── Indicadores del negocio ── */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.indicador {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  /* Lo que hay que atender se distingue por la forma, no solo por el número. */
+  &.alerta {
+    border-color: #fca5a5;
+    background: #fef2f2;
+
+    .cifra {
+      color: #b91c1c;
+    }
+  }
+}
+
+.etiqueta {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+}
+
+.cifra {
+  font-size: 24px;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.pie {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+/* ── Lista de módulos: la usan clientes y planes ── */
+.modulos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.modulo {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+
+  input {
+    margin-top: 2px;
+  }
+
+  /* El núcleo se ve activo pero no invita a pulsarlo. */
+  &.nucleo {
+    background: #f8fafc;
+    cursor: default;
+  }
+
+  &.fuera {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.modulo-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 13px;
+  color: #64748b;
+
+  strong {
+    color: #0f172a;
+    font-size: 14px;
+  }
+}
+
+.nota {
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+.fuera-titulo {
+  margin: 24px 0 10px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ── Formulario en rejilla ── */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+}
+
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: #475569;
+
+  input,
+  select,
+  textarea {
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font: inherit;
+    font-size: 14px;
+    color: #0f172a;
+    background: #fff;
+    resize: vertical;
+  }
+
+  &.ancho-total {
+    grid-column: 1 / -1;
+  }
+}
+
+.titulo-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.explica {
+  margin: -4px 0 16px;
+  font-size: 13px;
+  color: #64748b;
+  max-width: 62ch;
+}
+
+.dialogo-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}

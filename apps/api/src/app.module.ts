@@ -18,6 +18,7 @@ import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { StockLocationsModule } from './modules/stock-locations/stock-locations.module';
 import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { SaasModule } from './modules/saas/saas.module';
 import { CashRegisterModule } from './modules/cash-register/cash-register.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { WarehouseTransfersModule } from './modules/warehouse-transfers/warehouse-transfers.module';
@@ -114,6 +115,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     }),
     AuthModule,
     TenantsModule,
+    SaasModule,
     LegalEntitiesModule,
     BranchesModule,
     ClientsModule,

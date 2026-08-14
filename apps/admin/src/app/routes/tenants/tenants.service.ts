@@ -19,6 +19,8 @@ export interface Tenant {
   enabledModules: string[] | null;
   isActive: boolean;
   createdAt: string;
+  /** Paquete comercial contratado; null en quien nunca se le asignó uno. */
+  saasPlanId?: string | null;
 }
 
 export interface NuevoTenant {
@@ -80,5 +82,151 @@ export class TenantsService {
       `/api/v1/tenants/${id}/modules`,
       { enabledModules },
     );
+  }
+}
+
+// ─── Administración del negocio (planes, precios, cobros) ─────
+
+export interface PlanPrecio {
+  id: string;
+  /** Código comercial del paquete; en los de sistema coincide con el nivel. */
+  key: string;
+  /** Nivel técnico que otorga: el tope de lo que puede incluir. */
+  tier: Plan;
+  name: string;
+  description: string | null;
+  monthlyPrice: number;
+  currency: string;
+  isActive: boolean;
+  sortOrder: number;
+  /** `null` = entrega todo lo que su nivel permite. */
+  includedModules: string[] | null;
+  /** Los tres de origen: se tarifan, pero ni se borran ni cambian de nivel. */
+  isSystem: boolean;
+}
+
+export interface PrecioModulo {
+  key: string;
+  name: string;
+  minPlan: Plan;
+  core: boolean;
+  monthlyPrice: number;
+  currency: string;
+}
+
+export type EstadoPago = "PENDIENTE" | "PAGADO" | "VENCIDO" | "CANCELADO";
+
+export interface Pago {
+  id: string;
+  period: string;
+  amount: number;
+  currency: string;
+  status: EstadoPago;
+  dueDate: string | null;
+  paidAt: string | null;
+  method: string | null;
+  reference: string | null;
+  concept: string | null;
+  /** Lo calcula el backend: pendiente cuya fecha límite ya pasó. */
+  vencido?: boolean;
+}
+
+/** Datos comerciales del cliente; el resto del tenant no cambia aquí. */
+export interface FichaComercial {
+  /** Paquete comercial contratado; al cambiarlo se mueven nivel y módulos. */
+  saasPlanId: string | null;
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
+  rfc: string | null;
+  billingEmail: string | null;
+  address: string | null;
+  notes: string | null;
+  subscriptionStart: string | null;
+  billingDay: number | null;
+  extraModules: string[] | null;
+}
+
+export interface Ficha {
+  tenant: Tenant & FichaComercial;
+  cobro: {
+    plan: { key: Plan; name: string; precio: number };
+    extras: { key: string; name: string; precio: number }[];
+    total: number;
+    moneda: string;
+  };
+  modulos: { activos: number; incluidosEnPlan: number; extras: string[] };
+  pagos: Pago[];
+  resumen: {
+    totalPagado: number;
+    mesesPagados: number;
+    vencidos: number;
+    adeudo: number;
+    ultimoPago: string | null;
+    antiguedadMeses: number | null;
+  };
+}
+
+export interface Panorama {
+  clientes: number;
+  activos: number;
+  suspendidos: number;
+  ingresoMensual: number;
+  adeudoTotal: number;
+  clientesConAdeudo: number;
+}
+
+@Injectable({ providedIn: "root" })
+export class SaasService {
+  private http = inject(HttpClient);
+
+  panorama(): Observable<Panorama> {
+    return this.http.get<Panorama>("/api/v1/saas/overview");
+  }
+
+  planes(): Observable<PlanPrecio[]> {
+    return this.http.get<PlanPrecio[]>("/api/v1/saas/plans");
+  }
+
+  crearPlan(dto: Partial<PlanPrecio>): Observable<PlanPrecio> {
+    return this.http.post<PlanPrecio>("/api/v1/saas/plans", dto);
+  }
+
+  guardarPlan(id: string, dto: Partial<PlanPrecio>): Observable<PlanPrecio> {
+    return this.http.patch<PlanPrecio>(`/api/v1/saas/plans/${id}`, dto);
+  }
+
+  eliminarPlan(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/v1/saas/plans/${id}`);
+  }
+
+  preciosDeModulos(): Observable<PrecioModulo[]> {
+    return this.http.get<PrecioModulo[]>("/api/v1/saas/module-prices");
+  }
+
+  guardarPrecioModulo(key: string, monthlyPrice: number): Observable<unknown> {
+    return this.http.put(`/api/v1/saas/module-prices/${key}`, { monthlyPrice });
+  }
+
+  ficha(tenantId: string): Observable<Ficha> {
+    return this.http.get<Ficha>(`/api/v1/saas/tenants/${tenantId}`);
+  }
+
+  guardarFicha(
+    tenantId: string,
+    dto: Partial<FichaComercial>,
+  ): Observable<Tenant> {
+    return this.http.patch<Tenant>(`/api/v1/saas/tenants/${tenantId}`, dto);
+  }
+
+  registrarPago(tenantId: string, dto: Partial<Pago>): Observable<Pago> {
+    return this.http.post<Pago>(
+      `/api/v1/saas/tenants/${tenantId}/payments`,
+      dto,
+    );
+  }
+
+  eliminarPago(id: string): Observable<void> {
+    return this.http.delete<void>(`/api/v1/saas/payments/${id}`);
   }
 }

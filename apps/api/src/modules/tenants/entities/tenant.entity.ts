@@ -43,6 +43,51 @@ export class Tenant {
   @Column({ name: 'pld_config', type: 'jsonb', nullable: true })
   pldConfig: Record<string, number> | null;
 
+  /**
+   * Paquete comercial contratado. El nivel técnico sigue viviendo en `plan`:
+   * este campo dice cuál de los paquetes con ese nivel se le vendió, que es lo
+   * que determina el precio.
+   */
+  @Column({ name: 'saas_plan_id', type: 'uuid', nullable: true })
+  saasPlanId: string | null;
+
+  // ── Ficha comercial: con quién se trata y a dónde se factura ──
+  @Column({ name: 'contact_name', type: 'varchar', length: 200, nullable: true })
+  contactName: string | null;
+
+  @Column({ name: 'contact_email', type: 'varchar', length: 200, nullable: true })
+  contactEmail: string | null;
+
+  @Column({ name: 'contact_phone', type: 'varchar', length: 30, nullable: true })
+  contactPhone: string | null;
+
+  @Column({ name: 'rfc', type: 'varchar', length: 13, nullable: true })
+  rfc: string | null;
+
+  @Column({ name: 'billing_email', type: 'varchar', length: 200, nullable: true })
+  billingEmail: string | null;
+
+  @Column({ name: 'address', type: 'varchar', length: 400, nullable: true })
+  address: string | null;
+
+  @Column({ name: 'notes', type: 'text', nullable: true })
+  notes: string | null;
+
+  /** Desde cuándo paga; sirve para calcular antigüedad y periodos debidos. */
+  @Column({ name: 'subscription_start', type: 'date', nullable: true })
+  subscriptionStart: string | null;
+
+  /** Día del mes en que se le cobra. */
+  @Column({ name: 'billing_day', type: 'int', nullable: true })
+  billingDay: number | null;
+
+  /**
+   * Módulos contratados por encima de lo que incluye su plan. Se cobran aparte
+   * y se suman a los que el plan ya trae.
+   */
+  @Column({ name: 'extra_modules', type: 'jsonb', nullable: true })
+  extraModules: string[] | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

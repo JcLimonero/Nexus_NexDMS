@@ -1,0 +1,17 @@
+<header class="barra">
+  <div>
+    <h1>{{ titulo() }}</h1>
+    @if (subtitulo()) {
+      <p>{{ subtitulo() }}</p>
+    }
+  </div>
+
+  <div class="barra-derecha">
+    <nav class="nav">
+      <a routerLink="/tenants" routerLinkActive="activo">Clientes</a>
+      <a routerLink="/precios" routerLinkActive="activo">Planes y precios</a>
+    </nav>
+    <span class="quien">{{ auth.usuario()?.email }}</span>
+    <button type="button" class="btn-texto" (click)="auth.salir()">Salir</button>
+  </div>
+</header>
