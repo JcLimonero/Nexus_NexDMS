@@ -8,6 +8,16 @@ export const clientsRoutes: Routes = [
     data: { title: "Clientes", breadcrumb: "Clientes" },
   },
   {
+    // Antes que `:id`, o la ruta se comería "relaciones" como si fuera un id.
+    path: "relaciones",
+    loadComponent: () =>
+      import("./relaciones/relaciones").then((m) => m.Relaciones),
+    data: {
+      title: "Clientes, vehículos y servicios",
+      breadcrumb: "Relaciones",
+    },
+  },
+  {
     path: "nuevo",
     loadComponent: () =>
       import("./form/cliente-form").then((m) => m.ClienteForm),
