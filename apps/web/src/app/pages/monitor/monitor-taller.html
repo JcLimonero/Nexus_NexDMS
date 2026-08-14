@@ -1,0 +1,86 @@
+<div class="monitor">
+  <header class="monitor-top">
+    <div>
+      <h1>Taller</h1>
+      <p>{{ nombreSucursal() }}</p>
+    </div>
+
+    <div class="monitor-resumen">
+      <div class="resumen-dato">
+        <strong>{{ unidades().length }}</strong>
+        <span>en piso</span>
+      </div>
+      <div class="resumen-dato" [class.alerta]="porVencer() > 0">
+        <strong>{{ porVencer() }}</strong>
+        <span>por vencer</span>
+      </div>
+      <div class="resumen-dato" [class.critico]="excedidas() > 0">
+        <strong>{{ excedidas() }}</strong>
+        <span>excedidas</span>
+      </div>
+    </div>
+
+    <div class="monitor-hora">
+      @if (sinConexion()) {
+        <!-- Se dice que el dato está viejo en vez de borrarlo: una pantalla
+             en blanco no distingue "no hay nada" de "no hay conexión". -->
+        <span class="sin-conexion">Sin conexión</span>
+      }
+      <span>{{ actualizado() | date: "HH:mm" }}</span>
+    </div>
+  </header>
+
+  @if (!unidades().length) {
+    <p class="monitor-vacio">No hay unidades en servicio.</p>
+  } @else {
+    <div class="tarjetas">
+      @for (u of ordenadas(); track u.ordenId) {
+        <article class="unidad" [attr.data-semaforo]="u.semaforo">
+          <div class="unidad-top">
+            <span class="folio">{{ u.folio }}</span>
+            <span class="estado">{{ etiquetaEstado(u.estado) }}</span>
+          </div>
+
+          <h2 class="vehiculo">{{ u.vehiculo }}</h2>
+          <p class="placa">
+            {{ u.placa || "sin placa" }} · {{ u.cliente }}
+          </p>
+
+          @if (u.faseActual) {
+            <div class="fase">
+              <div class="fase-nombre">
+                <span>{{ u.faseActual }}</span>
+                <span class="fase-cuenta">
+                  {{ u.fasesTerminadas }}/{{ u.fasesTotales }}
+                </span>
+              </div>
+
+              <div class="barra">
+                <div class="barra-avance" [style.width.%]="avance(u)"></div>
+              </div>
+
+              <div class="fase-tiempo">
+                <span>
+                  {{ duracion(u.minutosEnFase) }} de {{ duracion(u.estimadoFase) }}
+                </span>
+                @if (u.retraso > 0) {
+                  <strong class="retraso">+{{ duracion(u.retraso) }}</strong>
+                }
+              </div>
+
+              @if (u.responsable) {
+                <p class="responsable">{{ u.responsable }}</p>
+              }
+            </div>
+          } @else if (u.fasesTotales) {
+            <p class="sin-fase">Sin fase iniciada</p>
+          } @else {
+            <!-- Sin paquete aplicado no hay nada contra qué medir; se dice,
+                 en vez de mostrarla como si fuera en tiempo. -->
+            <p class="sin-fase">Sin paquete de servicio</p>
+          }
+        </article>
+      }
+    </div>
+  }
+</div>

@@ -10,6 +10,24 @@ export const routes: Routes = [
     redirectTo: "/dashboard/default",
     pathMatch: "full",
   },
+  // Pantallas para colgar en el taller. Fuera del layout del DMS: no llevan
+  // menú ni nada que pulsar, y `?branch=` deja fija la sucursal para que el
+  // monitor arranque solo al encenderlo. Piden sesión como el resto —lo que
+  // muestran son datos de clientes.
+  {
+    path: "monitor/taller",
+    loadComponent: () =>
+      import("./pages/monitor/monitor-taller").then((m) => m.MonitorTaller),
+    canActivate: [AdminGuard],
+    data: { title: "Monitor del taller" },
+  },
+  {
+    path: "monitor/citas",
+    loadComponent: () =>
+      import("./pages/monitor/monitor-citas").then((m) => m.MonitorCitas),
+    canActivate: [AdminGuard],
+    data: { title: "Monitor de citas" },
+  },
   {
     path: "auth/login",
     loadComponent: () => import("./auth/login/login").then((m) => m.Login),

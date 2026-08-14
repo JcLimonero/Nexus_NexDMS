@@ -1,0 +1,310 @@
+/**
+ * Pantallas para colgar en el taller.
+ *
+ * Se leen de lejos y de pie: todo va una o dos tallas por encima de lo
+ * normal, sin menús ni nada que pulsar. Van en oscuro porque están
+ * encendidas todo el día en una nave con luz de techo, donde un fondo
+ * blanco deslumbra y quema el panel.
+ *
+ * Los colores del semáforo no se toman de los tokens claros: sobre negro
+ * necesitan más luminosidad para mantener el contraste.
+ */
+
+.monitor {
+  --m-bg: #0f171c;
+  --m-card: #16222a;
+  --m-border: #26353f;
+  --m-text: #eaf0f4;
+  --m-text-2: #9fb0bc;
+  --m-ok: #4ade9b;
+  --m-warn: #e9b872;
+  --m-bad: #f0736a;
+  --m-idle: #71838f;
+
+  min-height: 100vh;
+  padding: 24px 32px;
+  background: var(--m-bg);
+  color: var(--m-text);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+.monitor-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--m-border);
+
+  h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: 20px;
+    color: var(--m-text-2);
+  }
+}
+
+.monitor-resumen {
+  display: flex;
+  gap: 32px;
+}
+
+.resumen-dato {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  strong {
+    font-size: 44px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--m-text-2);
+  }
+
+  &.alerta strong {
+    color: var(--m-warn);
+  }
+  &.critico strong {
+    color: var(--m-bad);
+  }
+}
+
+.monitor-hora {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  color: var(--m-text-2);
+}
+
+.sin-conexion {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--m-bad);
+  color: var(--m-bg);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.monitor-vacio {
+  margin: 80px 0;
+  text-align: center;
+  font-size: 28px;
+  color: var(--m-text-2);
+}
+
+.tarjetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 20px;
+}
+
+.unidad {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px;
+  background: var(--m-card);
+  border: 1px solid var(--m-border);
+  /* La franja de color es lo que se ve a cinco metros; el borde entero no
+     aguanta la distancia. */
+  border-left: 8px solid var(--m-idle);
+  border-radius: 12px;
+
+  &[data-semaforo="en-tiempo"] {
+    border-left-color: var(--m-ok);
+  }
+  &[data-semaforo="por-vencer"] {
+    border-left-color: var(--m-warn);
+  }
+  &[data-semaforo="excedido"] {
+    border-left-color: var(--m-bad);
+    background: color-mix(in srgb, var(--m-bad) 12%, var(--m-card));
+  }
+}
+
+.unidad-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 16px;
+  color: var(--m-text-2);
+}
+
+.folio {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  letter-spacing: 0.02em;
+}
+
+.estado {
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--m-border);
+  font-size: 14px;
+}
+
+.vehiculo {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+.placa {
+  margin: 0;
+  font-size: 17px;
+  color: var(--m-text-2);
+}
+
+.fase {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.fase-nombre {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 21px;
+  font-weight: 500;
+}
+
+.fase-cuenta {
+  font-size: 17px;
+  color: var(--m-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.barra {
+  height: 10px;
+  border-radius: 999px;
+  background: var(--m-border);
+  overflow: hidden;
+}
+
+.barra-avance {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--m-ok);
+  transition: width 0.4s ease;
+
+  [data-semaforo="por-vencer"] & {
+    background: var(--m-warn);
+  }
+  [data-semaforo="excedido"] & {
+    background: var(--m-bad);
+  }
+}
+
+.fase-tiempo {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 18px;
+  color: var(--m-text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.retraso {
+  color: var(--m-bad);
+  font-size: 20px;
+}
+
+.responsable {
+  margin: 0;
+  font-size: 17px;
+  color: var(--m-text);
+}
+
+.sin-fase {
+  margin: 4px 0 0;
+  font-size: 18px;
+  color: var(--m-idle);
+}
+
+/* ── Monitor de citas ── */
+.citas {
+  display: grid;
+  /* Ancho suficiente para que un nombre largo no se parta en tres líneas:
+     la hora ya se lleva 100px y la marca de estado otro tanto. */
+  grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+  gap: 16px;
+}
+
+.cita {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--m-card);
+  border: 1px solid var(--m-border);
+  border-left: 8px solid var(--m-idle);
+  border-radius: 12px;
+
+  /* Ya llegó: deja de ser una espera y se atenúa para no competir con las
+     que faltan, que es lo que hay que vigilar. */
+  &.llegada {
+    border-left-color: var(--m-ok);
+    opacity: 0.65;
+  }
+
+  /* Pasó su hora y no ha llegado. */
+  &.tarde {
+    border-left-color: var(--m-bad);
+  }
+}
+
+.cita-hora {
+  font-size: 34px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 100px;
+}
+
+.cita-datos {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 auto;
+
+  strong {
+    font-size: 21px;
+    font-weight: 500;
+  }
+
+  span {
+    font-size: 17px;
+    color: var(--m-text-2);
+  }
+}
+
+.cita-marca {
+  margin-left: auto;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--m-text-2);
+  white-space: nowrap;
+}

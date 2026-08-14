@@ -1,0 +1,47 @@
+<div class="monitor">
+  <header class="monitor-top">
+    <div>
+      <h1>Citas de hoy</h1>
+      <p>{{ nombreSucursal() }} · {{ actualizado() | date: "EEEE d 'de' MMMM" }}</p>
+    </div>
+
+    <div class="monitor-resumen">
+      <div class="resumen-dato">
+        <strong>{{ citas().length }}</strong>
+        <span>agendadas</span>
+      </div>
+      <div class="resumen-dato">
+        <strong>{{ llegadas() }}</strong>
+        <span>llegaron</span>
+      </div>
+      <div class="resumen-dato" [class.alerta]="pendientes() > 0">
+        <strong>{{ pendientes() }}</strong>
+        <span>por llegar</span>
+      </div>
+    </div>
+
+    <div class="monitor-hora">
+      @if (sinConexion()) {
+        <span class="sin-conexion">Sin conexión</span>
+      }
+      <span>{{ actualizado() | date: "HH:mm" }}</span>
+    </div>
+  </header>
+
+  @if (!citas().length) {
+    <p class="monitor-vacio">No hay citas para hoy.</p>
+  } @else {
+    <div class="citas">
+      @for (c of ordenadas(); track c.id) {
+        <article class="cita" [class.llegada]="llego(c)" [class.tarde]="tarde(c)">
+          <span class="cita-hora">{{ c.scheduledAt | date: "HH:mm" }}</span>
+          <span class="cita-datos">
+            <strong>{{ c.clientName }}</strong>
+            <span>{{ c.serviceType }}</span>
+          </span>
+          <span class="cita-marca">{{ etiquetaEstado(c) }}</span>
+        </article>
+      }
+    </div>
+  }
+</div>

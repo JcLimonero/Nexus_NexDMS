@@ -5,9 +5,12 @@ import {
 } from "@angular/common/http";
 import {
   ApplicationConfig,
+  LOCALE_ID,
   importProvidersFrom,
   provideZoneChangeDetection,
 } from "@angular/core";
+import { registerLocaleData } from "@angular/common";
+import localeEsMX from "@angular/common/locales/es-MX";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import {
   provideRouter,
@@ -26,12 +29,22 @@ import { authInterceptor } from "./auth/auth.interceptor";
 import { routes } from "./app.routes";
 import { NexDMSTitleStrategy } from "./shared/services/nexdms-title.strategy";
 
+/**
+ * Español de México en fechas y números.
+ *
+ * Sin esto Angular usa `en-US` y los `| date` salen "Friday 14 de August":
+ * el formato en español pero los nombres en inglés. Se registra una sola vez
+ * aquí porque afecta a todas las pantallas.
+ */
+registerLocaleData(localeEsMX, "es-MX");
+
 export function HttpLoaderFactory(http: HttpClient) {
   return new TranslateHttpLoader(http, "/assets/i18n/", ".json");
 }
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    { provide: LOCALE_ID, useValue: "es-MX" },
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideAnimations(),
     provideToastr(),
