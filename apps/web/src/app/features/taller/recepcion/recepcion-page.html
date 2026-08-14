@@ -266,11 +266,21 @@
             <button class="btn btn-light btn-sm" (click)="fotoActiva.set(null)">Cerrar</button>
           </div>
           <div class="card-body">
-            <div class="foto-wrap" (click)="onClickFoto($event)">
-              <div class="foto-placeholder">
-                <app-feather-icons [icon]="'image'" />
-                <span>{{ f.specCode }}</span>
-              </div>
+            <div
+              class="foto-wrap"
+              [class.con-media]="!!f.url"
+              (click)="onClickFoto($event)"
+            >
+              @if (f.url && f.mediaType === "VIDEO") {
+                <video class="foto-media" [src]="f.url" controls playsinline></video>
+              } @else if (f.url) {
+                <img class="foto-media" [src]="f.url" [alt]="f.specCode" />
+              } @else {
+                <div class="foto-placeholder">
+                  <app-feather-icons [icon]="'image'" />
+                  <span>No se pudo cargar la imagen</span>
+                </div>
+              }
               @for (m of f.marks; track m.id) {
                 <span
                   class="mark"

@@ -260,6 +260,9 @@ export class RecepcionPage implements OnInit {
 
   /** Convierte el clic en coordenadas relativas a la imagen. */
   onClickFoto(event: MouseEvent): void {
+    // Sobre un video no se marca: la posición no significa nada si la imagen
+    // se mueve, y el clic sería el de darle play.
+    if (this.fotoActiva()?.mediaType === "VIDEO") return;
     const img = event.currentTarget as HTMLElement;
     const r = img.getBoundingClientRect();
     this.marcaPendiente.set({

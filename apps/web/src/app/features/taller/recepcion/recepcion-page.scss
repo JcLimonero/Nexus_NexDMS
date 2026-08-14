@@ -118,7 +118,21 @@
   overflow: hidden;
 }
 
-/* Marcador de posición mientras el almacenamiento no sirve la imagen */
+/* Con foto, el recuadro toma la forma de la foto en vez de imponerle 4:3.
+   La marca se guarda en coordenadas relativas al recuadro, así que recuadro
+   e imagen tienen que ser lo mismo: si sobraran franjas, un toque sobre la
+   franja quedaría guardado como un daño que en la unidad no está. */
+.foto-wrap.con-media {
+  aspect-ratio: auto;
+}
+
+.foto-media {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Solo se ve si la liga de la imagen falló */
 .foto-placeholder {
   position: absolute;
   inset: 0;

@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  Logger,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -75,6 +76,30 @@ export class ReceptionService {
     private readonly events: EventEmitter2,
     private readonly additionalWork: AdditionalWorkService,
   ) {}
+
+  private readonly logger = new Logger(ReceptionService.name);
+
+  /**
+   * Liga temporal para ver la foto en el navegador.
+   *
+   * El bucket es privado, así que la imagen no se puede servir por su nombre:
+   * se firma una liga que caduca. Se firma en cada consulta y no se guarda
+   * porque caduca en una hora, y una recepción se abre y se cierra en minutos.
+   *
+   * Si el almacenamiento no está configurado —una instalación de desarrollo
+   * sin credenciales— devuelve nulo en vez de tumbar la pantalla: sin foto la
+   * recepción todavía sirve, el marcado depende de la posición del toque.
+   */
+  private async ligaDeFoto(storageKey: string): Promise<string | null> {
+    try {
+      return await this.storage.getSignedUrl(storageKey);
+    } catch (e) {
+      this.logger.warn(
+        `No se pudo firmar la liga de ${storageKey}: ${(e as Error).message}`,
+      );
+      return null;
+    }
+  }
 
   // ─── Catálogo de fotos ───────────────────────────
 
@@ -410,22 +435,27 @@ export class ReceptionService {
       pendientes: specs
         .filter((s) => s.required && !tomadas.has(s.code))
         .map((s) => s.name),
-      fotos: fotos.map((f) => ({
-        id: f.id,
-        specCode: f.specCode,
-        angle: f.angle,
-        mediaType: f.mediaType,
-        storageKey: f.storageKey,
-        marks: marcas
-          .filter((m) => m.receptionPhotoId === f.id)
-          .map((m) => ({
-            id: m.id,
-            type: m.markType,
-            note: m.note,
-            x: Number(m.x),
-            y: Number(m.y),
-          })),
-      })),
+      // Las ligas se firman a la vez: firmar es cuenta local, no viaje a
+      // Backblaze, pero en serie son diez esperas encadenadas sin razón.
+      fotos: await Promise.all(
+        fotos.map(async (f) => ({
+          id: f.id,
+          specCode: f.specCode,
+          angle: f.angle,
+          mediaType: f.mediaType,
+          storageKey: f.storageKey,
+          url: await this.ligaDeFoto(f.storageKey),
+          marks: marcas
+            .filter((m) => m.receptionPhotoId === f.id)
+            .map((m) => ({
+              id: m.id,
+              type: m.markType,
+              note: m.note,
+              x: Number(m.x),
+              y: Number(m.y),
+            })),
+        })),
+      ),
     };
   }
 
@@ -506,7 +536,7 @@ export class ReceptionService {
     });
     if (previa) await this.photoRepo.remove(previa);
 
-    return this.photoRepo.save(
+    const foto = await this.photoRepo.save(
       this.photoRepo.create({
         receptionChecklistId: checklist.id,
         specCode,
@@ -516,6 +546,10 @@ export class ReceptionService {
         mimeType: file.mimetype,
       }),
     );
+    // Se devuelve ya con la liga y sin marcas, es decir con la misma forma que
+    // tienen las fotos en `getReception`: quien suba puede pintarla enseguida
+    // sin volver a pedir la recepción entera.
+    return { ...foto, url: await this.ligaDeFoto(foto.storageKey), marks: [] };
   }
 
   /** Marca un daño sobre una foto (coordenadas relativas 0–1). */

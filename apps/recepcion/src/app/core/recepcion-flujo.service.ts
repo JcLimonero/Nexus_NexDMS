@@ -45,6 +45,8 @@ export interface ReceptionPhoto {
   angle: string;
   mediaType: string;
   storageKey: string;
+  /** Liga firmada y temporal. Nula si el almacenamiento no está configurado. */
+  url: string | null;
   marks: PhotoMark[];
 }
 

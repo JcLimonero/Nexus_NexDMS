@@ -358,8 +358,6 @@ input[type="range"] {
   line-height: 1;
 }
 
-/* El lienzo no muestra la imagen: sin credenciales de almacenamiento no se
-   puede descargar, y el marcado depende de la posición, no de verla. */
 .lienzo {
   position: relative;
   aspect-ratio: 4 / 3;
@@ -368,6 +366,20 @@ input[type="range"] {
   background: #f8fafc;
   cursor: crosshair;
   touch-action: none;
+}
+
+/* Con foto el lienzo toma la forma de la foto: la marca se guarda relativa
+   al lienzo, así que si sobraran franjas el toque quedaría fuera de la unidad. */
+.lienzo.con-foto {
+  aspect-ratio: auto;
+  border-style: solid;
+  overflow: hidden;
+}
+
+.lienzo-foto {
+  display: block;
+  width: 100%;
+  height: auto;
 }
 
 .lienzo-fondo {

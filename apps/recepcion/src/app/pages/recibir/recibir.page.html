@@ -239,8 +239,12 @@
     </header>
 
     <p class="pista">Toca la foto donde esté el daño.</p>
-    <div class="lienzo" (click)="onTocarFoto($event)">
-      <div class="lienzo-fondo">Foto {{ f.specCode }}</div>
+    <div class="lienzo" [class.con-foto]="!!f.url" (click)="onTocarFoto($event)">
+      @if (f.url) {
+        <img class="lienzo-foto" [src]="f.url" [alt]="f.specCode" />
+      } @else {
+        <div class="lienzo-fondo">No se pudo cargar la foto {{ f.specCode }}</div>
+      }
       @for (m of f.marks; track m.id) {
         <button
           type="button"
