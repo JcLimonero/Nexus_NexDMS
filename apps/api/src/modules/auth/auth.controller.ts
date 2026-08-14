@@ -9,6 +9,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { LIMITE_ACCESO } from '../../common/throttler/limites';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { AuthService } from './auth.service';
@@ -25,7 +26,9 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(200)
-  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  // Cinco por minuto en producción; más holgado en desarrollo, donde el
+  // límite estorba más de lo que protege. Ver `common/throttler/limites`.
+  @Throttle(LIMITE_ACCESO)
   @ApiResponse({ status: 200, description: 'Login exitoso' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
   login(@Body() dto: LoginDto) {
@@ -34,7 +37,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(200)
-  @Throttle({ medium: { limit: 5, ttl: 60000 } })
+  @Throttle(LIMITE_ACCESO)
   @ApiResponse({ status: 200, description: 'Token renovado' })
   @ApiResponse({
     status: 401,

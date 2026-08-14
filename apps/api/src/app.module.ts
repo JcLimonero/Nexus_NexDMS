@@ -60,7 +60,8 @@ import { RedisModule } from './common/redis/redis.module';
 import { StorageModule } from './common/storage/storage.module';
 import { QueuesModule } from './queues/queues.module';
 import { EventsModule } from './events/events.module';
-import { seconds, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { LIMITES_GENERALES } from './common/throttler/limites';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuditInterceptor } from './common/audit/audit.interceptor';
@@ -105,11 +106,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
       imports: [],
       inject: ['REDIS_CLIENT'],
       useFactory: (redis: { increment: unknown }) => ({
-        throttlers: [
-          { name: 'short', ttl: seconds(1), limit: 30 },
-          { name: 'medium', ttl: seconds(60), limit: 120 },
-          { name: 'long', ttl: seconds(60), limit: 300 },
-        ],
+        throttlers: LIMITES_GENERALES,
         storage: new RedisThrottlerStorage(redis as never),
         getTracker: getThrottlerTracker,
         generateKey: getThrottlerKey,
