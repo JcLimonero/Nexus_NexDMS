@@ -78,6 +78,11 @@ DELETE FROM receivables;
 DELETE FROM payable_payments;
 DELETE FROM payables;
 DELETE FROM pld_operations;
+DELETE FROM sale_items;
+DELETE FROM sales;
+DELETE FROM cash_sessions;
+DELETE FROM purchase_order_items;
+DELETE FROM purchase_orders;
 DELETE FROM contacts;
 DELETE FROM catalog_units;
 DELETE FROM stock_movements;
@@ -438,15 +443,24 @@ SELECT r.tenant_id,
 FROM ref r, generate_series(0, 5) AS n;
 
 -- ── Prospectos ───────────────────────────────────────────────────────
-INSERT INTO leads (id, tenant_id, branch_id, name, phone, email, source, interest, status, assigned_to)
+-- El estatus lo define el backend en inglés (NEW, CONTACTED, QUALIFIED,
+-- OPPORTUNITY, WON, LOST). Con los nombres en español las tarjetas existían
+-- pero no caían en ninguna columna del tablero: el pipeline salía en cero.
+-- Se cubre toda la fila para que el embudo se lea de un vistazo.
+INSERT INTO leads (id, tenant_id, branch_id, name, phone, email, source, interest, status, assigned_to, client_id, created_at)
 SELECT gen_random_uuid(), r.tenant_id, r.central, l.nombre, l.tel, l.correo,
-       l.origen, l.interes, l.estado, r.asesor1
+       l.origen, l.interes, l.estado, r.asesor1,
+       (SELECT id FROM clients WHERE coalesce(company_name, last_name) = l.cliente),
+       (now() AT TIME ZONE 'America/Mexico_City') - (l.dias || ' days')::interval
 FROM ref r, (VALUES
-  ('Sofía Delgado Marín', '5551003001', 'sofia.delgado@correo.mx', 'PORTAL',    'Honda CB190R 2025, cotiza financiamiento', 'NUEVO'),
-  ('Raúl Ibáñez Cortés',  '5551003002', 'raul.ibanez@correo.mx',  'MOSTRADOR', 'XR150L para trabajo de campo',             'CONTACTADO'),
-  ('Verónica Palma Ruiz', '5551003003', 'veronica.palma@correo.mx','TELEFONO', 'Cargo 150 para reparto, dos unidades',     'COTIZADO'),
-  ('Grupo Logístico Sur', '5551003004', 'compras@logisticosur.mx','REFERIDO',  'Flotilla de cinco Cargo 150',              'NUEVO')
-) AS l(nombre, tel, correo, origen, interes, estado);
+  ('Sofía Delgado Marín',  '5551003001', 'sofia.delgado@correo.mx',  'PORTAL',    'XR150L 2026, pregunta por financiamiento',   'NEW',         NULL, 2),
+  ('Grupo Logístico Sur',  '5551003004', 'compras@logisticosur.mx',  'REFERIDO',  'Flotilla de cinco Cargo 150',                'NEW',         NULL, 1),
+  ('Raúl Ibáñez Cortés',   '5551003002', 'raul.ibanez@correo.mx',    'PISO',      'XR150L para trabajo de campo',               'CONTACTED',   NULL, 6),
+  ('Verónica Palma Ruiz',  '5551003003', 'veronica.palma@correo.mx', 'TELEFONO',  'Dos Cargo 150 para reparto',                 'QUALIFIED',   NULL, 9),
+  ('Ernesto Salas Ibarra', '5551003005', 'ernesto.salas@correo.mx',  'PORTAL',    'CB500F 2026, ya probó la unidad',            'OPPORTUNITY', NULL, 12),
+  ('Claudia Ramos Beltrán','5551002036', 'claudia.ramos@correo.mx',  'PISO',      'XR150L 2026 — cerrada, entregada',           'WON',         'Ramos Beltrán', 45),
+  ('Tomás Vera Zúñiga',    '5551003006', 'tomas.vera@correo.mx',     'TELEFONO',  'Comparó contra otra marca y no volvió',      'LOST',        NULL, 30)
+) AS l(nombre, tel, correo, origen, interes, estado, cliente, dias);
 
 -- ── Inventario de unidades ───────────────────────────────────────────
 -- Piso de venta: lo que hay disponible, lo apartado y lo ya vendido. Sin
@@ -546,13 +560,17 @@ INSERT INTO lead_activities (lead_id, user_id, type, notes, created_at)
 SELECT l.id, r.asesor1, a.tipo, a.nota,
        (now() AT TIME ZONE 'America/Mexico_City') - (a.dias || ' days')::interval
 FROM ref r, (VALUES
-  ('Sofía Delgado Marín',  'LLAMADA', 'Pidió cotización de CB190R con enganche de 15,000', 2),
+  ('Sofía Delgado Marín',  'LLAMADA', 'Pidió cotización de XR150L con enganche de 15,000', 2),
   ('Sofía Delgado Marín',  'CORREO',  'Se envió cotización con dos planes de financiamiento', 1),
   ('Raúl Ibáñez Cortés',   'VISITA',  'Vino a mostrador, probó la XR150L', 5),
   ('Raúl Ibáñez Cortés',   'LLAMADA', 'Sigue comparando contra Italika DM200', 3),
   ('Verónica Palma Ruiz',  'LLAMADA', 'Cotizó dos Cargo 150 para reparto', 8),
   ('Verónica Palma Ruiz',  'CORREO',  'Solicitó factura a nombre de la empresa', 6),
-  ('Grupo Logístico Sur',  'CORREO',  'Pidió propuesta por cinco unidades con descuento', 1)
+  ('Grupo Logístico Sur',  'CORREO',  'Pidió propuesta por cinco unidades con descuento', 1),
+  ('Ernesto Salas Ibarra', 'VISITA',  'Prueba de manejo de la CB500F; pidió plan a 36 meses', 4),
+  ('Ernesto Salas Ibarra', 'LLAMADA', 'Confirmó interés, espera respuesta del banco', 1),
+  ('Claudia Ramos Beltrán','VISITA',  'Cerró la compra de la XR150L', 45),
+  ('Tomás Vera Zúñiga',    'LLAMADA', 'Avisó que compró en otra agencia', 28)
 ) AS a(prospecto, tipo, nota, dias)
 JOIN leads l ON l.name = a.prospecto;
 
@@ -601,8 +619,10 @@ SELECT gen_random_uuid(), r.tenant_id, r.central,
        (SELECT id FROM clients WHERE company_name = c.empresa),
        'ServiceOrder', c.concepto, c.total, c.pagado, r.hoy + c.vence, c.estado
 FROM ref r, (VALUES
-  ('Mensajería Rápida del Centro SA de CV', 'Servicio de flotilla, tres unidades', 7888, 3000, 12, 'PARCIAL'),
-  ('Distribuidora Ferretera del Bajío SA',  'Refacciones a crédito 30 días',        4250, 0,    -5, 'VENCIDA')
+  -- El vencimiento se deduce de la fecha, no del estatus: los válidos son
+  -- OPEN, PARTIAL, PAID y CANCELLED. La segunda ya pasó su fecha.
+  ('Mensajería Rápida del Centro SA de CV', 'Servicio de flotilla, tres unidades', 7888, 3000, 12, 'PARTIAL'),
+  ('Distribuidora Ferretera del Bajío SA',  'Refacciones a crédito 30 días',        4250, 0,    -5, 'OPEN')
 ) AS c(empresa, concepto, total, pagado, vence, estado);
 
 -- ── Historial de servicio ────────────────────────────────────────────
@@ -684,5 +704,115 @@ JOIN (VALUES
   ('OS-2025-0211', 145), ('OS-2026-0130', 30), ('OS-2026-0136', 25),
   ('OS-2026-0142', 58), ('OS-2026-0149', 50)
 ) AS t(folio, minutos) ON t.folio = so.folio;
+
+-- ── Compras al proveedor ─────────────────────────────────────────────
+-- Una recibida y otra en camino: es lo que explica que el almacén tenga
+-- existencias y que el filtro de aire esté por llegar.
+INSERT INTO purchase_orders (id, tenant_id, branch_id, supplier_id, user_id, folio,
+                             status, subtotal, tax_amount, total, ordered_at,
+                             expected_at, received_at, notes)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM suppliers WHERE name = o.proveedor), r.admin, o.folio,
+       o.estado::purchase_orders_status_enum, o.subtotal,
+       round(o.subtotal * 0.16, 2), round(o.subtotal * 1.16, 2),
+       r.hoy - o.pedida, r.hoy - o.pedida + 7,
+       CASE WHEN o.estado = 'RECEIVED' THEN r.hoy - o.pedida + 5 END, o.nota
+FROM ref r, (VALUES
+  ('OC-2026-0031', 'Refaccionaria Central de Motos SA', 'RECEIVED', 18400, 21, 'Resurtido mensual de consumibles'),
+  ('OC-2026-0034', 'Distribuidora Honda Nacional',      'SENT',      9600,  4, 'Filtros de aire y bujías; pendiente de llegar'),
+  ('OC-2026-0036', 'Llantas y Rines del Valle',         'DRAFT',    12800,  1, 'Borrador: reposición de llantas')
+) AS o(folio, proveedor, estado, subtotal, pedida, nota);
+
+INSERT INTO purchase_order_items (purchase_order_id, part_id, quantity, quantity_received, unit_price, subtotal)
+SELECT po.id, p.id, x.cant,
+       CASE WHEN po.status = 'RECEIVED' THEN x.cant ELSE 0 END,
+       p.purchase_price, p.purchase_price * x.cant
+FROM (VALUES
+  ('OC-2026-0031', 'ACE-10W40', 48), ('OC-2026-0031', 'FIL-ACE', 24),
+  ('OC-2026-0031', 'BUJ-CR8',   36), ('OC-2026-0031', 'BAL-DEL', 12),
+  ('OC-2026-0034', 'FIL-AIRE',  30), ('OC-2026-0034', 'BUJ-CR8', 24),
+  ('OC-2026-0036', 'LLA-DEL',   10), ('OC-2026-0036', 'LLA-TRA', 10)
+) AS x(folio, sku, cant)
+JOIN purchase_orders po ON po.folio = x.folio
+JOIN parts p            ON p.sku    = x.sku;
+
+-- ── Cuentas por pagar ────────────────────────────────────────────────
+INSERT INTO payables (id, tenant_id, branch_id, supplier_id, reference_type,
+                      concept, total, paid_amount, due_date, status)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM suppliers WHERE name = c.proveedor),
+       'PurchaseOrder', c.concepto, c.total, c.pagado, r.hoy + c.vence, c.estado
+FROM ref r, (VALUES
+  ('Refaccionaria Central de Motos SA', 'OC-2026-0031 resurtido mensual', 21344, 21344, -12, 'PAID'),
+  ('Distribuidora Honda Nacional',      'OC-2026-0034 filtros y bujías',  11136, 0,      18, 'OPEN'),
+  ('Lubricantes Industriales del Norte','Aceite a granel de marzo',        8700, 4000,    5, 'PARTIAL')
+) AS c(proveedor, concepto, total, pagado, vence, estado);
+
+-- ── Caja y mostrador ─────────────────────────────────────────────────
+-- Una caja abierta hoy con sus ventas: sin esto el módulo de caja arranca
+-- pidiendo abrir turno y no se puede enseñar nada.
+INSERT INTO cash_sessions (id, tenant_id, branch_id, user_id, opening_balance,
+                           total_cash, total_card, total_transfer, total_sales,
+                           opened_at, status)
+SELECT gen_random_uuid(), r.tenant_id, r.central, r.asesor1, 2000,
+       1580, 2470, 0, 4050, r.hoy + time '08:00', 'OPEN'
+FROM ref r;
+
+INSERT INTO sales (id, tenant_id, branch_id, cash_session_id, client_id, user_id,
+                   sale_type, status, payment_method, price_list, subtotal,
+                   discount, tax_amount, total, ticket_number, created_at)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM cash_sessions LIMIT 1),
+       (SELECT id FROM clients WHERE coalesce(company_name, last_name) = v.cliente LIMIT 1),
+       r.asesor1, 'COUNTER', 'PAID', v.forma::sales_payment_method_enum,
+       'PUBLIC', v.subtotal, 0, round(v.subtotal * 0.16, 2),
+       round(v.subtotal * 1.16, 2), v.ticket, r.hoy + v.hora::time
+FROM ref r, (VALUES
+  ('TKT-000451', 'Silva Ortega',   'CASH',     495, '09:15'),
+  ('TKT-000452', 'Nava Estrada',   'CARD',    1650, '10:40'),
+  ('TKT-000453', 'Ibarra Luna',    'CASH',     330, '11:20'),
+  ('TKT-000454', 'Rojas Cabrera',  'CARD',     890, '12:05')
+) AS v(ticket, cliente, forma, subtotal, hora);
+
+INSERT INTO sale_items (sale_id, part_id, quantity, unit_price, discount, subtotal)
+SELECT s.id, p.id, x.cant, p.public_price, 0, p.public_price * x.cant
+FROM (VALUES
+  ('TKT-000451', 'ACE-10W40', 3),
+  ('TKT-000452', 'KIT-ARR',   1),
+  ('TKT-000453', 'BUJ-CR8',   2),
+  ('TKT-000454', 'BAT-YTX7',  1)
+) AS x(ticket, sku, cant)
+JOIN sales s ON s.ticket_number = x.ticket
+JOIN parts p ON p.sku = x.sku;
+
+-- ── Garantías ────────────────────────────────────────────────────────
+INSERT INTO warranties (id, tenant_id, branch_id, client_id, vehicle_id,
+                        service_order_id, type, description, status, resolution,
+                        start_date, end_date)
+SELECT gen_random_uuid(), r.tenant_id, r.central, v.owner_id, v.id,
+       (SELECT id FROM service_orders WHERE folio = g.folio),
+       g.tipo::warranties_type_enum, g.descripcion,
+       g.estado::warranties_status_enum, g.resolucion,
+       r.hoy - g.desde, r.hoy - g.desde + 365
+FROM ref r, (VALUES
+  ('POI-9922', 'OS-2026-0130', 'UNIT',    'Ruido en tren delantero dentro del periodo de garantía', 'RESOLVED',    'Ajuste de suspensión sin costo', 45),
+  ('BNM-7766', 'OS-2025-0198', 'PART',    'Batería falló a los tres meses',                          'IN_PROGRESS', NULL, 20),
+  ('FLT-1001', 'OS-2025-0182', 'SERVICE', 'Vibración tras el cambio de llanta',                      'OPEN',        NULL, 8)
+) AS g(placa, folio, tipo, descripcion, estado, resolucion, desde)
+JOIN customer_vehicles v ON v.plate = g.placa;
+
+-- ── Cumplimiento PLD ─────────────────────────────────────────────────
+-- Las operaciones en efectivo que rebasan el umbral. La venta de contado de
+-- la flotilla es justo el caso que obliga a identificar al cliente.
+INSERT INTO pld_operations (id, tenant_id, branch_id, client_id, reference_type,
+                            reference_id, amount, uma_value, uma_amount,
+                            operation_date, requires_identification,
+                            requires_notice, file_status, notice_status, notes)
+SELECT gen_random_uuid(), r.tenant_id, r.central, us.client_id, 'UnitSale', us.id,
+       us.final_price, 113.14, round(us.final_price / 113.14, 2),
+       us.delivery_date, true, false, 'COMPLETO', 'NO_APLICA',
+       'Venta de contado; expediente integrado'
+FROM ref r, unit_sales us
+WHERE us.financing_type = 'CASH';
 
 COMMIT;
