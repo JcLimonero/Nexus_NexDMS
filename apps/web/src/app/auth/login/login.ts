@@ -129,7 +129,10 @@ export class Login implements OnInit {
       nombre: "API",
       icono: "📘",
       descripcion: "Swagger con todos los endpoints",
-      url: "http://localhost:3010/api/docs",
+      // Ruta relativa a propósito: sale por el mismo proxy que las peticiones
+      // de la aplicación, así que funciona sea cual sea el puerto en que esté
+      // publicada la API. Fijarlo a un puerto lo rompía en cuanto cambiaba.
+      url: "/api/docs",
       interno: false,
     },
   ];
