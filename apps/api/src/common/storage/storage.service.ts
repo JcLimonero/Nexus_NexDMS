@@ -7,6 +7,8 @@ import {
   DeleteObjectCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { NodeHttpHandler } from '@smithy/node-http-handler';
+import { Agent } from 'https';
 import { getB2Config } from '../../config/b2.config';
 
 @Injectable()
@@ -37,6 +39,28 @@ export class StorageService {
             }
           : undefined,
       forcePathStyle: true,
+      /*
+       * IPv4 a la fuerza.
+       *
+       * El nombre de Backblaze resuelve a IPv4 y a IPv6, y la red de un
+       * contenedor de Docker no suele tener salida IPv6: la conexión por esa
+       * vía no falla rápido, se queda esperando hasta agotar el tiempo. La
+       * variable `--dns-result-order=ipv4first` no bastó —se comprobó—, así
+       * que se fija en el agente, que es donde sí surte efecto.
+       */
+      requestHandler: new NodeHttpHandler({
+        httpsAgent: new Agent({ family: 4, keepAlive: true }),
+        connectionTimeout: 10_000,
+        requestTimeout: 60_000,
+      }),
+      // Desde la versión 3.729 el SDK añade por omisión sumas de verificación
+      // en el cuerpo, codificadas como `aws-chunked` con tráilers. El API de
+      // Backblaze no las admite: no devuelve error, simplemente deja la
+      // petición esperando hasta que expira. Con la misma firma hecha a mano
+      // la subida responde 200 en un segundo, así que el problema es esto y
+      // no la credencial ni el endpoint.
+      requestChecksumCalculation: 'WHEN_REQUIRED',
+      responseChecksumValidation: 'WHEN_REQUIRED',
     });
   }
 
