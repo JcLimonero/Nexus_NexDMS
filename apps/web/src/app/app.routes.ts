@@ -1,6 +1,7 @@
 import { Routes } from "@angular/router";
 
 import { AdminGuard } from "./shared/guard/admin.guard";
+import { monitorGuard } from "./pages/monitor/monitor.guard";
 import { content } from "./shared/routes/content-routes";
 import { fullRoutes } from "./shared/routes/full.routes";
 
@@ -12,20 +13,29 @@ export const routes: Routes = [
   },
   // Pantallas para colgar en el taller. Fuera del layout del DMS: no llevan
   // menú ni nada que pulsar, y `?branch=` deja fija la sucursal para que el
-  // monitor arranque solo al encenderlo. Piden sesión como el resto —lo que
-  // muestran son datos de clientes.
+  // monitor arranque solo al encenderlo.
+  //
+  // Con sesión propia, no la del DMS: un monitor se enciende una vez y se
+  // queda meses, y compartir la sesión lo apagaría en cuanto alguien cerrara
+  // la suya en ese equipo.
+  {
+    path: "monitor/acceso",
+    loadComponent: () =>
+      import("./pages/monitor/monitor-acceso").then((m) => m.MonitorAcceso),
+    data: { title: "Acceso a las pantallas del taller" },
+  },
   {
     path: "monitor/taller",
     loadComponent: () =>
       import("./pages/monitor/monitor-taller").then((m) => m.MonitorTaller),
-    canActivate: [AdminGuard],
+    canActivate: [monitorGuard],
     data: { title: "Monitor del taller" },
   },
   {
     path: "monitor/citas",
     loadComponent: () =>
       import("./pages/monitor/monitor-citas").then((m) => m.MonitorCitas),
-    canActivate: [AdminGuard],
+    canActivate: [monitorGuard],
     data: { title: "Monitor de citas" },
   },
   {

@@ -146,6 +146,9 @@ export class Login implements OnInit {
    * esta misma aplicación, así que funcionan en cualquier despliegue, al
    * contrario que los otros portales, fijados a puertos locales.
    *
+   * Se abren en otra pestaña, como los demás accesos: el monitor se queda
+   * puesto en su pantalla y quien lo abrió sigue aquí para entrar al DMS.
+   *
    * Sin sucursal en la dirección toman la primera; para dejar una pantalla
    * fija por taller se añade `?branch=<id>` al marcador del navegador.
    */

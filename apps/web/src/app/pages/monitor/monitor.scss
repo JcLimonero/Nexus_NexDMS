@@ -20,6 +20,9 @@
   --m-warn: #e9b872;
   --m-bad: #f0736a;
   --m-idle: #71838f;
+  /* Azul de marca aclarado para fondo oscuro. La acción no usa el verde del
+     semáforo: ahí el verde ya significa "en tiempo". */
+  --m-accion: #4589b5;
 
   min-height: 100vh;
   padding: 24px 32px;
@@ -307,4 +310,81 @@
   letter-spacing: 0.06em;
   color: var(--m-text-2);
   white-space: nowrap;
+}
+
+/* ── Acceso de las pantallas ── */
+.monitor-acceso {
+  display: grid;
+  place-items: center;
+}
+
+.acceso-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: min(420px, calc(100vw - 48px));
+  padding: 32px;
+  background: var(--m-card);
+  border: 1px solid var(--m-border);
+  border-radius: 16px;
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  p {
+    margin: -8px 0 0;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--m-text-2);
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 15px;
+    color: var(--m-text-2);
+  }
+
+  input {
+    height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--m-border);
+    border-radius: 10px;
+    background: var(--m-bg);
+    color: var(--m-text);
+    font-size: 17px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--m-accion);
+    }
+  }
+
+  button {
+    height: 48px;
+    border: none;
+    border-radius: 10px;
+    background: var(--m-accion);
+    color: #fff;
+    font-size: 17px;
+    font-weight: 600;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.acceso-error {
+  margin: 0 !important;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--m-bad) 20%, var(--m-card));
+  color: var(--m-bad) !important;
+  font-size: 15px;
 }

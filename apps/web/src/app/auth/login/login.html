@@ -138,11 +138,20 @@
             <div class="demo-title">Pantallas para el taller</div>
             <div class="demo-links">
               @for (m of monitores; track m.url) {
+                <!-- En otra pestaña aunque sea una ruta de esta aplicación:
+                     el monitor se queda puesto en su pantalla, y quien lo
+                     abrió sigue en el acceso para entrar al DMS. La sesión
+                     se comparte entre pestañas del mismo origen, así que si
+                     ya entró, la nueva abre directa. -->
                 <a
                   class="portal-icono"
-                  [routerLink]="m.url"
+                  [href]="m.url"
+                  target="_blank"
+                  rel="noopener"
                   [title]="m.descripcion"
-                  [attr.aria-label]="m.nombre + ': ' + m.descripcion"
+                  [attr.aria-label]="
+                    m.nombre + ': ' + m.descripcion + ' (abre en otra pestaña)'
+                  "
                 >
                   <span class="portal-glifo" aria-hidden="true">{{ m.icono }}</span>
                   <span class="portal-nombre">{{ m.nombre }}</span>
