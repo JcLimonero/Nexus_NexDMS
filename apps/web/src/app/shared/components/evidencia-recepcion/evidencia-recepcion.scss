@@ -62,6 +62,13 @@
   border-radius: var(--radius-md);
 }
 
+/* Dentro de la fila de su propio servicio el marco sobra: ya lo enmarca la
+   tabla, y un recuadro dentro de otro solo añade ruido. */
+.visita.sin-marco {
+  padding: 0;
+  border: 0;
+}
+
 .visita-cabecera {
   display: flex;
   align-items: baseline;

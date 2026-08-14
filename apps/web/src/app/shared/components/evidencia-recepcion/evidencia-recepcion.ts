@@ -50,6 +50,23 @@ export class EvidenciaRecepcion {
    */
   titulo = input<string>("");
   subtitulo = input<string>("");
+  /**
+   * Folio, fecha y kilometraje de la visita.
+   *
+   * Se apaga cuando quien lo usa ya los tiene delante —dentro de la fila de
+   * su propio servicio, por ejemplo—: repetirlos ahí no informa, solo obliga
+   * a leer dos veces lo mismo para comprobar que dicen igual.
+   */
+  conCabecera = input<boolean>(true);
+  /**
+   * Qué decir cuando no hay evidencia.
+   *
+   * Vacío por omisión: donde el componente se ofrece sin que nadie lo pida
+   * —una sección más de una ficha— lo correcto es desaparecer. Pero cuando
+   * alguien pulsó para verlo, callar es peor que no tener nada: parece que el
+   * botón está roto.
+   */
+  mensajeVacio = input<string>("");
 
   cargando = signal(false);
   unidades = signal<UnidadEvidencia[]>([]);

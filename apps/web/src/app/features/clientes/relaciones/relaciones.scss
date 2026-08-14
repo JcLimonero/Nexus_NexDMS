@@ -250,3 +250,32 @@ tr.anterior td {
   padding: 16px 24px 20px;
   border-top: 1px solid var(--border);
 }
+
+/* El folio no se parte en varios renglones. */
+.tabla-servicios td:first-child,
+.tabla-servicios th:first-child {
+  white-space: nowrap;
+}
+
+/* El control va bajo el folio y no en su propia columna: con siete columnas
+   la tabla se salía del contenedor y lo primero que quedaba fuera era él. */
+.ver-recepcion {
+  display: block;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover { color: var(--primary); }
+}
+
+/* Recepción desplegada bajo su servicio: se separa del resto de la tabla con
+   un fondo tenue para que se lea como detalle de esa fila y no como otra. */
+.fila-evidencia > td {
+  background: var(--bg);
+  padding: var(--space-16);
+}

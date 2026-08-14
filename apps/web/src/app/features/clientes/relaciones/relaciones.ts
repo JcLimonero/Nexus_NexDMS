@@ -42,6 +42,8 @@ export class Relaciones implements OnInit {
   cliente = signal<Client | null>(null);
   vehiculos = signal<VehiculoDelCliente[]>([]);
   ficha = signal<FichaVehiculo | null>(null);
+  /** Servicio cuyo detalle de recepción está desplegado; null = ninguno. */
+  servicioAbierto = signal<string | null>(null);
   cargando = signal(false);
   aviso = signal<{ texto: string; tono: "ok" | "error" } | null>(null);
 
@@ -104,9 +106,22 @@ export class Relaciones implements OnInit {
     });
   }
 
+  /**
+   * Despliega cómo llegó la unidad en ese servicio.
+   *
+   * Uno a la vez: son fotos, y con tres visitas abiertas la tabla deja de
+   * poder leerse de un vistazo, que es para lo que sirve.
+   */
+  alternarServicio(id: string): void {
+    this.servicioAbierto.update((abierto) => (abierto === id ? null : id));
+  }
+
   abrirVehiculo(vehicleId: string): void {
     this.srv.fichaDelVehiculo(vehicleId).subscribe({
-      next: (f) => this.ficha.set(f),
+      next: (f) => {
+        this.ficha.set(f);
+        this.servicioAbierto.set(null);
+      },
       error: () => this.avisar("No se pudo cargar la ficha", "error"),
     });
   }

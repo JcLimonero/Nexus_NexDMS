@@ -219,7 +219,7 @@
                 </p>
               } @else {
                 <div class="table-responsive">
-                  <table class="table table-sm table-hover align-middle">
+                  <table class="table table-sm table-hover align-middle tabla-servicios">
                     <thead>
                       <tr>
                         <th>Folio</th>
@@ -234,9 +234,19 @@
                       @for (s of ficha()!.servicios; track s.id) {
                         <tr [class.anterior]="s.deDuenoAnterior">
                           <td>
-                            <a [routerLink]="['/workshop/orders', s.id]">
+                            <a [routerLink]="['/workshop/service-orders', s.id]">
                               {{ s.folio }}
                             </a>
+                            <!-- Cómo llegó la unidad ESA vez: pertenece a su
+                                 servicio, no a un bloque aparte que repita la
+                                 tabla renglón por renglón. -->
+                            <button
+                              type="button"
+                              class="ver-recepcion"
+                              (click)="alternarServicio(s.id)"
+                            >
+                              {{ servicioAbierto() === s.id ? "Ocultar" : "Cómo llegó" }}
+                            </button>
                           </td>
                           <td>{{ s.fecha | date: "dd/MM/yyyy" }}</td>
                           <td>
@@ -256,22 +266,23 @@
                             {{ s.total | currency: "MXN" : "symbol-narrow" : "1.0-2" }}
                           </td>
                         </tr>
+
+                        @if (servicioAbierto() === s.id) {
+                          <tr class="fila-evidencia">
+                            <td colspan="6">
+                              <app-evidencia-recepcion
+                                [serviceOrderId]="s.id"
+                                [conCabecera]="false"
+                                mensajeVacio="Esta orden se abrió sin pasar por la recepción guiada, así que no tiene fotos ni daños marcados."
+                              />
+                            </td>
+                          </tr>
+                        }
                       }
                     </tbody>
                   </table>
                 </div>
               }
-
-              <!-- Cómo llegó en cada visita. Aquí es donde se resuelve la
-                   discusión de verdad: si el golpe ya venía de la vez
-                   anterior, se ve sin abrir orden por orden. -->
-              <div class="mt-4">
-                <app-evidencia-recepcion
-                  [vehicleId]="ficha()!.vehiculo.id"
-                  titulo="Cómo llegó en cada visita"
-                  subtitulo="Fotos y daños registrados al recibirla"
-                />
-              </div>
             </div>
           </div>
         }
