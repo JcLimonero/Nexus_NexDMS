@@ -1,12 +1,13 @@
 /**
  * Lo propio de la pantalla de clientes. El panel, la tabla, los botones, el
  * armazón del diálogo y la lista de módulos son comunes y están en
- * `styles/_panel.scss`.
+ * `styles/_panel.scss`. Aquí tampoco hay colores a mano: todo sale de los
+ * tokens de marca.
  */
 
 .precio-extra {
-  font-size: 12px;
-  color: #0f766e;
+  font-size: var(--text-caption);
+  color: var(--primary);
   font-variant-numeric: tabular-nums;
 }
 
@@ -17,71 +18,73 @@
 
 /* ── Ficha del cliente ── */
 .dialogo.ancho {
-  width: min(920px, calc(100vw - 32px));
+  width: min(920px, calc(100vw - var(--space-32)));
 }
 
 .indicadores.compactos {
-  margin-bottom: 16px;
+  margin-bottom: var(--space-16);
 
   .indicador {
-    padding: 12px;
-    background: #f8fafc;
+    padding: var(--space-12);
+    background: var(--bg);
+    box-shadow: none;
   }
 
   .cifra {
-    font-size: 20px;
+    font-size: var(--text-xl);
   }
 }
 
 .pestanas {
   display: flex;
-  gap: 4px;
-  border-bottom: 1px solid #e2e8f0;
-  margin-bottom: 16px;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-16);
 
   button {
-    padding: 8px 14px;
+    padding: var(--space-8) 14px;
     border: none;
     border-bottom: 2px solid transparent;
     background: none;
-    font-size: 14px;
-    color: #64748b;
+    font-family: inherit;
+    font-size: var(--text-body);
+    color: var(--text-secondary);
     cursor: pointer;
   }
 
   button.activa {
-    color: #105078;
-    border-bottom-color: #105078;
-    font-weight: 600;
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: var(--font-semibold);
   }
 }
 
 /* La fila con la que se registra el cobro se separa de la tabla de abajo. */
 .rejilla.cobro {
   align-items: end;
-  padding-bottom: 16px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: var(--space-16);
+  margin-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border);
 }
 
 .cobro-estado {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: #e2e8f0;
-  color: #334155;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  background: var(--bg);
+  color: var(--text-secondary);
 
   &[data-estado="PAGADO"] {
-    background: #d1fae5;
-    color: #047857;
+    background: var(--success-bg);
+    color: var(--success);
   }
   &[data-estado="VENCIDO"] {
-    background: #fee2e2;
-    color: #b91c1c;
+    background: var(--danger-bg);
+    color: var(--danger);
   }
   &[data-estado="PENDIENTE"] {
-    background: #fef3c7;
-    color: #92400e;
+    background: var(--warning-bg);
+    color: var(--warning);
   }
 }

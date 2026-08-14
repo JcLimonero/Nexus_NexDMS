@@ -1,8 +1,11 @@
 // `@use` va antes que cualquier regla: Sass lo exige.
+@use "styles/tokens";
 @use "styles/panel";
 
-/* Admin styles */
+* {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
-  font-family: system-ui, sans-serif;
 }

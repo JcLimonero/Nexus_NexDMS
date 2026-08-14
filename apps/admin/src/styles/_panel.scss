@@ -1,75 +1,90 @@
 /**
  * Estilos del portal de administración.
  *
+ * Todo sale de los tokens del DMS: el portal es otra aplicación, pero es el
+ * mismo producto y la misma marca. No hay un solo color escrito a mano aquí
+ * —si aparece uno, es que se coló— y por eso también hereda el modo oscuro
+ * sin tener que declararlo dos veces.
+ *
  * Viven aquí y no en cada pantalla porque son el mismo panel: al abrir la
  * segunda pantalla habría que copiar trescientas líneas, y a la tercera ya
  * no coincidirían entre sí.
  */
 
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+}
+
 .panel {
   min-height: 100vh;
-  background: #f1f5f9;
-  padding: 24px;
+  background: var(--bg);
+  padding: var(--space-24);
 }
 
 .barra {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
+  gap: var(--space-16);
+  margin-bottom: var(--space-24);
 
   h1 {
     margin: 0;
-    font-size: 22px;
-    color: #0f172a;
+    font-size: var(--text-page-title);
+    font-weight: var(--text-page-title-weight);
+    color: var(--text-primary);
   }
 
   p {
     margin: 2px 0 0;
-    font-size: 14px;
-    color: #64748b;
+    font-size: var(--text-body);
+    color: var(--text-secondary);
   }
 }
 
 .barra-derecha {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 .quien {
-  font-size: 13px;
-  color: #64748b;
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
 }
 
 .aviso {
-  margin: 0 0 16px;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 14px;
+  margin: 0 0 var(--space-16);
+  padding: 10px var(--space-16);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body);
 
   &[data-tono="ok"] {
-    background: #ecfdf5;
-    color: #047857;
+    background: var(--success-bg);
+    color: var(--success);
   }
   &[data-tono="error"] {
-    background: #fef2f2;
-    color: #b91c1c;
+    background: var(--danger-bg);
+    color: var(--danger);
   }
 }
 
 .tarjeta {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  margin-bottom: var(--space-24);
+  box-shadow: var(--shadow-sm);
 
   h2 {
-    margin: 0 0 16px;
-    font-size: 16px;
-    color: #0f172a;
+    margin: 0 0 var(--space-16);
+    font-size: var(--text-section-title);
+    font-weight: var(--text-section-title-weight);
+    color: var(--text-primary);
   }
 }
 
@@ -77,103 +92,153 @@
 .fila {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+  gap: var(--space-16);
   align-items: end;
 
   label {
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    font-size: 13px;
-    color: #475569;
-  }
-
-  input,
-  select {
-    height: 38px;
-    padding: 0 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #0f172a;
-    background: #fff;
+    gap: var(--space-4);
+    font-size: var(--text-label);
+    font-weight: var(--text-label-weight);
+    color: var(--text-secondary);
   }
 }
 
 .acciones-fila {
   display: flex;
-  gap: 8px;
+  gap: var(--space-8);
+}
+
+/* ══ Controles — la escala única del sistema ══ */
+input,
+select,
+textarea {
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: var(--control-border-w) solid var(--border);
+  border-radius: var(--control-radius);
+  font-family: inherit;
+  font-size: var(--control-font);
+  color: var(--text-primary);
+  background: var(--input-bg);
+
+  &:hover {
+    border-color: var(--border-hover);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+/* El textarea crece: fijarle la altura de control lo dejaría de una línea. */
+textarea {
+  height: auto;
+  padding: var(--space-8) var(--control-px);
+  resize: vertical;
 }
 
 .btn-principal,
 .btn-secundario,
 .btn-chico,
 .btn-texto {
-  border-radius: 8px;
-  font-size: 14px;
+  border-radius: var(--control-radius);
+  font-family: inherit;
+  font-size: var(--text-button);
+  font-weight: var(--text-button-weight);
   cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
 }
 
 .btn-principal {
-  height: 38px;
-  padding: 0 16px;
-  border: none;
-  background: #105078;
-  color: #fff;
-  font-weight: 600;
+  height: var(--control-h);
+  padding: 0 var(--space-16);
+  border: var(--control-border-w) solid var(--primary);
+  background: var(--primary);
+  color: var(--text-on-brand);
+  font-weight: var(--font-semibold);
+
+  &:hover:not(:disabled) {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
 
   &:disabled {
     opacity: 0.6;
+    cursor: default;
   }
 }
 
 .btn-secundario {
-  height: 38px;
-  padding: 0 16px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #0f172a;
+  height: var(--control-h);
+  padding: 0 var(--space-16);
+  border: var(--control-border-w) solid var(--border);
+  background: var(--card);
+  color: var(--text-primary);
+
+  &:hover {
+    border-color: var(--border-hover);
+    background: var(--bg);
+  }
 }
 
 .btn-chico {
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #0f172a;
-  font-size: 13px;
+  height: var(--control-h-sm);
+  padding: 0 var(--control-px-sm);
+  border: var(--control-border-w) solid var(--border);
+  background: var(--card);
+  color: var(--text-primary);
+  font-size: var(--control-font-sm);
+
+  &:hover:not(:disabled) {
+    border-color: var(--border-hover);
+    background: var(--bg);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
 }
 
 .btn-texto {
   border: none;
   background: none;
-  color: #105078;
-  padding: 4px;
+  color: var(--primary);
+  padding: var(--space-4);
 }
 
 .vacio {
   margin: 0;
-  color: #64748b;
-  font-size: 14px;
+  color: var(--text-secondary);
+  font-size: var(--text-body);
 }
 
 .tabla {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  font-size: var(--text-body);
 
   th,
   td {
-    padding: 10px 8px;
-    border-bottom: 1px solid #e2e8f0;
+    padding: 10px var(--space-8);
+    border-bottom: 1px solid var(--border);
     text-align: left;
   }
 
   th {
-    font-size: 12px;
+    font-size: var(--text-overline);
+    font-weight: var(--text-overline-weight);
     text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: #64748b;
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
   }
 
   .num {
@@ -182,9 +247,9 @@
   }
 
   .mono {
-    font-family: ui-monospace, monospace;
-    font-size: 13px;
-    color: #475569;
+    font-family: var(--font-mono);
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
   }
 
   /* El suspendido sigue visible pero atenuado: su historial no desaparece. */
@@ -202,35 +267,46 @@
 .plan,
 .estado {
   display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  background: #e2e8f0;
-  color: #334155;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
 }
 
+/* El nivel se distingue por tono, dentro de la misma familia de marca. */
 .plan {
+  &[data-plan="BASIC"] {
+    background: var(--nexus-50);
+    border-color: var(--nexus-100);
+    color: var(--nexus-700);
+  }
   &[data-plan="PRO"] {
-    background: #dbeafe;
-    color: #1e40af;
+    background: var(--nexus-100);
+    border-color: var(--nexus-200);
+    color: var(--nexus-800);
   }
   &[data-plan="ENTERPRISE"] {
-    background: #ede9fe;
-    color: #5b21b6;
+    background: var(--nexus-600);
+    border-color: var(--nexus-600);
+    color: var(--text-on-brand);
   }
 }
 
 .estado[data-activo="true"] {
-  background: #d1fae5;
-  color: #047857;
+  background: var(--success-bg);
+  border-color: var(--success-bg);
+  color: var(--success);
 }
 
-
-/* ── Diálogo de módulos ── */
+/* ── Diálogos ── */
 .fondo {
   position: fixed;
   inset: 0;
-  background: rgb(15 23 42 / 45%);
+  /* El velo es el navy de marca con transparencia; no hay token de color
+     con alfa, así que se compone aquí a partir del mismo tono. */
+  background: color-mix(in srgb, var(--navy-800) 55%, transparent);
   z-index: 40;
 }
 
@@ -239,32 +315,40 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: min(720px, calc(100vw - 32px));
-  max-height: 85vh;
+  width: min(720px, calc(100vw - var(--space-32)));
+  max-height: 88vh;
+  /* Se desplaza el diálogo entero y no solo su cuerpo: aquí el pie cambia
+     según la pestaña, y fijarlo obligaría a sacarlo de cada una. */
   overflow-y: auto;
   z-index: 50;
-  background: #fff;
-  border-radius: 12px;
-  padding: 24px;
-  box-shadow: 0 24px 48px rgb(15 23 42 / 25%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: var(--space-24);
 }
 
 .dialogo-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--space-16);
+  padding: 0 0 var(--space-16);
 
   h2 {
     margin: 0;
-    font-size: 18px;
+    font-size: var(--text-lg);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
   }
 
   p {
-    margin: 2px 0 0;
-    font-size: 13px;
-    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+    margin: var(--space-4) 0 0;
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
   }
 }
 
@@ -272,59 +356,26 @@
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 8px;
-  background: #f1f5f9;
-  color: #475569;
-  font-size: 20px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text-secondary);
+  font-size: var(--text-xl);
   line-height: 1;
   cursor: pointer;
-}
 
-
-/* ── Indicadores del negocio ── */
-.indicadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.indicador {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 16px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-
-  /* Lo que hay que atender se distingue por la forma, no solo por el número. */
-  &.alerta {
-    border-color: #fca5a5;
-    background: #fef2f2;
-
-    .cifra {
-      color: #b91c1c;
-    }
+  &:hover {
+    background: var(--border);
+    color: var(--text-primary);
   }
 }
 
-.etiqueta {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #64748b;
-}
-
-.cifra {
-  font-size: 24px;
-  color: #0f172a;
-  font-variant-numeric: tabular-nums;
-}
-
-.pie {
-  font-size: 12px;
-  color: #94a3b8;
+.dialogo-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--border);
 }
 
 /* ── Lista de módulos: la usan clientes y planes ── */
@@ -338,23 +389,23 @@
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 12px;
-  border: 1px solid #e2e8f0;
-  border-radius: 10px;
+  padding: var(--space-12);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   cursor: pointer;
 
   input {
+    height: auto;
     margin-top: 2px;
+  }
+
+  &:hover {
+    border-color: var(--border-hover);
   }
 
   /* El núcleo se ve activo pero no invita a pulsarlo. */
   &.nucleo {
-    background: #f8fafc;
-    cursor: default;
-  }
-
-  &.fuera {
-    opacity: 0.6;
+    background: var(--bg);
     cursor: default;
   }
 }
@@ -363,24 +414,26 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  font-size: 13px;
-  color: #64748b;
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
 
   strong {
-    color: #0f172a;
-    font-size: 14px;
+    color: var(--text-primary);
+    font-size: var(--text-body);
+    font-weight: var(--font-medium);
   }
 }
 
 .nota {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: var(--text-caption);
+  color: var(--text-muted);
 }
 
 .fuera-titulo {
-  margin: 24px 0 10px;
-  font-size: 14px;
-  color: #64748b;
+  margin: var(--space-24) 0 10px;
+  font-size: var(--text-body);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
 }
 
 /* ── Formulario en rejilla ── */
@@ -393,22 +446,10 @@
 .campo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  font-size: 13px;
-  color: #475569;
-
-  input,
-  select,
-  textarea {
-    padding: 8px 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font: inherit;
-    font-size: 14px;
-    color: #0f172a;
-    background: #fff;
-    resize: vertical;
-  }
+  gap: var(--space-4);
+  font-size: var(--text-label);
+  font-weight: var(--text-label-weight);
+  color: var(--text-secondary);
 
   &.ancho-total {
     grid-column: 1 / -1;
@@ -419,8 +460,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 16px;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
 
   h2 {
     margin: 0;
@@ -428,15 +469,57 @@
 }
 
 .explica {
-  margin: -4px 0 16px;
-  font-size: 13px;
-  color: #64748b;
+  margin: -4px 0 var(--space-16);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
   max-width: 62ch;
 }
 
-.dialogo-pie {
+/* ── Indicadores del negocio ── */
+.indicadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-16);
+  margin-bottom: var(--space-24);
+}
+
+.indicador {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin-top: 24px;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-16);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+
+  /* Lo que hay que atender se distingue por la forma, no solo por el color. */
+  &.alerta {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+
+    .cifra {
+      color: var(--danger);
+    }
+  }
+}
+
+.etiqueta {
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-secondary);
+}
+
+.cifra {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.pie {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
 }

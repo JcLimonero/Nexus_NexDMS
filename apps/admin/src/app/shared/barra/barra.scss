@@ -1,20 +1,25 @@
 /* El armazón (.barra, .quien, .btn-texto) es global; aquí solo la navegación. */
 .nav {
   display: flex;
-  gap: 4px;
+  gap: var(--space-4);
 
   a {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    color: #475569;
+    padding: 6px var(--space-12);
+    border-radius: var(--radius-md);
+    font-size: var(--text-body);
+    color: var(--text-secondary);
     text-decoration: none;
+  }
+
+  a:hover {
+    background: var(--bg);
+    color: var(--text-primary);
   }
 
   /* La pantalla en la que estás se marca, no solo se subraya al pasar. */
   a.activo {
-    background: #e2e8f0;
-    color: #0f172a;
-    font-weight: 600;
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: var(--font-semibold);
   }
 }

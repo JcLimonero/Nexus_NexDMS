@@ -52,6 +52,8 @@ export class Tenants implements OnInit {
 
   /** Tenant en edición; null = alta nueva. */
   editando = signal<Tenant | null>(null);
+  /** El alta y la edición viven en un diálogo, no en la propia pantalla. */
+  formAbierto = signal(false);
   form: NuevoTenant = { name: "", slug: "", plan: "BASIC", isActive: true };
   /**
    * Paquete elegido en el alta. Va aparte de `form` porque el endpoint de
@@ -144,6 +146,12 @@ export class Tenants implements OnInit {
     this.editando.set(null);
     this.form = { name: "", slug: "", plan: "BASIC", isActive: true };
     this.planId = this.planesALaVenta()[0]?.id ?? "";
+    this.formAbierto.set(true);
+  }
+
+  cerrarForm(): void {
+    this.formAbierto.set(false);
+    this.editando.set(null);
   }
 
   editar(t: Tenant): void {
@@ -155,6 +163,7 @@ export class Tenants implements OnInit {
       isActive: t.isActive,
     };
     this.planId = t.saasPlanId ?? "";
+    this.formAbierto.set(true);
   }
 
   /** El identificador sale del nombre; se puede corregir a mano. */
@@ -198,7 +207,7 @@ export class Tenants implements OnInit {
         });
         this.guardando.set(false);
         this.avisar(actual ? "Cliente actualizado" : "Cliente dado de alta");
-        this.nuevo();
+        this.cerrarForm();
         this.cargar();
       },
       error: (e) => {

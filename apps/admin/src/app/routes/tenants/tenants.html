@@ -28,48 +28,15 @@
     </section>
   }
 
-  <!-- Alta y edición -->
-  <section class="tarjeta">
-    <h2>{{ editando() ? "Editar cliente" : "Nuevo cliente" }}</h2>
-    <div class="fila">
-      <label>
-        <span>Nombre del grupo</span>
-        <input [(ngModel)]="form.name" (input)="alEscribirNombre()" />
-      </label>
-      <label>
-        <span>Identificador</span>
-        <input [(ngModel)]="form.slug" />
-      </label>
-      <label>
-        <span>Plan contratado</span>
-        <select [(ngModel)]="planId">
-          @for (p of planesALaVenta(); track p.id) {
-            <option [value]="p.id">
-              {{ p.name }} — {{ p.monthlyPrice | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
-            </option>
-          }
-        </select>
-      </label>
-      <div class="acciones-fila">
-        <button
-          type="button"
-          class="btn-principal"
-          [disabled]="guardando()"
-          (click)="guardar()"
-        >
-          {{ editando() ? "Guardar" : "Dar de alta" }}
-        </button>
-        @if (editando()) {
-          <button type="button" class="btn-secundario" (click)="nuevo()">
-            Cancelar
-          </button>
-        }
-      </div>
-    </div>
-  </section>
-
   <!-- Listado -->
   <section class="tarjeta">
+    <div class="titulo-fila">
+      <h2>Clientes</h2>
+      <button type="button" class="btn-principal" (click)="nuevo()">
+        Nuevo cliente
+      </button>
+    </div>
+
     @if (cargando()) {
       <p class="vacio">Cargando…</p>
     } @else if (tenants().length === 0) {
@@ -127,6 +94,61 @@
     }
   </section>
 </div>
+
+<!-- Alta y edición del cliente -->
+@if (formAbierto()) {
+  <div class="fondo" (click)="cerrarForm()"></div>
+  <div class="dialogo" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>{{ editando() ? "Editar cliente" : "Nuevo cliente" }}</h2>
+        <p>
+          {{
+            editando()
+              ? "El plan define su nivel, su precio y los módulos que recibe"
+              : "Un grupo nuevo con el plan que contrata"
+          }}
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarForm()">×</button>
+    </header>
+
+    <div class="rejilla">
+        <label class="campo">
+          <span>Nombre del grupo</span>
+          <input [(ngModel)]="form.name" (input)="alEscribirNombre()" />
+        </label>
+        <label class="campo">
+          <span>Identificador</span>
+          <input [(ngModel)]="form.slug" />
+        </label>
+        <label class="campo ancho-total">
+          <span>Plan contratado</span>
+          <select [(ngModel)]="planId">
+            @for (p of planesALaVenta(); track p.id) {
+              <option [value]="p.id">
+                {{ p.name }} — {{ p.monthlyPrice | currency: "MXN" : "symbol-narrow" : "1.0-0" }} al mes
+              </option>
+            }
+          </select>
+      </label>
+    </div>
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarForm()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando()"
+        (click)="guardar()"
+      >
+        {{ editando() ? "Guardar" : "Dar de alta" }}
+      </button>
+    </footer>
+  </div>
+}
 
 <!-- Módulos del cliente -->
 @if (moduloDe(); as t) {
