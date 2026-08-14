@@ -1,63 +1,52 @@
 /**
  * Pantallas para colgar en el taller.
  *
- * Se leen de lejos y de pie: todo va una o dos tallas por encima de lo
- * normal, sin menús ni nada que pulsar. Van en oscuro porque están
- * encendidas todo el día en una nave con luz de techo, donde un fondo
- * blanco deslumbra y quema el panel.
+ * Mismos colores que el resto del DMS: todo sale de los tokens de marca y no
+ * hay un solo color escrito a mano. Lo que sí cambia respecto a una pantalla
+ * de escritorio es la escala —todo va una o dos tallas por encima, porque
+ * esto se lee de pie y desde el otro lado de la nave— y que no hay nada que
+ * pulsar.
  *
- * Los colores del semáforo no se toman de los tokens claros: sobre negro
- * necesitan más luminosidad para mantener el contraste.
+ * El semáforo usa los colores semánticos del sistema (éxito, aviso, peligro)
+ * para que aquí signifiquen lo mismo que en cualquier otra pantalla.
  */
 
 .monitor {
-  --m-bg: #0f171c;
-  --m-card: #16222a;
-  --m-border: #26353f;
-  --m-text: #eaf0f4;
-  --m-text-2: #9fb0bc;
-  --m-ok: #4ade9b;
-  --m-warn: #e9b872;
-  --m-bad: #f0736a;
-  --m-idle: #71838f;
-  /* Azul de marca aclarado para fondo oscuro. La acción no usa el verde del
-     semáforo: ahí el verde ya significa "en tiempo". */
-  --m-accion: #4589b5;
-
   min-height: 100vh;
-  padding: 24px 32px;
-  background: var(--m-bg);
-  color: var(--m-text);
-  font-family: var(--font-sans, system-ui, sans-serif);
+  padding: var(--space-24) var(--space-32);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
 }
 
 .monitor-top {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 32px;
+  gap: var(--space-32);
   flex-wrap: wrap;
   padding-bottom: 20px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--m-border);
+  margin-bottom: var(--space-24);
+  border-bottom: 1px solid var(--border);
 
   h1 {
     margin: 0;
     font-size: 40px;
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     letter-spacing: -0.01em;
+    color: var(--text-primary);
   }
 
   p {
     margin: 2px 0 0;
-    font-size: 20px;
-    color: var(--m-text-2);
+    font-size: var(--text-xl);
+    color: var(--text-secondary);
   }
 }
 
 .monitor-resumen {
   display: flex;
-  gap: 32px;
+  gap: var(--space-32);
 }
 
 .resumen-dato {
@@ -68,47 +57,48 @@
   strong {
     font-size: 44px;
     line-height: 1;
+    font-weight: var(--font-semibold);
     font-variant-numeric: tabular-nums;
   }
 
   span {
     font-size: 15px;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--m-text-2);
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
   }
 
   &.alerta strong {
-    color: var(--m-warn);
+    color: var(--warning);
   }
   &.critico strong {
-    color: var(--m-bad);
+    color: var(--danger);
   }
 }
 
 .monitor-hora {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--space-12);
   font-size: 28px;
   font-variant-numeric: tabular-nums;
-  color: var(--m-text-2);
+  color: var(--text-secondary);
 }
 
 .sin-conexion {
-  padding: 4px 12px;
-  border-radius: 999px;
-  background: var(--m-bad);
-  color: var(--m-bg);
+  padding: 4px var(--space-12);
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  color: var(--text-on-brand);
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 }
 
 .monitor-vacio {
   margin: 80px 0;
   text-align: center;
   font-size: 28px;
-  color: var(--m-text-2);
+  color: var(--text-secondary);
 }
 
 /* ══ Magneto plano ══════════════════════════════════════════
@@ -118,6 +108,12 @@
 .tablero {
   --ancho-recurso: 220px;
   --alto-carril: 64px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16) var(--space-24) 0;
+  box-shadow: var(--shadow-sm);
 }
 
 .tablero-cabecera,
@@ -130,12 +126,12 @@
   flex: 0 0 var(--ancho-recurso);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 8px 16px 8px 0;
+  gap: var(--space-12);
+  padding: var(--space-8) var(--space-16) var(--space-8) 0;
   font-size: 15px;
-  color: var(--m-text-2);
+  color: var(--text-secondary);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--text-overline-tracking);
 }
 
 .carril .tablero-recurso {
@@ -150,15 +146,15 @@
   width: 42px;
   height: 42px;
   border-radius: 50%;
-  background: var(--m-border);
-  color: var(--m-text);
+  background: var(--primary-soft);
+  color: var(--primary);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--font-semibold);
 
   &.vacio {
     background: transparent;
-    border: 2px dashed var(--m-border);
-    color: var(--m-idle);
+    border: 2px dashed var(--border-strong);
+    color: var(--text-muted);
   }
 }
 
@@ -169,8 +165,8 @@
 
   strong {
     font-size: 19px;
-    font-weight: 500;
-    color: var(--m-text);
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -178,38 +174,41 @@
 
   small {
     font-size: 14px;
-    color: var(--m-idle);
+    color: var(--text-muted);
   }
 }
 
+/* Fuera del turno el carril queda gris; la franja del turno lo abre en
+   blanco. Así se ve de un golpe hasta qué hora hay alguien. */
 .tablero-pista {
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   display: flex;
-  border-left: 1px solid var(--m-border);
+  background: var(--bg);
+  border-left: 1px solid var(--border);
 }
 
 .tablero-cabecera {
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--m-border);
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border);
 
   .tablero-pista {
     border-left: none;
+    background: transparent;
   }
 }
 
 .marca-hora {
   flex: 1 1 0;
   min-width: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-variant-numeric: tabular-nums;
-  color: var(--m-text-2);
+  color: var(--text-secondary);
   /* Cada marca rotula el inicio de su columna, pegada a su línea. Centrarla
      y desplazarla media caja las encabalgaba unas con otras. */
   text-align: left;
   padding-left: 6px;
-  font-size: 15px;
 }
 
 .tablero-cuerpo {
@@ -218,48 +217,52 @@
 
 .carril {
   min-height: var(--alto-carril);
-  border-bottom: 1px solid var(--m-border);
+  border-bottom: 1px solid var(--border);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
 
   /* Quien no está se atenúa entero, no solo su franja. */
   &.fuera-turno {
-    opacity: 0.5;
+    opacity: 0.55;
   }
 
   &.sin-tecnico .tablero-pista {
     background: repeating-linear-gradient(
       45deg,
-      transparent,
-      transparent 8px,
-      rgb(255 255 255 / 2%) 8px,
-      rgb(255 255 255 / 2%) 16px
+      var(--bg),
+      var(--bg) 8px,
+      var(--border) 8px,
+      var(--border) 9px
     );
   }
 }
 
-/* La franja del turno: el resto del carril queda a fondo del tablero, que
-   es más oscuro, y así se ve de un golpe hasta qué hora hay alguien. */
 .franja-turno {
   position: absolute;
   top: 0;
   bottom: 0;
-  background: rgb(255 255 255 / 4%);
+  background: var(--card);
 }
 
 .linea-hora {
   flex: 1 1 0;
-  border-right: 1px solid rgb(255 255 255 / 6%);
+  border-right: 1px solid var(--border);
 }
 
 .bloque {
   position: absolute;
-  top: 8px;
-  bottom: 8px;
+  top: var(--space-8);
+  bottom: var(--space-8);
   display: flex;
   align-items: center;
   overflow: hidden;
-  border-radius: 8px;
-  border-left: 4px solid var(--m-idle);
-  background: var(--m-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-muted);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
   /* Una fase de diez minutos sobre un eje de trece horas es una raya de
      tres píxeles: ilegible desde el otro lado de la nave. Se le da un
      mínimo en píxeles —la hora de inicio sigue siendo exacta, solo se
@@ -268,13 +271,13 @@
   min-width: 104px;
 
   &[data-semaforo="en-tiempo"] {
-    border-left-color: var(--m-ok);
+    border-left-color: var(--success);
   }
   &[data-semaforo="por-vencer"] {
-    border-left-color: var(--m-warn);
+    border-left-color: var(--warning);
   }
   &[data-semaforo="excedido"] {
-    border-left-color: var(--m-bad);
+    border-left-color: var(--danger);
   }
 }
 
@@ -285,13 +288,13 @@
   left: 0;
   top: 0;
   bottom: 0;
-  background: rgb(255 255 255 / 7%);
+  background: var(--success-bg);
 
   [data-semaforo="por-vencer"] & {
-    background: color-mix(in srgb, var(--m-warn) 22%, transparent);
+    background: var(--warning-bg);
   }
   [data-semaforo="excedido"] & {
-    background: color-mix(in srgb, var(--m-bad) 26%, transparent);
+    background: var(--danger-bg);
   }
 }
 
@@ -305,7 +308,7 @@
 
   strong {
     font-size: 16px;
-    font-weight: 500;
+    font-weight: var(--font-medium);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -313,7 +316,7 @@
 
   small {
     font-size: 13px;
-    color: var(--m-text-2);
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -327,7 +330,7 @@
   top: 0;
   bottom: 0;
   width: 2px;
-  background: var(--m-bad);
+  background: var(--danger);
   pointer-events: none;
   transition: left 1s linear;
 }
@@ -339,57 +342,58 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--m-bad);
+  background: var(--danger);
 }
 
 /* ── Bandeja de lo que espera turno ── */
 .bandeja {
-  margin-top: 24px;
+  margin-top: var(--space-24);
 
   h2 {
-    margin: 0 0 12px;
-    font-size: 16px;
-    font-weight: 600;
+    margin: 0 0 var(--space-12);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
     text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--m-text-2);
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
   }
 }
 
 .bandeja-piezas {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 12px;
+  gap: var(--space-12);
 }
 
 .pieza {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: 12px 14px;
-  background: var(--m-card);
-  border: 1px solid var(--m-border);
-  border-left: 4px solid var(--m-idle);
-  border-radius: 10px;
+  padding: var(--space-12) 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-muted);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
 
   strong {
-    font-size: 18px;
-    font-weight: 500;
+    font-size: var(--text-lg);
+    font-weight: var(--font-medium);
   }
 }
 
 .pieza-folio {
-  font-family: var(--font-mono, ui-monospace, monospace);
+  font-family: var(--font-mono);
   font-size: 13px;
-  color: var(--m-text-2);
+  color: var(--text-secondary);
 }
 
 .pieza-datos {
   font-size: 14px;
-  color: var(--m-text-2);
+  color: var(--text-secondary);
 
   &.sin-plan {
-    color: var(--m-warn);
+    color: var(--warning);
   }
 }
 
@@ -399,35 +403,37 @@
   /* Ancho suficiente para que un nombre largo no se parta en tres líneas:
      la hora ya se lleva 100px y la marca de estado otro tanto. */
   grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
-  gap: 16px;
+  gap: var(--space-16);
 }
 
 .cita {
   display: flex;
-  gap: 16px;
+  gap: var(--space-16);
   align-items: center;
-  padding: 16px 20px;
-  background: var(--m-card);
-  border: 1px solid var(--m-border);
-  border-left: 8px solid var(--m-idle);
-  border-radius: 12px;
+  padding: var(--space-16) 20px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 8px solid var(--text-muted);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 
   /* Ya llegó: deja de ser una espera y se atenúa para no competir con las
      que faltan, que es lo que hay que vigilar. */
   &.llegada {
-    border-left-color: var(--m-ok);
-    opacity: 0.65;
+    border-left-color: var(--success);
+    opacity: 0.6;
   }
 
   /* Pasó su hora y no ha llegado. */
   &.tarde {
-    border-left-color: var(--m-bad);
+    border-left-color: var(--danger);
+    background: var(--danger-bg);
   }
 }
 
 .cita-hora {
   font-size: 34px;
-  font-weight: 600;
+  font-weight: var(--font-semibold);
   font-variant-numeric: tabular-nums;
   min-width: 100px;
 }
@@ -441,12 +447,12 @@
 
   strong {
     font-size: 21px;
-    font-weight: 500;
+    font-weight: var(--font-medium);
   }
 
   span {
     font-size: 17px;
-    color: var(--m-text-2);
+    color: var(--text-secondary);
   }
 }
 
@@ -454,8 +460,8 @@
   margin-left: auto;
   font-size: 15px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--m-text-2);
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
@@ -468,24 +474,25 @@
 .acceso-tarjeta {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-16);
   width: min(420px, calc(100vw - 48px));
-  padding: 32px;
-  background: var(--m-card);
-  border: 1px solid var(--m-border);
-  border-radius: 16px;
+  padding: var(--space-32);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
 
   h1 {
     margin: 0;
     font-size: 26px;
-    font-weight: 600;
+    font-weight: var(--font-semibold);
   }
 
   p {
     margin: -8px 0 0;
     font-size: 15px;
     line-height: 1.4;
-    color: var(--m-text-2);
+    color: var(--text-secondary);
   }
 
   label {
@@ -493,33 +500,40 @@
     flex-direction: column;
     gap: 6px;
     font-size: 15px;
-    color: var(--m-text-2);
+    color: var(--text-secondary);
   }
 
   input {
-    height: 44px;
+    height: var(--control-h-lg);
     padding: 0 14px;
-    border: 1px solid var(--m-border);
-    border-radius: 10px;
-    background: var(--m-bg);
-    color: var(--m-text);
+    border: 1px solid var(--border);
+    border-radius: var(--control-radius);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
     font-size: 17px;
 
     &:focus {
       outline: none;
-      border-color: var(--m-accion);
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
     }
   }
 
   button {
     height: 48px;
     border: none;
-    border-radius: 10px;
-    background: var(--m-accion);
-    color: #fff;
+    border-radius: var(--control-radius);
+    background: var(--primary);
+    color: var(--text-on-brand);
+    font-family: inherit;
     font-size: 17px;
-    font-weight: 600;
+    font-weight: var(--font-semibold);
     cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
 
     &:disabled {
       opacity: 0.6;
@@ -530,8 +544,8 @@
 .acceso-error {
   margin: 0 !important;
   padding: 10px 14px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--m-bad) 20%, var(--m-card));
-  color: var(--m-bad) !important;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  color: var(--danger) !important;
   font-size: 15px;
 }
