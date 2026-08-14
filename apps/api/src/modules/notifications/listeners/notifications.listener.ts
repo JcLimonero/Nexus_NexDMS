@@ -14,6 +14,7 @@ import {
   PagoCreditoVencidoEvent,
   VentaConfirmadaEvent,
   CotizacionEnviadaEvent,
+  CitaNoSePresentoEvent,
   MantenimientoSinRefaccionesEvent,
   ServicioProximoVencimientoEvent,
   ServicioHallazgoCotizacionEvent,
@@ -244,6 +245,52 @@ export class NotificationsListener {
           html: `<p>Cita programada para ${event.scheduledAt.toISOString()}. Partes faltantes: ${partsList}</p>`,
         });
       }
+    }
+  }
+
+  /**
+   * El cliente no llegó: hay que llamarlo.
+   *
+   * Se avisa a su asesor —el seguimiento es de quien recibió la cita— y de
+   * paso al mostrador, porque si el asesor libró ese día nadie más se
+   * enteraría. Sin este aviso, la cita perdida solo existe como un cambio
+   * de estado que nadie mira.
+   */
+  @OnEvent('cita.no_se_presento')
+  async onCitaNoSePresento(event: CitaNoSePresentoEvent): Promise<void> {
+    const responsables = await this.usersService.getUsersByRoleInBranch(
+      event.branchId,
+      [RoleEnum.RECEPTIONIST, RoleEnum.CASHIER, RoleEnum.MANAGER],
+    );
+    // Se avisa a todos los de esos roles en la sucursal, no solo al asesor
+    // de la cita: si ese día libró, el aviso moriría con él.
+    const correos = new Set(
+      responsables.map((u) => u.email).filter(Boolean),
+    );
+
+    const hora = event.scheduledAt.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const quien = event.client.name ?? 'El cliente';
+    const telefono = event.client.phone ?? 'sin teléfono registrado';
+
+    for (const email of correos) {
+      if (!email) continue;
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'cita_no_se_presento',
+        referenceType: 'Appointment',
+        referenceId: event.appointmentId,
+        recipient: email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: `No llegó a su cita: ${quien} (${hora})`,
+        html:
+          `<p><strong>${quien}</strong> no llegó a su cita de las ${hora} ` +
+          `(${event.serviceType}).</p>` +
+          `<p>Hay que contactarlo para reagendar: ${telefono}</p>`,
+      });
     }
   }
 

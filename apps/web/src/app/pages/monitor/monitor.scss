@@ -23,7 +23,7 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: var(--space-32);
+  gap: var(--space-24);
   flex-wrap: wrap;
   padding-bottom: 20px;
   margin-bottom: var(--space-24);
@@ -44,9 +44,12 @@
   }
 }
 
+/* Con cinco indicadores el reloj se caía de línea en pantallas estrechas;
+   los huecos se aprietan para que quepan en la misma fila. */
 .monitor-resumen {
   display: flex;
-  gap: var(--space-32);
+  flex-wrap: wrap;
+  gap: var(--space-24);
 }
 
 .resumen-dato {
@@ -79,6 +82,7 @@
 .monitor-hora {
   display: flex;
   align-items: center;
+  margin-left: auto;
   gap: var(--space-12);
   font-size: 28px;
   font-variant-numeric: tabular-nums;
@@ -414,6 +418,32 @@
   &.tarde {
     border-left-color: var(--danger);
     background: var(--danger-bg);
+  }
+
+  /* Se dio por perdida: no es una espera sino una llamada pendiente. Se
+     distingue de la que va tarde —esa todavía puede aparecer— con el borde
+     discontinuo y el nombre tachado. */
+  &.no-vino {
+    border-left-color: var(--danger);
+    border-style: dashed;
+    background: var(--danger-bg);
+
+    strong {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    small {
+      color: var(--danger);
+    }
+  }
+
+  &.cancelada {
+    opacity: 0.45;
+
+    strong {
+      text-decoration: line-through;
+    }
   }
 }
 

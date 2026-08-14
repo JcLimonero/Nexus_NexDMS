@@ -18,9 +18,13 @@
         <strong>{{ pendientes() }}</strong>
         <span>por llegar</span>
       </div>
-      <div class="resumen-dato" [class.critico]="retrasadas() > 0">
+      <div class="resumen-dato" [class.alerta]="retrasadas() > 0">
         <strong>{{ retrasadas() }}</strong>
         <span>pasadas de hora</span>
+      </div>
+      <div class="resumen-dato" [class.critico]="noVinieron() > 0">
+        <strong>{{ noVinieron() }}</strong>
+        <span>por contactar</span>
       </div>
     </div>
 
@@ -100,6 +104,8 @@
                 class="bloque cita-bloque"
                 [class.llegada]="cita.llego"
                 [class.tarde]="cita.tarde"
+                [class.no-vino]="cita.noVino"
+                [class.cancelada]="cita.cancelada"
                 [style.left.%]="cita.izquierda"
                 [style.width.%]="cita.ancho"
                 [title]="
@@ -109,7 +115,14 @@
               >
                 <span class="bloque-texto">
                   <strong>{{ cita.cliente }}</strong>
-                  <small>{{ cita.hora }} · {{ cita.servicio }}</small>
+                  <small>
+                    @if (cita.noVino) {
+                      <!-- Lo que hay que hacer con ella, no solo su hora. -->
+                      No llegó · contactar
+                    } @else {
+                      {{ cita.hora }} · {{ cita.servicio }}
+                    }
+                  </small>
                 </span>
               </div>
             }
@@ -135,6 +148,8 @@
                 class="bloque cita-bloque"
                 [class.llegada]="cita.llego"
                 [class.tarde]="cita.tarde"
+                [class.no-vino]="cita.noVino"
+                [class.cancelada]="cita.cancelada"
                 [style.left.%]="cita.izquierda"
                 [style.width.%]="cita.ancho"
                 [title]="cita.hora + ' · ' + cita.cliente + ' · ' + cita.servicio"

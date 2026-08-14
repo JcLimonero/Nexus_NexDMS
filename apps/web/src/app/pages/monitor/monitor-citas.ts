@@ -25,6 +25,9 @@ interface CitaColocada {
   /** Pasó su hora y sigue esperándose. */
   tarde: boolean;
   llego: boolean;
+  /** Se dio por no presentada: hay que llamar al cliente. */
+  noVino: boolean;
+  cancelada: boolean;
   izquierda: number;
   ancho: number;
 }
@@ -88,6 +91,10 @@ export class MonitorCitas implements OnInit, OnDestroy {
     ].includes(estado);
   }
 
+  private noVino(estado: string): boolean {
+    return estado === "NO_SHOW";
+  }
+
   private llego(estado: string): boolean {
     return ["ARRIVED", "IN_SERVICE", "COMPLETED"].includes(estado);
   }
@@ -109,9 +116,18 @@ export class MonitorCitas implements OnInit, OnDestroy {
   pendientes = computed(
     () => this.todas().filter((c) => !this.cerrada(c.estado)).length,
   );
-  /** Las que ya pasaron de su hora y siguen sin llegar. */
+  /** Las que ya pasaron de su hora y siguen esperándose. */
   retrasadas = computed(
     () => this.todas().filter((c) => this.tarde(c)).length,
+  );
+
+  /**
+   * Las que se dieron por perdidas. Se cuentan aparte porque no son un
+   * pendiente de la agenda sino una llamada pendiente: alguien tiene que
+   * contactar al cliente para reagendar.
+   */
+  noVinieron = computed(
+    () => this.todas().filter((c) => c.estado === "NO_SHOW").length,
   );
 
   private tarde(c: CitaEnTablero): boolean {
@@ -131,6 +147,8 @@ export class MonitorCitas implements OnInit, OnDestroy {
       etiqueta: this.etiquetaEstado(c),
       tarde: this.tarde(c),
       llego: this.llego(c.estado),
+      noVino: this.noVino(c.estado),
+      cancelada: c.estado === "CANCELLED",
       izquierda,
       ancho: this.eje.ancho(izquierda, c.duracionMin),
     };
