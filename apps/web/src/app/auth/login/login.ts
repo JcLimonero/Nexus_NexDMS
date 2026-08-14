@@ -103,25 +103,31 @@ export class Login implements OnInit {
       // Es una aplicación aparte —como la del técnico— y se abre en su propia
       // pestaña: tiene su sesión y su ciclo, y meterla en esta cerraría el DMS
       // a quien solo iba a echar un vistazo.
-      nombre: "Portal de recepción",
+      nombre: "Recepción",
+      // El icono es lo que se ve; la descripción queda en el título emergente
+      // y como nombre accesible, para no perderla al compactar.
+      icono: "📋",
       descripcion: "Recibir unidades desde el iPad, con cámara",
       url: "http://localhost:4203",
       interno: false,
     },
     {
-      nombre: "App del técnico",
+      nombre: "Técnico",
+      icono: "🔧",
       descripcion: "Órdenes, cronómetro y hallazgos",
       url: "http://localhost:4201",
       interno: false,
     },
     {
-      nombre: "Panel superadmin",
+      nombre: "Superadmin",
+      icono: "🏢",
       descripcion: "Administración de Nexus Q Tech",
       url: "http://localhost:4202",
       interno: false,
     },
     {
-      nombre: "Documentación de la API",
+      nombre: "API",
+      icono: "📘",
       descripcion: "Swagger con todos los endpoints",
       url: "http://localhost:3010/api/docs",
       interno: false,

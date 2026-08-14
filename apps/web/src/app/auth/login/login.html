@@ -157,19 +157,26 @@
                   @if (p.interno) {
                     <!-- Ruta de esta misma aplicación: se abre aquí para que
                          el acceso pida la sesión y luego lleve al portal -->
-                    <a class="demo-link" [routerLink]="p.url">
-                      <span class="demo-link-name">{{ p.nombre }}</span>
-                      <span class="demo-detalle">{{ p.descripcion }}</span>
+                    <a
+                      class="portal-icono"
+                      [routerLink]="p.url"
+                      [title]="p.descripcion"
+                      [attr.aria-label]="p.nombre + ': ' + p.descripcion"
+                    >
+                      <span class="portal-glifo" aria-hidden="true">{{ p.icono }}</span>
+                      <span class="portal-nombre">{{ p.nombre }}</span>
                     </a>
                   } @else {
                     <a
-                      class="demo-link"
+                      class="portal-icono"
                       [href]="p.url"
                       target="_blank"
                       rel="noopener"
+                      [title]="p.descripcion"
+                      [attr.aria-label]="p.nombre + ': ' + p.descripcion + ' (abre en otra pestaña)'"
                     >
-                      <span class="demo-link-name">{{ p.nombre }} ↗</span>
-                      <span class="demo-detalle">{{ p.descripcion }}</span>
+                      <span class="portal-glifo" aria-hidden="true">{{ p.icono }}</span>
+                      <span class="portal-nombre">{{ p.nombre }}</span>
                     </a>
                   }
                 }

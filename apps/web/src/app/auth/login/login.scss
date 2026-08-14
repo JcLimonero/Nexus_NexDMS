@@ -89,13 +89,16 @@
 }
 
 .demo-accounts,
+/* Los accesos a los otros portales van como iconos: son atajos de
+   demostración, no opciones del formulario, y en fila ocupan una fracción de
+   lo que ocupaban como fichas con descripción. */
 .demo-links {
-  display: grid;
+  display: flex;
   gap: var(--space-8);
+  flex-wrap: wrap;
 }
 
-.demo-account,
-.demo-link {
+.demo-account {
   display: flex;
   flex-direction: column;
   gap: 1px;
@@ -148,4 +151,42 @@
   background: color-mix(in srgb, var(--primary) 8%, transparent);
   color: var(--primary);
   font-size: var(--text-sm);
+}
+
+
+.portal-icono {
+  flex: 1 1 auto;
+  min-width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  /* El teclado también llega aquí: sin foco visible el atajo se vuelve
+     inalcanzable para quien no usa ratón. */
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+.portal-glifo {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.portal-nombre {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-align: center;
 }
