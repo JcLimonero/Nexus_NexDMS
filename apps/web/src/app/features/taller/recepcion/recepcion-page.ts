@@ -25,6 +25,13 @@ interface LineaCotizacion {
 }
 
 /**
+ * ⚠️ Existe una segunda implementación de este mismo flujo en el portal
+ * independiente: `apps/recepcion/src/app/pages/recibir/recibir.page.ts`.
+ * Son dos pantallas deliberadas —una embebida en el DMS y otra para el iPad
+ * del mostrador—, así que un cambio de comportamiento aquí hay que llevarlo
+ * también allá o las dos empezarán a contar historias distintas.
+ */
+/**
  * Recepción de unidades a servicio.
  *
  * Flujo: cita del día → recibir la unidad (km, combustible, inventario) →

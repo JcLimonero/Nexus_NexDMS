@@ -22,6 +22,11 @@ interface LineaCotizacion {
 type Paso = "unidad" | "estado" | "fotos" | "cotizacion";
 
 /**
+ * ⚠️ La misma recepción existe embebida en el DMS:
+ * `apps/web/src/app/features/taller/recepcion/recepcion-page.ts`.
+ * Se mantienen las dos a propósito; si cambias el flujo aquí, revisa allá.
+ */
+/**
  * Recepción de una unidad, de principio a fin.
  *
  * Los cuatro pasos van en la misma pantalla y no en rutas separadas: el asesor

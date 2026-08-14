@@ -84,7 +84,8 @@ export interface DatosUnidad {
 }
 
 /**
- * Portado desde el DMS: mismo backend y mismo contrato. Se comparte la forma
+ * Portado desde `apps/web/.../taller/recepcion/recepcion.service.ts`: mismo
+ * backend y mismo contrato. Se comparte la forma
  * de los datos a propósito para que las dos pantallas no se separen con el
  * tiempo; si el contrato cambia, rompe en los dos sitios a la vez.
  * Tipos de unidad que puede recibir el taller. */
