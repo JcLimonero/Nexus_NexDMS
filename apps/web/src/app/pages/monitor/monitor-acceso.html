@@ -1,9 +1,11 @@
 <div class="monitor monitor-acceso">
   <form class="acceso-tarjeta" (ngSubmit)="entrar()">
-    <h1>Pantallas del taller</h1>
+    <h1>{{ pantalla().nombre }}</h1>
     <p>
-      Entra una vez con la cuenta de la pantalla. La sesión se queda aquí y no
-      afecta a la del sistema.
+      @if (pantalla().rol) {
+        Entra con una cuenta de {{ pantalla().rol!.toLowerCase() }}.
+      }
+      La sesión se queda en esta pantalla y no afecta a la del sistema.
     </p>
 
     @if (error(); as e) {

@@ -1,5 +1,6 @@
 import {
   Component,
+  OnInit,
   computed,
   inject,
   isDevMode,
@@ -8,6 +9,7 @@ import {
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Title } from "@angular/platform-browser";
 
 import { MonitorAuthService } from "./monitor-auth.service";
 
@@ -25,10 +27,11 @@ import { MonitorAuthService } from "./monitor-auth.service";
   templateUrl: "./monitor-acceso.html",
   styleUrls: ["./monitor.scss"],
 })
-export class MonitorAcceso {
+export class MonitorAcceso implements OnInit {
   private auth = inject(MonitorAuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private titulo = inject(Title);
 
   email = "";
   password = "";
@@ -77,6 +80,22 @@ export class MonitorAcceso {
     return [...this.cuentas].sort((a, b) =>
       destino.startsWith(b.ruta) ? 1 : destino.startsWith(a.ruta) ? -1 : 0,
     );
+  });
+
+  /**
+   * A qué pantalla se va, con su nombre.
+   *
+   * El acceso es el mismo para las dos, así que sin decirlo se llega desde
+   * el monitor de citas a una pantalla titulada "del taller" y parece que
+   * la liga estaba mal.
+   */
+  pantalla = computed(() => {
+    const d = this.destino();
+    const c = this.cuentas.find((x) => d.startsWith(x.ruta));
+    return {
+      nombre: c?.para ?? "Pantallas del taller",
+      rol: c?.rol ?? null,
+    };
   });
 
   /** Si es la que corresponde a la pantalla pedida. */
@@ -138,6 +157,12 @@ export class MonitorAcceso {
     return m && !m.includes("Exception")
       ? m
       : "No se pudo entrar. Revisa los datos.";
+  }
+
+  ngOnInit(): void {
+    // El título de la pestaña también, que es donde se distinguen dos
+    // accesos abiertos a la vez.
+    this.titulo.setTitle(`Acceso · ${this.pantalla().nombre} — NexDMS`);
   }
 
 }
