@@ -99,13 +99,14 @@ export class Login implements OnInit {
 
   public readonly demoPortales = [
     {
-      // Va primero porque es el que se usa a diario y desde el iPad del taller.
-      // `interno` lo abre en esta misma pestaña: así el guard puede pedir la
-      // sesión y devolver al portal, en vez de dejar una pestaña huérfana.
+      // Va primero porque es el que se usa a diario, desde el iPad del taller.
+      // Es una aplicación aparte —como la del técnico— y se abre en su propia
+      // pestaña: tiene su sesión y su ciclo, y meterla en esta cerraría el DMS
+      // a quien solo iba a echar un vistazo.
       nombre: "Portal de recepción",
       descripcion: "Recibir unidades desde el iPad, con cámara",
-      url: "/recepcion",
-      interno: true,
+      url: "http://localhost:4203",
+      interno: false,
     },
     {
       nombre: "App del técnico",
