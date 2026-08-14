@@ -132,6 +132,25 @@
             </form>
           }
 
+          <!-- Pantallas de taller: siempre, también en producción. Son rutas
+               de esta aplicación y piden sesión al abrirlas. -->
+          <div class="monitores">
+            <div class="demo-title">Pantallas para el taller</div>
+            <div class="demo-links">
+              @for (m of monitores; track m.url) {
+                <a
+                  class="portal-icono"
+                  [routerLink]="m.url"
+                  [title]="m.descripcion"
+                  [attr.aria-label]="m.nombre + ': ' + m.descripcion"
+                >
+                  <span class="portal-glifo" aria-hidden="true">{{ m.icono }}</span>
+                  <span class="portal-nombre">{{ m.nombre }}</span>
+                </a>
+              }
+            </div>
+          </div>
+
           <!-- Solo en compilaciones de desarrollo (ver demoMode) -->
           @if (demoMode) {
             <div class="demo-panel">

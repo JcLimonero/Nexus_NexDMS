@@ -75,6 +75,22 @@
   border-top: 1px dashed var(--border);
 }
 
+/* Mismo separador que el panel de demostración, pero este bloque sí llega a
+   producción: son accesos del producto, no atajos de prueba. */
+.monitores {
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--border);
+}
+
+/* Con los dos bloques presentes, el de demostración ya no necesita su propia
+   línea encima: quedarían dos seguidas. */
+.monitores + .demo-panel {
+  margin-top: var(--space-16);
+  padding-top: 0;
+  border-top: none;
+}
+
 .demo-title {
   font-size: var(--text-overline);
   font-weight: var(--text-overline-weight);

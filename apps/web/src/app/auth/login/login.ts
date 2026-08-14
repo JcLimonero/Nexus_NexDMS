@@ -137,6 +137,33 @@ export class Login implements OnInit {
     },
   ];
 
+  /**
+   * Pantallas para colgar en el taller.
+   *
+   * Van fuera del panel de demostración a propósito: ese bloque desaparece
+   * en producción —publica contraseñas—, y un monitor de taller es
+   * justamente algo que hace falta en producción. Además apuntan a rutas de
+   * esta misma aplicación, así que funcionan en cualquier despliegue, al
+   * contrario que los otros portales, fijados a puertos locales.
+   *
+   * Sin sucursal en la dirección toman la primera; para dejar una pantalla
+   * fija por taller se añade `?branch=<id>` al marcador del navegador.
+   */
+  public readonly monitores = [
+    {
+      nombre: "Monitor de taller",
+      icono: "🖥️",
+      descripcion: "Estado de las unidades en servicio, con semáforo de tiempos",
+      url: "/monitor/taller",
+    },
+    {
+      nombre: "Monitor de citas",
+      icono: "📅",
+      descripcion: "Las citas esperadas hoy, para la recepción",
+      url: "/monitor/citas",
+    },
+  ];
+
   /** Rellena el formulario con una cuenta de demostración. */
   usarCuenta(cuenta: { email: string; password: string }): void {
     this.loginForm.patchValue({
