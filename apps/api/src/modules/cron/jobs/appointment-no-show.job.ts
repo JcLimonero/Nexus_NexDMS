@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, LessThan, Repository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Appointment,
@@ -54,20 +54,33 @@ export class AppointmentNoShowJob {
     const margenMinimo = Math.min(
       ...activas.map((b) => b.noShowToleranceMin ?? 30),
     );
-    const candidatas = await this.appointmentRepo.find({
-      where: {
-        branchId: In(activas.map((b) => b.id)),
-        scheduledAt: LessThan(new Date(Date.now() - margenMinimo * 60_000)),
-        // Solo las que seguían esperándose. Una cita ya recibida, cancelada
-        // o completada no se toca, y la que ya se marcó no se vuelve a
-        // marcar —eso dispararía el aviso cada cinco minutos.
-        status: In([
+    const candidatas = await this.appointmentRepo
+      .createQueryBuilder('a')
+      .leftJoinAndSelect('a.client', 'client')
+      .where('a.branch_id IN (:...sucursales)', {
+        sucursales: activas.map((b) => b.id),
+      })
+      .andWhere('a.scheduled_at < :limite', {
+        limite: new Date(Date.now() - margenMinimo * 60_000),
+      })
+      // Solo las que seguían esperándose. Una cita cancelada o completada no
+      // se toca, y la que ya se marcó no se vuelve a marcar —eso dispararía
+      // el aviso cada cinco minutos.
+      .andWhere('a.status IN (:...esperando)', {
+        esperando: [
           AppointmentStatusEnum.SCHEDULED,
           AppointmentStatusEnum.CONFIRMED,
-        ]),
-      },
-      relations: ['client'],
-    });
+        ],
+      })
+      // Si ya se abrió la orden de servicio, la unidad está en el taller: da
+      // igual que el estado de la cita se haya quedado en "agendada". Sin
+      // esto, a la media hora de su hora se marcaba como no presentada una
+      // unidad que estaba en la rampa, desaparecía de la agenda de recepción
+      // y salía el aviso de perseguir a un cliente que ya está en el mostrador.
+      .andWhere(
+        'NOT EXISTS (SELECT 1 FROM service_orders so WHERE so.appointment_id = a.id)',
+      )
+      .getMany();
 
     const ahora = Date.now();
     const vencidas = candidatas.filter((c) => {

@@ -34,9 +34,13 @@ export interface PhotoSpec {
 export interface PhotoMark {
   id: string;
   type: string;
+  /** POINT es un sitio concreto; CIRCLE encierra una zona. */
+  shape: "POINT" | "CIRCLE";
   note: string | null;
   x: number;
   y: number;
+  /** Nulo en un punto. En un área, fracción del ANCHO de la foto. */
+  radius: number | null;
 }
 
 export interface ReceptionPhoto {
@@ -191,7 +195,14 @@ export class RecepcionFlujoService {
 
   addMark(
     photoId: string,
-    dto: { type: string; note?: string; x: number; y: number },
+    dto: {
+      type: string;
+      shape?: "POINT" | "CIRCLE";
+      note?: string;
+      x: number;
+      y: number;
+      radius?: number;
+    },
   ): Observable<unknown> {
     return this.http.post(`${URL}/photos/${photoId}/marks`, dto);
   }

@@ -260,16 +260,71 @@
         <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
             <div>
-              <h5>Marcar daños</h5>
-              <span>Toca la imagen donde está el detalle</span>
+              <h5>Daños · {{ nombreSpec(f.specCode) }}</h5>
+              <span>
+                @if (marcando()) {
+                  @if (herramienta() === "CIRCLE") {
+                    Arrastra sobre la zona dañada para encerrarla
+                  } @else {
+                    Toca la imagen donde está el detalle
+                  }
+                } @else {
+                  {{ f.marks.length }} marca(s) registradas · solo lectura
+                }
+              </span>
             </div>
-            <button class="btn btn-light btn-sm" (click)="fotoActiva.set(null)">Cerrar</button>
+            <div class="marcado-acciones">
+              <!-- Ver es el modo de entrada: se abre esta ficha muchas más
+                   veces para consultar los daños que para agregar uno, y un
+                   toque de más sobre la foto no debe inventar un daño. -->
+              <div class="segmentado">
+                <button
+                  type="button"
+                  [class.activo]="!marcando()"
+                  (click)="verMarcas()"
+                >
+                  Ver
+                </button>
+                <button
+                  type="button"
+                  [class.activo]="marcando()"
+                  [disabled]="f.mediaType === 'VIDEO'"
+                  [title]="f.mediaType === 'VIDEO' ? 'Sobre un video no se marca' : ''"
+                  (click)="modo.set('marcar')"
+                >
+                  Marcar
+                </button>
+              </div>
+              @if (marcando()) {
+                <div class="segmentado">
+                  <button
+                    type="button"
+                    [class.activo]="herramienta() === 'POINT'"
+                    (click)="cambiarHerramienta('POINT')"
+                  >
+                    Punto
+                  </button>
+                  <button
+                    type="button"
+                    [class.activo]="herramienta() === 'CIRCLE'"
+                    (click)="cambiarHerramienta('CIRCLE')"
+                  >
+                    Área
+                  </button>
+                </div>
+              }
+              <button class="btn btn-light btn-sm" (click)="cerrarMarcado()">Cerrar</button>
+            </div>
           </div>
           <div class="card-body">
             <div
               class="foto-wrap"
               [class.con-media]="!!f.url"
-              (click)="onClickFoto($event)"
+              [class.marcando]="marcando()"
+              (pointerdown)="onPointerDown($event)"
+              (pointermove)="onPointerMove($event)"
+              (pointerup)="onPointerUp()"
+              (pointercancel)="onPointerUp()"
             >
               @if (f.url && f.mediaType === "VIDEO") {
                 <video class="foto-media" [src]="f.url" controls playsinline></video>
@@ -281,20 +336,39 @@
                   <span>No se pudo cargar la imagen</span>
                 </div>
               }
-              @for (m of f.marks; track m.id) {
+
+              @for (m of f.marks; track m.id; let i = $index) {
                 <span
-                  class="mark"
+                  class="marca"
+                  [class.area]="m.shape === 'CIRCLE'"
+                  [class.resaltada]="marcaResaltada() === m.id"
+                  [attr.data-tipo]="m.type"
                   [style.left.%]="m.x * 100"
                   [style.top.%]="m.y * 100"
+                  [style.width.%]="m.shape === 'CIRCLE' ? m.radius! * 200 : null"
                   [title]="etiquetaMarca(m.type) + (m.note ? ': ' + m.note : '')"
-                ></span>
+                  (pointerenter)="marcaResaltada.set(m.id)"
+                  (pointerleave)="marcaResaltada.set(null)"
+                >
+                  <b class="marca-num">{{ i + 1 }}</b>
+                </span>
               }
+
               @if (marcaPendiente(); as p) {
-                <span class="mark pendiente" [style.left.%]="p.x * 100" [style.top.%]="p.y * 100"></span>
+                <span
+                  class="marca pendiente"
+                  [class.area]="p.shape === 'CIRCLE'"
+                  [attr.data-tipo]="marcaTipo"
+                  [style.left.%]="p.x * 100"
+                  [style.top.%]="p.y * 100"
+                  [style.width.%]="p.shape === 'CIRCLE' ? p.radius! * 200 : null"
+                >
+                  <b class="marca-num">{{ f.marks.length + 1 }}</b>
+                </span>
               }
             </div>
 
-            @if (marcaPendiente()) {
+            @if (marcaPendiente(); as p) {
               <div class="control-row mt-3">
                 <select class="form-control field-md" [(ngModel)]="marcaTipo">
                   @for (t of markTypes; track t.value) {
@@ -302,20 +376,40 @@
                   }
                 </select>
                 <input type="text" class="form-control" [(ngModel)]="marcaNota" placeholder="Nota (opcional)" />
-                <button class="btn btn-primary" (click)="confirmarMarca()">Agregar marca</button>
+                @if (p.shape === "CIRCLE") {
+                  <span class="pista-area">Área · radio {{ (p.radius! * 100).toFixed(0) }}%</span>
+                }
+                <button class="btn btn-primary" [disabled]="guardando()" (click)="confirmarMarca()">
+                  Agregar marca
+                </button>
                 <button class="btn btn-light" (click)="marcaPendiente.set(null)">Cancelar</button>
               </div>
             }
 
             @if (f.marks.length) {
               <div class="marks-list mt-3">
-                @for (m of f.marks; track m.id) {
-                  <div class="mark-item">
-                    <span class="badge badge-warning">{{ etiquetaMarca(m.type) }}</span>
-                    <span>{{ m.note || "Sin nota" }}</span>
-                    <button class="table-action-btn table-action-btn-danger" (click)="quitarMarca(m.id)">
-                      <app-feather-icons [icon]="'trash-2'" />
-                    </button>
+                @for (m of f.marks; track m.id; let i = $index) {
+                  <div
+                    class="mark-item"
+                    [class.resaltada]="marcaResaltada() === m.id"
+                    (mouseenter)="marcaResaltada.set(m.id)"
+                    (mouseleave)="marcaResaltada.set(null)"
+                  >
+                    <!-- El número es lo que liga la fila con el marcador de la
+                         foto: el color solo no basta cuando hay dos rayones. -->
+                    <span class="marca-num en-lista" [attr.data-tipo]="m.type">{{ i + 1 }}</span>
+                    <span class="tipo-marca" [attr.data-tipo]="m.type">
+                      {{ etiquetaMarca(m.type) }}
+                    </span>
+                    <span class="forma-marca">
+                      {{ m.shape === "CIRCLE" ? "Área" : "Punto" }}
+                    </span>
+                    <span class="nota-marca">{{ m.note || "Sin nota" }}</span>
+                    @if (marcando()) {
+                      <button class="table-action-btn table-action-btn-danger" (click)="quitarMarca(m.id)">
+                        <app-feather-icons [icon]="'trash-2'" />
+                      </button>
+                    }
                   </div>
                 }
               </div>

@@ -24,6 +24,25 @@ interface LineaCotizacion {
   unitPrice: number;
 }
 
+type MarkShape = "POINT" | "CIRCLE";
+
+interface MarcaPendiente {
+  x: number;
+  y: number;
+  shape: MarkShape;
+  /** Nulo en un punto. En un área, fracción del ANCHO de la foto. */
+  radius: number | null;
+}
+
+/**
+ * Radio mínimo de un área, en fracción del ancho de la foto.
+ *
+ * Un toque sin arrastre en modo área daría radio cero, es decir un círculo
+ * invisible. Con este mínimo el toque simple deja un área pequeña que después
+ * se puede rehacer, en vez de una marca que no se ve y que nadie sabe borrar.
+ */
+const RADIO_MINIMO = 0.04;
+
 /**
  * ⚠️ Existe una segunda implementación de este mismo flujo en el portal
  * independiente: `apps/recepcion/src/app/pages/recibir/recibir.page.ts`.
@@ -88,11 +107,24 @@ export class RecepcionPage implements OnInit {
     damageDescription: "",
   };
 
-  // Marcado sobre la foto
+  // ─── Marcado sobre la foto ───────────────────────
   fotoActiva = signal<ReceptionPhoto | null>(null);
-  marcaPendiente = signal<{ x: number; y: number } | null>(null);
+  /**
+   * Se entra en "ver" a propósito: esta ficha se abre muchas más veces para
+   * consultar los daños que para agregar uno, y mientras cualquier toque
+   * sobre la foto creaba una marca, revisarla era arriesgado.
+   */
+  modo = signal<"ver" | "marcar">("ver");
+  marcando = computed(() => this.modo() === "marcar");
+  herramienta = signal<MarkShape>("POINT");
+  /** Marca que se resalta en la foto y en la lista a la vez. */
+  marcaResaltada = signal<string | null>(null);
+  marcaPendiente = signal<MarcaPendiente | null>(null);
   marcaTipo = "SCRATCH";
   marcaNota = "";
+  /** Caja de la foto durante el arrastre, para no medirla en cada movimiento. */
+  private cajaFoto: DOMRect | null = null;
+  private arrastrando = false;
 
   // Cotización
   servicios = signal<ServicioPredefinido[]>([]);
@@ -256,20 +288,88 @@ export class RecepcionPage implements OnInit {
   abrirMarcado(foto: ReceptionPhoto): void {
     this.fotoActiva.set(foto);
     this.marcaPendiente.set(null);
+    this.marcaResaltada.set(null);
+    this.modo.set("ver");
   }
 
-  /** Convierte el clic en coordenadas relativas a la imagen. */
-  onClickFoto(event: MouseEvent): void {
+  cerrarMarcado(): void {
+    this.fotoActiva.set(null);
+    this.marcaPendiente.set(null);
+    this.marcaResaltada.set(null);
+  }
+
+  /** Vuelve a solo lectura y descarta lo que se estuviera dibujando. */
+  verMarcas(): void {
+    this.modo.set("ver");
+    this.marcaPendiente.set(null);
+  }
+
+  cambiarHerramienta(h: MarkShape): void {
+    this.herramienta.set(h);
+    this.marcaPendiente.set(null);
+  }
+
+  /** Nombre del catálogo, que dice más que el código de la foto. */
+  nombreSpec(code: string | null): string {
+    return (
+      this.recepcion()?.specs.find((s) => s.code === code)?.name ?? code ?? ""
+    );
+  }
+
+  /** Posición del puntero como fracción del ancho y del alto de la foto. */
+  private relativo(ev: PointerEvent, caja: DOMRect): { x: number; y: number } {
+    return {
+      x: Math.min(1, Math.max(0, (ev.clientX - caja.left) / caja.width)),
+      y: Math.min(1, Math.max(0, (ev.clientY - caja.top) / caja.height)),
+    };
+  }
+
+  onPointerDown(ev: PointerEvent): void {
     // Sobre un video no se marca: la posición no significa nada si la imagen
-    // se mueve, y el clic sería el de darle play.
-    if (this.fotoActiva()?.mediaType === "VIDEO") return;
-    const img = event.currentTarget as HTMLElement;
-    const r = img.getBoundingClientRect();
+    // se mueve, y el toque sería el de darle play.
+    if (!this.marcando() || this.fotoActiva()?.mediaType === "VIDEO") return;
+    const lienzo = ev.currentTarget as HTMLElement;
+    this.cajaFoto = lienzo.getBoundingClientRect();
+    const p = this.relativo(ev, this.cajaFoto);
+    this.arrastrando = true;
+    // Con captura el arrastre sigue vivo aunque el puntero se salga de la
+    // foto: sin ella el círculo se congela justo cuando se quiere agrandar
+    // del todo. Puede fallar si el puntero ya se levantó, y no vale la pena
+    // abortar el marcado entero por eso.
+    try {
+      lienzo.setPointerCapture(ev.pointerId);
+    } catch {
+      /* el arrastre sigue funcionando sin captura */
+    }
     this.marcaPendiente.set({
-      x: Math.min(1, Math.max(0, (event.clientX - r.left) / r.width)),
-      y: Math.min(1, Math.max(0, (event.clientY - r.top) / r.height)),
+      x: p.x,
+      y: p.y,
+      shape: this.herramienta(),
+      radius: this.herramienta() === "CIRCLE" ? RADIO_MINIMO : null,
     });
     this.marcaNota = "";
+  }
+
+  onPointerMove(ev: PointerEvent): void {
+    if (!this.arrastrando || this.herramienta() !== "CIRCLE") return;
+    const centro = this.marcaPendiente();
+    const caja = this.cajaFoto;
+    if (!centro || !caja) return;
+    const p = this.relativo(ev, caja);
+    // El radio se mide sobre el ancho para que el círculo salga redondo, así
+    // que la distancia vertical —que viene en fracción del alto— hay que
+    // pasarla a fracción del ancho antes de componerla con la horizontal.
+    const dx = p.x - centro.x;
+    const dy = (p.y - centro.y) * (caja.height / caja.width);
+    this.marcaPendiente.set({
+      ...centro,
+      radius: Math.min(1, Math.max(RADIO_MINIMO, Math.hypot(dx, dy))),
+    });
+  }
+
+  onPointerUp(): void {
+    this.arrastrando = false;
+    this.cajaFoto = null;
   }
 
   confirmarMarca(): void {
@@ -277,15 +377,19 @@ export class RecepcionPage implements OnInit {
     const pos = this.marcaPendiente();
     const r = this.recepcion();
     if (!foto || !pos || !r) return;
+    this.guardando.set(true);
     this.srv
       .addMark(foto.id, {
         type: this.marcaTipo,
+        shape: pos.shape,
         note: this.marcaNota || undefined,
         x: pos.x,
         y: pos.y,
+        radius: pos.radius ?? undefined,
       })
       .subscribe({
         next: () => {
+          this.guardando.set(false);
           this.marcaPendiente.set(null);
           this.marcaNota = "";
           this.srv.get(r.serviceOrder.id).subscribe({
@@ -297,7 +401,10 @@ export class RecepcionPage implements OnInit {
             },
           });
         },
-        error: (err) => this.toastr.error(err?.error?.message || "Error"),
+        error: (err) => {
+          this.guardando.set(false);
+          this.toastr.error(err?.error?.message || "Error");
+        },
       });
   }
 

@@ -16,6 +16,7 @@ import {
 import { ReceptionChecklist } from './entities/reception-checklist.entity';
 import { ReceptionPhoto } from './entities/reception-photo.entity';
 import {
+  ReceptionMarkShapeEnum,
   ReceptionMarkTypeEnum,
   ReceptionPhotoMark,
   ReceptionPhotoSpec,
@@ -407,6 +408,10 @@ export class ReceptionService {
           .where('m.reception_photo_id IN (:...ids)', {
             ids: fotos.map((f) => f.id),
           })
+          // El orden tiene que ser estable: la pantalla numera las marcas por
+          // su posición, y si cambiaran de sitio entre consultas la marca 2
+          // de la foto no sería la misma que la fila 2 de la lista.
+          .orderBy('m.created_at', 'ASC')
           .getMany()
       : [];
 
@@ -450,9 +455,11 @@ export class ReceptionService {
             .map((m) => ({
               id: m.id,
               type: m.markType,
+              shape: m.shape,
               note: m.note,
               x: Number(m.x),
               y: Number(m.y),
+              radius: m.radius === null ? null : Number(m.radius),
             })),
         })),
       ),
@@ -556,7 +563,14 @@ export class ReceptionService {
   async addMark(
     user: UserPayload,
     photoId: string,
-    dto: { type: ReceptionMarkTypeEnum; note?: string; x: number; y: number },
+    dto: {
+      type: ReceptionMarkTypeEnum;
+      shape?: ReceptionMarkShapeEnum;
+      note?: string;
+      x: number;
+      y: number;
+      radius?: number;
+    },
   ) {
     const photo = await this.photoRepo.findOne({ where: { id: photoId } });
     if (!photo) throw new NotFoundException('Foto no encontrada');
@@ -565,13 +579,27 @@ export class ReceptionService {
         'Las coordenadas del marcador deben ir de 0 a 1',
       );
     }
+
+    const esCirculo = dto.shape === ReceptionMarkShapeEnum.CIRCLE;
+    if (esCirculo && !(dto.radius && dto.radius > 0 && dto.radius <= 1)) {
+      throw new BadRequestException(
+        'Una marca de área necesita un radio entre 0 y 1',
+      );
+    }
+
     return this.markRepo.save(
       this.markRepo.create({
         receptionPhotoId: photoId,
         markType: dto.type,
+        // Sin forma explícita es un punto: así siguen valiendo las marcas que
+        // ya se guardaban antes de que existiera el círculo.
+        shape: esCirculo
+          ? ReceptionMarkShapeEnum.CIRCLE
+          : ReceptionMarkShapeEnum.POINT,
         note: dto.note ?? null,
         x: String(dto.x),
         y: String(dto.y),
+        radius: esCirculo ? String(dto.radius) : null,
       }),
     );
   }

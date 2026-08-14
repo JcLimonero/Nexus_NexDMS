@@ -25,6 +25,7 @@ import {
   ReceptionServiceLine,
 } from './reception.service';
 import {
+  ReceptionMarkShapeEnum,
   ReceptionMarkTypeEnum,
   ReceptionPhotoSpec,
 } from './entities/reception-catalog.entities';
@@ -162,7 +163,15 @@ export class ReceptionController {
     @CurrentUser() user: UserPayload,
     @Param('photoId', ParseUUIDPipe) photoId: string,
     @Body()
-    dto: { type: ReceptionMarkTypeEnum; note?: string; x: number; y: number },
+    dto: {
+      type: ReceptionMarkTypeEnum;
+      /** Sin forma, punto: es lo que se guardaba antes del círculo. */
+      shape?: ReceptionMarkShapeEnum;
+      note?: string;
+      x: number;
+      y: number;
+      radius?: number;
+    },
   ) {
     return this.reception.addMark(user, photoId, dto);
   }

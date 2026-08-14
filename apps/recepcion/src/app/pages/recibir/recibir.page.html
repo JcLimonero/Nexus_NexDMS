@@ -234,39 +234,96 @@
   <div class="fondo" (click)="cerrarMarcado()"></div>
   <div class="marcador" role="dialog" aria-modal="true" aria-label="Marcar daños">
     <header>
-      <strong>Marca los daños</strong>
+      <strong>Daños · {{ nombreSpec(f.specCode) }}</strong>
       <button type="button" class="cerrar" (click)="cerrarMarcado()">×</button>
     </header>
 
-    <p class="pista">Toca la foto donde esté el daño.</p>
-    <div class="lienzo" [class.con-foto]="!!f.url" (click)="onTocarFoto($event)">
+    <!-- Se entra en "ver": esta ficha se abre sobre todo para consultar, y
+         con la tableta en la mano un roce no debe inventar un daño. -->
+    <div class="segmentado-fila">
+      <div class="segmentado">
+        <button type="button" [class.activo]="!marcando()" (click)="verMarcas()">
+          Ver
+        </button>
+        <button type="button" [class.activo]="marcando()" (click)="modo.set('marcar')">
+          Marcar
+        </button>
+      </div>
+      @if (marcando()) {
+        <div class="segmentado">
+          <button
+            type="button"
+            [class.activo]="herramienta() === 'POINT'"
+            (click)="cambiarHerramienta('POINT')"
+          >
+            Punto
+          </button>
+          <button
+            type="button"
+            [class.activo]="herramienta() === 'CIRCLE'"
+            (click)="cambiarHerramienta('CIRCLE')"
+          >
+            Área
+          </button>
+        </div>
+      }
+    </div>
+
+    <p class="pista">
+      @if (marcando()) {
+        @if (herramienta() === "CIRCLE") {
+          Arrastra sobre la zona dañada para encerrarla.
+        } @else {
+          Toca la foto donde esté el daño.
+        }
+      } @else {
+        {{ f.marks.length }} marca(s) registradas. Solo lectura.
+      }
+    </p>
+
+    <div
+      class="lienzo"
+      [class.con-foto]="!!f.url"
+      [class.marcando]="marcando()"
+      (pointerdown)="onPointerDown($event)"
+      (pointermove)="onPointerMove($event)"
+      (pointerup)="onPointerUp()"
+      (pointercancel)="onPointerUp()"
+    >
       @if (f.url) {
         <img class="lienzo-foto" [src]="f.url" [alt]="f.specCode" />
       } @else {
         <div class="lienzo-fondo">No se pudo cargar la foto {{ f.specCode }}</div>
       }
-      @for (m of f.marks; track m.id) {
-        <button
-          type="button"
+      @for (m of f.marks; track m.id; let i = $index) {
+        <span
           class="marca"
+          [class.area]="m.shape === 'CIRCLE'"
+          [class.resaltada]="marcaResaltada() === m.id"
+          [attr.data-tipo]="m.type"
           [style.left.%]="m.x * 100"
           [style.top.%]="m.y * 100"
+          [style.width.%]="m.shape === 'CIRCLE' ? m.radius! * 200 : null"
           [title]="etiquetaMarca(m.type) + (m.note ? ': ' + m.note : '')"
-          (click)="quitarMarca(m.id); $event.stopPropagation()"
         >
-          ✕
-        </button>
+          <b class="marca-num">{{ i + 1 }}</b>
+        </span>
       }
       @if (marcaPendiente(); as p) {
         <span
           class="marca pendiente"
+          [class.area]="p.shape === 'CIRCLE'"
+          [attr.data-tipo]="marcaTipo"
           [style.left.%]="p.x * 100"
           [style.top.%]="p.y * 100"
-        ></span>
+          [style.width.%]="p.shape === 'CIRCLE' ? p.radius! * 200 : null"
+        >
+          <b class="marca-num">{{ f.marks.length + 1 }}</b>
+        </span>
       }
     </div>
 
-    @if (marcaPendiente()) {
+    @if (marcaPendiente(); as p) {
       <div class="marca-datos">
         <select [(ngModel)]="marcaTipo">
           @for (t of markTypes; track t.value) {
@@ -274,9 +331,37 @@
           }
         </select>
         <input placeholder="Nota (opcional)" [(ngModel)]="marcaNota" />
+        @if (p.shape === "CIRCLE") {
+          <span class="pista-area">Área · radio {{ (p.radius! * 100).toFixed(0) }}%</span>
+        }
         <button class="principal" [disabled]="guardando()" (click)="confirmarMarca()">
           Guardar marca
         </button>
+      </div>
+    }
+
+    @if (f.marks.length) {
+      <div class="lista-marcas">
+        @for (m of f.marks; track m.id; let i = $index) {
+          <div
+            class="fila-marca"
+            [class.resaltada]="marcaResaltada() === m.id"
+            (pointerenter)="marcaResaltada.set(m.id)"
+            (pointerleave)="marcaResaltada.set(null)"
+          >
+            <!-- El número liga la fila con el marcador de la foto: el color
+                 solo no basta cuando hay dos rayones. -->
+            <span class="marca-num en-lista" [attr.data-tipo]="m.type">{{ i + 1 }}</span>
+            <span class="tipo-marca" [attr.data-tipo]="m.type">
+              {{ etiquetaMarca(m.type) }}
+            </span>
+            <span class="forma-marca">{{ m.shape === "CIRCLE" ? "Área" : "Punto" }}</span>
+            <span class="nota-marca">{{ m.note || "Sin nota" }}</span>
+            @if (marcando()) {
+              <button type="button" class="quitar" (click)="quitarMarca(m.id)">✕</button>
+            }
+          </div>
+        }
       </div>
     }
   </div>

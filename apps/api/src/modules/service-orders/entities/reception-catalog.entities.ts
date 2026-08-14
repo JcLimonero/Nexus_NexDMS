@@ -55,11 +55,20 @@ export enum ReceptionMarkTypeEnum {
   OTHER = 'OTHER',
 }
 
+export enum ReceptionMarkShapeEnum {
+  /** Un sitio concreto: un rayón, una piedra en el parabrisas. */
+  POINT = 'POINT',
+  /** Una zona: el cuarto de tapa raspado, el faro estrellado. */
+  CIRCLE = 'CIRCLE',
+}
+
 /**
  * Marca sobre una foto de recepción.
  *
  * Las coordenadas son relativas (0–1) al ancho y alto de la imagen: así el
  * marcador cae en el mismo punto sin importar el tamaño con que se muestre.
+ * El radio, en cambio, es relativo solo al ancho, para que el círculo salga
+ * redondo y no un óvalo distinto en cada pantalla.
  */
 @Entity('reception_photo_marks')
 @Index(['receptionPhotoId'])
@@ -72,6 +81,14 @@ export class ReceptionPhotoMark {
   @Column({ name: 'mark_type', type: 'varchar', length: 30 })
   markType: ReceptionMarkTypeEnum;
 
+  @Column({
+    name: 'shape',
+    type: 'varchar',
+    length: 10,
+    default: ReceptionMarkShapeEnum.POINT,
+  })
+  shape: ReceptionMarkShapeEnum;
+
   @Column({ name: 'note', type: 'varchar', length: 300, nullable: true })
   note: string | null;
 
@@ -80,6 +97,10 @@ export class ReceptionPhotoMark {
 
   @Column({ name: 'y', type: 'numeric', precision: 5, scale: 4 })
   y: string;
+
+  /** Nulo en un punto; en un círculo, su radio sobre el ancho de la imagen. */
+  @Column({ name: 'radius', type: 'numeric', precision: 5, scale: 4, nullable: true })
+  radius: string | null;
 
   @CreateDateColumn({ name: 'created_at' }) createdAt: Date;
 
