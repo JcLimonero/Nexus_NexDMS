@@ -4,7 +4,10 @@ import { FormsModule } from "@angular/forms";
 import { ToastrService } from "ngx-toastr";
 
 import { CitasService, Appointment } from "./citas.service";
-import { TallerService } from "../taller.service";
+import {
+  DisponibilidadRefacciones,
+  TallerService,
+} from "../taller.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { ClientesService } from "../../clientes/clientes.service";
 import { ClientSelector } from "../../clientes/client-selector/client-selector";
@@ -177,6 +180,34 @@ export class CitasPage implements OnInit {
     }));
     // Cambia la duración → la matriz se recarga sola por el input serviceTypeId
     this.selectedSlot.set(null);
+    this.revisarRefacciones(serviceTypeId);
+  }
+
+  /**
+   * Refacciones del servicio elegido.
+   *
+   * Se consulta al elegirlo y no al guardar: avisar después deja la cita
+   * puesta y el problema lo descubre quien recibe la unidad, que es cuando
+   * ya no se puede pedir nada. No bloquea el agendado —hay tiempo para
+   * surtir antes del día de la cita—, solo lo dice.
+   */
+  faltantes = signal<DisponibilidadRefacciones | null>(null);
+  revisandoRefacciones = signal(false);
+
+  private revisarRefacciones(serviceTypeId: string): void {
+    this.faltantes.set(null);
+    const branchId = this.branchId();
+    if (!serviceTypeId || !branchId) return;
+    this.revisandoRefacciones.set(true);
+    this.tallerService.getPartsAvailability(serviceTypeId, branchId).subscribe({
+      next: (r) => {
+        this.faltantes.set(r.available ? null : r);
+        this.revisandoRefacciones.set(false);
+      },
+      // Si no se puede consultar no se inventa un "todo bien": se calla y
+      // deja agendar, que es lo que se hacía antes de tener el aviso.
+      error: () => this.revisandoRefacciones.set(false),
+    });
   }
 
   onSlotSelected(slot: SlotSelection): void {
@@ -198,6 +229,7 @@ export class CitasPage implements OnInit {
     });
     this.vehicles.set([]);
     this.selectedSlot.set(null);
+    this.faltantes.set(null);
   }
 
   save(): void {

@@ -14,6 +14,17 @@ const SERVICE_ORDERS_URL = "/api/v1/service-orders";
 const USER_AVAILABILITY_URL = "/api/v1/user-availability";
 const SERVICE_TYPES_URL = "/api/v1/service-types";
 
+/** Lo que falta en almacén para poder hacer el servicio. */
+export interface DisponibilidadRefacciones {
+  available: boolean;
+  missingParts: {
+    partId: string;
+    partName: string;
+    required: number;
+    available: number;
+  }[];
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -120,4 +131,21 @@ export class TallerService {
     };
     return labels[status] ?? status;
   }
+  /**
+   * Si hay refacciones para ese servicio en esa sucursal.
+   *
+   * Se consulta al elegir el servicio y no al guardar: avisar después de
+   * agendar deja la cita puesta y el problema descubierto por quien recibe
+   * la unidad, que es cuando ya no se puede hacer nada.
+   */
+  getPartsAvailability(
+    serviceTypeId: string,
+    branchId: string,
+  ): Observable<DisponibilidadRefacciones> {
+    return this.http.get<DisponibilidadRefacciones>(
+      `/api/v1/service-types/${serviceTypeId}/parts-availability`,
+      { params: new HttpParams().set("branchId", branchId) },
+    );
+  }
+
 }

@@ -102,7 +102,36 @@
                 (ngModelChange)="form.set({ ...form(), serviceType: $event })"
               />
             }
+
+            @if (revisandoRefacciones()) {
+              <small class="text-muted d-block mt-1">
+                Revisando refacciones…
+              </small>
+            }
           </div>
+
+          @if (faltantes(); as f) {
+            <!-- A ancho completo y debajo de la fila: es una advertencia
+                 sobre el servicio, no sobre el campo. No bloquea el
+                 agendado —hay tiempo de surtir antes del día de la cita—,
+                 pero nadie puede quedarse sin enterarse. -->
+            <div class="col-12">
+              <div class="alert alert-warning mb-0">
+                <strong>Faltan refacciones para este servicio.</strong>
+                <ul class="mb-0 mt-1">
+                  @for (p of f.missingParts; track p.partId) {
+                    <li>
+                      {{ p.partName }} — se necesitan {{ p.required }}, hay
+                      {{ p.available }}
+                    </li>
+                  }
+                </ul>
+                <small class="d-block mt-1">
+                  Se puede agendar igual; almacén queda avisado por correo.
+                </small>
+              </div>
+            </div>
+          }
         </div>
 
         <div class="mb-3">
