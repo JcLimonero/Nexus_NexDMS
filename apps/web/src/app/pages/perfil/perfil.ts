@@ -4,16 +4,59 @@ import { FormsModule } from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
 import { ToastrService } from "ngx-toastr";
 
+/**
+ * Lo que devuelve `/auth/me`.
+ *
+ * Los identificadores vienen planos y los nombres en las listas de acceso,
+ * no como objetos anidados. La pantalla los pedía anidados, así que sucursal
+ * y razón social salían siempre en blanco.
+ */
 interface DatosPerfil {
   id: string;
+  tenantId: string;
+  branchId: string | null;
+  legalEntityId: string | null;
   firstName: string;
   lastName: string;
   email: string;
   roles?: string[];
   scope?: string;
-  branch?: { id: string; name: string } | null;
-  legalEntity?: { id: string; name: string } | null;
-  tenant?: { id: string; name: string } | null;
+  branches?: {
+    branchId: string;
+    branchName: string;
+    legalEntityId: string;
+    legalEntityName: string;
+  }[];
+  legalEntities?: { id: string; name: string }[];
+}
+
+/** Lo que el grupo paga por usar NexDMS. */
+interface Suscripcion {
+  tenant: { name: string; billingDay: number | null };
+  cobro: {
+    plan: { key: string; name: string; precio: number };
+    extras: { key: string; name: string; precio: number }[];
+    total: number;
+    moneda: string;
+  };
+  modulos: { activos: number; incluidosEnPlan: number; extras: string[] };
+  pagos: {
+    id: string;
+    period: string;
+    amount: number;
+    status: string;
+    paidAt: string | null;
+    method: string | null;
+    reference: string | null;
+    vencido?: boolean;
+  }[];
+  resumen: {
+    totalPagado: number;
+    mesesPagados: number;
+    vencidos: number;
+    adeudo: number;
+    antiguedadMeses: number | null;
+  };
 }
 
 /**
@@ -44,14 +87,47 @@ export class Perfil implements OnInit {
   nueva = "";
   confirmar = "";
 
+  /**
+   * La suscripción al SaaS, aquí y no en el menú.
+   *
+   * Lo que el grupo paga por usar NexDMS no es operación del taller: no le
+   * incumbe a quien factura a un cliente o recibe una unidad, y mezclarlo
+   * con la facturación del concesionario confundía las dos cosas. Solo lo
+   * ve quien administra la cuenta.
+   */
+  suscripcion = signal<Suscripcion | null>(null);
+
+  esSuperadmin(): boolean {
+    return (this.perfil()?.roles ?? []).includes("SUPERADMIN");
+  }
+
   ngOnInit(): void {
     this.http.get<DatosPerfil>("/api/v1/auth/me").subscribe({
       next: (p) => {
         this.perfil.set(p);
         this.cargando.set(false);
+        if (this.esSuperadmin() && p.tenantId) this.cargarSuscripcion(p.tenantId);
       },
       error: () => this.cargando.set(false),
     });
+  }
+
+  private cargarSuscripcion(tenantId: string): void {
+    this.http.get<Suscripcion>(`/api/v1/saas/tenants/${tenantId}`).subscribe({
+      // Si no alcanza el endpoint no se enseña la sección: es información de
+      // la cuenta, no algo que deba fallar a la vista de todos.
+      next: (s) => this.suscripcion.set(s),
+      error: () => this.suscripcion.set(null),
+    });
+  }
+
+  etiquetaPago(p: { status: string; vencido?: boolean }): string {
+    if (p.vencido) return "Vencido";
+    return (
+      { PAGADO: "Pagado", PENDIENTE: "Pendiente", CANCELADO: "Cancelado" }[
+        p.status
+      ] ?? p.status
+    );
   }
 
   nombre(): string {
@@ -124,4 +200,21 @@ export class Perfil implements OnInit {
         },
       });
   }
+  /** La sucursal activa, resuelta contra las que tiene asignadas. */
+  sucursal(): string {
+    const p = this.perfil();
+    return (
+      p?.branches?.find((b) => b.branchId === p.branchId)?.branchName ?? "—"
+    );
+  }
+
+  razonSocial(): string {
+    const p = this.perfil();
+    return (
+      p?.legalEntities?.find((l) => l.id === p.legalEntityId)?.name ??
+      p?.branches?.find((b) => b.branchId === p.branchId)?.legalEntityName ??
+      "—"
+    );
+  }
+
 }

@@ -57,6 +57,8 @@ DELETE FROM reception_checklists;
 DELETE FROM document_signatures;
 DELETE FROM portal_messages;
 DELETE FROM portal_users;
+-- Antes que las órdenes: una garantía apunta a la que la originó.
+DELETE FROM warranties;
 DELETE FROM service_orders;
 DELETE FROM service_order_folio_seq;
 DELETE FROM appointments;
@@ -89,7 +91,6 @@ DELETE FROM stock_movements;
 DELETE FROM stock_locations;
 DELETE FROM part_categories;
 DELETE FROM suppliers;
-DELETE FROM warranties;
 DELETE FROM service_type_parts;
 DELETE FROM service_types;
 DELETE FROM stock_movements;
@@ -98,6 +99,7 @@ DELETE FROM vehicle_ownerships;
 DELETE FROM customer_vehicles;
 DELETE FROM clients;
 DELETE FROM saas_payments;
+DELETE FROM saas_module_prices;
 
 -- ── Clientes ─────────────────────────────────────────────────────────
 -- Ocho particulares y dos empresas: las empresas son las que mueven flota
@@ -425,13 +427,30 @@ JOIN service_kits k      ON k.code   = f.kit
 JOIN service_kit_phases kp ON kp.kit_id = k.id;
 
 -- ── Cobros del SaaS ──────────────────────────────────────────────────
+-- Precio de los módulos que se contratan aparte. Sin él, un extra aparece
+-- en la ficha del cliente cobrando cero y el total no cuadra con lo que se
+-- le factura.
+INSERT INTO saas_module_prices (module_key, monthly_price)
+VALUES ('finance', 1200), ('pld', 900), ('reports', 700), ('billing', 800);
+
 -- Seis meses de historial para que la ficha del cliente en el portal de
 -- administración muestre algo más que un mes suelto.
+--
+-- El importe se calcula del plan contratado más sus extras, no se escribe a
+-- mano: con una cifra fija el histórico contradecía al cobro mensual que la
+-- propia pantalla calcula, y salía cobrando una cosa y pagando otra.
 INSERT INTO saas_payments (tenant_id, period, amount, status, due_date, paid_at,
                            method, reference, concept)
 SELECT r.tenant_id,
        to_char((r.hoy - (n || ' months')::interval), 'YYYY-MM'),
-       5900,
+       (SELECT p.monthly_price FROM saas_plans p
+         JOIN tenants t ON t.saas_plan_id = p.id AND t.id = r.tenant_id)
+       + coalesce((SELECT sum(mp.monthly_price)
+                     FROM tenants t
+                     CROSS JOIN LATERAL jsonb_array_elements_text(
+                       coalesce(t.extra_modules, '[]'::jsonb)) AS m(clave)
+                     JOIN saas_module_prices mp ON mp.module_key = m.clave
+                    WHERE t.id = r.tenant_id), 0),
        CASE WHEN n = 0 THEN 'PENDIENTE' ELSE 'PAGADO' END,
        date_trunc('month', r.hoy - (n || ' months')::interval)::date + 4,
        CASE WHEN n > 0

@@ -159,6 +159,10 @@ export class NavService {
       ],
     },
     {
+      // Solo los CFDI que el concesionario emite a sus clientes. Lo que el
+      // grupo paga por usar NexDMS es otra cosa y vive en el perfil: no le
+      // incumbe a quien factura a un cliente, y juntarlos hacía pensar que
+      // "Facturación" era la cuenta del sistema.
       title: "Facturación",
       icon: "credit-card",
       type: "sub",
@@ -166,7 +170,6 @@ export class NavService {
       children: [
         { path: "/billing", title: "Inicio", type: "link" },
         { path: "/billing/facturas", title: "Facturas (CFDI)", type: "link" },
-        { path: "/billing/plan", title: "Plan NexDMS", type: "link" },
       ],
     },
     {

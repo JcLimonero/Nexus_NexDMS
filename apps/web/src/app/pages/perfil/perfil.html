@@ -30,11 +30,11 @@
               </div>
               <div>
                 <dt>Sucursal</dt>
-                <dd>{{ p.branch?.name || "—" }}</dd>
+                <dd>{{ sucursal() }}</dd>
               </div>
               <div>
                 <dt>Razón social</dt>
-                <dd>{{ p.legalEntity?.name || "—" }}</dd>
+                <dd>{{ razonSocial() }}</dd>
               </div>
             </dl>
             <p class="text-muted small">
@@ -93,4 +93,104 @@
       </div>
     </div>
   </div>
+
+  <!-- La suscripción al SaaS: lo que el grupo paga por usar NexDMS. Vive
+       aquí y no en el menú porque no es operación del taller, y solo la ve
+       quien administra la cuenta. -->
+  @if (suscripcion(); as sub) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header">
+            <h5>Suscripción a NexDMS</h5>
+            <span class="text-muted">
+              Lo que {{ sub.tenant.name }} paga por usar el sistema
+            </span>
+          </div>
+          <div class="card-body">
+            <div class="suscripcion-resumen">
+              <div class="dato">
+                <strong>
+                  {{ sub.cobro.total | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                </strong>
+                <span>al mes</span>
+                <small>
+                  Plan {{ sub.cobro.plan.name }}
+                  @for (e of sub.cobro.extras; track e.key) {
+                    · {{ e.name }}
+                    +{{ e.precio | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                  }
+                </small>
+              </div>
+              <div class="dato" [class.alerta]="sub.resumen.adeudo > 0">
+                <strong>
+                  {{ sub.resumen.adeudo | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                </strong>
+                <span>adeudo</span>
+                <small>{{ sub.resumen.vencidos }} periodos vencidos</small>
+              </div>
+              <div class="dato">
+                <strong>{{ sub.modulos.activos }}</strong>
+                <span>módulos activos</span>
+                <small>{{ sub.modulos.incluidosEnPlan }} permite el plan</small>
+              </div>
+              <div class="dato">
+                <strong>
+                  {{ sub.resumen.antiguedadMeses ?? "—" }}
+                </strong>
+                <span>meses de antigüedad</span>
+                @if (sub.tenant.billingDay) {
+                  <small>Se cobra el día {{ sub.tenant.billingDay }}</small>
+                }
+              </div>
+            </div>
+
+            <h6 class="mt-4">Historial de pagos</h6>
+            @if (!sub.pagos.length) {
+              <p class="text-muted mb-0">Todavía no hay cobros registrados.</p>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                  <thead>
+                    <tr>
+                      <th>Periodo</th>
+                      <th class="text-end">Importe</th>
+                      <th>Estado</th>
+                      <th>Pagado</th>
+                      <th>Forma</th>
+                      <th>Referencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (p of sub.pagos; track p.id) {
+                      <tr>
+                        <td class="mono">{{ p.period }}</td>
+                        <td class="text-end">
+                          {{ p.amount | currency: "MXN" : "symbol-narrow" : "1.0-2" }}
+                        </td>
+                        <td>
+                          <span
+                            class="badge"
+                            [class.bg-success]="p.status === 'PAGADO'"
+                            [class.bg-danger]="p.vencido"
+                            [class.bg-warning]="!p.vencido && p.status === 'PENDIENTE'"
+                            [class.text-dark]="!p.vencido && p.status === 'PENDIENTE'"
+                          >
+                            {{ etiquetaPago(p) }}
+                          </span>
+                        </td>
+                        <td>{{ p.paidAt ? (p.paidAt | date: "dd/MM/yyyy") : "—" }}</td>
+                        <td>{{ p.method || "—" }}</td>
+                        <td class="mono">{{ p.reference || "—" }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
 </div>

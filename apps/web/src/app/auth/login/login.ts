@@ -209,11 +209,32 @@ export class Login implements OnInit {
         },
         error: (err) => {
           this.loading = false;
-          this.error =
-            err?.error?.message ||
-            err?.message ||
-            "Credenciales inválidas. Intente de nuevo.";
+          this.error = this.mensajeDeError(err);
         },
       });
   }
+  /**
+   * Traduce el fallo a algo que se pueda hacer.
+   *
+   * El backend devuelve cosas como "ThrottlerException: Too Many Requests",
+   * que no le dice nada a quien solo quiere entrar y encima parece un error
+   * del sistema y no un límite a propósito.
+   */
+  private mensajeDeError(err: {
+    status?: number;
+    error?: { message?: string | string[] };
+  }): string {
+    if (err?.status === 429) {
+      return "Demasiados intentos seguidos. Espera un minuto y vuelve a probar.";
+    }
+    if (err?.status === 0) {
+      return "Sin conexión con el servidor.";
+    }
+    const m = err?.error?.message;
+    const texto = Array.isArray(m) ? m[0] : m;
+    return texto && !texto.includes("Exception")
+      ? texto
+      : "Credenciales inválidas. Intente de nuevo.";
+  }
+
 }

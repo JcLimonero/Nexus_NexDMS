@@ -27,9 +27,11 @@ export const billingRoutes: Routes = [
     ],
   },
   {
+    // La suscripción se mudó al perfil, donde solo la ve quien administra la
+    // cuenta. La ruta se conserva redirigiendo para no romper un enlace
+    // guardado ni un marcador.
     path: "plan",
-    loadComponent: () =>
-      import("./billing-plan/billing-plan").then((m) => m.BillingPlan),
-    data: { title: "Plan NexDMS", breadcrumb: "Plan" },
+    redirectTo: "/perfil",
+    pathMatch: "full",
   },
 ];
