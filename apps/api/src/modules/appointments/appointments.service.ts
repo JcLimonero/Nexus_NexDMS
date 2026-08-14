@@ -205,12 +205,28 @@ export class AppointmentsService {
     }));
   }
 
-  /** Citas que ya tiene cada asesor ese día, para repartir con criterio. */
+  /**
+   * Citas que ya tiene cada asesor ese día, para repartir con criterio.
+   *
+   * Se marca además si puede tomar la cita a esa hora. No se filtra aquí:
+   * quien agenda a mano tiene que poder ver a todo el equipo y saber por qué
+   * uno aparece descartado —está de vacaciones, o ya salió— en vez de
+   * encontrarse una lista corta sin explicación.
+   */
   async cargaDeAsesores(
     tenantId: string,
     branchId: string,
     fecha: Date,
-  ): Promise<{ id: string; nombre: string; citas: number }[]> {
+  ): Promise<
+    {
+      id: string;
+      nombre: string;
+      citas: number;
+      disponible: boolean;
+      motivo?: string;
+      horario: string;
+    }[]
+  > {
     const asesores = await this.asesoresDeSucursal(tenantId, branchId);
     if (!asesores.length) return [];
 
@@ -232,7 +248,30 @@ export class AppointmentsService {
       .getRawMany<{ advisorId: string; total: string }>();
 
     const porId = new Map(conteo.map((c) => [c.advisorId, Number(c.total)]));
-    return asesores.map((a) => ({ ...a, citas: porId.get(a.id) ?? 0 }));
+    const disponibilidad = await this.userAvailabilityService.disponibilidadDelDia(
+      asesores.map((a) => a.id),
+      branchId,
+      fecha,
+      fecha,
+    );
+
+    return asesores.map((a) => {
+      const d = disponibilidad.get(a.id);
+      return {
+        ...a,
+        citas: porId.get(a.id) ?? 0,
+        disponible: d?.disponible ?? false,
+        motivo:
+          d?.motivo === 'ausente'
+            ? 'Ausente ese día'
+            : d?.motivo === 'fuera-de-horario'
+              ? 'Fuera de su horario'
+              : undefined,
+        horario: (d?.ventanas ?? [])
+          .map((v) => `${v.inicio}–${v.fin}`)
+          .join(', '),
+      };
+    });
   }
 
   /**
@@ -242,6 +281,10 @@ export class AppointmentsService {
    * pero deja a alguien con seis recepciones seguidas si las cancelaciones no
    * caen parejas. Con empate gana el de menor id, para que el resultado no
    * dependa del orden en que la base devuelva las filas.
+   *
+   * Solo entra al reparto quien esté en horario a esa hora y no esté ausente:
+   * una cita asignada a quien no va a estar es peor que una sin asignar,
+   * porque nadie la revisa hasta que el cliente llega.
    */
   private async asesorConMenosCarga(
     tenantId: string,
@@ -249,8 +292,9 @@ export class AppointmentsService {
     fecha: Date,
   ): Promise<string | null> {
     const carga = await this.cargaDeAsesores(tenantId, branchId, fecha);
-    if (!carga.length) return null;
-    return carga.sort(
+    const candidatos = carga.filter((a) => a.disponible);
+    if (!candidatos.length) return null;
+    return candidatos.sort(
       (a, b) => a.citas - b.citas || a.id.localeCompare(b.id),
     )[0].id;
   }

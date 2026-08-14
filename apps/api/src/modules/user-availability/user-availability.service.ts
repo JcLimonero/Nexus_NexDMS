@@ -1,8 +1,11 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
 import { UserSchedule } from './entities/user-schedule.entity';
-import { UserAbsence } from './entities/user-absence.entity';
+import {
+  UserAbsence,
+  UserAbsenceTypeEnum,
+} from './entities/user-absence.entity';
 import { UserBranch } from '../legal-entities/entities/user-branch.entity';
 import { UserRole } from '../users/entities/user-role.entity';
 import { User } from '../users/entities/user.entity';
@@ -22,6 +25,28 @@ export interface AvailableSlot {
   start: string;
   end: string;
   mechanicId?: string;
+}
+
+/**
+ * Turno que se asume para quien no tiene horario propio.
+ *
+ * Estaba escrito a mano dentro del cálculo de slots. Ahora que la
+ * disponibilidad decide también a quién se le asignan citas, el valor tiene
+ * que ser uno solo y estar a la vista: si cada sitio inventa el suyo, un
+ * usuario aparece disponible para el planificador y ocupado para el reparto.
+ */
+export const TURNO_POR_OMISION = { inicio: '09:00', fin: '18:00' };
+
+/** Por qué alguien no puede tomar trabajo en un momento dado. */
+export type MotivoNoDisponible = 'ausente' | 'fuera-de-horario';
+
+export interface Disponibilidad {
+  disponible: boolean;
+  motivo?: MotivoNoDisponible;
+  /** Ventanas de trabajo de ese día, para poder decir hasta qué hora está. */
+  ventanas: { inicio: string; fin: string }[];
+  /** Si el horario sale del turno por omisión y no de uno configurado. */
+  porOmision: boolean;
 }
 
 @Injectable()
@@ -44,6 +69,132 @@ export class UserAvailabilityService {
     @InjectRepository(BranchRamp)
     private readonly branchRampRepo: Repository<BranchRamp>,
   ) {}
+
+  // ─── Disponibilidad: quién puede tomar trabajo y cuándo ──────
+
+  /**
+   * Si estas personas pueden tomar trabajo en esa sucursal ese día.
+   *
+   * Se resuelve para varias a la vez porque quien reparte carga siempre
+   * pregunta por el equipo entero: hacerlo de una en una son tantas consultas
+   * como asesores tenga la sucursal.
+   *
+   * Reglas, en orden: una ausencia que cubre el día lo deja fuera aunque tenga
+   * horario; un horario configurado manda, y los días que no aparecen en él
+   * son días que no trabaja; sin horario configurado se asume el turno por
+   * omisión, que es como se ha venido comportando el planificador.
+   */
+  async disponibilidadDelDia(
+    userIds: string[],
+    branchId: string,
+    fecha: Date,
+    /** Si se indica, además comprueba que esa hora caiga dentro del turno. */
+    hora?: Date,
+  ): Promise<Map<string, Disponibilidad>> {
+    const resultado = new Map<string, Disponibilidad>();
+    if (!userIds.length) return resultado;
+
+    const dia = fecha.getDay();
+    const [horarios, ausencias] = await Promise.all([
+      this.scheduleRepo.find({
+        where: { branchId, userId: In(userIds) },
+      }),
+      this.absenceRepo.find({ where: { branchId, userId: In(userIds) } }),
+    ]);
+
+    // La fecha se compara a mediodía: las ausencias se guardan como fecha sin
+    // hora y comparar contra medianoche deja fuera el primer día por el huso.
+    const referencia = new Date(fecha);
+    referencia.setHours(12, 0, 0, 0);
+    const minutosDeLaHora = hora
+      ? hora.getHours() * 60 + hora.getMinutes()
+      : null;
+
+    for (const id of userIds) {
+      const ausente = ausencias.some(
+        (a) =>
+          a.userId === id &&
+          referencia >= new Date(`${this.soloFecha(a.startDate)}T00:00:00`) &&
+          referencia <= new Date(`${this.soloFecha(a.endDate)}T23:59:59`),
+      );
+      if (ausente) {
+        resultado.set(id, {
+          disponible: false,
+          motivo: 'ausente',
+          ventanas: [],
+          porOmision: false,
+        });
+        continue;
+      }
+
+      const suyos = horarios.filter((h) => h.userId === id);
+      const porOmision = suyos.length === 0;
+      const delDia = suyos.filter((h) => h.dayOfWeek === dia);
+
+      const ventanas = porOmision
+        ? [{ inicio: TURNO_POR_OMISION.inicio, fin: TURNO_POR_OMISION.fin }]
+        : delDia.map((h) => ({
+            inicio: this.hhmm(h.startTime),
+            fin: this.hhmm(h.endTime),
+          }));
+
+      if (!ventanas.length) {
+        resultado.set(id, {
+          disponible: false,
+          motivo: 'fuera-de-horario',
+          ventanas: [],
+          porOmision,
+        });
+        continue;
+      }
+
+      const dentro =
+        minutosDeLaHora === null ||
+        ventanas.some(
+          (v) =>
+            minutosDeLaHora >= this.aMinutos(v.inicio) &&
+            minutosDeLaHora < this.aMinutos(v.fin),
+        );
+
+      resultado.set(id, {
+        disponible: dentro,
+        motivo: dentro ? undefined : 'fuera-de-horario',
+        ventanas,
+        porOmision,
+      });
+    }
+
+    return resultado;
+  }
+
+  /** De una lista, quiénes pueden tomar trabajo en ese momento. */
+  async quienesPueden(
+    userIds: string[],
+    branchId: string,
+    momento: Date,
+  ): Promise<string[]> {
+    const mapa = await this.disponibilidadDelDia(
+      userIds,
+      branchId,
+      momento,
+      momento,
+    );
+    return userIds.filter((id) => mapa.get(id)?.disponible);
+  }
+
+  private soloFecha(v: Date | string): string {
+    return typeof v === 'string' ? v.slice(0, 10) : v.toISOString().slice(0, 10);
+  }
+
+  /** `09:00:00` → `09:00`; en la pantalla los segundos solo estorban. */
+  private hhmm(t: string): string {
+    return t.slice(0, 5);
+  }
+
+  private aMinutos(hhmm: string): number {
+    const [h, m] = hhmm.split(':').map(Number);
+    return h * 60 + m;
+  }
 
   /**
    * Get mechanics with MECHANIC role assigned to the branch via user_branches
@@ -200,12 +351,15 @@ export class UserAvailabilityService {
           workWindows.push({ start: winStart, end: winEnd });
         }
       } else {
-        workWindows.push({
-          start: new Date(dayStart.getTime()),
-          end: new Date(dayEnd.getTime()),
-        });
-        workWindows[0].start.setHours(9, 0, 0, 0);
-        workWindows[0].end.setHours(18, 0, 0, 0);
+        // Sin horario propio se asume el turno por omisión, el mismo que usa
+        // el reparto de citas.
+        const [oi, omi] = TURNO_POR_OMISION.inicio.split(':').map(Number);
+        const [of, omf] = TURNO_POR_OMISION.fin.split(':').map(Number);
+        const inicio = new Date(dayStart.getTime());
+        const fin = new Date(dayStart.getTime());
+        inicio.setHours(oi, omi, 0, 0);
+        fin.setHours(of, omf, 0, 0);
+        workWindows.push({ start: inicio, end: fin });
       }
 
       const mechanicAppointments = appointments.filter(
@@ -264,4 +418,123 @@ export class UserAvailabilityService {
       (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
     );
   }
+  // ─── Administración del horario ─────────────────────────────
+
+  /** Horario semanal y ausencias de una persona, para la pantalla. */
+  async agendaDe(userId: string, branchId?: string) {
+    const donde = branchId ? { userId, branchId } : { userId };
+    const [horarios, ausencias] = await Promise.all([
+      this.scheduleRepo.find({
+        where: donde,
+        order: { dayOfWeek: 'ASC', startTime: 'ASC' },
+      }),
+      this.absenceRepo.find({ where: donde, order: { startDate: 'DESC' } }),
+    ]);
+    return {
+      horarios,
+      ausencias,
+      // Si no tiene ninguno, lo que rige es el turno por omisión: se dice
+      // aquí para que la pantalla no muestre un vacío que parece "no trabaja".
+      porOmision: horarios.length === 0,
+      turnoPorOmision: TURNO_POR_OMISION,
+    };
+  }
+
+  /**
+   * Reemplaza el horario de una persona en una sucursal.
+   *
+   * Se guarda completo en vez de por filas sueltas: la pantalla edita la
+   * semana entera, y borrar el martes sería una petición distinta que es fácil
+   * olvidar de mandar. Así lo que se ve es lo que queda.
+   */
+  async guardarHorario(
+    userId: string,
+    branchId: string,
+    dias: { dayOfWeek: number; startTime: string; endTime: string }[],
+  ): Promise<UserSchedule[]> {
+    for (const d of dias) {
+      if (d.dayOfWeek < 0 || d.dayOfWeek > 6) {
+        throw new BadRequestException(`Día fuera de rango: ${d.dayOfWeek}`);
+      }
+      if (this.aMinutos(d.startTime) >= this.aMinutos(d.endTime)) {
+        throw new BadRequestException(
+          'La hora de salida tiene que ser posterior a la de entrada',
+        );
+      }
+    }
+    await this.scheduleRepo.delete({ userId, branchId });
+    if (!dias.length) return [];
+    return this.scheduleRepo.save(
+      dias.map((d) =>
+        this.scheduleRepo.create({
+          userId,
+          branchId,
+          dayOfWeek: d.dayOfWeek,
+          startTime: d.startTime,
+          endTime: d.endTime,
+        }),
+      ),
+    );
+  }
+
+  async registrarAusencia(
+    userId: string,
+    branchId: string,
+    dto: {
+      startDate: string;
+      endDate: string;
+      type: UserAbsenceTypeEnum;
+      notes?: string;
+    },
+  ): Promise<UserAbsence> {
+    if (dto.endDate < dto.startDate) {
+      throw new BadRequestException('La ausencia termina antes de empezar');
+    }
+    return this.absenceRepo.save(
+      this.absenceRepo.create({
+        userId,
+        branchId,
+        startDate: new Date(`${dto.startDate}T12:00:00`),
+        endDate: new Date(`${dto.endDate}T12:00:00`),
+        type: dto.type,
+        notes: dto.notes ?? null,
+      }),
+    );
+  }
+
+  async eliminarAusencia(id: string): Promise<void> {
+    await this.absenceRepo.delete(id);
+  }
+
+  /**
+   * Quién está y quién no en una sucursal un día dado.
+   *
+   * Es la vista que necesita quien reparte trabajo por la mañana: antes había
+   * que abrir el perfil de cada persona para saberlo.
+   */
+  async panelDelDia(branchId: string, fecha: string) {
+    const ids = (
+      await this.userBranchRepo.find({ where: { branchId } })
+    ).map((ub) => ub.userId);
+    if (!ids.length) return [];
+
+    const [usuarios, disponibilidad] = await Promise.all([
+      this.userRepo.find({
+        where: { id: In(ids), isActive: true },
+        select: ['id', 'firstName', 'lastName'],
+      }),
+      this.disponibilidadDelDia(ids, branchId, new Date(`${fecha}T12:00:00`)),
+    ]);
+
+    return usuarios.map((u) => ({
+      id: u.id,
+      nombre: `${u.firstName} ${u.lastName}`.trim(),
+      ...(disponibilidad.get(u.id) ?? {
+        disponible: false,
+        ventanas: [],
+        porOmision: false,
+      }),
+    }));
+  }
+
 }
