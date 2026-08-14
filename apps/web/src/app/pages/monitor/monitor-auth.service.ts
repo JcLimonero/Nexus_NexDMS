@@ -59,6 +59,16 @@ export class MonitorAuthService {
       );
   }
 
+  /**
+   * Cierra la sesión sin navegar: lo hace el guard, que ya sabe a dónde
+   * mandar y con qué motivo.
+   */
+  salirPorRol(): void {
+    localStorage.removeItem(ACCESO);
+    localStorage.removeItem(REFRESCO);
+    localStorage.removeItem(USUARIO);
+  }
+
   salir(): void {
     localStorage.removeItem(ACCESO);
     localStorage.removeItem(REFRESCO);

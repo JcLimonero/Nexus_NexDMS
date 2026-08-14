@@ -1,11 +1,12 @@
 import {
   Component,
-  OnInit,
   computed,
+  effect,
   inject,
   isDevMode,
   signal,
 } from "@angular/core";
+import { toSignal } from "@angular/core/rxjs-interop";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router } from "@angular/router";
@@ -27,7 +28,7 @@ import { MonitorAuthService } from "./monitor-auth.service";
   templateUrl: "./monitor-acceso.html",
   styleUrls: ["./monitor.scss"],
 })
-export class MonitorAcceso implements OnInit {
+export class MonitorAcceso {
   private auth = inject(MonitorAuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -110,9 +111,20 @@ export class MonitorAcceso implements OnInit {
   entrando = signal(false);
   error = signal<string | null>(null);
 
+  /**
+   * Los parámetros como señal, no leídos una vez.
+   *
+   * El guard rechaza y vuelve a esta misma ruta con otro `motivo`. Angular
+   * reutiliza el componente al no cambiar de ruta, así que leerlos en
+   * `ngOnInit` dejaba el aviso sin aparecer nunca.
+   */
+  private parametros = toSignal(this.route.queryParamMap, {
+    initialValue: this.route.snapshot.queryParamMap,
+  });
+
   /** A cuál de las dos pantallas iba, con su sucursal si la traía. */
   destino(): string {
-    const url = this.route.snapshot.queryParamMap.get("returnUrl");
+    const url = this.parametros().get("returnUrl");
     // Solo rutas del monitor: un returnUrl a cualquier otro sitio metería la
     // cuenta de la pantalla dentro del DMS.
     return url && url.startsWith("/monitor/") ? url : "/monitor/taller";
@@ -159,10 +171,23 @@ export class MonitorAcceso implements OnInit {
       : "No se pudo entrar. Revisa los datos.";
   }
 
-  ngOnInit(): void {
-    // El título de la pestaña también, que es donde se distinguen dos
-    // accesos abiertos a la vez.
-    this.titulo.setTitle(`Acceso · ${this.pantalla().nombre} — NexDMS`);
+  constructor() {
+    effect(() => {
+      const p = this.pantalla();
+      // El título se pone aquí y no en `ngOnInit` porque la estrategia de
+      // títulos lo reescribe en cada navegación, incluida la del rechazo.
+      this.titulo.setTitle(`Acceso · ${p.nombre} — NexDMS`);
+
+      // Si el guard rechazó por rol se dice cuál hace falta, en vez de
+      // devolver al acceso sin explicación y dejar probando la misma cuenta.
+      if (this.parametros().get("motivo") === "rol") {
+        this.error.set(
+          p.rol
+            ? `Esa cuenta no abre esta pantalla: ${p.nombre.toLowerCase()} necesita una de ${p.rol.toLowerCase()}.`
+            : "Esa cuenta no tiene acceso a esta pantalla.",
+        );
+      }
+    });
   }
 
 }

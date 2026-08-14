@@ -65,6 +65,27 @@ export class AppointmentsController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
+  /**
+   * Las citas del día para la pantalla de recepción.
+   *
+   * Endpoint propio y no el calendario general porque lleva su propia
+   * restricción: la agenda del día la mira el asesor de servicio, y el
+   * técnico tiene la suya en el tablero del taller. Colgar la regla del
+   * calendario general habría limitado también a quien lo usa para otra
+   * cosa.
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Get('monitor')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
+  monitor(
+    @CurrentUser() user: UserPayload,
+    @Query('branchId') branchId: string,
+    @Query('date') date: string,
+  ) {
+    return this.appointmentsService.findCalendar(user, branchId, date, date);
+  }
+
   @Get('availability')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   getAvailability(

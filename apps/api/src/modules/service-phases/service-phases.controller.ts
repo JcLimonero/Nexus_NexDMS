@@ -49,16 +49,16 @@ export class ServicePhasesController {
     return this.fases.tablero(user.tenantId, branchId);
   }
 
-  /** El magneto plano: técnico por hora, con lo que espera turno aparte. */
+  /**
+   * El magneto plano: técnico por hora, con lo que espera turno aparte.
+   *
+   * Es la pantalla del taller y solo la alcanza quien trabaja en él. El
+   * asesor de servicio queda fuera a propósito: su pantalla es la agenda del
+   * día, y dejar que cada monitor entrara con cualquier cuenta convertía la
+   * separación en una recomendación.
+   */
   @Get('magneto')
-  @Roles(
-    'SUPERADMIN',
-    'ADMIN',
-    'MANAGER',
-    'CASHIER',
-    'RECEPTIONIST',
-    'MECHANIC',
-  )
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'MECHANIC')
   magneto(
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId: string,
