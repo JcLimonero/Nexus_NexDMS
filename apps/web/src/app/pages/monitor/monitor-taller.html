@@ -59,7 +59,11 @@
       }
 
       @for (c of carriles(); track c.id) {
-        <div class="carril" [class.fuera-turno]="!c.disponible">
+        <div
+          class="carril"
+          [class.fuera-turno]="!c.disponible"
+          [style.min-height.px]="16 + c.filas * 52"
+        >
           <div class="tablero-recurso">
             <span class="avatar">{{ c.iniciales }}</span>
             <span class="recurso-datos">
@@ -87,9 +91,11 @@
             @for (b of c.bloques; track b.faseId) {
               <div
                 class="bloque"
-                [attr.data-semaforo]="b.semaforo"
+                [class.terminada]="!b.enCurso"
+                [attr.data-semaforo]="b.enCurso ? b.semaforo : null"
                 [style.left.%]="b.izquierda"
                 [style.width.%]="b.ancho"
+                [style.top.px]="8 + b.nivel * 28"
                 [title]="
                   b.folio + ' · ' + b.vehiculo + ' · ' + b.fase +
                   ' · ' + b.transcurridoMin + ' de ' + b.estimadoMin + ' min'
@@ -122,9 +128,11 @@
             @for (b of sinAsignar(); track b.faseId) {
               <div
                 class="bloque"
-                [attr.data-semaforo]="b.semaforo"
+                [class.terminada]="!b.enCurso"
+                [attr.data-semaforo]="b.enCurso ? b.semaforo : null"
                 [style.left.%]="b.izquierda"
                 [style.width.%]="b.ancho"
+                [style.top.px]="8 + b.nivel * 28"
                 [title]="b.folio + ' · ' + b.vehiculo + ' · ' + b.fase"
               >
                 <span class="bloque-relleno" [style.width.%]="b.consumido"></span>

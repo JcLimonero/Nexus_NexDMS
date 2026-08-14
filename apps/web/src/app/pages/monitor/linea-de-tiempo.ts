@@ -53,14 +53,44 @@ export class LineaDeTiempo {
   }
 
   /**
-   * Ancho de un bloque de esa duración, sin salirse del eje. El mínimo evita
-   * que una cita corta quede en una raya de dos píxeles.
+   * Ancho mínimo de un bloque, en porcentaje del eje.
+   *
+   * Una fase de diez minutos sobre trece horas es una raya de tres píxeles:
+   * ilegible desde el otro lado de la nave. Se expresa en porcentaje y no en
+   * píxeles para que el cálculo de encabalgamientos vea el mismo ancho que
+   * se dibuja; con un mínimo en CSS los bloques se pisaban sin que nadie lo
+   * supiera.
    */
+  static readonly ANCHO_MINIMO_PCT = 5;
+
+  /** Ancho de un bloque de esa duración, sin salirse del eje. */
   ancho(izquierda: number, minutos: number): number {
     return Math.min(
       100 - izquierda,
-      Math.max(1.5, (minutos / this.rango) * 100),
+      Math.max(LineaDeTiempo.ANCHO_MINIMO_PCT, (minutos / this.rango) * 100),
     );
+  }
+
+  /**
+   * Reparte en filas los bloques que se pisan.
+   *
+   * Dos trabajos consecutivos y cortos ocupan más sitio del que les toca por
+   * el ancho mínimo, y encimados no se lee ninguno. Se les da fila propia
+   * —como los imanes que no caben en la misma línea del tablero— en vez de
+   * moverlos de hora, que falsearía justo el dato que la pantalla muestra.
+   */
+  apilar<T extends { izquierda: number; ancho: number }>(
+    bloques: T[],
+  ): (T & { nivel: number })[] {
+    const finDeNivel: number[] = [];
+    return [...bloques]
+      .sort((a, b) => a.izquierda - b.izquierda)
+      .map((b) => {
+        let nivel = finDeNivel.findIndex((fin) => fin <= b.izquierda);
+        if (nivel === -1) nivel = finDeNivel.length;
+        finDeNivel[nivel] = b.izquierda + b.ancho;
+        return { ...b, nivel };
+      });
   }
 
   /** Solo la hora: con "07:00" en cada columna las etiquetas se tocaban. */

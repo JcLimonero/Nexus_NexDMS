@@ -30,9 +30,13 @@ interface CitaColocada {
   cancelada: boolean;
   izquierda: number;
   ancho: number;
+  /** Fila dentro del carril, para las que se pisan entre sí. */
+  nivel: number;
 }
 
 interface CarrilAsesor {
+  /** Cuántas filas ocupa; el carril crece con ellas. */
+  filas: number;
   id: string;
   nombre: string;
   iniciales: string;
@@ -149,6 +153,7 @@ export class MonitorCitas implements OnInit, OnDestroy {
       llego: this.llego(c.estado),
       noVino: this.noVino(c.estado),
       cancelada: c.estado === "CANCELLED",
+      nivel: 0,
       izquierda,
       ancho: this.eje.ancho(izquierda, c.duracionMin),
     };
@@ -157,7 +162,12 @@ export class MonitorCitas implements OnInit, OnDestroy {
   carriles = computed<CarrilAsesor[]>(() => {
     const d = this.datos();
     if (!d) return [];
-    return (d.asesores ?? []).map((a) => ({
+    return (d.asesores ?? []).map((a) => {
+      const citas = this.eje.apilar(
+        (a.bloques ?? []).map((b) => this.colocar(b)),
+      );
+      return {
+      filas: citas.reduce((x, c) => Math.max(x, c.nivel + 1), 1),
       id: a.id,
       nombre: a.nombre,
       iniciales: a.iniciales,
@@ -170,12 +180,13 @@ export class MonitorCitas implements OnInit, OnDestroy {
           ancho: Math.max(0, this.eje.posicionHora(v.fin) - izquierda),
         };
       }),
-      citas: (a.bloques ?? []).map((b) => this.colocar(b)),
-    }));
+      citas,
+      };
+    });
   });
 
   sinAsignar = computed<CitaColocada[]>(() =>
-    (this.datos()?.sinAsignar ?? []).map((c) => this.colocar(c)),
+    this.eje.apilar((this.datos()?.sinAsignar ?? []).map((c) => this.colocar(c))),
   );
 
   ngOnInit(): void {

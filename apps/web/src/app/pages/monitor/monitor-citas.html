@@ -69,7 +69,11 @@
       }
 
       @for (c of carriles(); track c.id) {
-        <div class="carril" [class.fuera-turno]="!c.disponible">
+        <div
+          class="carril"
+          [class.fuera-turno]="!c.disponible"
+          [style.min-height.px]="16 + c.filas * 52"
+        >
           <div class="tablero-recurso">
             <span class="avatar">{{ c.iniciales }}</span>
             <span class="recurso-datos">
@@ -108,6 +112,7 @@
                 [class.cancelada]="cita.cancelada"
                 [style.left.%]="cita.izquierda"
                 [style.width.%]="cita.ancho"
+                [style.top.px]="8 + cita.nivel * 28"
                 [title]="
                   cita.hora + ' · ' + cita.cliente + ' · ' + cita.servicio +
                   ' · ' + cita.etiqueta
@@ -152,6 +157,7 @@
                 [class.cancelada]="cita.cancelada"
                 [style.left.%]="cita.izquierda"
                 [style.width.%]="cita.ancho"
+                [style.top.px]="8 + cita.nivel * 28"
                 [title]="cita.hora + ' · ' + cita.cliente + ' · ' + cita.servicio"
               >
                 <span class="bloque-texto">

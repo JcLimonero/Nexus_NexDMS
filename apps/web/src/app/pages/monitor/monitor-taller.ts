@@ -25,13 +25,19 @@ interface BloqueColocado {
   estado: string;
   transcurridoMin: number;
   estimadoMin: number;
+  /** Sigue corriendo; una terminada ya no compite por atención. */
+  enCurso: boolean;
   izquierda: number;
   ancho: number;
+  /** Fila dentro del carril, para los que se pisan entre sí. */
+  nivel: number;
   /** Cuánto del estimado se lleva consumido, tope 100 para la barra. */
   consumido: number;
 }
 
 interface CarrilTecnico {
+  /** Cuántas filas ocupa; el carril crece con ellas. */
+  filas: number;
   id: string;
   nombre: string;
   iniciales: string;
@@ -89,7 +95,12 @@ export class MonitorTaller implements OnInit, OnDestroy {
   carriles = computed<CarrilTecnico[]>(() => {
     const d = this.datos();
     if (!d) return [];
-    return (d.tecnicos ?? []).map((t) => ({
+    return (d.tecnicos ?? []).map((t) => {
+      const bloques = this.eje.apilar(
+        (t.bloques ?? []).map((b) => this.colocar(b)),
+      );
+      return {
+      filas: bloques.reduce((a, b) => Math.max(a, b.nivel + 1), 1),
       id: t.id,
       nombre: t.nombre,
       iniciales: t.iniciales,
@@ -102,22 +113,30 @@ export class MonitorTaller implements OnInit, OnDestroy {
           ancho: Math.max(0, this.eje.posicionHora(v.fin) - izquierda),
         };
       }),
-      bloques: (t.bloques ?? []).map((b) => this.colocar(b)),
-    }));
+      bloques,
+      };
+    });
   });
 
   sinAsignar = computed<BloqueColocado[]>(() =>
-    (this.datos()?.sinAsignar ?? []).map((b) => this.colocar(b)),
+    this.eje.apilar((this.datos()?.sinAsignar ?? []).map((b) => this.colocar(b))),
   );
 
   enEspera = computed(() => this.datos()?.enEspera ?? []);
 
+  /**
+   * Lo que hay que atender ahora, no lo que se pasó de tiempo alguna vez.
+   *
+   * Solo cuenta lo que sigue en curso: una fase ya terminada que tardó de
+   * más es un dato del historial, y sumarla dejaba el contador en rojo toda
+   * la tarde por trabajos que ya salieron.
+   */
   excedidas = computed(
     () =>
       this.carriles()
         .flatMap((c) => c.bloques)
         .concat(this.sinAsignar())
-        .filter((b) => b.semaforo === "excedido").length,
+        .filter((b) => b.enCurso && b.semaforo === "excedido").length,
   );
 
   enPiso = computed(() => {
@@ -147,6 +166,9 @@ export class MonitorTaller implements OnInit, OnDestroy {
       estado: b.estado,
       transcurridoMin: b.transcurridoMin,
       estimadoMin: b.estimadoMin,
+      enCurso: b.estado === "EN_CURSO",
+      // El nivel lo pone `apilar` al conocer el carril completo.
+      nivel: 0,
       izquierda,
       ancho,
       consumido: b.estimadoMin

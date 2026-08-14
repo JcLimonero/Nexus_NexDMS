@@ -221,6 +221,8 @@
 
 .carril {
   min-height: var(--alto-carril);
+  /* El carril crece si sus bloques se reparten en varias filas. */
+  height: auto;
   border-bottom: 1px solid var(--border);
 
   &:last-of-type {
@@ -257,8 +259,6 @@
 
 .bloque {
   position: absolute;
-  top: var(--space-8);
-  bottom: var(--space-8);
   display: flex;
   align-items: center;
   overflow: hidden;
@@ -267,12 +267,10 @@
   border-left: 4px solid var(--text-muted);
   background: var(--card);
   box-shadow: var(--shadow-sm);
-  /* Una fase de diez minutos sobre un eje de trece horas es una raya de
-     tres píxeles: ilegible desde el otro lado de la nave. Se le da un
-     mínimo en píxeles —la hora de inicio sigue siendo exacta, solo se
-     ensancha el bloque— porque en un tablero para mirar de lejos leer qué
-     unidad es importa más que la proporción exacta de las cortas. */
-  min-width: 104px;
+  /* El alto es fijo y el ancho mínimo se calcula en el eje, no aquí: el
+     reparto en filas necesita ver el mismo ancho que se dibuja, y con un
+     mínimo puesto en CSS los bloques se pisaban sin que nadie lo supiera. */
+  height: 44px;
 
   &[data-semaforo="en-tiempo"] {
     border-left-color: var(--success);
@@ -282,6 +280,17 @@
   }
   &[data-semaforo="excedido"] {
     border-left-color: var(--danger);
+  }
+
+  /* Ya salió de esa fase: se atenúa para que no compita con lo que sigue
+     corriendo, que es lo que la pantalla tiene que hacer mirar. */
+  &.terminada {
+    opacity: 0.5;
+    box-shadow: none;
+
+    .bloque-relleno {
+      background: var(--bg);
+    }
   }
 }
 
