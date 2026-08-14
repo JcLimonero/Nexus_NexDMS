@@ -29,14 +29,14 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./pages/monitor/monitor-taller").then((m) => m.MonitorTaller),
     canActivate: [monitorGuard],
-    data: { title: "Monitor del taller" },
+    data: { title: "Taller" },
   },
   {
     path: "monitor/citas",
     loadComponent: () =>
       import("./pages/monitor/monitor-citas").then((m) => m.MonitorCitas),
     canActivate: [monitorGuard],
-    data: { title: "Monitor de citas" },
+    data: { title: "Citas" },
   },
   {
     path: "auth/login",

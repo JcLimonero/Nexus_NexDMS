@@ -8,6 +8,7 @@ import {
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
+import { Title } from "@angular/platform-browser";
 
 import { BranchesService } from "../../features/inventario-refacciones/services/branches.service";
 import { CitaDelDia, MonitorService } from "./monitor.service";
@@ -29,6 +30,7 @@ export class MonitorCitas implements OnInit, OnDestroy {
   private srv = inject(MonitorService);
   private branchesSrv = inject(BranchesService);
   private route = inject(ActivatedRoute);
+  private titulo = inject(Title);
 
   private static readonly REFRESCO_MS = 60_000;
   private temporizador?: ReturnType<typeof setInterval>;
@@ -79,6 +81,7 @@ export class MonitorCitas implements OnInit, OnDestroy {
         this.nombreSucursal.set(
           lista.find((b: { id: string }) => b.id === this.sucursal())?.name ?? "",
         );
+        this.ponerTitulo();
       },
     });
     this.temporizador = setInterval(
@@ -132,4 +135,17 @@ export class MonitorCitas implements OnInit, OnDestroy {
       }[c.status] ?? c.status
     );
   }
+  /**
+   * El nombre de la pantalla y su sucursal, en la pestaña.
+   *
+   * Con dos monitores abiertos —o el mismo de dos talleres— las pestañas
+   * decían lo mismo y no había forma de saber cuál era cuál.
+   */
+  private ponerTitulo(): void {
+    const suc = this.nombreSucursal();
+    this.titulo.setTitle(
+      suc ? `Citas · ${suc} — NexDMS` : `Citas — NexDMS`,
+    );
+  }
+
 }

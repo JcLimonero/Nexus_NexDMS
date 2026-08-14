@@ -8,6 +8,7 @@ import {
 } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
+import { Title } from "@angular/platform-browser";
 
 import { BranchesService } from "../../features/inventario-refacciones/services/branches.service";
 import { Magneto, MonitorService, Semaforo } from "./monitor.service";
@@ -63,6 +64,7 @@ export class MonitorTaller implements OnInit, OnDestroy {
   private srv = inject(MonitorService);
   private branchesSrv = inject(BranchesService);
   private route = inject(ActivatedRoute);
+  private titulo = inject(Title);
 
   /** Los datos, cada minuto; la línea de "ahora", cada quince segundos. */
   private static readonly REFRESCO_MS = 60_000;
@@ -198,6 +200,7 @@ export class MonitorTaller implements OnInit, OnDestroy {
         this.nombreSucursal.set(
           lista.find((b: { id: string }) => b.id === this.sucursal())?.name ?? "",
         );
+        this.ponerTitulo();
       },
     });
     this.temporizador = setInterval(
@@ -271,4 +274,17 @@ export class MonitorTaller implements OnInit, OnDestroy {
       }[e] ?? e
     );
   }
+  /**
+   * El nombre de la pantalla y su sucursal, en la pestaña.
+   *
+   * Con dos monitores abiertos —o el mismo de dos talleres— las pestañas
+   * decían lo mismo y no había forma de saber cuál era cuál.
+   */
+  private ponerTitulo(): void {
+    const suc = this.nombreSucursal();
+    this.titulo.setTitle(
+      suc ? `Taller · ${suc} — NexDMS` : `Taller — NexDMS`,
+    );
+  }
+
 }

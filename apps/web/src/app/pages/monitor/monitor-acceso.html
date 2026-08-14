@@ -28,5 +28,32 @@
     <button type="submit" [disabled]="entrando()">
       {{ entrando() ? "Entrando…" : "Entrar" }}
     </button>
+
+    <!-- Solo en desarrollo (ver demoMode) -->
+    @if (demoMode) {
+      <div class="acceso-demo">
+        <span class="acceso-demo-titulo">Cuentas de demostración</span>
+        @for (c of cuentasOrdenadas(); track c.email) {
+          <button
+            type="button"
+            class="acceso-demo-cuenta"
+            [class.sugerida]="esLaDeEstaPantalla(c)"
+            (click)="usarCuenta(c)"
+            [title]="'Usar la cuenta de ' + c.rol"
+          >
+            <span class="cuenta-rol">
+              {{ c.rol }}
+              @if (esLaDeEstaPantalla(c)) {
+                <!-- Se marca la que toca: se llega aquí desde una pantalla
+                     concreta y la otra cuenta no es la de esta. -->
+                <small class="cuenta-marca">para esta pantalla</small>
+              }
+            </span>
+            <span class="cuenta-cred">{{ c.email }} · {{ c.password }}</span>
+            <span class="cuenta-detalle">{{ c.para }}</span>
+          </button>
+        }
+      </div>
+    }
   </form>
 </div>

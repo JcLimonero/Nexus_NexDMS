@@ -549,3 +549,73 @@
   color: var(--danger) !important;
   font-size: 15px;
 }
+
+/* Panel de demostración del acceso; desaparece entero en producción. */
+.acceso-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-top: var(--space-16);
+  border-top: 1px dashed var(--border);
+}
+
+.acceso-demo-titulo {
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-muted);
+}
+
+.acceso-demo-cuenta {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1px;
+  height: auto !important;
+  padding: 10px var(--space-12) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md);
+  background: var(--bg) !important;
+  color: inherit !important;
+  font-weight: var(--font-regular) !important;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--border-hover) !important;
+  }
+
+  &.sugerida {
+    border-color: var(--primary) !important;
+    background: var(--card) !important;
+  }
+}
+
+.cuenta-rol {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.cuenta-marca {
+  padding: 1px var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+}
+
+.cuenta-cred {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+.cuenta-detalle {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
