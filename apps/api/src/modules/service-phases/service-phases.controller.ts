@@ -49,6 +49,24 @@ export class ServicePhasesController {
     return this.fases.tablero(user.tenantId, branchId);
   }
 
+  /** El magneto plano: técnico por hora, con lo que espera turno aparte. */
+  @Get('magneto')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'RECEPTIONIST',
+    'MECHANIC',
+  )
+  magneto(
+    @CurrentUser() user: UserPayload,
+    @Query('branchId') branchId: string,
+    @Query('date') date: string,
+  ) {
+    return this.fases.magneto(user.tenantId, branchId, date);
+  }
+
   @Get('paquete/:kitId')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   delPaquete(@Param('kitId', ParseUUIDPipe) kitId: string) {

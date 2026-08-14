@@ -16,6 +16,7 @@ import {
 } from '../service-orders/entities/service-order.entity';
 import { ServiceKit } from '../service-kits/entities/service-kit.entity';
 import { User } from '../users/entities/user.entity';
+import { UserAvailabilityService } from '../user-availability/user-availability.service';
 
 /** Cómo va una unidad respecto a lo que se estimó. */
 export type Semaforo = 'en-tiempo' | 'por-vencer' | 'excedido' | 'sin-empezar';
@@ -55,6 +56,7 @@ export class ServicePhasesService {
     private readonly kitRepo: Repository<ServiceKit>,
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
+    private readonly availability: UserAvailabilityService,
   ) {}
 
   // ─── Plantilla: fases del paquete ───────────────────────────
@@ -318,4 +320,132 @@ export class ServicePhasesService {
       };
     });
   }
+  // ─── Magneto plano ──────────────────────────────────────────
+
+  /**
+   * El tablero de recursos del taller: técnico por hora.
+   *
+   * Es el "magneto plano" de toda la vida —una fila por técnico y los
+   * trabajos colocados sobre la hora en que ocurren—, con dos cosas que un
+   * tablero de imanes no puede tener: la franja de su horario, para que se
+   * vea de un vistazo quién no está, y el avance real de cada trabajo contra
+   * lo estimado.
+   *
+   * Lo que todavía no ha empezado no se coloca en ninguna hora, porque no la
+   * tiene: va a una bandeja aparte, igual que los imanes que esperan al
+   * margen del tablero.
+   */
+  async magneto(tenantId: string, branchId: string, fecha: string) {
+    const dia = new Date(`${fecha}T12:00:00`);
+    const inicioDia = new Date(`${fecha}T00:00:00`);
+    const finDia = new Date(`${fecha}T23:59:59.999`);
+
+    const tecnicos = await this.availability.getMechanicsWithDetailsForBranch(
+      branchId,
+    );
+    const ids = tecnicos.map((t) => t.id);
+    const turnos = await this.availability.disponibilidadDelDia(
+      ids,
+      branchId,
+      dia,
+    );
+
+    // Órdenes vivas de la sucursal con sus fases; el tablero es de lo que
+    // está en el taller, no de lo que ya salió.
+    const ordenes = await this.orderRepo.find({
+      where: {
+        tenantId,
+        branchId,
+        status: Not(
+          In([
+            ServiceOrderStatusEnum.DELIVERED,
+            ServiceOrderStatusEnum.CANCELLED,
+          ]),
+        ),
+      },
+      relations: ['vehicle', 'owner'],
+      order: { createdAt: 'ASC' },
+    });
+    const fases = ordenes.length
+      ? await this.phaseRepo.find({
+          where: { serviceOrderId: In(ordenes.map((o) => o.id)) },
+          order: { sequence: 'ASC' },
+        })
+      : [];
+
+    const porOrden = new Map(ordenes.map((o) => [o.id, o]));
+    const etiqueta = (o: (typeof ordenes)[number]) => ({
+      folio: o.folio,
+      vehiculo: o.vehicle
+        ? `${o.vehicle.make} ${o.vehicle.model}`.trim()
+        : 'Sin unidad',
+      placa: o.vehicle?.plate ?? null,
+    });
+
+    // Un bloque por fase que haya corrido hoy: ahí es donde estuvo la unidad.
+    const bloques = fases
+      .filter(
+        (f) =>
+          f.startedAt && f.startedAt >= inicioDia && f.startedAt <= finDia,
+      )
+      .map((f) => {
+        const o = porOrden.get(f.serviceOrderId)!;
+        const transcurrido = this.minutos(f.startedAt, f.finishedAt);
+        return {
+          faseId: f.id,
+          ordenId: f.serviceOrderId,
+          ...etiqueta(o),
+          fase: f.name,
+          secuencia: f.sequence,
+          estado: f.status,
+          tecnicoId: f.assignedUserId,
+          inicio: f.startedAt!.toISOString(),
+          fin: f.finishedAt?.toISOString() ?? null,
+          estimadoMin: f.estimatedMin,
+          transcurridoMin: transcurrido,
+          semaforo: this.semaforo(transcurrido, f.estimatedMin),
+        };
+      });
+
+    // Lo que espera turno: sin ninguna fase empezada todavía.
+    const enEspera = ordenes
+      .filter(
+        (o) => !fases.some((f) => f.serviceOrderId === o.id && f.startedAt),
+      )
+      .map((o) => {
+        const suyas = fases.filter((f) => f.serviceOrderId === o.id);
+        return {
+          ordenId: o.id,
+          ...etiqueta(o),
+          estado: o.status,
+          fases: suyas.length,
+          estimadoMin: suyas.reduce((a, f) => a + f.estimatedMin, 0),
+          desde: o.createdAt.toISOString(),
+        };
+      });
+
+    return {
+      fecha,
+      // La hora del servidor, para que la línea de "ahora" no dependa del
+      // reloj del equipo donde esté colgada la pantalla.
+      ahora: new Date().toISOString(),
+      tecnicos: tecnicos.map((t) => {
+        const d = turnos.get(t.id);
+        return {
+          id: t.id,
+          nombre: `${t.firstName} ${t.lastName}`.trim(),
+          iniciales: `${t.firstName?.[0] ?? ''}${t.lastName?.[0] ?? ''}`.toUpperCase(),
+          disponible: d?.disponible ?? false,
+          motivo: d?.motivo ?? null,
+          ventanas: d?.ventanas ?? [],
+          bloques: bloques.filter((b) => b.tecnicoId === t.id),
+        };
+      }),
+      // Trabajo en curso sin técnico asignado: si no se muestra, desaparece
+      // del tablero justo cuando hay que asignarlo.
+      sinAsignar: bloques.filter((b) => !b.tecnicoId),
+      enEspera,
+    };
+  }
+
 }

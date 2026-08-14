@@ -7,12 +7,12 @@
 
     <div class="monitor-resumen">
       <div class="resumen-dato">
-        <strong>{{ unidades().length }}</strong>
+        <strong>{{ enPiso() }}</strong>
         <span>en piso</span>
       </div>
-      <div class="resumen-dato" [class.alerta]="porVencer() > 0">
-        <strong>{{ porVencer() }}</strong>
-        <span>por vencer</span>
+      <div class="resumen-dato">
+        <strong>{{ enEspera().length }}</strong>
+        <span>esperan turno</span>
       </div>
       <div class="resumen-dato" [class.critico]="excedidas() > 0">
         <strong>{{ excedidas() }}</strong>
@@ -22,65 +22,139 @@
 
     <div class="monitor-hora">
       @if (sinConexion()) {
-        <!-- Se dice que el dato está viejo en vez de borrarlo: una pantalla
-             en blanco no distingue "no hay nada" de "no hay conexión". -->
         <span class="sin-conexion">Sin conexión</span>
       }
       <span>{{ actualizado() | date: "HH:mm" }}</span>
     </div>
   </header>
 
-  @if (!unidades().length) {
-    <p class="monitor-vacio">No hay unidades en servicio.</p>
-  } @else {
-    <div class="tarjetas">
-      @for (u of ordenadas(); track u.ordenId) {
-        <article class="unidad" [attr.data-semaforo]="u.semaforo">
-          <div class="unidad-top">
-            <span class="folio">{{ u.folio }}</span>
-            <span class="estado">{{ etiquetaEstado(u.estado) }}</span>
+  <!-- Magneto plano: una fila por técnico, la hora en el eje -->
+  <div class="tablero">
+    <div class="tablero-cabecera">
+      <div class="tablero-recurso">Técnico</div>
+      <div class="tablero-pista">
+        @for (h of horas; track h) {
+          <span class="marca-hora">{{ etiquetaHora(h) }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="tablero-cuerpo">
+      @if (!carriles().length) {
+        <p class="monitor-vacio">No hay técnicos asignados a esta sucursal.</p>
+      }
+
+      @for (c of carriles(); track c.id) {
+        <div class="carril" [class.fuera-turno]="!c.disponible">
+          <div class="tablero-recurso">
+            <span class="avatar">{{ c.iniciales }}</span>
+            <span class="recurso-datos">
+              <strong>{{ c.nombre }}</strong>
+              @if (!c.disponible) {
+                <small>{{ c.motivo === "ausente" ? "Ausente" : "Fuera de turno" }}</small>
+              }
+            </span>
           </div>
 
-          <h2 class="vehiculo">{{ u.vehiculo }}</h2>
-          <p class="placa">
-            {{ u.placa || "sin placa" }} · {{ u.cliente }}
-          </p>
+          <div class="tablero-pista">
+            <!-- Las franjas del turno se pintan primero: lo que queda fuera
+                 se ve apagado, que es como se sabe quién no está. -->
+            @for (f of c.franjas; track $index) {
+              <div
+                class="franja-turno"
+                [style.left.%]="f.izquierda"
+                [style.width.%]="f.ancho"
+              ></div>
+            }
+            @for (h of horas; track h) {
+              <div class="linea-hora"></div>
+            }
 
-          @if (u.faseActual) {
-            <div class="fase">
-              <div class="fase-nombre">
-                <span>{{ u.faseActual }}</span>
-                <span class="fase-cuenta">
-                  {{ u.fasesTerminadas }}/{{ u.fasesTotales }}
+            @for (b of c.bloques; track b.faseId) {
+              <div
+                class="bloque"
+                [attr.data-semaforo]="b.semaforo"
+                [style.left.%]="b.izquierda"
+                [style.width.%]="b.ancho"
+                [title]="
+                  b.folio + ' · ' + b.vehiculo + ' · ' + b.fase +
+                  ' · ' + b.transcurridoMin + ' de ' + b.estimadoMin + ' min'
+                "
+              >
+                <span class="bloque-relleno" [style.width.%]="b.consumido"></span>
+                <span class="bloque-texto">
+                  <strong>{{ b.vehiculo }}</strong>
+                  <small>{{ b.fase }}</small>
                 </span>
               </div>
+            }
+          </div>
+        </div>
+      }
 
-              <div class="barra">
-                <div class="barra-avance" [style.width.%]="avance(u)"></div>
-              </div>
-
-              <div class="fase-tiempo">
-                <span>
-                  {{ duracion(u.minutosEnFase) }} de {{ duracion(u.estimadoFase) }}
+      @if (sinAsignar().length) {
+        <div class="carril sin-tecnico">
+          <div class="tablero-recurso">
+            <span class="avatar vacio">?</span>
+            <span class="recurso-datos">
+              <strong>Sin asignar</strong>
+              <small>Trabajo en curso sin técnico</small>
+            </span>
+          </div>
+          <div class="tablero-pista">
+            @for (h of horas; track h) {
+              <div class="linea-hora"></div>
+            }
+            @for (b of sinAsignar(); track b.faseId) {
+              <div
+                class="bloque"
+                [attr.data-semaforo]="b.semaforo"
+                [style.left.%]="b.izquierda"
+                [style.width.%]="b.ancho"
+                [title]="b.folio + ' · ' + b.vehiculo + ' · ' + b.fase"
+              >
+                <span class="bloque-relleno" [style.width.%]="b.consumido"></span>
+                <span class="bloque-texto">
+                  <strong>{{ b.vehiculo }}</strong>
+                  <small>{{ b.fase }}</small>
                 </span>
-                @if (u.retraso > 0) {
-                  <strong class="retraso">+{{ duracion(u.retraso) }}</strong>
-                }
               </div>
+            }
+          </div>
+        </div>
+      }
 
-              @if (u.responsable) {
-                <p class="responsable">{{ u.responsable }}</p>
-              }
-            </div>
-          } @else if (u.fasesTotales) {
-            <p class="sin-fase">Sin fase iniciada</p>
-          } @else {
-            <!-- Sin paquete aplicado no hay nada contra qué medir; se dice,
-                 en vez de mostrarla como si fuera en tiempo. -->
-            <p class="sin-fase">Sin paquete de servicio</p>
-          }
-        </article>
+      <!-- La línea de la hora cruza todos los carriles -->
+      @if (lineaAhora(); as x) {
+        <div class="linea-ahora" [style.left]="'calc(var(--ancho-recurso) + (100% - var(--ancho-recurso)) * ' + x / 100 + ')'">
+          <span class="linea-ahora-punta"></span>
+        </div>
       }
     </div>
+  </div>
+
+  <!-- Bandeja: lo que todavía no tiene hora, como los imanes al margen -->
+  @if (enEspera().length) {
+    <section class="bandeja">
+      <h2>Esperan turno</h2>
+      <div class="bandeja-piezas">
+        @for (o of enEspera(); track o.ordenId) {
+          <article class="pieza">
+            <span class="pieza-folio">{{ o.folio }}</span>
+            <strong>{{ o.vehiculo }}</strong>
+            <span class="pieza-datos">
+              {{ o.placa || "sin placa" }} · {{ etiquetaEstadoOrden(o.estado) }}
+            </span>
+            @if (o.fases) {
+              <span class="pieza-datos">
+                {{ o.fases }} fases · {{ duracion(o.estimadoMin) }}
+              </span>
+            } @else {
+              <span class="pieza-datos sin-plan">Sin paquete de servicio</span>
+            }
+          </article>
+        }
+      </div>
+    </section>
   }
 </div>
