@@ -37,6 +37,16 @@
                 <button
                   type="button"
                   class="nav-link"
+                  [class.active]="pestana() === 'pagos'"
+                  (click)="pestana.set('pagos')"
+                >
+                  Pagos
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  type="button"
+                  class="nav-link"
                   [class.active]="pestana() === 'documentos'"
                   (click)="pestana.set('documentos')"
                 >
@@ -81,6 +91,13 @@
                   </dl>
                 </div>
               </div>
+            } @else if (pestana() === "pagos") {
+              <!-- Pagos de la venta: apartado, enganche, parciales, cada uno
+                   con su comprobante. Solo se editan en una venta en proceso. -->
+              <app-pagos-venta
+                [unitSaleId]="s.id"
+                [editable]="s.status === UnitSaleStatus.IN_PROGRESS"
+              />
             } @else {
               <!-- Expediente: qué exige esta venta según a quién, cómo y qué
                    se vende, y cuánto falta para poder cerrarla. -->

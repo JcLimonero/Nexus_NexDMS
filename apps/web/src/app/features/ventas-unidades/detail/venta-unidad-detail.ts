@@ -6,12 +6,13 @@ import { ToastrService } from "ngx-toastr";
 import { VentasUnidadesService } from "../ventas-unidades.service";
 import { UnitSale, UnitSaleStatus } from "../models/unit-sale.model";
 import { ExpedienteVenta } from "../documentos/expediente-venta";
+import { PagosVenta } from "../pagos/pagos-venta";
 import { AuthService } from "../../../auth/auth.service";
 
 @Component({
   selector: "app-venta-unidad-detail",
   standalone: true,
-  imports: [CommonModule, RouterModule, ExpedienteVenta],
+  imports: [CommonModule, RouterModule, ExpedienteVenta, PagosVenta],
   templateUrl: "./venta-unidad-detail.html",
   styleUrls: ["./venta-unidad-detail.scss"],
 })
@@ -32,7 +33,7 @@ export class VentaUnidadDetail implements OnInit {
   error = signal<string | null>(null);
 
   /** Pestaña activa de la ficha. */
-  pestana = signal<"datos" | "documentos">("datos");
+  pestana = signal<"datos" | "pagos" | "documentos">("datos");
 
   readonly UnitSaleStatus = UnitSaleStatus;
 

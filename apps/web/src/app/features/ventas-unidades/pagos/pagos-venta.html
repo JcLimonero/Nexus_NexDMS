@@ -1,0 +1,139 @@
+@if (cargando()) {
+  <p class="text-muted mb-0">Cargando pagos…</p>
+} @else if (resumen(); as r) {
+  <div class="pagos">
+    <div class="cabecera">
+      <div class="total">
+        Pagado: <strong>{{ r.total | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+        <span class="sub">{{ r.pagos.length }} pago(s)</span>
+      </div>
+      @if (editable()) {
+        <button class="btn btn-primary btn-sm" (click)="abrirAlta()">
+          Registrar pago
+        </button>
+      }
+    </div>
+
+    <!-- Aviso de cierre: es lo que impide marcar la unidad como vendida. -->
+    @if (faltanComprobantes()) {
+      <div class="aviso-cierre">
+        {{ r.pagosSinComprobante }} pago(s) sin comprobante — la venta no se
+        puede cerrar hasta adjuntarlos.
+      </div>
+    }
+
+    @if (r.pagos.length === 0) {
+      <p class="text-muted mb-0">Todavía no hay pagos registrados.</p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th>Forma</th>
+              <th>Referencia</th>
+              <th class="text-end">Importe</th>
+              <th>Comprobante</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of r.pagos; track p.id) {
+              <tr>
+                <td>{{ p.paidDate | date: "dd/MM/yyyy" }}</td>
+                <td>{{ etiquetaTipo[p.kind] }}</td>
+                <td>{{ etiquetaForma[p.method] }}</td>
+                <td>{{ p.reference || "—" }}</td>
+                <td class="text-end">{{ p.amount | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</td>
+                <td>
+                  @if (p.tieneComprobante) {
+                    <button class="btn btn-light btn-sm" (click)="verComprobante(p)">
+                      Ver
+                    </button>
+                    @if (editable()) {
+                      <label class="btn btn-light btn-sm mb-0">
+                        Reemplazar
+                        <input type="file" accept="image/*,application/pdf" hidden
+                          (change)="onComprobante($event, p)" />
+                      </label>
+                    }
+                  } @else if (editable()) {
+                    <label class="btn btn-outline-primary btn-sm mb-0">
+                      {{ subiendo() === p.id ? "Subiendo…" : "Adjuntar" }}
+                      <input type="file" accept="image/*,application/pdf" hidden
+                        (change)="onComprobante($event, p)" />
+                    </label>
+                  } @else {
+                    <span class="text-danger small">Sin comprobante</span>
+                  }
+                </td>
+                <td class="text-end">
+                  @if (editable()) {
+                    <button class="table-action-btn table-action-btn-danger" (click)="eliminar(p)">
+                      Borrar
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+}
+
+<!-- Alta de un pago -->
+@if (altaAbierta()) {
+  <div class="fondo-modal" (click)="altaAbierta.set(false)"></div>
+  <div class="panel-modal" role="dialog" aria-modal="true">
+    <header>
+      <h5>Registrar pago</h5>
+      <button class="btn-cerrar" (click)="altaAbierta.set(false)">×</button>
+    </header>
+    <div class="cuerpo">
+      <label>
+        <span>Concepto</span>
+        <select class="form-control" [(ngModel)]="form.kind">
+          @for (t of tipos; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Importe *</span>
+        <input class="form-control" type="number" min="0" step="0.01" [(ngModel)]="form.amount" />
+      </label>
+      <label>
+        <span>Forma de pago</span>
+        <select class="form-control" [(ngModel)]="form.method">
+          @for (f of formas; track f.value) {
+            <option [value]="f.value">{{ f.label }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Fecha</span>
+        <input class="form-control" type="date" [(ngModel)]="form.paidDate" />
+      </label>
+      <label>
+        <span>Referencia</span>
+        <input class="form-control" [(ngModel)]="form.reference" placeholder="Folio SPEI, autorización…" />
+      </label>
+      <label>
+        <span>Notas</span>
+        <input class="form-control" [(ngModel)]="form.notes" />
+      </label>
+      <p class="pista">
+        El comprobante se adjunta desde la lista; puede ser en un paso posterior.
+      </p>
+    </div>
+    <footer>
+      <button class="btn btn-light" (click)="altaAbierta.set(false)">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="guardando()" (click)="registrar()">
+        {{ guardando() ? "Guardando…" : "Registrar" }}
+      </button>
+    </footer>
+  </div>
+}

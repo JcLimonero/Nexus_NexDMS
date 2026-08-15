@@ -1,0 +1,104 @@
+.pagos {
+  display: grid;
+  gap: var(--space-12);
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+}
+
+.total {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  strong {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .sub {
+    margin-left: var(--space-8);
+    color: var(--text-muted);
+  }
+}
+
+/* El aviso de cierre va en ámbar: no es un error, es lo que falta para vender. */
+.aviso-cierre {
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+}
+
+/* ── Modal de alta ── */
+.fondo-modal {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--navy-800) 55%, transparent);
+  z-index: 40;
+}
+
+.panel-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  width: min(440px, calc(100vw - var(--space-32)));
+  max-height: calc(100vh - var(--space-32));
+  overflow-y: auto;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg, 0 20px 50px rgb(0 0 0 / 30%));
+
+  header,
+  footer {
+    display: flex;
+    align-items: center;
+    padding: var(--space-16);
+  }
+  header {
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    h5 { margin: 0; }
+  }
+  footer {
+    justify-content: flex-end;
+    gap: var(--space-8);
+    border-top: 1px solid var(--border);
+  }
+}
+
+.cuerpo {
+  padding: var(--space-16);
+  display: grid;
+  gap: var(--space-12);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .pista {
+    margin: 0;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+}
+
+.btn-cerrar {
+  border: 0;
+  background: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
