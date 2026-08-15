@@ -229,4 +229,48 @@ export class SaasService {
   eliminarPago(id: string): Observable<void> {
     return this.http.delete<void>(`/api/v1/saas/payments/${id}`);
   }
+
+  // ─── Marca del cliente ───────────────────────────
+  paletas(): Observable<PaletaMarca[]> {
+    return this.http.get<PaletaMarca[]>("/api/v1/saas/branding/paletas");
+  }
+
+  branding(tenantId: string): Observable<Branding> {
+    return this.http.get<Branding>(`/api/v1/saas/tenants/${tenantId}/branding`);
+  }
+
+  guardarBranding(
+    tenantId: string,
+    dto: { paletaId?: string; logoKey?: string | null },
+  ): Observable<Branding> {
+    return this.http.put<Branding>(
+      `/api/v1/saas/tenants/${tenantId}/branding`,
+      dto,
+    );
+  }
+
+  subirLogo(tenantId: string, file: File): Observable<Branding> {
+    const form = new FormData();
+    form.append("file", file);
+    return this.http.post<Branding>(
+      `/api/v1/saas/tenants/${tenantId}/branding/logo`,
+      form,
+    );
+  }
+}
+
+export interface PaletaMarca {
+  id: string;
+  nombre: string;
+  primary: string;
+  primaryHover: string;
+  primarySoft: string;
+  tinta: string;
+}
+
+export interface Branding {
+  paletaId: string;
+  paleta: PaletaMarca;
+  logoKey: string | null;
+  logoUrl: string | null;
 }

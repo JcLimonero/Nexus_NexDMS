@@ -14,6 +14,8 @@ import {
 } from './entities/reception-catalog.entities';
 import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { paletaPorId } from '../tenants/branding.paletas';
 import { Part } from '../parts/entities/part.entity';
 
 /** Etiquetas de los daños, las mismas que ve el asesor en la pantalla. */
@@ -39,10 +41,20 @@ const ESTATUS: Record<string, string> = {
 
 /** Márgenes y tipografías, en un solo sitio para no descuadrar el documento. */
 const M = 40;
-const TINTA = '#16262F';
 const TENUE = '#5A6B78';
-const MARCA = '#203848';
 const LINEA = '#DDE3E9';
+
+/**
+ * Los dos colores que aporta la marca del cliente: la tinta de los textos y el
+ * color de las bandas de sección. Viajan por el documento en vez de ser
+ * constantes globales: dos órdenes de clientes distintos pueden imprimirse a
+ * la vez, y una constante reasignada por petición teñiría una con los colores
+ * de la otra.
+ */
+interface ColoresMarca {
+  tinta: string;
+  marca: string;
+}
 
 /**
  * Orden de servicio en papel.
@@ -78,6 +90,8 @@ export class OrdenPdfService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(LegalEntity)
     private readonly legalRepo: Repository<LegalEntity>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
   ) {}
 
   private dinero(n: number): string {
@@ -134,6 +148,12 @@ export class OrdenPdfService {
     });
     if (!so) throw new NotFoundException('Orden no encontrada');
 
+    // La marca del cliente tiñe la tinta y las bandas del documento, para que
+    // el papel se vea como el resto de su NexDMS.
+    const t = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    const paleta = paletaPorId(t?.palette);
+    const c: ColoresMarca = { tinta: paleta.tinta, marca: paleta.primary };
+
     const sucursal = await this.branchRepo.findOne({
       where: { id: so.branchId },
     });
@@ -183,20 +203,21 @@ export class OrdenPdfService {
 
     const ancho = doc.page.width - M * 2;
 
-    this.encabezado(doc, ancho, so, sucursal, razon);
-    this.cliente(doc, ancho, so);
-    this.unidad(doc, ancho, so, checklist);
+    this.encabezado(doc, ancho, c, so, sucursal, razon);
+    this.cliente(doc, ancho, c, so);
+    this.unidad(doc, ancho, c, so, checklist);
     this.conceptos(
       doc,
       ancho,
+      c,
       so,
       operaciones,
       refacciones,
       nombreParte,
       sucursal,
     );
-    this.recepcion(doc, ancho, checklist, fotos, marcas, nombreSpec);
-    this.cierre(doc, ancho, so);
+    this.recepcion(doc, ancho, c, checklist, fotos, marcas, nombreSpec);
+    this.cierre(doc, ancho, c, so);
     this.pieDePagina(doc);
 
     doc.end();
@@ -206,24 +227,25 @@ export class OrdenPdfService {
   // ─── Bloques del documento ───────────────────────
 
   /** Título de sección: una banda con el nombre, para separar de un vistazo. */
-  private seccion(doc: PDFKit.PDFDocument, ancho: number, texto: string): void {
+  private seccion(doc: PDFKit.PDFDocument, ancho: number, c: ColoresMarca, texto: string): void {
     // Si no cabe el título más una línea, la sección empieza en otra hoja: un
     // encabezado solo al pie de página no orienta a nadie.
     if (doc.y > doc.page.height - 90) doc.addPage();
-    doc.rect(M, doc.y, ancho, 16).fill(MARCA);
+    doc.rect(M, doc.y, ancho, 16).fill(c.marca);
     doc
       .fillColor('#FFFFFF')
       .fontSize(8.5)
       .font('Helvetica-Bold')
       .text(texto.toUpperCase(), M + 6, doc.y + 4.5);
     doc.moveDown(0.9);
-    doc.fillColor(TINTA).font('Helvetica');
+    doc.fillColor(c.tinta).font('Helvetica');
   }
 
   /** Pares etiqueta/valor en columnas. */
   private campos(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     pares: [string, string][],
     columnas = 3,
   ): void {
@@ -241,7 +263,7 @@ export class OrdenPdfService {
       });
       doc
         .fontSize(9)
-        .fillColor(TINTA)
+        .fillColor(c.tinta)
         .text(par[1] || '—', x, y + 9, { width: w - 8, ellipsis: true });
       x += w;
     });
@@ -252,11 +274,12 @@ export class OrdenPdfService {
   private encabezado(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     so: ServiceOrder,
     sucursal: Branch | null,
     razon: LegalEntity | null,
   ): void {
-    doc.fontSize(14).font('Helvetica-Bold').fillColor(MARCA);
+    doc.fontSize(14).font('Helvetica-Bold').fillColor(c.marca);
     doc.text(razon?.name ?? sucursal?.name ?? 'Taller', M, M, {
       width: ancho * 0.6,
     });
@@ -283,7 +306,7 @@ export class OrdenPdfService {
     doc
       .fontSize(18)
       .font('Helvetica-Bold')
-      .fillColor(MARCA)
+      .fillColor(c.marca)
       .text(so.folio, dx, M + 12, { width: ancho * 0.38, align: 'right' });
     doc
       .fontSize(8)
@@ -307,6 +330,7 @@ export class OrdenPdfService {
     this.campos(
       doc,
       ancho,
+      c,
       [
         ['Recepción', this.fecha(so.receivedAt ?? so.createdAt)],
         ['Entrega prometida', this.fecha(so.promisedAt)],
@@ -322,24 +346,26 @@ export class OrdenPdfService {
   private cliente(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     so: ServiceOrder,
   ): void {
-    const c = so.owner;
-    const nombre = c
-      ? c.companyName ||
-        `${c.firstName ?? ''} ${c.lastName ?? ''}`.trim()
+    const dueno = so.owner;
+    const nombre = dueno
+      ? dueno.companyName ||
+        `${dueno.firstName ?? ''} ${dueno.lastName ?? ''}`.trim()
       : so.receptionName || '';
-    this.seccion(doc, ancho, 'Datos del cliente');
+    this.seccion(doc, ancho, c, 'Datos del cliente');
     this.campos(
       doc,
       ancho,
+      c,
       [
         ['Nombre o razón social', nombre],
-        ['RFC', c?.rfc ?? ''],
-        ['Teléfono', c?.phone ?? so.receptionPhone ?? ''],
-        ['Correo', c?.email ?? ''],
-        ['Domicilio', c?.address ?? ''],
-        ['Ciudad', [c?.city, c?.state].filter(Boolean).join(', ')],
+        ['RFC', dueno?.rfc ?? ''],
+        ['Teléfono', dueno?.phone ?? so.receptionPhone ?? ''],
+        ['Correo', dueno?.email ?? ''],
+        ['Domicilio', dueno?.address ?? ''],
+        ['Ciudad', [dueno?.city, dueno?.state].filter(Boolean).join(', ')],
       ],
       3,
     );
@@ -348,14 +374,16 @@ export class OrdenPdfService {
   private unidad(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     so: ServiceOrder,
     checklist: ReceptionChecklist | null,
   ): void {
     const v = so.vehicle as unknown as Record<string, unknown> | undefined;
-    this.seccion(doc, ancho, 'Datos de la unidad');
+    this.seccion(doc, ancho, c, 'Datos de la unidad');
     this.campos(
       doc,
       ancho,
+      c,
       [
         [
           'Unidad',
@@ -375,7 +403,7 @@ export class OrdenPdfService {
 
     if (so.reportedFault) {
       doc.fontSize(6.5).fillColor(TENUE).text('FALLA REPORTADA POR EL CLIENTE');
-      doc.fontSize(9).fillColor(TINTA).text(so.reportedFault, { width: ancho });
+      doc.fontSize(9).fillColor(c.tinta).text(so.reportedFault, { width: ancho });
       doc.moveDown(0.5);
     }
   }
@@ -383,13 +411,14 @@ export class OrdenPdfService {
   private conceptos(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     so: ServiceOrder,
     operaciones: ServiceOrderOperation[],
     refacciones: ServiceOrderPart[],
     nombreParte: Map<string, Part>,
     sucursal: Branch | null,
   ): void {
-    this.seccion(doc, ancho, 'Conceptos y costos');
+    this.seccion(doc, ancho, c, 'Conceptos y costos');
 
     // Columnas: descripción elástica, números a la derecha y alineados.
     const cImporte = 80;
@@ -406,7 +435,7 @@ export class OrdenPdfService {
       doc
         .font(opciones.negrita ? 'Helvetica-Bold' : 'Helvetica')
         .fontSize(8)
-        .fillColor(opciones.tenue ? TENUE : TINTA);
+        .fillColor(opciones.tenue ? TENUE : c.tinta);
       doc.text(celdas[0], M, y, { width: cDesc - 6 });
       const alto = doc.y - y;
       doc.text(celdas[1], M + cDesc, y, { width: cCant - 6, align: 'right' });
@@ -498,12 +527,12 @@ export class OrdenPdfService {
       doc
         .font(fuerte ? 'Helvetica-Bold' : 'Helvetica')
         .fontSize(fuerte ? 11 : 9)
-        .fillColor(fuerte ? MARCA : TENUE);
+        .fillColor(fuerte ? c.marca : TENUE);
       doc.text(etiqueta, M + ancho * 0.5, y, {
         width: ancho * 0.28,
         align: 'right',
       });
-      doc.fillColor(fuerte ? MARCA : TINTA);
+      doc.fillColor(fuerte ? c.marca : c.tinta);
       doc.text(valor, M + ancho * 0.78, y, {
         width: ancho * 0.22,
         align: 'right',
@@ -533,13 +562,14 @@ export class OrdenPdfService {
   private recepcion(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     checklist: ReceptionChecklist | null,
     fotos: ReceptionPhoto[],
     marcas: ReceptionPhotoMark[],
     nombreSpec: Map<string, string>,
   ): void {
     if (!checklist) return;
-    this.seccion(doc, ancho, 'Cómo se recibió la unidad');
+    this.seccion(doc, ancho, c, 'Cómo se recibió la unidad');
 
     const inventario: [string, boolean][] = [
       ['Herramienta', checklist.hasTools],
@@ -560,10 +590,10 @@ export class OrdenPdfService {
           .lineTo(x + 3.4, y + 7)
           .lineTo(x + 6.5, y + 2.5)
           .lineWidth(1.2)
-          .strokeColor(MARCA)
+          .strokeColor(c.marca)
           .stroke();
       }
-      doc.fontSize(8).fillColor(TINTA).text(nombre, x + 12, y, {
+      doc.fontSize(8).fillColor(c.tinta).text(nombre, x + 12, y, {
         width: w - 16,
       });
     });
@@ -574,7 +604,7 @@ export class OrdenPdfService {
       doc.fontSize(6.5).fillColor(TENUE).text('OBSERVACIONES');
       doc
         .fontSize(8.5)
-        .fillColor(TINTA)
+        .fillColor(c.tinta)
         .text(checklist.observations, { width: ancho });
       doc.moveDown(0.3);
     }
@@ -582,7 +612,7 @@ export class OrdenPdfService {
       doc.fontSize(6.5).fillColor(TENUE).text('DAÑOS VISIBLES');
       doc
         .fontSize(8.5)
-        .fillColor(TINTA)
+        .fillColor(c.tinta)
         .text(checklist.damageDescription, { width: ancho });
       doc.moveDown(0.3);
     }
@@ -602,7 +632,7 @@ export class OrdenPdfService {
         doc
           .fontSize(8)
           .font('Helvetica-Bold')
-          .fillColor(TINTA)
+          .fillColor(c.tinta)
           .text(nombreSpec.get(foto.specCode ?? '') ?? foto.specCode ?? 'Foto', {
             width: ancho,
           });
@@ -611,7 +641,7 @@ export class OrdenPdfService {
           if (doc.y > doc.page.height - 70) doc.addPage();
           doc
             .fontSize(8)
-            .fillColor(TINTA)
+            .fillColor(c.tinta)
             .text(
               `${i + 1}. ${DANOS[m.markType] ?? m.markType}` +
                 `${m.shape === 'CIRCLE' ? ' (área)' : ''}` +
@@ -631,14 +661,15 @@ export class OrdenPdfService {
   private cierre(
     doc: PDFKit.PDFDocument,
     ancho: number,
+    c: ColoresMarca,
     so: ServiceOrder,
   ): void {
     if (doc.y > doc.page.height - 170) doc.addPage();
-    this.seccion(doc, ancho, 'Autorización del cliente');
+    this.seccion(doc, ancho, c, 'Autorización del cliente');
 
     doc
       .fontSize(7.5)
-      .fillColor(TINTA)
+      .fillColor(c.tinta)
       .text(
         'Autorizo la ejecución de los trabajos descritos y su costo. Reconozco que el taller ' +
           'no se hace responsable por objetos de valor que se queden en el interior de la unidad ' +
@@ -678,7 +709,7 @@ export class OrdenPdfService {
       doc.moveTo(x, y).lineTo(x + wFirma, y).strokeColor(TENUE).lineWidth(0.7).stroke();
       doc.fontSize(7).fillColor(TENUE).text(rotulo, x, y + 4, { width: wFirma });
       if (nombre) {
-        doc.fontSize(8).fillColor(TINTA).text(nombre, x, y + 13, {
+        doc.fontSize(8).fillColor(c.tinta).text(nombre, x, y + 13, {
           width: wFirma,
           ellipsis: true,
         });

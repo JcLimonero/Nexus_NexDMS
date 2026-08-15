@@ -13,6 +13,11 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import type { UserPayload } from './strategies/jwt.strategy';
 import { UsersService } from '../users/users.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { StorageService } from '../../common/storage/storage.service';
+import { PALETA_POR_OMISION, paletaPorId } from '../tenants/branding.paletas';
 
 const REFRESH_KEY_PREFIX = 'refresh:';
 const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
@@ -26,6 +31,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
+    private readonly storage: StorageService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -139,6 +147,9 @@ export class AuthService {
         roles,
         scope: user.scope,
       },
+      // La marca viaja ya en el login para pintar el DMS de una vez, sin la
+      // llamada extra a /auth/me y el parpadeo que traería.
+      branding: await this.brandingDelTenant(user.tenantId),
     };
   }
 
@@ -296,6 +307,30 @@ export class AuthService {
       scope: dbUser.scope,
       branches,
       legalEntities,
+      // La marca del cliente viaja con la sesión: el DMS la necesita antes de
+      // pintar la primera pantalla, y pedirla aparte dejaría ver un parpadeo
+      // con los colores de fábrica en cada entrada.
+      branding: await this.brandingDelTenant(dbUser.tenantId),
+    };
+  }
+
+  /** Paleta y logotipo del cliente, resueltos para pintar. */
+  private async brandingDelTenant(tenantId: string) {
+    const t = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    let logoUrl: string | null = null;
+    if (t?.logoKey) {
+      try {
+        // Un día de vigencia: la sesión dura menos, y así el logotipo no se
+        // cae a media jornada en el monitor del taller, que nadie recarga.
+        logoUrl = await this.storage.getSignedUrl(t.logoKey, 24 * 3600);
+      } catch {
+        /* sin almacenamiento se entra igual, solo que sin logotipo */
+      }
+    }
+    return {
+      paletaId: t?.palette ?? PALETA_POR_OMISION.id,
+      paleta: paletaPorId(t?.palette),
+      logoUrl,
     };
   }
 }

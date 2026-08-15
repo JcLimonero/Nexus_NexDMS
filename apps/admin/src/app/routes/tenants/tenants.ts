@@ -15,6 +15,8 @@ import {
   SaasService,
   Tenant,
   TenantsService,
+  PaletaMarca,
+  Branding,
 } from "./tenants.service";
 
 /**
@@ -86,6 +88,7 @@ export class Tenants implements OnInit {
   });
 
   ngOnInit(): void {
+    this.saas.paletas().subscribe({ next: (p) => this.paletas.set(p) });
     this.cargar();
     this.srv.catalogo().subscribe({
       next: (c) => this.catalogo.set(c.modules ?? []),
@@ -323,8 +326,14 @@ export class Tenants implements OnInit {
   /** Cliente cuya ficha se está viendo; null = ninguna abierta. */
   fichaDe = signal<Tenant | null>(null);
   ficha = signal<Ficha | null>(null);
-  /** Qué se ve dentro de la ficha: sus datos o sus cobros. */
-  pestana = signal<"datos" | "pagos">("datos");
+  /** Qué se ve dentro de la ficha: sus datos, sus cobros o su marca. */
+  pestana = signal<"datos" | "pagos" | "marca">("datos");
+
+  // ── Marca del cliente ──
+  paletas = signal<PaletaMarca[]>([]);
+  branding = signal<Branding | null>(null);
+  paletaElegida = signal<string>("nexus");
+  subiendoLogo = signal(false);
 
   datos = {
     saasPlanId: "" as string | null,
@@ -353,6 +362,13 @@ export class Tenants implements OnInit {
     this.fichaDe.set(t);
     this.ficha.set(null);
     this.pestana.set("datos");
+    this.branding.set(null);
+    this.saas.branding(t.id).subscribe({
+      next: (b) => {
+        this.branding.set(b);
+        this.paletaElegida.set(b.paletaId);
+      },
+    });
     this.saas.ficha(t.id).subscribe({
       next: (f) => {
         this.ficha.set(f);
@@ -417,6 +433,55 @@ export class Tenants implements OnInit {
           this.avisar(e?.error?.message || "No se pudo guardar", "error");
         },
       });
+  }
+
+  /** Aplica la paleta elegida al cliente. */
+  guardarPaleta(): void {
+    const t = this.fichaDe();
+    if (!t) return;
+    this.guardando.set(true);
+    this.saas.guardarBranding(t.id, { paletaId: this.paletaElegida() }).subscribe({
+      next: (b) => {
+        this.branding.set(b);
+        this.guardando.set(false);
+        this.avisar("Paleta guardada", "ok");
+      },
+      error: () => {
+        this.guardando.set(false);
+        this.avisar("No se pudo guardar la paleta", "error");
+      },
+    });
+  }
+
+  subirLogo(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const t = this.fichaDe();
+    if (!file || !t) return;
+    this.subiendoLogo.set(true);
+    this.saas.subirLogo(t.id, file).subscribe({
+      next: (b) => {
+        this.branding.set(b);
+        this.subiendoLogo.set(false);
+        this.avisar("Logotipo actualizado", "ok");
+      },
+      error: (e) => {
+        this.subiendoLogo.set(false);
+        this.avisar(e?.error?.message || "No se pudo subir el logotipo", "error");
+      },
+    });
+    input.value = "";
+  }
+
+  quitarLogo(): void {
+    const t = this.fichaDe();
+    if (!t) return;
+    this.saas.guardarBranding(t.id, { logoKey: null }).subscribe({
+      next: (b) => {
+        this.branding.set(b);
+        this.avisar("Logotipo quitado", "ok");
+      },
+    });
   }
 
   registrarPago(): void {

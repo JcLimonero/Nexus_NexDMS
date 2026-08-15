@@ -9,13 +9,17 @@ import {
   Post,
   Put,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { SaasService } from './saas.service';
+import { PALETAS } from '../tenants/branding.paletas';
 import { SaasPayment, SaasPlan } from './entities/saas.entities';
 
 /**
@@ -73,6 +77,36 @@ export class SaasController {
     @Body() dto: { monthlyPrice: number },
   ) {
     return this.saas.guardarPrecioModulo(moduleKey, dto.monthlyPrice);
+  }
+
+  // ─── Marca del cliente ───────────────────────────
+
+  /** Las paletas entre las que puede elegir. */
+  @Get('branding/paletas')
+  paletas() {
+    return PALETAS;
+  }
+
+  @Get('tenants/:id/branding')
+  branding(@Param('id', ParseUUIDPipe) id: string) {
+    return this.saas.branding(id);
+  }
+
+  @Put('tenants/:id/branding')
+  guardarBranding(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { paletaId?: string; logoKey?: string | null },
+  ) {
+    return this.saas.guardarBranding(id, dto);
+  }
+
+  @Post('tenants/:id/branding/logo')
+  @UseInterceptors(FileInterceptor('file'))
+  subirLogo(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.saas.subirLogo(id, file);
   }
 
   /** Todo lo del cliente: ficha, cobro mensual, módulos e historial. */

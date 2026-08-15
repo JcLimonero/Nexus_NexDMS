@@ -1,6 +1,7 @@
 import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Router } from "@angular/router";
+import { BrandingService } from "../shared/services/branding.service";
 import { Observable, tap, catchError, of } from "rxjs";
 
 const API_URL = "/api/v1/auth";
@@ -26,6 +27,7 @@ export interface LoginResponse {
     roles: string[];
     scope?: string;
   };
+  branding?: import("../shared/services/branding.service").Branding;
 }
 
 export interface TotpRequiredResponse {
@@ -48,6 +50,7 @@ export interface AuthUser {
 export class AuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private branding = inject(BrandingService);
 
   login(dto: LoginRequest): Observable<LoginResponse | TotpRequiredResponse> {
     return this.http
@@ -56,6 +59,9 @@ export class AuthService {
         tap((res) => {
           if ("accessToken" in res) {
             this.setSession(res);
+            // El backend manda la marca ya resuelta en el login; se aplica de
+            // una vez para no entrar al DMS con los colores de fábrica.
+            this.branding.establecer(res.branding);
           }
         }),
       );
@@ -69,6 +75,7 @@ export class AuthService {
       }).subscribe({ error: () => {} });
     }
     this.clearSession();
+    this.branding.limpiar();
     this.router.navigate(["/auth/login"]);
   }
 

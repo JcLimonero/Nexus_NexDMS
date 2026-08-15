@@ -1,8 +1,14 @@
 <div class="main-header-left d-none d-lg-block">
   <div class="logo-wrapper">
-    <a href="javascript:void(0)"
-      ><img src="assets/nexus_images/logo/logo_white.png" alt="NexDMS" loading="lazy"
-    /></a>
+    <a href="javascript:void(0)">
+      @if (logoUrl(); as url) {
+        <!-- Logotipo del cliente. Fondo claro detrás porque el suyo puede
+             venir en tinta oscura, y el sidebar es azul de marca. -->
+        <img class="logo-cliente" [src]="url" alt="Logotipo" loading="lazy" />
+      } @else {
+        <img src="assets/nexus_images/logo/logo_white.png" alt="NexDMS" loading="lazy" />
+      }
+    </a>
   </div>
 </div>
 <div class="sidebar custom-scrollbar">

@@ -7,6 +7,8 @@ import {
   ApplicationConfig,
   LOCALE_ID,
   importProvidersFrom,
+  inject,
+  provideAppInitializer,
   provideZoneChangeDetection,
 } from "@angular/core";
 import { registerLocaleData } from "@angular/common";
@@ -28,6 +30,8 @@ import { provideToastr } from "ngx-toastr";
 import { authInterceptor } from "./auth/auth.interceptor";
 import { routes } from "./app.routes";
 import { NexDMSTitleStrategy } from "./shared/services/nexdms-title.strategy";
+import { BrandingService } from "./shared/services/branding.service";
+import { AuthService } from "./auth/auth.service";
 
 /**
  * Español de México en fechas y números.
@@ -57,6 +61,15 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     { provide: TitleStrategy, useClass: NexDMSTitleStrategy },
+    // La marca del cliente se aplica antes de la primera pantalla: primero la
+    // última guardada —instantánea, sin parpadeo de los colores de fábrica— y,
+    // si hay sesión, se refresca contra el servidor.
+    provideAppInitializer(() => {
+      const branding = inject(BrandingService);
+      branding.aplicarGuardado();
+      const auth = inject(AuthService);
+      if (auth.isAuthenticated()) branding.cargar();
+    }),
     importProvidersFrom(
       CalendarModule.forRoot({
         provide: DateAdapter,

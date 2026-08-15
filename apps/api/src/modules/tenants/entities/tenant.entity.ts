@@ -88,6 +88,19 @@ export class Tenant {
   @Column({ name: 'extra_modules', type: 'jsonb', nullable: true })
   extraModules: string[] | null;
 
+  /**
+   * Marca del cliente: su logotipo y su paleta.
+   *
+   * `palette` es el identificador de una paleta del catálogo, no los colores
+   * sueltos: si mañana se corrige un tono por contraste, la corrección alcanza
+   * a todos los que la eligieron en vez de quedarse congelada aquí.
+   */
+  @Column({ name: 'logo_key', type: 'varchar', length: 500, nullable: true })
+  logoKey: string | null;
+
+  @Column({ name: 'palette', type: 'varchar', length: 40, default: 'nexus' })
+  palette: string;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

@@ -8,10 +8,12 @@ import {
   SaasPayment,
   SaasPlan,
 } from './entities/saas.entities';
+import { StorageModule } from '../../common/storage/storage.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SaasPlan, SaasModulePrice, SaasPayment, Tenant]),
+    StorageModule,
   ],
   controllers: [SaasController],
   providers: [SaasService],

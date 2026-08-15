@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from "@angular/core";
+import { Component, DestroyRef, computed, inject } from "@angular/core";
 import { ModulesService } from "../../services/modules.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter } from "rxjs/operators";
@@ -11,6 +11,7 @@ import { AuthService } from "../../../auth/auth.service";
 import { Menu, NavService } from "../../services/nav.service";
 import { FeatherIcons } from "../feather-icons/feather-icons";
 import { SelectorContexto } from "../selector-contexto/selector-contexto";
+import { BrandingService } from "../../services/branding.service";
 
 const ROLE_LABELS: Record<string, string> = {
   SUPERADMIN: "Super administrador",
@@ -54,6 +55,12 @@ export class Sidebar {
   }
 
   private modulesService = inject(ModulesService);
+  private brandingService = inject(BrandingService);
+
+  /** Logotipo del cliente; si no cargó, el del producto. */
+  readonly logoUrl = computed(
+    () => this.brandingService.branding()?.logoUrl ?? null,
+  );
 
   constructor() {
     this.navServices.items

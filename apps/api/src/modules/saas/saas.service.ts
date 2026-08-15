@@ -17,6 +17,8 @@ import {
   SaasPaymentStatusEnum,
   SaasPlan,
 } from './entities/saas.entities';
+import { PALETAS, paletaPorId } from '../tenants/branding.paletas';
+import { StorageService } from '../../common/storage/storage.service';
 
 /** Lo que un cliente paga al mes, desglosado. */
 export interface Cobro {
@@ -37,6 +39,7 @@ export class SaasService {
     private readonly pagoRepo: Repository<SaasPayment>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    private readonly storage: StorageService,
   ) {}
 
   // ─── Planes ─────────────────────────────────────────────────
@@ -236,6 +239,66 @@ export class SaasService {
   }
 
   /** Todo lo que el portal muestra de un cliente en una sola llamada. */
+  /**
+   * Marca del cliente: su paleta y su logotipo.
+   *
+   * Se devuelve la paleta resuelta y no solo su identificador, para que quien
+   * pinte —el DMS, el portal del mostrador, un PDF— no tenga que conocer el
+   * catálogo ni quedarse sin colores si el identificador guardado ya no existe.
+   */
+  async branding(tenantId: string) {
+    const t = await this.tenant(tenantId);
+    return {
+      paletaId: t.palette,
+      paleta: paletaPorId(t.palette),
+      logoKey: t.logoKey,
+      logoUrl: t.logoKey ? await this.ligaDeLogo(t.logoKey) : null,
+    };
+  }
+
+  /** Liga temporal del logotipo; el bucket es privado. */
+  private async ligaDeLogo(key: string): Promise<string | null> {
+    try {
+      return await this.storage.getSignedUrl(key, 24 * 3600);
+    } catch {
+      // Sin almacenamiento la aplicación sigue viva y sin logotipo, que es
+      // preferible a una pantalla que no carga por una imagen.
+      return null;
+    }
+  }
+
+  async guardarBranding(
+    tenantId: string,
+    dto: { paletaId?: string; logoKey?: string | null },
+  ) {
+    const t = await this.tenant(tenantId);
+    if (dto.paletaId !== undefined) {
+      // Se valida contra el catálogo: un identificador inventado dejaría al
+      // cliente con la paleta por omisión sin que nadie entienda por qué.
+      if (!PALETAS.some((p) => p.id === dto.paletaId)) {
+        throw new BadRequestException(`La paleta "${dto.paletaId}" no existe`);
+      }
+      t.palette = dto.paletaId;
+    }
+    if (dto.logoKey !== undefined) t.logoKey = dto.logoKey;
+    await this.tenantRepo.save(t);
+    return this.branding(tenantId);
+  }
+
+  /** Sube el logotipo del cliente y lo deja asignado. */
+  async subirLogo(tenantId: string, file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Archivo requerido');
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('El logotipo debe ser una imagen');
+    }
+    const key = await this.storage.upload(
+      file.buffer,
+      `branding/${tenantId}/logo-${Date.now()}`,
+      file.mimetype,
+    );
+    return this.guardarBranding(tenantId, { logoKey: key });
+  }
+
   async ficha(tenantId: string) {
     const t = await this.tenant(tenantId);
     const [cobro, pagos] = await Promise.all([

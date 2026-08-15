@@ -68,3 +68,15 @@
 .sidebar-user-bottom .dropdown-item app-feather-icons {
   flex-shrink: 0;
 }
+
+/* Logotipo del cliente: el suyo puede venir sobre transparente y en tinta
+   oscura, y el encabezado del sidebar es azul de marca. La cama clara lo deja
+   legible sea cual sea. */
+.logo-cliente {
+  max-height: 40px;
+  max-width: 160px;
+  object-fit: contain;
+  padding: 4px 8px;
+  background: #fff;
+  border-radius: 6px;
+}

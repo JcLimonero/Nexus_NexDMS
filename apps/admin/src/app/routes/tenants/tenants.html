@@ -298,6 +298,13 @@
         >
           Cobros ({{ f.pagos.length }})
         </button>
+        <button
+          type="button"
+          [class.activa]="pestana() === 'marca'"
+          (click)="pestana.set('marca')"
+        >
+          Marca
+        </button>
       </nav>
 
       @if (pestana() === "datos") {
@@ -367,7 +374,7 @@
             Guardar datos
           </button>
         </footer>
-      } @else {
+      } @else if (pestana() === "pagos") {
         <!-- Registrar el cobro del mes, propuesto con lo que le toca pagar -->
         <div class="rejilla cobro">
           <label class="campo">
@@ -452,6 +459,78 @@
             </tbody>
           </table>
         }
+      } @else {
+        <!-- ── Marca del cliente ── -->
+        <p class="marca-intro">
+          El logotipo y los colores se aplican en todo su NexDMS y en lo que
+          imprime: el DMS, el portal del mostrador, los monitores del taller y
+          las órdenes de servicio.
+        </p>
+
+        <h4 class="marca-titulo">Logotipo</h4>
+        <div class="logo-fila">
+          <div class="logo-vista" [class.vacio]="!branding()?.logoUrl">
+            @if (branding()?.logoUrl; as url) {
+              <img [src]="url" alt="Logotipo del cliente" />
+            } @else {
+              <span>Sin logotipo</span>
+            }
+          </div>
+          <div class="logo-acciones">
+            <label class="btn-archivo">
+              {{ subiendoLogo() ? "Subiendo…" : "Subir logotipo" }}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                hidden
+                [disabled]="subiendoLogo()"
+                (change)="subirLogo($event)"
+              />
+            </label>
+            @if (branding()?.logoUrl) {
+              <button type="button" class="btn-secundario" (click)="quitarLogo()">
+                Quitar
+              </button>
+            }
+            <span class="pista">PNG, JPG, SVG o WebP. Fondo transparente, de preferencia.</span>
+          </div>
+        </div>
+
+        <h4 class="marca-titulo">Paleta de colores</h4>
+        <div class="paletas">
+          @for (p of paletas(); track p.id) {
+            <!-- Cada paleta se muestra con sus propios colores: se elige por
+                 cómo se ve, no por su nombre. -->
+            <button
+              type="button"
+              class="paleta"
+              [class.elegida]="paletaElegida() === p.id"
+              (click)="paletaElegida.set(p.id)"
+            >
+              <span class="muestras">
+                <span class="tono" [style.background]="p.primary"></span>
+                <span class="tono" [style.background]="p.primaryHover"></span>
+                <span class="tono" [style.background]="p.tinta"></span>
+                <span class="tono borde" [style.background]="p.primarySoft"></span>
+              </span>
+              <span class="paleta-nombre">{{ p.nombre }}</span>
+              @if (paletaElegida() === p.id) {
+                <span class="marca-check">✓</span>
+              }
+            </button>
+          }
+        </div>
+
+        <footer class="acciones">
+          <button
+            type="button"
+            class="btn-principal"
+            [disabled]="guardando() || paletaElegida() === branding()?.paletaId"
+            (click)="guardarPaleta()"
+          >
+            {{ guardando() ? "Guardando…" : "Aplicar paleta" }}
+          </button>
+        </footer>
       }
     } @else {
       <p class="vacio">Cargando ficha…</p>
