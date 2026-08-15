@@ -2,6 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Router } from "@angular/router";
 import { Observable, catchError, map, of, tap } from "rxjs";
+import { Branding, BrandingService } from "../../shared/services/branding.service";
 
 const API_URL = "/api/v1/auth";
 
@@ -30,6 +31,7 @@ export interface MonitorUser {
 
 interface RespuestaLogin {
   accessToken: string;
+  branding?: Branding;
   refreshToken: string;
   user: MonitorUser;
 }
@@ -38,6 +40,7 @@ interface RespuestaLogin {
 export class MonitorAuthService {
   private http = inject(HttpClient);
   private router = inject(Router);
+  private branding = inject(BrandingService);
 
   entrar(
     email: string,
@@ -54,6 +57,8 @@ export class MonitorAuthService {
             localStorage.setItem(ACCESO, r.accessToken);
             localStorage.setItem(REFRESCO, r.refreshToken);
             localStorage.setItem(USUARIO, JSON.stringify(r.user));
+            // El monitor de pared no pasó por el DMS: su marca llega aquí.
+            this.branding.establecer(r.branding);
           }
         }),
       );

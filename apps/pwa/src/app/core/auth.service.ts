@@ -1,6 +1,7 @@
 import { Injectable, inject, signal } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Observable, tap } from "rxjs";
+import { BrandingService } from "./branding.service";
 
 const STORAGE_TOKEN = "nexdms_pwa_token";
 const STORAGE_USER = "nexdms_pwa_user";
@@ -15,6 +16,7 @@ export interface PwaUser {
 
 interface LoginResponse {
   accessToken: string;
+  branding?: import("./branding.service").Branding;
   refreshToken: string;
   user: PwaUser;
 }
@@ -22,6 +24,7 @@ interface LoginResponse {
 @Injectable({ providedIn: "root" })
 export class AuthService {
   private http = inject(HttpClient);
+  private branding = inject(BrandingService);
 
   user = signal<PwaUser | null>(this.readUser());
 
@@ -50,6 +53,7 @@ export class AuthService {
           localStorage.setItem(STORAGE_TOKEN, res.accessToken);
           localStorage.setItem(STORAGE_USER, JSON.stringify(res.user));
           this.user.set(res.user);
+          this.branding.establecer(res.branding);
         }),
       );
   }
