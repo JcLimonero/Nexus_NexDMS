@@ -15,6 +15,50 @@ import {
 
 const WAREHOUSE_TRANSFERS_URL = "/api/v1/warehouse-transfers";
 const UNIT_RESERVATIONS_URL = "/api/v1/unit-reservations";
+const STOCK_MOVEMENTS_URL = "/api/v1/stock-movements";
+const STOCK_COUNTS_URL = "/api/v1/stock-counts";
+
+export interface ValuationItem {
+  partId: string;
+  sku: string;
+  name: string;
+  stockQuantity: number;
+  averageCost: number;
+  value: number;
+  publicPrice: number;
+  marginPct: number | null;
+}
+
+export interface Valuation {
+  items: ValuationItem[];
+  totals: {
+    parts: number;
+    units: number;
+    costValue: number;
+    retailValue: number;
+  };
+}
+
+export interface StockCountLine {
+  id: string;
+  partId: string;
+  sku: string;
+  name: string;
+  systemQty: number;
+  countedQty: number | null;
+  difference: number | null;
+}
+
+export interface StockCount {
+  id: string;
+  branchId: string;
+  folio: string;
+  status: "OPEN" | "APPLIED" | "CANCELLED";
+  notes: string | null;
+  createdAt: string;
+  appliedAt: string | null;
+  lines?: StockCountLine[];
+}
 
 @Injectable({
   providedIn: "root",
@@ -145,6 +189,68 @@ export class AlmacenService {
       ACTIVE: "Activo",
       CONVERTED: "Convertido",
       RELEASED: "Liberado",
+    };
+    return labels[status] ?? status;
+  }
+
+  // ── Costeo ──
+  getValuation(branchId: string): Observable<Valuation> {
+    const params = new HttpParams().set("branchId", branchId);
+    return this.http.get<Valuation>(`${STOCK_MOVEMENTS_URL}/valuation`, {
+      params,
+    });
+  }
+
+  registrarEntrada(dto: {
+    partId: string;
+    branchId: string;
+    quantity: number;
+    unitCost: number;
+    notes?: string;
+  }): Observable<unknown> {
+    return this.http.post(`${STOCK_MOVEMENTS_URL}/entrada`, dto);
+  }
+
+  // ── Conteo físico ──
+  getStockCounts(branchId?: string): Observable<StockCount[]> {
+    let params = new HttpParams();
+    if (branchId) params = params.set("branchId", branchId);
+    return this.http.get<StockCount[]>(STOCK_COUNTS_URL, { params });
+  }
+
+  getStockCount(id: string): Observable<StockCount> {
+    return this.http.get<StockCount>(`${STOCK_COUNTS_URL}/${id}`);
+  }
+
+  openStockCount(dto: {
+    branchId: string;
+    notes?: string;
+  }): Observable<StockCount> {
+    return this.http.post<StockCount>(STOCK_COUNTS_URL, dto);
+  }
+
+  saveStockCounts(
+    id: string,
+    lines: { lineId: string; countedQty: number }[],
+  ): Observable<StockCount> {
+    return this.http.post<StockCount>(`${STOCK_COUNTS_URL}/${id}/lines`, {
+      lines,
+    });
+  }
+
+  applyStockCount(id: string): Observable<StockCount> {
+    return this.http.post<StockCount>(`${STOCK_COUNTS_URL}/${id}/apply`, {});
+  }
+
+  cancelStockCount(id: string): Observable<StockCount> {
+    return this.http.post<StockCount>(`${STOCK_COUNTS_URL}/${id}/cancel`, {});
+  }
+
+  getCountStatusLabel(status: string): string {
+    const labels: Record<string, string> = {
+      OPEN: "Abierto",
+      APPLIED: "Aplicado",
+      CANCELLED: "Cancelado",
     };
     return labels[status] ?? status;
   }

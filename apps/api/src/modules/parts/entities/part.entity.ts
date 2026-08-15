@@ -72,6 +72,19 @@ export class Part {
   @Column({ name: 'purchase_price', type: 'decimal', precision: 12, scale: 2 })
   purchasePrice: number;
 
+  /**
+   * Costo promedio ponderado. Se recalcula en cada entrada de compra y es la
+   * base para valuar el inventario, en vez del último precio de compra.
+   */
+  @Column({
+    name: 'average_cost',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    default: 0,
+  })
+  averageCost: number;
+
   @Column({ name: 'public_price', type: 'decimal', precision: 12, scale: 2 })
   publicPrice: number;
 

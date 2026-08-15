@@ -64,4 +64,27 @@ export const warehouseRoutes: Routes = [
       },
     ],
   },
+  {
+    path: "costeo",
+    loadComponent: () =>
+      import("./costeo/costeo").then((m) => m.Costeo),
+    data: { title: "Costeo", breadcrumb: "Costeo" },
+  },
+  {
+    path: "conteos",
+    children: [
+      {
+        path: "",
+        loadComponent: () =>
+          import("./conteos/list/conteos-list").then((m) => m.ConteosList),
+        data: { title: "Conteos físicos", breadcrumb: "Conteos" },
+      },
+      {
+        path: ":id",
+        loadComponent: () =>
+          import("./conteos/detail/conteo-detail").then((m) => m.ConteoDetail),
+        data: { title: "Detalle conteo", breadcrumb: "Detalle" },
+      },
+    ],
+  },
 ];

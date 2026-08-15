@@ -6,6 +6,7 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { StockMovementsService } from './stock-movements.service';
 import { CreateAdjustmentDto } from './dto/create-adjustment.dto';
+import { PurchaseEntryDto } from './dto/purchase-entry.dto';
 import { FilterStockMovementsDto } from './dto/filter-stock-movements.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
@@ -31,5 +32,23 @@ export class StockMovementsController {
     @Body() dto: CreateAdjustmentDto,
   ) {
     return this.stockMovementsService.createAdjustment(user, dto);
+  }
+
+  @Post('entrada')
+  @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE')
+  registrarEntrada(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: PurchaseEntryDto,
+  ) {
+    return this.stockMovementsService.registrarEntrada(user, dto);
+  }
+
+  @Get('valuation')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE')
+  valuation(
+    @CurrentUser() user: UserPayload,
+    @Query('branchId') branchId: string,
+  ) {
+    return this.stockMovementsService.valuation(user, branchId);
   }
 }

@@ -17,6 +17,7 @@ import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { StockLocationsModule } from './modules/stock-locations/stock-locations.module';
 import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
+import { StockCountsModule } from './modules/stock-counts/stock-counts.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { SaasModule } from './modules/saas/saas.module';
 import { VehicleHistoryModule } from './modules/vehicle-history/vehicle-history.module';
@@ -129,6 +130,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     PurchaseOrdersModule,
     StockLocationsModule,
     StockMovementsModule,
+    StockCountsModule,
     SuppliersModule,
     UsersModule,
     CashRegisterModule,
