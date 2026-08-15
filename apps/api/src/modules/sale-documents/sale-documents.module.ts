@@ -32,5 +32,6 @@ import { AuthModule } from '../auth/auth.module';
   ],
   controllers: [SaleDocumentsController],
   providers: [SaleDocumentsService],
+  exports: [SaleDocumentsService],
 })
 export class SaleDocumentsModule {}

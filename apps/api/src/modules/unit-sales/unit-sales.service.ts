@@ -38,6 +38,10 @@ import { CfdiService } from '../cfdi/cfdi.service';
 import { UnitAccessoriesService } from '../unit-accessories/unit-accessories.service';
 import { UnitSaleAccessory } from '../unit-accessories/entities/unit-sale-accessory.entity';
 import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { hasModule } from '../modules/module-registry';
+import { UnitSalePaymentsService } from './unit-sale-payments.service';
+import { SaleDocumentsService } from '../sale-documents/sale-documents.service';
 
 @Injectable()
 export class UnitSalesService {
@@ -58,9 +62,13 @@ export class UnitSalesService {
     private readonly reservationRepo: Repository<UnitReservation>,
     @InjectRepository(UnitSaleExtra)
     private readonly saleExtraRepo: Repository<UnitSaleExtra>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly unitAccessoriesService: UnitAccessoriesService,
+    private readonly pagosService: UnitSalePaymentsService,
+    private readonly saleDocuments: SaleDocumentsService,
   ) {}
 
   private async generateFolio(
@@ -308,6 +316,33 @@ export class UnitSalesService {
       if (!plan) {
         throw new BadRequestException(
           'Para crédito agencia debe existir un plan de pago creado',
+        );
+      }
+    }
+
+    // ── No se marca como vendida sin sus documentos ──
+    // Cada pago registrado necesita su comprobante guardado; el dinero se
+    // apunta cuando entra, pero la venta no cierra hasta tener el recibo.
+    const sinComprobante = await this.pagosService.pagosSinComprobante(id);
+    if (sinComprobante > 0) {
+      throw new BadRequestException(
+        `Hay ${sinComprobante} pago(s) sin comprobante; adjúntalos antes de cerrar la venta`,
+      );
+    }
+
+    // Y el expediente documental completo, pero solo si el cliente contrató
+    // ese módulo: quien no lo tiene vende sin esa exigencia.
+    const tenant = await this.tenantRepo.findOne({
+      where: { id: user.tenantId },
+    });
+    if (
+      tenant &&
+      hasModule(tenant.plan, tenant.enabledModules ?? null, 'sale-documents')
+    ) {
+      const exp = await this.saleDocuments.expediente(user, id);
+      if (!exp.completo) {
+        throw new BadRequestException(
+          `Faltan documentos obligatorios: ${exp.faltan.join(', ')}`,
         );
       }
     }
