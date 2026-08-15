@@ -53,10 +53,13 @@ export class CotizacionesService {
     return this.http.post<Quotation>(`${QUOTATIONS_URL}/${id}/send`, {});
   }
 
-  convertQuotation(id: string): Observable<{ type: string; id?: string }> {
-    return this.http.post<{ type: string; id?: string }>(
+  convertQuotation(
+    id: string,
+    vehicleId?: string,
+  ): Observable<{ type: string; id: string; folio: string }> {
+    return this.http.post<{ type: string; id: string; folio: string }>(
       `${QUOTATIONS_URL}/${id}/convert`,
-      {}
+      vehicleId ? { vehicleId } : {},
     );
   }
 

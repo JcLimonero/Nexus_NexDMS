@@ -6,10 +6,12 @@ import { ToastrService } from "ngx-toastr";
 
 import { CotizacionesService } from "../cotizaciones.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
+import { RelacionesService } from "../../clientes/relaciones/relaciones.service";
 import {
   Quotation,
   QuotationItem,
   QuotationStatus,
+  QuotationType,
 } from "../models/quotation.model";
 
 @Component({
@@ -22,6 +24,7 @@ import {
 export class CotizacionDetail implements OnInit {
   private cotizacionesService = inject(CotizacionesService);
   private branchesService = inject(BranchesService);
+  private relacionesService = inject(RelacionesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
@@ -35,6 +38,12 @@ export class CotizacionDetail implements OnInit {
   sending = signal(false);
   converting = signal(false);
   rejectReason = signal("");
+  readonly QT = QuotationType;
+
+  /** Elección del vehículo para convertir una cotización de servicio. */
+  vehiculoAbierto = signal(false);
+  vehiculosCliente = signal<{ vehicleId: string; descripcion: string }[]>([]);
+  vehiculoElegido = "";
 
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({
@@ -178,18 +187,70 @@ export class CotizacionDetail implements OnInit {
   onConvert(): void {
     const q = this.cotizacion();
     if (!q || this.converting()) return;
-    if (!confirm("¿Convertir esta cotización en orden de servicio/venta?")) return;
 
+    // Una de servicio necesita el vehículo del cliente: se elige antes. Una de
+    // unidad o de refacciones se convierte directo.
+    if (q.type === QuotationType.SERVICE) {
+      if (!q.clientId) {
+        this.toastr.warning("La cotización necesita un cliente");
+        return;
+      }
+      this.vehiculoElegido = "";
+      this.relacionesService.vehiculosDelCliente(q.clientId).subscribe({
+        next: (vs) => {
+          this.vehiculosCliente.set(
+            vs.map((v) => ({ vehicleId: v.vehicleId, descripcion: v.descripcion })),
+          );
+          if (vs.length === 1) {
+            // Con un solo vehículo no se pregunta: se usa ese.
+            this.convertir(this.vehiculosCliente()[0].vehicleId);
+          } else if (vs.length === 0) {
+            this.toastr.warning(
+              "El cliente no tiene vehículos registrados; regístralo antes de abrir la orden",
+            );
+          } else {
+            this.vehiculoAbierto.set(true);
+          }
+        },
+        error: () => this.toastr.error("No se pudieron cargar los vehículos"),
+      });
+      return;
+    }
+
+    if (!confirm("¿Convertir esta cotización en venta de unidad?")) return;
+    this.convertir();
+  }
+
+  convertirConVehiculo(): void {
+    if (!this.vehiculoElegido) {
+      this.toastr.warning("Elige el vehículo");
+      return;
+    }
+    this.vehiculoAbierto.set(false);
+    this.convertir(this.vehiculoElegido);
+  }
+
+  private convertir(vehicleId?: string): void {
+    const q = this.cotizacion();
+    if (!q) return;
     this.converting.set(true);
-    this.cotizacionesService.convertQuotation(q.id).subscribe({
+    this.cotizacionesService.convertQuotation(q.id, vehicleId).subscribe({
       next: (result) => {
         this.cotizacion.update((prev) =>
-          prev ? { ...prev, status: QuotationStatus.CONVERTED as QuotationStatus } : null
-        );
-        this.toastr.success(
-          `Cotización convertida (${result.type === "unit_sale" ? "venta de unidad" : "orden de servicio"})`
+          prev
+            ? { ...prev, status: QuotationStatus.CONVERTED as QuotationStatus }
+            : null,
         );
         this.converting.set(false);
+        this.toastr.success(
+          `Cotización convertida en ${result.folio}`,
+        );
+        // Se lleva a lo creado: cerrar el círculo es el punto de convertir.
+        const destino =
+          result.type === "unit_sale"
+            ? ["/sales", result.id]
+            : ["/workshop/service-orders", result.id];
+        this.router.navigate(destino);
       },
       error: (err) => {
         this.toastr.error(err?.error?.message || "Error al convertir");

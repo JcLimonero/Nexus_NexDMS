@@ -121,6 +121,18 @@ export class Quotation {
   @Column({ name: 'validity_date', type: 'date', nullable: true })
   validityDate: Date | null;
 
+  /** En qué se convirtió: 'unit_sale' o 'service_order', y su id. */
+  @Column({
+    name: 'converted_to_type',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  convertedToType: string | null;
+
+  @Column({ name: 'converted_to_id', type: 'uuid', nullable: true })
+  convertedToId: string | null;
+
   @Column({ name: 'pdf_key', type: 'varchar', length: 500, nullable: true })
   pdfKey: string | null;
 

@@ -9,6 +9,8 @@ import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { BranchesModule } from '../branches/branches.module';
+import { UnitSalesModule } from '../unit-sales/unit-sales.module';
+import { ServiceOrdersModule } from '../service-orders/service-orders.module';
 
 @Module({
   imports: [
@@ -21,6 +23,8 @@ import { BranchesModule } from '../branches/branches.module';
       CatalogUnit,
     ]),
     BranchesModule,
+    UnitSalesModule,
+    ServiceOrdersModule,
   ],
   controllers: [QuotationsController],
   providers: [QuotationsService],

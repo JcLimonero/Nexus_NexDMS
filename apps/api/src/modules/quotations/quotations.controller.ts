@@ -100,7 +100,8 @@ export class QuotationsController {
   convert(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { vehicleId?: string },
   ) {
-    return this.quotationsService.convert(user, id);
+    return this.quotationsService.convert(user, id, dto ?? {});
   }
 }

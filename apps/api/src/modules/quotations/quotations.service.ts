@@ -22,6 +22,9 @@ import { UpdateQuotationDto } from './dto/update-quotation.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { BranchesService } from '../branches/branches.service';
+import { UnitSalesService } from '../unit-sales/unit-sales.service';
+import { UnitSaleFinancingTypeEnum } from '../unit-sales/entities/unit-sale.entity';
+import { ServiceOrdersService } from '../service-orders/service-orders.service';
 
 @Injectable()
 export class QuotationsService {
@@ -38,6 +41,8 @@ export class QuotationsService {
     private readonly catalogUnitRepo: Repository<CatalogUnit>,
     private readonly dataSource: DataSource,
     private readonly branchesService: BranchesService,
+    private readonly unitSalesService: UnitSalesService,
+    private readonly serviceOrdersService: ServiceOrdersService,
   ) {}
 
   private applyScope(
@@ -421,10 +426,25 @@ export class QuotationsService {
     return this.findOne(user, id);
   }
 
+  /**
+   * Convierte una cotización en lo que corresponde y cierra el círculo.
+   *
+   * Antes solo marcaba CONVERTED sin crear nada, que es lo que un vendedor no
+   * entendía. Ahora:
+   *  - UNIT → crea la venta de la unidad cotizada con su precio.
+   *  - SERVICE → crea la orden de servicio para el vehículo indicado, con el
+   *    trabajo cotizado como falla reportada.
+   *  - PARTS → no se convierte sola: es una venta de mostrador que se cobra en
+   *    caja, y ahí se emite; se avisa en vez de crear algo a medias.
+   *
+   * Se exige que la cotización tenga cliente, y el vehículo para las de
+   * servicio, porque una orden no existe sin uno.
+   */
   async convert(
     user: UserPayload,
     id: string,
-  ): Promise<{ type: string; id?: string }> {
+    opts: { vehicleId?: string } = {},
+  ): Promise<{ type: string; id: string; folio: string }> {
     const quotation = await this.findOne(user, id);
     if (quotation.status === QuotationStatusEnum.CONVERTED) {
       throw new BadRequestException('Esta cotización ya fue convertida');
@@ -439,15 +459,78 @@ export class QuotationsService {
         'Solo cotizaciones enviadas, aceptadas o aprobadas pueden convertirse',
       );
     }
-    await this.quotationRepo.update(id, {
-      status: QuotationStatusEnum.CONVERTED,
+    if (!quotation.clientId) {
+      throw new BadRequestException(
+        'La cotización necesita un cliente para convertirse',
+      );
+    }
+
+    if (quotation.type === QuotationTypeEnum.UNIT) {
+      return this.convertirAVenta(user, quotation);
+    }
+    if (quotation.type === QuotationTypeEnum.SERVICE) {
+      return this.convertirAOrden(user, quotation, opts.vehicleId);
+    }
+    throw new BadRequestException(
+      'Una cotización de refacciones se cobra como venta de mostrador en caja, ' +
+        'no se convierte en orden. Úsala como referencia al cobrar.',
+    );
+  }
+
+  private async convertirAVenta(user: UserPayload, quotation: Quotation) {
+    const unitItem = quotation.items?.find((i) => i.catalogUnitId);
+    if (!unitItem?.catalogUnitId) {
+      throw new BadRequestException(
+        'La cotización no tiene una unidad para vender',
+      );
+    }
+    const venta = await this.unitSalesService.create(user, {
+      catalogUnitId: unitItem.catalogUnitId,
+      clientId: quotation.clientId!,
+      finalPrice: Number(quotation.total),
+      downPayment: 0,
+      financingType: UnitSaleFinancingTypeEnum.CASH,
+      notes: `Originada de la cotización ${quotation.folio}`,
     });
-    return {
-      type:
-        quotation.type === QuotationTypeEnum.UNIT
-          ? 'unit_sale'
-          : 'service_order',
-      id: undefined,
-    };
+    await this.quotationRepo.update(quotation.id, {
+      status: QuotationStatusEnum.CONVERTED,
+      convertedToType: 'unit_sale',
+      convertedToId: venta.id,
+    });
+    return { type: 'unit_sale', id: venta.id, folio: venta.folio };
+  }
+
+  private async convertirAOrden(
+    user: UserPayload,
+    quotation: Quotation,
+    vehicleId?: string,
+  ) {
+    if (!vehicleId) {
+      throw new BadRequestException(
+        'Indica el vehículo del cliente para abrir la orden de servicio',
+      );
+    }
+    // El trabajo cotizado va como falla reportada, para no perderlo; el taller
+    // arma los conceptos reales sobre la orden. No se descuentan refacciones
+    // aquí: eso ocurre cuando el trabajo se ejecuta.
+    const trabajo = (quotation.items ?? [])
+      .map((i) => `• ${i.description} (x${i.quantity})`)
+      .join('\n');
+    const orden = await this.serviceOrdersService.create(user, {
+      branchId: quotation.branchId,
+      ownerId: quotation.clientId!,
+      vehicleId,
+      reportedFault:
+        `Cotización ${quotation.folio}\n${trabajo}`.trim() ||
+        `Cotización ${quotation.folio}`,
+      kmIn: 0,
+      quotationId: quotation.id,
+    });
+    await this.quotationRepo.update(quotation.id, {
+      status: QuotationStatusEnum.CONVERTED,
+      convertedToType: 'service_order',
+      convertedToId: orden.id,
+    });
+    return { type: 'service_order', id: orden.id, folio: orden.folio };
   }
 }

@@ -185,7 +185,7 @@
                   @if (converting()) {
                     <span class="spinner-border spinner-border-sm me-1"></span>
                   }
-                  Convertir a orden
+                  {{ cotizacion()?.type === QT.SERVICE ? "Convertir a orden" : "Convertir a venta" }}
                 </button>
               }
             </div>
@@ -195,3 +195,44 @@
     </div>
   </div>
 </div>
+
+@if (vehiculoAbierto()) {
+  <div class="modal-backdrop fade show"></div>
+  <div class="modal fade show d-block" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">¿Para qué vehículo es la orden?</h5>
+          <button type="button" class="btn-close" (click)="vehiculoAbierto.set(false)"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-2">
+            El cliente tiene varios vehículos. Elige a cuál abrir la orden de servicio.
+          </p>
+          <select class="form-select" [(ngModel)]="vehiculoElegido">
+            <option value="">— Selecciona —</option>
+            @for (v of vehiculosCliente(); track v.vehicleId) {
+              <option [value]="v.vehicleId">{{ v.descripcion }}</option>
+            }
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" (click)="vehiculoAbierto.set(false)">
+            Cancelar
+          </button>
+          <button
+            type="button"
+            class="btn btn-info"
+            (click)="convertirConVehiculo()"
+            [disabled]="converting() || !vehiculoElegido"
+          >
+            @if (converting()) {
+              <span class="spinner-border spinner-border-sm me-1"></span>
+            }
+            Abrir orden
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
