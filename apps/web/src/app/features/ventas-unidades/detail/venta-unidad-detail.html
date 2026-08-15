@@ -55,6 +55,22 @@
                 </dl>
               </div>
             </div>
+
+            <!-- Expediente de documentos: qué exige esta venta según a quién,
+                 cómo y qué se vende, y cuánto falta para poder cerrarla. -->
+            <div class="card mt-4">
+              <div class="card-header">
+                <h5>Documentos de la venta</h5>
+                <span>Requisitos según el cliente, el tipo de venta y la unidad</span>
+              </div>
+              <div class="card-body">
+                <app-expediente-venta
+                  [unitSaleId]="s.id"
+                  [clientId]="s.clientId"
+                  [puedeRevisar]="puedeRevisar"
+                />
+              </div>
+            </div>
           }
         </div>
       </div>

@@ -12,6 +12,7 @@ import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { SaleDocumentsService } from './sale-documents.service';
 import { SaleDocumentsController } from './sale-documents.controller';
 import { StorageModule } from '../../common/storage/storage.module';
+import { ModulesModule } from '../modules/modules.module';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
@@ -26,6 +27,7 @@ import { AuthModule } from '../auth/auth.module';
       CatalogUnit,
     ]),
     StorageModule,
+    ModulesModule,
     AuthModule,
   ],
   controllers: [SaleDocumentsController],

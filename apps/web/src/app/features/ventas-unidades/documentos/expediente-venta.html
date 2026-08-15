@@ -1,0 +1,121 @@
+@if (cargando()) {
+  <p class="text-muted mb-0">Cargando expediente…</p>
+} @else if (expediente(); as e) {
+  <div class="expediente">
+    <!-- Qué combinación rige este expediente: es lo que decide qué se pide. -->
+    <div class="ejes">
+      <span class="eje">{{ etiquetaCliente[e.ejes.clientType || ""] || "—" }}</span>
+      <span class="eje">{{ etiquetaVenta[e.ejes.financingType || ""] || "—" }}</span>
+      <span class="eje">{{ etiquetaVehiculo[e.ejes.vehicleType || ""] || "—" }}</span>
+    </div>
+
+    <!-- El veredicto primero: es lo que decide si la venta puede cerrarse. -->
+    @if (e.completo) {
+      <div class="veredicto ok">Expediente completo</div>
+    } @else {
+      <div class="veredicto falta">
+        Faltan {{ e.faltan.length }} documento(s) obligatorio(s)
+      </div>
+    }
+
+    <ng-container
+      *ngTemplateOutlet="lista; context: { $implicit: obligatorios(), titulo: 'Obligatorios' }"
+    />
+    @if (opcionales().length) {
+      <ng-container
+        *ngTemplateOutlet="lista; context: { $implicit: opcionales(), titulo: 'Opcionales' }"
+      />
+    }
+  </div>
+}
+
+<ng-template #lista let-reqs let-titulo="titulo">
+  <h6 class="grupo">{{ titulo }}</h6>
+  <div class="requisitos">
+    @for (r of reqs; track r.documentTypeId) {
+      <div class="requisito" [attr.data-estado]="estado(r)">
+        <span class="semaforo"></span>
+
+        <div class="req-cuerpo">
+          <div class="req-nombre">
+            {{ r.name }}
+            <span class="ambito">{{ r.scope === "CLIENT" ? "del cliente" : "de la venta" }}</span>
+          </div>
+          <div class="req-detalle">
+            @switch (estado(r)) {
+              @case ("cumplido") { <span class="txt-ok">Aprobado</span> }
+              @case ("revisar") { <span class="txt-revisar">Cargado, por revisar</span> }
+              @case ("rechazado") { <span class="txt-rechazado">Rechazado — vuelve a subirlo</span> }
+              @case ("falta") {
+                @if (r.cumplido?.vencido) {
+                  <span class="txt-rechazado">Vencido — actualízalo</span>
+                } @else if (r.scope === "CLIENT") {
+                  <span class="txt-falta">Falta — se sube en la ficha del cliente</span>
+                } @else {
+                  <span class="txt-falta">Falta</span>
+                }
+              }
+            }
+          </div>
+        </div>
+
+        <div class="req-acciones">
+          @if (r.cumplido) {
+            <button type="button" class="btn btn-light btn-sm" (click)="descargar(r)">
+              Ver
+            </button>
+          }
+
+          <!-- Solo los de la venta se suben aquí; los del cliente, en su ficha. -->
+          @if (r.scope === "SALE") {
+            @if (fechaPara() === r.documentTypeId) {
+              <input
+                type="date"
+                class="form-control field-sm"
+                [(ngModel)]="fechaVencimiento"
+              />
+              <button type="button" class="btn btn-primary btn-sm" (click)="confirmarFecha(archivo)">
+                Elegir archivo
+              </button>
+            } @else {
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                [disabled]="subiendo() === r.documentTypeId"
+                (click)="pedirArchivo(r, archivo)"
+              >
+                {{ subiendo() === r.documentTypeId ? "Subiendo…" : (r.cumplido ? "Reemplazar" : "Subir") }}
+              </button>
+            }
+            <input
+              #archivo
+              type="file"
+              accept="image/*,application/pdf"
+              hidden
+              (change)="onArchivo($event, r)"
+            />
+            @if (r.cumplido?.origen === "VENTA") {
+              <button type="button" class="btn btn-light btn-sm" (click)="quitar(r)">
+                Quitar
+              </button>
+            }
+          } @else if (!r.cumplido && clientId()) {
+            <a class="btn btn-light btn-sm" [href]="'/clients/' + clientId()" target="_blank">
+              Ir al cliente
+            </a>
+          }
+
+          <!-- Revisión: solo para quien puede, y solo si hay algo por revisar. -->
+          @if (puedeRevisar() && r.cumplido && r.cumplido.status === "PENDING") {
+            <button type="button" class="btn btn-success btn-sm" (click)="aprobar(r)">
+              Aprobar
+            </button>
+            <button type="button" class="btn btn-outline-danger btn-sm" (click)="rechazar(r)">
+              Rechazar
+            </button>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</ng-template>

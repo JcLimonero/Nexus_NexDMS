@@ -19,6 +19,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 import { SaleDocumentsService } from './sale-documents.service';
 import {
   SaleDocumentRule,
@@ -28,9 +29,10 @@ import {
 
 @ApiTags('Documentos de venta')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
-// Se protege por rol, igual que el propio módulo de ventas de unidades: quien
-// puede vender puede juntar el expediente.
+@UseGuards(AuthGuard, RolesGuard, ModuleGuard)
+// Módulo propio, que se cobra aparte: el expediente documental. Quien no lo
+// tiene contratado vende unidades igual, solo que sin exigir documentos.
+@RequiresModule('sale-documents')
 @Controller('sale-documents')
 export class SaleDocumentsController {
   constructor(private readonly service: SaleDocumentsService) {}

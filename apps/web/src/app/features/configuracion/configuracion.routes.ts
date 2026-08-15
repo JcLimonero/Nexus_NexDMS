@@ -55,6 +55,17 @@ export const settingsRoutes: Routes = [
     data: { title: "Razones sociales", breadcrumb: "Razones sociales" },
   },
   {
+    path: "documentos-venta",
+    loadComponent: () =>
+      import(
+        "../ventas-unidades/documentos/config-documentos-venta"
+      ).then((m) => m.ConfigDocumentosVenta),
+    data: {
+      title: "Documentos de venta",
+      breadcrumb: "Documentos de venta",
+    },
+  },
+  {
     path: "general",
     loadComponent: () =>
       import("../../components/placeholder/placeholder").then(

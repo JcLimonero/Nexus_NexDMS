@@ -23,6 +23,7 @@ export type ModuleKey =
   | 'warehouse'
   | 'cash-register'
   | 'sales'
+  | 'sale-documents'
   | 'quotes'
   | 'workshop'
   | 'reception'
@@ -149,6 +150,20 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     route: '/sales',
     minPlan: TenantPlanEnum.PRO,
     hasDashboard: true,
+  },
+  {
+    // Complemento de ventas que se cobra aparte: el expediente documental por
+    // operación. Requiere 'sales' —sin poder vender, el expediente no aplica—
+    // y no tiene pantalla propia: vive dentro del detalle de la venta y de la
+    // configuración. Por eso no lleva `route` ni `hasDashboard`.
+    key: 'sale-documents',
+    name: 'Expediente documental de ventas',
+    description:
+      'Documentos requeridos por venta según tipo de cliente, tipo de venta y ' +
+      'tipo de vehículo, con carga, revisión y validación antes de cerrar.',
+    icon: 'file-text',
+    route: '/settings/documentos-venta',
+    minPlan: TenantPlanEnum.PRO,
   },
   {
     key: 'purchases',

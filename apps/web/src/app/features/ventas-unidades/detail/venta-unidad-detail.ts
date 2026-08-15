@@ -5,11 +5,13 @@ import { ToastrService } from "ngx-toastr";
 
 import { VentasUnidadesService } from "../ventas-unidades.service";
 import { UnitSale, UnitSaleStatus } from "../models/unit-sale.model";
+import { ExpedienteVenta } from "../documentos/expediente-venta";
+import { AuthService } from "../../../auth/auth.service";
 
 @Component({
   selector: "app-venta-unidad-detail",
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, ExpedienteVenta],
   templateUrl: "./venta-unidad-detail.html",
   styleUrls: ["./venta-unidad-detail.scss"],
 })
@@ -18,6 +20,12 @@ export class VentaUnidadDetail implements OnInit {
   private router = inject(Router);
   private ventasService = inject(VentasUnidadesService);
   private toastr = inject(ToastrService);
+  private auth = inject(AuthService);
+
+  /** Quién puede aprobar o rechazar documentos del expediente. */
+  puedeRevisar = (this.auth.getUser()?.roles ?? []).some((r) =>
+    ["SUPERADMIN", "ADMIN", "MANAGER"].includes(r),
+  );
 
   sale = signal<UnitSale | null>(null);
   loading = signal(true);
