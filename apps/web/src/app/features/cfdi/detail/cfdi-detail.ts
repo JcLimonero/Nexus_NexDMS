@@ -40,6 +40,10 @@ export class CfdiDetail implements OnInit {
   pagoDate = signal("");
   pagoMethod = signal("PUE");
   pagoReference = signal("");
+  // Nota de crédito
+  notaMotivo = signal("");
+  notaMonto = signal<number | null>(null);
+  generandoNota = signal(false);
 
   readonly motivosCancelacion = [
     { value: "01", label: "01 - Comprobante emitido con errores con relación" },
@@ -104,6 +108,17 @@ export class CfdiDetail implements OnInit {
     return !!c && c.status === CfdiStatus.VALID && c.cfdiType === "INCOME";
   }
 
+  /** Solo un ingreso vigente (no una global ni un egreso) se puede acreditar. */
+  canNotaCredito(): boolean {
+    const c = this.cfdi();
+    return (
+      !!c &&
+      c.status === CfdiStatus.VALID &&
+      c.cfdiType === "INCOME" &&
+      c.referenceType !== "GlobalInvoice"
+    );
+  }
+
   openXml(): void {
     const c = this.cfdi();
     if (c?.xmlUrl) window.open(c.xmlUrl, "_blank");
@@ -153,6 +168,39 @@ export class CfdiDetail implements OnInit {
         this.resending.set(false);
       },
     });
+  }
+
+  onNotaCredito(): void {
+    const c = this.cfdi();
+    if (!c || this.generandoNota()) return;
+
+    const motivo = this.notaMotivo().trim();
+    if (motivo.length < 3) {
+      this.toastr.warning("Indica el motivo de la nota de crédito");
+      return;
+    }
+    const monto = this.notaMonto();
+    if (monto !== null && (monto <= 0 || monto > Number(c.total))) {
+      this.toastr.warning("El monto debe ser mayor a cero y no superar el total");
+      return;
+    }
+
+    this.generandoNota.set(true);
+    this.cfdiService
+      .notaCredito(c.id, { motivo, monto: monto ?? undefined })
+      .subscribe({
+        next: (nc) => {
+          this.generandoNota.set(false);
+          this.toastr.success("Nota de crédito timbrada");
+          this.notaMotivo.set("");
+          this.notaMonto.set(null);
+          this.router.navigate(["/cfdi", nc.id]);
+        },
+        error: (err) => {
+          this.generandoNota.set(false);
+          this.toastr.error(err?.error?.message || "Error al generar la nota de crédito");
+        },
+      });
   }
 
   onRegisterPago(): void {

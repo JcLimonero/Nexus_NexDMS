@@ -15,6 +15,8 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { FilterCfdiDto } from './dto/filter-cfdi.dto';
 import { CancelCfdiDto } from './dto/cancel-cfdi.dto';
 import { RegisterPagoDto } from './dto/register-pago.dto';
+import { NotaCreditoDto } from './dto/nota-credito.dto';
+import { FacturaGlobalDto } from './dto/factura-global.dto';
 
 @ApiTags('CFDI')
 @Controller('cfdi')
@@ -49,6 +51,23 @@ export class CfdiController {
     @Param('referenceId') referenceId: string,
   ) {
     return this.cfdiService.generarIngreso(referenceType, referenceId);
+  }
+
+  @Post('global')
+  generarGlobal(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: FacturaGlobalDto,
+  ) {
+    return this.cfdiService.generarGlobal(user, dto);
+  }
+
+  @Post(':id/nota-credito')
+  notaCredito(
+    @CurrentUser() user: UserPayload,
+    @Param('id') id: string,
+    @Body() dto: NotaCreditoDto,
+  ) {
+    return this.cfdiService.generarNotaCredito(user, id, dto);
   }
 
   @Post(':id/cancelar')

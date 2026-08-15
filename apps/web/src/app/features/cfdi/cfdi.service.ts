@@ -57,6 +57,25 @@ export class CfdiService {
     );
   }
 
+  notaCredito(
+    id: string,
+    dto: { motivo: string; monto?: number }
+  ): Observable<CfdiLog> {
+    return this.http.post<CfdiLog>(`${CFDI_URL}/${id}/nota-credito`, dto);
+  }
+
+  facturaGlobal(dto: {
+    branchId: string;
+    year: number;
+    month: number;
+    periodicity?: string;
+  }): Observable<{ cfdi: CfdiLog; incluidas: number; total: number }> {
+    return this.http.post<{ cfdi: CfdiLog; incluidas: number; total: number }>(
+      `${CFDI_URL}/global`,
+      dto
+    );
+  }
+
   getTypeLabel(type: string): string {
     const labels: Record<string, string> = {
       INCOME: "Ingreso",

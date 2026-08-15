@@ -1,7 +1,8 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { RouterModule } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
+import { ToastrService } from "ngx-toastr";
 import { Subject } from "rxjs";
 import { debounceTime, switchMap } from "rxjs/operators";
 
@@ -20,6 +21,8 @@ import { FeatherIcons } from "../../../shared/components/feather-icons/feather-i
 export class CfdiList implements OnInit {
   private cfdiService = inject(CfdiService);
   private branchesService = inject(BranchesService);
+  private router = inject(Router);
+  private toastr = inject(ToastrService);
 
   cfdis = signal<CfdiLog[]>([]);
   branches = signal<{ id: string; name: string }[]>([]);
@@ -38,6 +41,28 @@ export class CfdiList implements OnInit {
   fechaHasta = signal<string>("");
 
   private loadSubject = new Subject<void>();
+
+  // Factura global
+  globalAbierto = signal(false);
+  globalBranch = signal<string>("");
+  globalYear = signal<number>(new Date().getFullYear());
+  globalMonth = signal<number>(new Date().getMonth() + 1);
+  globalPeriodicity = signal<string>("month");
+  generandoGlobal = signal(false);
+  readonly meses = [
+    { v: 1, n: "Enero" },
+    { v: 2, n: "Febrero" },
+    { v: 3, n: "Marzo" },
+    { v: 4, n: "Abril" },
+    { v: 5, n: "Mayo" },
+    { v: 6, n: "Junio" },
+    { v: 7, n: "Julio" },
+    { v: 8, n: "Agosto" },
+    { v: 9, n: "Septiembre" },
+    { v: 10, n: "Octubre" },
+    { v: 11, n: "Noviembre" },
+    { v: 12, n: "Diciembre" },
+  ];
 
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({
@@ -107,5 +132,46 @@ export class CfdiList implements OnInit {
 
   getReferenceTypeLabel(type: string): string {
     return this.cfdiService.getReferenceTypeLabel(type);
+  }
+
+  // ── Factura global ──
+  abrirGlobal(): void {
+    if (!this.globalBranch()) {
+      const primera = this.branches()[0];
+      if (primera) this.globalBranch.set(primera.id);
+    }
+    this.globalAbierto.set(true);
+  }
+
+  generarGlobal(): void {
+    if (this.generandoGlobal()) return;
+    if (!this.globalBranch()) {
+      this.toastr.warning("Selecciona la sucursal");
+      return;
+    }
+    this.generandoGlobal.set(true);
+    this.cfdiService
+      .facturaGlobal({
+        branchId: this.globalBranch(),
+        year: this.globalYear(),
+        month: this.globalMonth(),
+        periodicity: this.globalPeriodicity(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.generandoGlobal.set(false);
+          this.globalAbierto.set(false);
+          this.toastr.success(
+            `Factura global timbrada: ${res.incluidas} ticket(s) agrupado(s)`,
+          );
+          this.router.navigate(["/cfdi", res.cfdi.id]);
+        },
+        error: (err) => {
+          this.generandoGlobal.set(false);
+          this.toastr.error(
+            err?.error?.message || "No se pudo generar la factura global",
+          );
+        },
+      });
   }
 }

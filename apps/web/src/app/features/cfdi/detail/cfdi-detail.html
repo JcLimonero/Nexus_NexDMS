@@ -203,6 +203,55 @@
                 </div>
               </div>
             }
+
+            @if (canNotaCredito()) {
+              <div class="card mt-4">
+                <div class="card-header">Nota de crédito (egreso)</div>
+                <div class="card-body">
+                  <p class="text-muted small mb-3">
+                    Emite un CFDI de egreso ligado a esta factura, por una
+                    devolución, descuento o bonificación posterior.
+                  </p>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <label class="form-label">Motivo</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [ngModel]="notaMotivo()"
+                        (ngModelChange)="notaMotivo.set($event)"
+                        placeholder="Devolución de mercancía, descuento…"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Monto (IVA incl.)</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [ngModel]="notaMonto()"
+                        (ngModelChange)="notaMonto.set($event === null || $event === '' ? null : +$event)"
+                        min="0.01"
+                        step="0.01"
+                        [placeholder]="'Total: ' + (cfdi()!.total | number: '1.2-2')"
+                      />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                      <button
+                        type="button"
+                        class="btn btn-warning"
+                        (click)="onNotaCredito()"
+                        [disabled]="generandoNota()"
+                      >
+                        @if (generandoNota()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Generar nota de crédito
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
           }
         </div>
       </div>
