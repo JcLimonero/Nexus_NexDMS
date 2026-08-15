@@ -1,1 +1,73 @@
 // Estilos del detalle de sesión
+
+/* ── Modales de movimiento y arqueo ── */
+.modal-fondo {
+  position: fixed;
+  inset: 0;
+  background: color-mix(in srgb, var(--navy-800, #16262F) 55%, transparent);
+  z-index: 40;
+}
+
+.modal-panel {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 50;
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: var(--card, #fff);
+  border-radius: 12px;
+  box-shadow: 0 20px 50px rgb(0 0 0 / 30%);
+
+  &.ancho { width: min(560px, calc(100vw - 32px)); }
+
+  header,
+  footer {
+    display: flex;
+    align-items: center;
+    padding: 16px;
+    h5 { margin: 0; }
+  }
+  header { border-bottom: 1px solid var(--border, #DDE3E9); }
+  footer {
+    justify-content: flex-end;
+    gap: 8px;
+    border-top: 1px solid var(--border, #DDE3E9);
+  }
+}
+
+.modal-cuerpo {
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--text-secondary, #5A6B78);
+  }
+  .pista { margin: 0; font-size: 12px; color: var(--text-muted, #8A98A4); }
+}
+
+.arqueo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+}
+
+.arqueo-fila {
+  flex-direction: row !important;
+  align-items: center;
+  gap: 8px;
+  span { flex: 0 0 64px; font-variant-numeric: tabular-nums; }
+}
+
+.arqueo-total {
+  text-align: right;
+  font-size: 15px;
+  strong { font-variant-numeric: tabular-nums; }
+}

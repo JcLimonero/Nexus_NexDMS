@@ -19,6 +19,9 @@ export interface CashSession {
   closedAt: string | null;
   status: CashSessionStatus;
   closingNotes: string | null;
+  denominations: Record<string, number> | null;
+  countedCash: number | null;
+  expectedCash: number | null;
   createdAt: string;
   updatedAt: string;
   branch?: { id: string; name: string };
@@ -42,6 +45,16 @@ export interface OpenCashSessionDto {
 }
 
 export interface CloseCashSessionDto {
-  closingBalance: number;
+  closingBalance?: number;
+  denominations?: Record<string, number>;
   closingNotes?: string;
+}
+
+export interface MovimientoCaja {
+  id: string;
+  kind: "DEPOSIT" | "WITHDRAWAL" | "EXPENSE";
+  amount: number;
+  concept: string;
+  reference: string | null;
+  createdAt: string;
 }

@@ -100,6 +100,30 @@ export class CashSession {
   @Column({ name: 'status', type: 'enum', enum: CashSessionStatusEnum })
   status: CashSessionStatusEnum;
 
+  /** Arqueo por denominaciones: { "500": 3, "200": 10, ... } (billete/moneda → cantidad). */
+  @Column({ name: 'denominations', type: 'jsonb', nullable: true })
+  denominations: Record<string, number> | null;
+
+  /** Efectivo contado, suma del arqueo. */
+  @Column({
+    name: 'counted_cash',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  countedCash: string | null;
+
+  /** Efectivo que debería haber: fondo + ventas en efectivo + movimientos. */
+  @Column({
+    name: 'expected_cash',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  expectedCash: string | null;
+
   @Column({ name: 'closing_notes', type: 'text', nullable: true })
   closingNotes: string | null;
 

@@ -8,6 +8,7 @@ import {
   CashSessionFilters,
   OpenCashSessionDto,
   CloseCashSessionDto,
+  MovimientoCaja,
 } from "./models/cash-session.model";
 import {
   Sale,
@@ -66,6 +67,34 @@ export class CajaVentasService {
 
   getSession(id: string): Observable<CashSession> {
     return this.http.get<CashSession>(`${CASH_REGISTER_URL}/sessions/${id}`);
+  }
+
+  // ── Movimientos manuales de efectivo ──
+  registrarMovimiento(
+    branchId: string,
+    dto: {
+      kind: "DEPOSIT" | "WITHDRAWAL" | "EXPENSE";
+      amount: number;
+      concept: string;
+      reference?: string;
+    },
+  ): Observable<unknown> {
+    return this.http.post(`${CASH_REGISTER_URL}/movements`, dto, {
+      params: { branchId },
+    });
+  }
+
+  getMovimientos(sessionId: string): Observable<MovimientoCaja[]> {
+    return this.http.get<MovimientoCaja[]>(
+      `${CASH_REGISTER_URL}/sessions/${sessionId}/movements`,
+    );
+  }
+
+  /** Corte imprimible; se pide como blob por la credencial en la cabecera. */
+  corte(sessionId: string): Observable<Blob> {
+    return this.http.get(`${CASH_REGISTER_URL}/sessions/${sessionId}/corte`, {
+      responseType: "blob",
+    });
   }
 
   getSessionStatusLabel(status: string): string {
