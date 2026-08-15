@@ -42,6 +42,13 @@ export class VentasUnidadesService {
     return this.http.post<UnitSale>(UNIT_SALES_URL, dto);
   }
 
+  /** Programa la fecha de entrega (o la borra con null). */
+  scheduleDelivery(id: string, deliveryDate: string | null): Observable<UnitSale> {
+    return this.http.post<UnitSale>(`${UNIT_SALES_URL}/${id}/delivery-date`, {
+      deliveryDate,
+    });
+  }
+
   complete(id: string): Observable<UnitSale> {
     return this.http.post<UnitSale>(`${UNIT_SALES_URL}/${id}/complete`, {});
   }

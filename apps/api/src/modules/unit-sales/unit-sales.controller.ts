@@ -157,6 +157,17 @@ export class UnitSalesController {
       },
     );
   }
+  /** Programa la fecha de entrega, que al crear la venta no se conoce. */
+  @Post(':id/delivery-date')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER')
+  scheduleDelivery(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { deliveryDate: string | null },
+  ) {
+    return this.unitSalesService.scheduleDelivery(user, id, dto.deliveryDate);
+  }
+
   // ─── Pagos de la venta ───────────────────────────
 
   @Get(':id/payments')

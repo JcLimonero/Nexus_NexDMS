@@ -80,10 +80,29 @@
                     <dt class="col-sm-4">Estatus</dt>
                     <dd class="col-sm-8">{{ getStatusLabel(s.status) }}</dd>
 
-                    @if (s.deliveryDate) {
-                      <dt class="col-sm-4">Fecha entrega</dt>
-                      <dd class="col-sm-8">{{ s.deliveryDate }}</dd>
-                    }
+                    <dt class="col-sm-4">Fecha entrega</dt>
+                    <dd class="col-sm-8">
+                      @if (editandoEntrega()) {
+                        <span class="d-inline-flex align-items-center gap-2 flex-wrap">
+                          <input type="date" class="form-control form-control-sm" style="width: 170px"
+                            [(ngModel)]="fechaEntrega" />
+                          <button class="btn btn-primary btn-sm" [disabled]="guardandoEntrega()"
+                            (click)="guardarEntrega()">
+                            {{ guardandoEntrega() ? "Guardando…" : "Guardar" }}
+                          </button>
+                          <button class="btn btn-light btn-sm" (click)="editandoEntrega.set(false)">
+                            Cancelar
+                          </button>
+                        </span>
+                      } @else {
+                        {{ s.deliveryDate ? (s.deliveryDate | date: "dd/MM/yyyy") : "Sin programar" }}
+                        @if (s.status === UnitSaleStatus.IN_PROGRESS) {
+                          <button class="btn btn-link btn-sm p-0 ms-2" (click)="abrirEntrega(s.deliveryDate)">
+                            {{ s.deliveryDate ? "Cambiar" : "Programar" }}
+                          </button>
+                        }
+                      }
+                    </dd>
                     @if (s.notes) {
                       <dt class="col-sm-4">Notas</dt>
                       <dd class="col-sm-8">{{ s.notes }}</dd>

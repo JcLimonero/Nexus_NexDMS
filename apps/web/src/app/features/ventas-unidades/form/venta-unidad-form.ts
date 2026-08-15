@@ -91,7 +91,6 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
       financingType: [UnitSaleFinancingType.CASH, Validators.required],
       bankFinancier: [""],
       bankFolio: [""],
-      deliveryDate: [""],
       notes: [""],
       accessories: this.fb.array([]),
     });
@@ -267,7 +266,6 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
       financingType: raw.financingType,
       bankFinancier: raw.bankFinancier || undefined,
       bankFolio: raw.bankFolio || undefined,
-      deliveryDate: raw.deliveryDate || undefined,
       notes: raw.notes || undefined,
     };
 

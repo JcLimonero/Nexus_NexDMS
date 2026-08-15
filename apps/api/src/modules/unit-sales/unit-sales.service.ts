@@ -401,6 +401,33 @@ export class UnitSalesService {
     return sale;
   }
 
+  /**
+   * Programa (o borra) la fecha de entrega.
+   *
+   * Al abrir la venta rara vez se sabe cuándo se entrega —depende de trámites,
+   * del pago, de que llegue la unidad—, así que se captura después. Se admite
+   * fecha nula para volver a dejarla sin definir.
+   */
+  async scheduleDelivery(
+    user: UserPayload,
+    id: string,
+    deliveryDate: string | null,
+  ): Promise<UnitSale> {
+    this.assertCanWrite(user);
+    const sale = await this.findOne(user, id);
+    if (sale.status === UnitSaleStatusEnum.CANCELLED) {
+      throw new BadRequestException(
+        'Una venta cancelada no tiene entrega que programar',
+      );
+    }
+    // Se guarda el texto 'YYYY-MM-DD' tal cual, sin `new Date()`: es una fecha
+    // sin hora, y envolverla la interpreta como medianoche UTC y la corre un
+    // día al escribirla en un contenedor en otro huso.
+    sale.deliveryDate = (deliveryDate || null) as unknown as Date | null;
+    await this.saleRepo.save(sale);
+    return this.findOne(user, id);
+  }
+
   async createPaymentPlan(
     user: UserPayload,
     saleId: string,
