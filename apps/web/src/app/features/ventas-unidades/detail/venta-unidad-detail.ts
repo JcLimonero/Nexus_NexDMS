@@ -31,6 +31,9 @@ export class VentaUnidadDetail implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
 
+  /** Pestaña activa de la ficha. */
+  pestana = signal<"datos" | "documentos">("datos");
+
   readonly UnitSaleStatus = UnitSaleStatus;
 
   ngOnInit(): void {

@@ -184,6 +184,34 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
     return this.form.get("accessories") as FormArray;
   }
 
+  /**
+   * Accesorios que un renglón puede elegir: los compatibles menos los ya
+   * usados en OTROS renglones. Se conserva el del renglón actual para que su
+   * propia opción no desaparezca del combo.
+   *
+   * Depende de `accessoriesDirty` para recomputarse cuando cambia cualquier
+   * selección: al elegir uno, deja de ofrecerse en los demás.
+   */
+  accesoriosDisponibles(actualId: string): UnitAccessory[] {
+    this.accessoriesDirty();
+    const usadosEnOtros = new Set(
+      this.accessoriesArray.controls
+        .map((c) => c.get("accessoryId")?.value)
+        .filter((v) => v && v !== actualId),
+    );
+    return this.compatibleAccessories().filter((a) => !usadosEnOtros.has(a.id));
+  }
+
+  /** Ya no queda ninguno por agregar: todos los compatibles están en la venta. */
+  todosLosAccesoriosUsados(): boolean {
+    this.accessoriesDirty();
+    if (this.compatibleAccessories().length === 0) return true;
+    const usados = new Set(
+      this.accessoriesArray.controls.map((c) => c.get("accessoryId")?.value),
+    );
+    return this.compatibleAccessories().every((a) => usados.has(a.id));
+  }
+
   addAccessory(): void {
     const compat = this.compatibleAccessories();
     if (compat.length === 0) return;
@@ -191,11 +219,13 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
     const used = new Set(
       this.accessoriesArray.controls.map((c) => c.get("accessoryId")?.value)
     );
-    const nextId = compat.find((a) => !used.has(a.id))?.id ?? compat[0].id;
+    const nuevo = compat.find((a) => !used.has(a.id));
+    // Sin ninguno libre no se agrega un renglón: sería un duplicado forzado.
+    if (!nuevo) return;
 
     this.accessoriesArray.push(
       this.fb.group({
-        accessoryId: [nextId, Validators.required],
+        accessoryId: [nuevo.id, Validators.required],
         quantity: [1, [Validators.required, Validators.min(1)]],
       })
     );

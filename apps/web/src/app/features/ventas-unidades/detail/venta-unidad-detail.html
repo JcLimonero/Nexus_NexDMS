@@ -20,57 +20,76 @@
               </div>
             </div>
           } @else if (sale(); as s) {
-            <div class="row">
-              <div class="col-md-6">
-                <dl class="row">
-                  <dt class="col-sm-4">Folio</dt>
-                  <dd class="col-sm-8">{{ s.folio }}</dd>
+            <!-- La ficha en pestañas: los datos y el expediente son cosas
+                 distintas y cada una crece; verlas juntas ensucia la lectura. -->
+            <ul class="nav nav-tabs mb-4">
+              <li class="nav-item">
+                <button
+                  type="button"
+                  class="nav-link"
+                  [class.active]="pestana() === 'datos'"
+                  (click)="pestana.set('datos')"
+                >
+                  Datos
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  type="button"
+                  class="nav-link"
+                  [class.active]="pestana() === 'documentos'"
+                  (click)="pestana.set('documentos')"
+                >
+                  Documentos
+                </button>
+              </li>
+            </ul>
 
-                  <dt class="col-sm-4">Unidad</dt>
-                  <dd class="col-sm-8">{{ getUnitLabel(s) }}</dd>
+            @if (pestana() === "datos") {
+              <div class="row">
+                <div class="col-md-6">
+                  <dl class="row">
+                    <dt class="col-sm-4">Folio</dt>
+                    <dd class="col-sm-8">{{ s.folio }}</dd>
 
-                  <dt class="col-sm-4">Cliente</dt>
-                  <dd class="col-sm-8">{{ getClientLabel(s) }}</dd>
+                    <dt class="col-sm-4">Unidad</dt>
+                    <dd class="col-sm-8">{{ getUnitLabel(s) }}</dd>
 
-                  <dt class="col-sm-4">Precio lista</dt>
-                  <dd class="col-sm-8">${{ s.listPrice | number:'1.2-2' }}</dd>
+                    <dt class="col-sm-4">Cliente</dt>
+                    <dd class="col-sm-8">{{ getClientLabel(s) }}</dd>
 
-                  <dt class="col-sm-4">Precio final</dt>
-                  <dd class="col-sm-8">${{ s.finalPrice | number:'1.2-2' }}</dd>
+                    <dt class="col-sm-4">Precio lista</dt>
+                    <dd class="col-sm-8">${{ s.listPrice | number:'1.2-2' }}</dd>
 
-                  <dt class="col-sm-4">Enganche</dt>
-                  <dd class="col-sm-8">${{ s.downPayment | number:'1.2-2' }}</dd>
+                    <dt class="col-sm-4">Precio final</dt>
+                    <dd class="col-sm-8">${{ s.finalPrice | number:'1.2-2' }}</dd>
 
-                  <dt class="col-sm-4">Estatus</dt>
-                  <dd class="col-sm-8">{{ getStatusLabel(s.status) }}</dd>
+                    <dt class="col-sm-4">Enganche</dt>
+                    <dd class="col-sm-8">${{ s.downPayment | number:'1.2-2' }}</dd>
 
-                  @if (s.deliveryDate) {
-                    <dt class="col-sm-4">Fecha entrega</dt>
-                    <dd class="col-sm-8">{{ s.deliveryDate }}</dd>
-                  }
-                  @if (s.notes) {
-                    <dt class="col-sm-4">Notas</dt>
-                    <dd class="col-sm-8">{{ s.notes }}</dd>
-                  }
-                </dl>
+                    <dt class="col-sm-4">Estatus</dt>
+                    <dd class="col-sm-8">{{ getStatusLabel(s.status) }}</dd>
+
+                    @if (s.deliveryDate) {
+                      <dt class="col-sm-4">Fecha entrega</dt>
+                      <dd class="col-sm-8">{{ s.deliveryDate }}</dd>
+                    }
+                    @if (s.notes) {
+                      <dt class="col-sm-4">Notas</dt>
+                      <dd class="col-sm-8">{{ s.notes }}</dd>
+                    }
+                  </dl>
+                </div>
               </div>
-            </div>
-
-            <!-- Expediente de documentos: qué exige esta venta según a quién,
-                 cómo y qué se vende, y cuánto falta para poder cerrarla. -->
-            <div class="card mt-4">
-              <div class="card-header">
-                <h5>Documentos de la venta</h5>
-                <span>Requisitos según el cliente, el tipo de venta y la unidad</span>
-              </div>
-              <div class="card-body">
-                <app-expediente-venta
-                  [unitSaleId]="s.id"
-                  [clientId]="s.clientId"
-                  [puedeRevisar]="puedeRevisar"
-                />
-              </div>
-            </div>
+            } @else {
+              <!-- Expediente: qué exige esta venta según a quién, cómo y qué
+                   se vende, y cuánto falta para poder cerrarla. -->
+              <app-expediente-venta
+                [unitSaleId]="s.id"
+                [clientId]="s.clientId"
+                [puedeRevisar]="puedeRevisar"
+              />
+            }
           }
         </div>
       </div>

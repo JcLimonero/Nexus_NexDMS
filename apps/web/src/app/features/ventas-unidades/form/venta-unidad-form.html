@@ -71,11 +71,16 @@
                 <div class="d-flex justify-content-between align-items-center mb-2">
                   <h6 class="mb-0">Accesorios compatibles</h6>
                   @if (accessoriesLoading()) {
-                    <span class="badge bg-secondary">Cargando...</span>
+                    <span class="text-muted small d-inline-flex align-items-center gap-2">
+                      <span class="spinner-border spinner-border-sm"></span>
+                      Cargando accesorios…
+                    </span>
                   } @else if (compatibleAccessories().length > 0) {
                     <button
                       type="button"
                       class="btn btn-outline-primary btn-sm"
+                      [disabled]="todosLosAccesoriosUsados()"
+                      [title]="todosLosAccesoriosUsados() ? 'Ya se agregaron todos los accesorios compatibles' : ''"
                       (click)="addAccessory()"
                     >
                       Agregar accesorio
@@ -86,7 +91,11 @@
                 </div>
                 @if (accessoriesArray.length > 0) {
                   <div class="table-responsive">
-                    <table class="table table-sm">
+                    <!-- `formArrayName` es imprescindible: sin él, cada
+                         `[formGroupName]="i"` busca un control "0" en el
+                         formulario raíz, no lo encuentra, y el select del
+                         renglón nunca enlaza —el combo se queda vacío—. -->
+                    <table class="table table-sm" formArrayName="accessories">
                       <thead>
                         <tr>
                           <th>Accesorio</th>
@@ -101,7 +110,7 @@
                           <tr [formGroupName]="i">
                             <td>
                               <select class="form-select form-select-sm" formControlName="accessoryId" (change)="syncFinalPrice()">
-                                @for (a of compatibleAccessories(); track a.id) {
+                                @for (a of accesoriosDisponibles(ctrl.get('accessoryId')?.value); track a.id) {
                                   <option [ngValue]="a.id">{{ a.name }} — ${{ a.price | number:'1.2-2' }}</option>
                                 }
                               </select>
