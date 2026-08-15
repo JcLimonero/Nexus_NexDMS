@@ -38,6 +38,8 @@ import { OperationsService } from './operations.service';
 import { User } from '../users/entities/user.entity';
 import { AdditionalWorkController } from './additional-work.controller';
 import { AdditionalWorkService } from './additional-work.service';
+import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
+import { OrdenPdfService } from './orden-pdf.service';
 
 @Module({
   imports: [
@@ -62,6 +64,7 @@ import { AdditionalWorkService } from './additional-work.service';
       Branch,
       Part,
       StockMovement,
+      LegalEntity,
       CatalogUnit,
       CustomerVehicle,
       Client,
@@ -83,6 +86,7 @@ import { AdditionalWorkService } from './additional-work.service';
     ReceptionService,
     OperationsService,
     AdditionalWorkService,
+    OrdenPdfService,
   ],
   exports: [
     ServiceOrdersService,

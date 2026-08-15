@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { HttpClient } from "@angular/common/http";
 import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
@@ -40,6 +41,7 @@ const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
 })
 export class OrdenServicioDetail implements OnInit {
   private tallerService = inject(TallerService);
+  private http = inject(HttpClient);
   private branchesService = inject(BranchesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
@@ -55,6 +57,28 @@ export class OrdenServicioDetail implements OnInit {
   cancelling = signal(false);
   selectedStatus = signal<ServiceOrderStatus | "">("");
   selectedMechanicId = signal<string>("");
+
+  /**
+   * Abre la orden en PDF.
+   *
+   * Se pide como blob y no se navega a la dirección: el endpoint exige la
+   * credencial en la cabecera, y una pestaña nueva no la lleva —saldría un
+   * 401 en vez del documento—. El interceptor sí la pone en esta petición.
+   */
+  imprimir(id: string): void {
+    this.http
+      .get(`/api/v1/service-orders/${id}/pdf`, { responseType: "blob" })
+      .subscribe({
+        next: (pdf) => {
+          const url = URL.createObjectURL(pdf);
+          window.open(url, "_blank", "noopener");
+          // Se libera con holgura: revocarla de inmediato deja la pestaña
+          // nueva sin nada que mostrar.
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        },
+        error: () => this.toastr.error("No se pudo generar el PDF de la orden"),
+      });
+  }
 
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({
