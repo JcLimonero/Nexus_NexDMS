@@ -90,8 +90,14 @@ export class SaleDocumentRule {
   })
   financingType: string | null;
 
-  @Column({ name: 'vehicle_type', type: 'varchar', length: 20, nullable: true })
-  vehicleType: string | null;
+  /** Categoría de vehículo (MOTO/AUTO); null = cualquiera. */
+  @Column({
+    name: 'vehicle_category',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  vehicleCategory: string | null;
 
   @Column({ name: 'is_required', type: 'boolean', default: true })
   isRequired: boolean;

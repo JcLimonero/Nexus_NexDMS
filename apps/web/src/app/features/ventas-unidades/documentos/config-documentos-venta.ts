@@ -6,7 +6,6 @@ import { ToastrService } from "ngx-toastr";
 import {
   DocumentosVentaService,
   ETIQUETA_CLIENTE,
-  ETIQUETA_VEHICULO,
   ETIQUETA_VENTA,
   ReglaDocumento,
   TipoDocumento,
@@ -26,7 +25,7 @@ interface FormRegla {
   documentTypeId: string;
   clientType: string;
   financingType: string;
-  vehicleType: string;
+  vehicleCategory: string;
   isRequired: boolean;
 }
 
@@ -55,7 +54,10 @@ export class ConfigDocumentosVenta implements OnInit {
 
   readonly clientes = Object.entries(ETIQUETA_CLIENTE);
   readonly ventas = Object.entries(ETIQUETA_VENTA);
-  readonly vehiculos = Object.entries(ETIQUETA_VEHICULO);
+  categorias = signal<{ code: string; label: string }[]>([]);
+
+  /** Empieza en Reglas: es lo que se consulta y ajusta a diario. */
+  pestana = signal<"reglas" | "catalogo">("reglas");
 
   // Alta/edición de tipo
   tipoAbierto = signal(false);
@@ -72,6 +74,9 @@ export class ConfigDocumentosVenta implements OnInit {
 
   private cargar(): void {
     this.cargando.set(true);
+    this.srv.categoriasVehiculo().subscribe({
+      next: (c) => this.categorias.set(c),
+    });
     this.srv.tipos().subscribe({
       next: (t) => {
         this.tipos.set(t);
@@ -92,17 +97,14 @@ export class ConfigDocumentosVenta implements OnInit {
   }
 
   etiquetaEje(
-    tipo: "cliente" | "venta" | "vehiculo",
+    tipo: "cliente" | "venta" | "categoria",
     valor: string | null,
   ): string {
     if (!valor) return "Cualquiera";
-    const mapa =
-      tipo === "cliente"
-        ? ETIQUETA_CLIENTE
-        : tipo === "venta"
-          ? ETIQUETA_VENTA
-          : ETIQUETA_VEHICULO;
-    return mapa[valor] ?? valor;
+    if (tipo === "categoria") {
+      return this.categorias().find((c) => c.code === valor)?.label ?? valor;
+    }
+    return (tipo === "cliente" ? ETIQUETA_CLIENTE : ETIQUETA_VENTA)[valor] ?? valor;
   }
 
   // ── Tipos ──
@@ -164,7 +166,7 @@ export class ConfigDocumentosVenta implements OnInit {
       documentTypeId: "",
       clientType: "",
       financingType: "",
-      vehicleType: "",
+      vehicleCategory: "",
       isRequired: true,
     };
   }
@@ -179,7 +181,7 @@ export class ConfigDocumentosVenta implements OnInit {
         documentTypeId: this.formRegla.documentTypeId,
         clientType: this.formRegla.clientType || null,
         financingType: this.formRegla.financingType || null,
-        vehicleType: this.formRegla.vehicleType || null,
+        vehicleCategory: this.formRegla.vehicleCategory || null,
         isRequired: this.formRegla.isRequired,
       })
       .subscribe({

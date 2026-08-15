@@ -69,6 +69,13 @@ export class SaleDocumentsController {
     return this.service.reglas(user.tenantId);
   }
 
+  /** Categorías de vehículo (Moto/Auto) para el eje de las reglas. */
+  @Get('vehicle-categories')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  categorias() {
+    return this.service.categoriasVehiculo();
+  }
+
   @Put('rules')
   @Roles('SUPERADMIN', 'ADMIN')
   guardarRegla(
@@ -115,6 +122,44 @@ export class SaleDocumentsController {
       file,
       expirationDate,
     );
+  }
+
+  // ── Expediente del cliente (ámbito CLIENTE) ──
+  // Se sube desde aquí o desde la venta, lo que evite navegar de más.
+
+  @Get('client/:clientId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  expedienteCliente(
+    @CurrentUser() user: UserPayload,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+  ) {
+    return this.service.expedienteCliente(user, clientId);
+  }
+
+  @Post('client/:clientId/upload')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  @UseInterceptors(FileInterceptor('file'))
+  subirCliente(
+    @CurrentUser() user: UserPayload,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+    @Query('documentTypeId', ParseUUIDPipe) documentTypeId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.service.subirDocumentoCliente(
+      user,
+      clientId,
+      documentTypeId,
+      file,
+    );
+  }
+
+  @Get('client-document/:id/download-url')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  descargaCliente(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.service.ligaDescargaCliente(user, id);
   }
 
   @Get('document/:id/download-url')

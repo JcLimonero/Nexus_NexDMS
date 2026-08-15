@@ -22,7 +22,7 @@ export interface ReglaDocumento {
   documentTypeId: string;
   clientType: string | null;
   financingType: string | null;
-  vehicleType: string | null;
+  vehicleCategory: string | null;
   isRequired: boolean;
   documentType?: TipoDocumento;
 }
@@ -49,7 +49,7 @@ export interface Expediente {
   ejes: {
     clientType: string | null;
     financingType: string | null;
-    vehicleType: string | null;
+    vehicleCategory: string | null;
   };
   requisitos: RequisitoResuelto[];
   completo: boolean;
@@ -76,6 +76,12 @@ export class DocumentosVentaService {
 
   reglas(): Observable<ReglaDocumento[]> {
     return this.http.get<ReglaDocumento[]>(`${URL}/rules`);
+  }
+
+  categoriasVehiculo(): Observable<{ code: string; label: string }[]> {
+    return this.http.get<{ code: string; label: string }[]>(
+      `${URL}/vehicle-categories`,
+    );
   }
 
   guardarRegla(dto: Partial<ReglaDocumento>): Observable<ReglaDocumento> {
@@ -124,9 +130,45 @@ export class DocumentosVentaService {
   eliminarDocumento(documentId: string): Observable<unknown> {
     return this.http.delete(`${URL}/document/${documentId}`);
   }
+
+  // ── Documentos del cliente ──
+  expedienteCliente(clientId: string): Observable<DocClienteResuelto[]> {
+    return this.http.get<DocClienteResuelto[]>(`${URL}/client/${clientId}`);
+  }
+
+  subirCliente(
+    clientId: string,
+    documentTypeId: string,
+    file: File,
+  ): Observable<unknown> {
+    const form = new FormData();
+    form.append("file", file);
+    return this.http.post(
+      `${URL}/client/${clientId}/upload?documentTypeId=${documentTypeId}`,
+      form,
+    );
+  }
+
+  ligaDescargaCliente(documentId: string): Observable<{ url: string }> {
+    return this.http.get<{ url: string }>(
+      `${URL}/client-document/${documentId}/download-url`,
+    );
+  }
+}
+
+export interface DocClienteResuelto {
+  documentTypeId: string;
+  key: string;
+  name: string;
+  hasExpiration: boolean;
+  cumplido: { id: string; status: EstadoDocumento; createdAt: string } | null;
 }
 
 /** Etiquetas de los tres ejes, para pantalla. */
+export const ETIQUETA_CATEGORIA: Record<string, string> = {
+  MOTO: "Moto",
+  AUTO: "Auto",
+};
 export const ETIQUETA_CLIENTE: Record<string, string> = {
   INDIVIDUAL: "Persona física",
   BUSINESS: "Persona moral",

@@ -5,8 +5,8 @@ import { ToastrService } from "ngx-toastr";
 
 import {
   DocumentosVentaService,
+  ETIQUETA_CATEGORIA,
   ETIQUETA_CLIENTE,
-  ETIQUETA_VEHICULO,
   ETIQUETA_VENTA,
   Expediente,
   RequisitoResuelto,
@@ -49,7 +49,7 @@ export class ExpedienteVenta {
 
   readonly etiquetaCliente = ETIQUETA_CLIENTE;
   readonly etiquetaVenta = ETIQUETA_VENTA;
-  readonly etiquetaVehiculo = ETIQUETA_VEHICULO;
+  readonly etiquetaCategoria = ETIQUETA_CATEGORIA;
 
   obligatorios = computed(
     () => this.expediente()?.requisitos.filter((r) => r.required) ?? [],
@@ -91,7 +91,7 @@ export class ExpedienteVenta {
 
   // ── Subir (solo ámbito venta) ──
   pedirArchivo(r: RequisitoResuelto, input: HTMLInputElement): void {
-    if (r.hasExpiration) {
+    if (r.hasExpiration && r.scope === "SALE") {
       // Con caducidad, primero la fecha: se despliega la fila y el archivo se
       // pide al confirmar.
       this.fechaPara.set(r.documentTypeId);

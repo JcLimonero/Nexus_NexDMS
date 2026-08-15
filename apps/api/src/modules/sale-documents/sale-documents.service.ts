@@ -16,7 +16,10 @@ import {
 } from './entities/sale-document.entities';
 import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
 import { Client } from '../clients/entities/client.entity';
-import { ClientDocument } from '../documents/entities/client-document.entity';
+import {
+  ClientDocument,
+  ClientDocumentStatusEnum,
+} from '../documents/entities/client-document.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 
 /** Un requisito ya resuelto: qué se pide y con qué está (o no) cumplido. */
@@ -130,7 +133,7 @@ export class SaleDocumentsService {
         // Los ejes vacíos se normalizan a null = "cualquiera".
         clientType: dto.clientType || null,
         financingType: dto.financingType || null,
-        vehicleType: dto.vehicleType || null,
+        vehicleCategory: dto.vehicleCategory || null,
       }),
     );
   }
@@ -155,26 +158,57 @@ export class SaleDocumentsService {
     const cliente = await this.clientRepo.findOne({
       where: { id: venta.clientId },
     });
-    const unidad = await this.catalogRepo.findOne({
-      where: { id: venta.catalogUnitId },
-    });
     return {
       clientType: cliente?.clientType ?? null,
       financingType: venta.financingType ?? null,
-      vehicleType: unidad?.vehicleType ?? null,
+      vehicleCategory: await this.categoriaDeLaUnidad(venta.catalogUnitId),
     };
+  }
+
+  /**
+   * Categoría (MOTO/AUTO) de la unidad que se vende.
+   *
+   * Se obtiene por la cadena catálogo → modelo global → tipo → categoría, que
+   * es donde vive la clasificación fina y su agrupación gruesa. Se resuelve con
+   * una consulta directa para no arrastrar cuatro relaciones por un solo dato.
+   */
+  private async categoriaDeLaUnidad(
+    catalogUnitId: string,
+  ): Promise<string | null> {
+    const filas = (await this.catalogRepo.query(
+      `SELECT vc.code AS code
+         FROM catalog_units cu
+         JOIN global_models gm ON gm.id = cu.global_model_id
+         JOIN vehicle_types vt ON vt.id = gm.vehicle_type_id
+         JOIN vehicle_categories vc ON vc.id = vt.category_id
+        WHERE cu.id = $1
+        LIMIT 1`,
+      [catalogUnitId],
+    )) as Array<{ code: string }>;
+    return filas[0]?.code ?? null;
+  }
+
+  /** Categorías disponibles, para la pantalla de configuración. */
+  categoriasVehiculo() {
+    return this.catalogRepo.query(
+      `SELECT code, label FROM vehicle_categories ORDER BY label`,
+    );
   }
 
   /** Reglas que aplican a esos ejes (una regla con eje null aplica a todos). */
   private aplican(
     reglas: SaleDocumentRule[],
-    ejes: { clientType: unknown; financingType: unknown; vehicleType: unknown },
+    ejes: {
+      clientType: unknown;
+      financingType: unknown;
+      vehicleCategory: unknown;
+    },
   ): SaleDocumentRule[] {
     return reglas.filter(
       (r) =>
         (!r.clientType || r.clientType === ejes.clientType) &&
         (!r.financingType || r.financingType === ejes.financingType) &&
-        (!r.vehicleType || r.vehicleType === ejes.vehicleType),
+        (!r.vehicleCategory || r.vehicleCategory === ejes.vehicleCategory),
     );
   }
 
@@ -322,11 +356,18 @@ export class SaleDocumentsService {
       where: { id: documentTypeId, tenantId: user.tenantId },
     });
     if (!tipo) throw new BadRequestException('Tipo de documento no válido');
-    // Un tipo de ámbito cliente se sube a su expediente, no a la venta: aquí
-    // se rechaza para no partir en dos el mismo documento.
+
+    // Un documento de ámbito cliente se sube a SU expediente aunque se cargue
+    // desde la venta: así queda reutilizable para sus otras compras, y el
+    // asesor no tiene que salir de la venta para adjuntarlo. Uno de ámbito
+    // venta se queda en la venta.
     if (tipo.scope === SaleDocumentScopeEnum.CLIENT) {
-      throw new BadRequestException(
-        'Este documento es del expediente del cliente; súbelo desde su ficha',
+      return this.subirDocumentoCliente(
+        user,
+        venta.clientId,
+        tipo,
+        file,
+        expirationDate,
       );
     }
 
@@ -359,6 +400,103 @@ export class SaleDocumentsService {
         expirationDate: tipo.hasExpiration ? (expirationDate ?? null) : null,
       }),
     );
+  }
+
+  // ─── Documentos del cliente (ámbito CLIENTE) ─────
+
+  /** Tipos de documento del cliente, con lo que ya tiene cargado. */
+  async expedienteCliente(user: UserPayload, clientId: string) {
+    const tipos = await this.typeRepo.find({
+      where: {
+        tenantId: user.tenantId,
+        scope: SaleDocumentScopeEnum.CLIENT,
+        isActive: true,
+      },
+      order: { sortOrder: 'ASC' },
+    });
+    const docs = await this.clientDocRepo.find({
+      where: { clientId, tenantId: user.tenantId },
+    });
+    return tipos.map((t) => {
+      const d = docs
+        .filter((x) => x.documentType === t.key)
+        .sort((a, b) => +b.createdAt - +a.createdAt)[0];
+      return {
+        documentTypeId: t.id,
+        key: t.key,
+        name: t.name,
+        hasExpiration: t.hasExpiration,
+        cumplido: d
+          ? { id: d.id, status: d.status, createdAt: d.createdAt }
+          : null,
+      };
+    });
+  }
+
+  /**
+   * Sube un documento al expediente del cliente.
+   *
+   * Se guarda en `client_documents` con la clave del tipo como `document_type`:
+   * es la que cruza con la matriz para dar por cumplido el requisito, se suba
+   * desde la venta o desde la ficha del cliente.
+   */
+  async subirDocumentoCliente(
+    user: UserPayload,
+    clientId: string,
+    tipoOId: SaleDocumentType | string,
+    file: Express.Multer.File,
+    _expirationDate?: string,
+  ) {
+    if (!file) throw new BadRequestException('Archivo requerido');
+    const tipo =
+      typeof tipoOId === 'string'
+        ? await this.typeRepo.findOne({
+            where: { id: tipoOId, tenantId: user.tenantId },
+          })
+        : tipoOId;
+    if (!tipo) throw new BadRequestException('Tipo de documento no válido');
+    if (tipo.scope !== SaleDocumentScopeEnum.CLIENT) {
+      throw new BadRequestException(
+        'Este documento es de la venta, no del cliente',
+      );
+    }
+
+    const key = await this.storage.upload(
+      file.buffer,
+      `clientes/${clientId}/${tipo.key}-${Date.now()}`,
+      file.mimetype,
+    );
+
+    // Reemplaza el anterior del mismo tipo: el expediente muestra el vigente.
+    const previos = await this.clientDocRepo.find({
+      where: { clientId, tenantId: user.tenantId, documentType: tipo.key },
+    });
+    for (const p of previos) {
+      await this.storage.delete(p.storageKey).catch(() => undefined);
+      await this.clientDocRepo.remove(p);
+    }
+
+    return this.clientDocRepo.save(
+      this.clientDocRepo.create({
+        tenantId: user.tenantId,
+        clientId,
+        documentType: tipo.key,
+        name: file.originalname || tipo.name,
+        storageKey: key,
+        mimeType: file.mimetype,
+        sizeBytes: file.size ?? file.buffer.length,
+        status: ClientDocumentStatusEnum.PENDING,
+      }),
+    );
+  }
+
+  /** Liga de un documento del cliente. */
+  async ligaDescargaCliente(user: UserPayload, id: string) {
+    const d = await this.clientDocRepo.findOne({
+      where: { id, tenantId: user.tenantId },
+    });
+    if (!d) throw new NotFoundException('Documento no encontrado');
+    return { url: await this.storage.getSignedUrl(d.storageKey) };
   }
 
   async ligaDescarga(user: UserPayload, id: string) {

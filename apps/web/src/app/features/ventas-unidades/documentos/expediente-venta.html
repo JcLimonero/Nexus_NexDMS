@@ -6,7 +6,7 @@
     <div class="ejes">
       <span class="eje">{{ etiquetaCliente[e.ejes.clientType || ""] || "—" }}</span>
       <span class="eje">{{ etiquetaVenta[e.ejes.financingType || ""] || "—" }}</span>
-      <span class="eje">{{ etiquetaVehiculo[e.ejes.vehicleType || ""] || "—" }}</span>
+      <span class="eje">{{ etiquetaCategoria[e.ejes.vehicleCategory || ""] || "—" }}</span>
     </div>
 
     <!-- El veredicto primero: es lo que decide si la venta puede cerrarse. -->
@@ -50,7 +50,7 @@
                 @if (r.cumplido?.vencido) {
                   <span class="txt-rechazado">Vencido — actualízalo</span>
                 } @else if (r.scope === "CLIENT") {
-                  <span class="txt-falta">Falta — se sube en la ficha del cliente</span>
+                  <span class="txt-falta">Falta — queda en el expediente del cliente</span>
                 } @else {
                   <span class="txt-falta">Falta</span>
                 }
@@ -66,43 +66,39 @@
             </button>
           }
 
-          <!-- Solo los de la venta se suben aquí; los del cliente, en su ficha. -->
-          @if (r.scope === "SALE") {
-            @if (fechaPara() === r.documentTypeId) {
-              <input
-                type="date"
-                class="form-control field-sm"
-                [(ngModel)]="fechaVencimiento"
-              />
-              <button type="button" class="btn btn-primary btn-sm" (click)="confirmarFecha(archivo)">
-                Elegir archivo
-              </button>
-            } @else {
-              <button
-                type="button"
-                class="btn btn-outline-primary btn-sm"
-                [disabled]="subiendo() === r.documentTypeId"
-                (click)="pedirArchivo(r, archivo)"
-              >
-                {{ subiendo() === r.documentTypeId ? "Subiendo…" : (r.cumplido ? "Reemplazar" : "Subir") }}
-              </button>
-            }
+          <!-- Se sube desde aquí sin importar el ámbito: los del cliente van a
+               su expediente (reutilizable), los de la venta se quedan en ella.
+               Así el asesor no sale de la venta para adjuntar. -->
+          @if (fechaPara() === r.documentTypeId) {
             <input
-              #archivo
-              type="file"
-              accept="image/*,application/pdf"
-              hidden
-              (change)="onArchivo($event, r)"
+              type="date"
+              class="form-control field-sm"
+              [(ngModel)]="fechaVencimiento"
             />
-            @if (r.cumplido?.origen === "VENTA") {
-              <button type="button" class="btn btn-light btn-sm" (click)="quitar(r)">
-                Quitar
-              </button>
-            }
-          } @else if (!r.cumplido && clientId()) {
-            <a class="btn btn-light btn-sm" [href]="'/clients/' + clientId()" target="_blank">
-              Ir al cliente
-            </a>
+            <button type="button" class="btn btn-primary btn-sm" (click)="confirmarFecha(archivo)">
+              Elegir archivo
+            </button>
+          } @else {
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm"
+              [disabled]="subiendo() === r.documentTypeId"
+              (click)="pedirArchivo(r, archivo)"
+            >
+              {{ subiendo() === r.documentTypeId ? "Subiendo…" : (r.cumplido ? "Reemplazar" : "Subir") }}
+            </button>
+          }
+          <input
+            #archivo
+            type="file"
+            accept="image/*,application/pdf"
+            hidden
+            (change)="onArchivo($event, r)"
+          />
+          @if (r.cumplido?.origen === "VENTA") {
+            <button type="button" class="btn btn-light btn-sm" (click)="quitar(r)">
+              Quitar
+            </button>
           }
 
           <!-- Revisión: solo para quien puede, y solo si hay algo por revisar. -->

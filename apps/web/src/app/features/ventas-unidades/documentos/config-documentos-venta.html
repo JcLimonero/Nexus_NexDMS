@@ -1,18 +1,34 @@
 <div class="container-fluid">
   <div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-      <div>
-        <h5>Documentos de venta</h5>
-        <span>Qué se exige para vender, según el cliente, el tipo de venta y la unidad</span>
-      </div>
+    <div class="card-header">
+      <h5>Documentos de venta</h5>
+      <span>Qué se exige para vender, según el cliente, el tipo de venta y la categoría</span>
     </div>
+    <!-- Reglas primero: es lo que se consulta y ajusta a diario; el catálogo
+         se toca solo al montar el concesionario. -->
+    <nav class="pestanas-doc">
+      <button
+        type="button"
+        [class.activa]="pestana() === 'reglas'"
+        (click)="pestana.set('reglas')"
+      >
+        Reglas
+      </button>
+      <button
+        type="button"
+        [class.activa]="pestana() === 'catalogo'"
+        (click)="pestana.set('catalogo')"
+      >
+        Catálogo de documentos
+      </button>
+    </nav>
   </div>
 
   @if (cargando()) {
     <div class="card"><div class="card-body text-center py-5">
       <span class="spinner-border"></span>
     </div></div>
-  } @else {
+  } @else if (pestana() === "catalogo") {
     <!-- ── Catálogo de tipos ── -->
     <div class="card mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
@@ -59,6 +75,7 @@
       </div>
     </div>
 
+  } @else {
     <!-- ── Matriz de reglas ── -->
     <div class="card">
       <div class="card-header">
@@ -96,11 +113,11 @@
             </select>
           </label>
           <label>
-            <span>Tipo de vehículo</span>
-            <select class="form-control" [(ngModel)]="formRegla.vehicleType">
+            <span>Categoría</span>
+            <select class="form-control" [(ngModel)]="formRegla.vehicleCategory">
               <option value="">Cualquiera</option>
-              @for (v of vehiculos; track v[0]) {
-                <option [value]="v[0]">{{ v[1] }}</option>
+              @for (c of categorias(); track c.code) {
+                <option [value]="c.code">{{ c.label }}</option>
               }
             </select>
           </label>
@@ -118,7 +135,7 @@
                 <th>Documento</th>
                 <th>Cliente</th>
                 <th>Venta</th>
-                <th>Vehículo</th>
+                <th>Categoría</th>
                 <th>Exigencia</th>
                 <th></th>
               </tr>
@@ -129,7 +146,7 @@
                   <td>{{ nombreTipo(r.documentTypeId) }}</td>
                   <td>{{ etiquetaEje("cliente", r.clientType) }}</td>
                   <td>{{ etiquetaEje("venta", r.financingType) }}</td>
-                  <td>{{ etiquetaEje("vehiculo", r.vehicleType) }}</td>
+                  <td>{{ etiquetaEje("categoria", r.vehicleCategory) }}</td>
                   <td>
                     <span class="pastilla" [attr.data-obl]="r.isRequired">
                       {{ r.isRequired ? "Obligatorio" : "Opcional" }}

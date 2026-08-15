@@ -131,3 +131,27 @@ code {
   color: var(--text-muted);
   cursor: pointer;
 }
+
+/* Pestañas Reglas / Catálogo */
+.pestanas-doc {
+  display: flex;
+  gap: var(--space-4);
+  padding: 0 var(--space-16) 0;
+  border-top: 1px solid var(--border);
+
+  button {
+    border: 0;
+    background: none;
+    padding: var(--space-12) var(--space-16);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+
+    &.activa {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+  }
+}
