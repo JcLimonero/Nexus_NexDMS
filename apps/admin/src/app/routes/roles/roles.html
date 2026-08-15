@@ -1,0 +1,86 @@
+<div class="panel">
+  <app-barra
+    titulo="Catálogo de roles"
+    subtitulo="Qué módulos y operaciones alcanza cada rol, derivado de las rutas reales"
+  />
+
+  @if (cargando()) {
+    <p class="aviso">Cargando…</p>
+  } @else if (error(); as e) {
+    <p class="aviso" data-tono="mal">{{ e }}</p>
+  } @else if (mapa(); as m) {
+    <div class="roles-layout">
+      <aside class="lista-roles">
+        <p class="meta">Actualizado {{ m.generatedAt | date: "dd/MM/yyyy HH:mm" }}</p>
+        @for (r of m.roles; track r.role) {
+          <button
+            type="button"
+            class="fila-rol"
+            [class.activa]="rolSeleccionado() === r.role"
+            (click)="seleccionar(r.role)"
+          >
+            <span class="nombre">{{ etiqueta(r.role) }}</span>
+            <span class="conteos">
+              {{ r.modules.length }} mód · {{ r.operationCount }} ops
+            </span>
+          </button>
+        }
+      </aside>
+
+      <section class="detalle-rol">
+        @if (rol(); as r) {
+          <header class="cabecera">
+            <h2>{{ etiqueta(r.role) }}</h2>
+            <code>{{ r.role }}</code>
+          </header>
+
+          <h3>Módulos que alcanza</h3>
+          @if (r.modules.length === 0) {
+            <p class="vacio">Este rol no llega a ningún módulo con control por módulo.</p>
+          } @else {
+            <div class="chips">
+              @for (mod of r.modules; track mod.key) {
+                <button
+                  type="button"
+                  class="chip"
+                  [class.activo]="soloModulo() === mod.key"
+                  (click)="filtrarModulo(mod.key)"
+                >
+                  {{ mod.name }}
+                </button>
+              }
+            </div>
+          }
+
+          <h3>
+            Operaciones
+            @if (soloModulo()) {
+              <span class="filtro-activo">· filtrando por {{ soloModulo() }}</span>
+            }
+            <span class="total">({{ operaciones().length }})</span>
+          </h3>
+          <div class="tabla-ops">
+            <table>
+              <thead>
+                <tr>
+                  <th>Método</th>
+                  <th>Ruta</th>
+                  <th>Módulo</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (op of operaciones(); track op.method + op.path) {
+                  <tr>
+                    <td><span class="verbo" [attr.data-verbo]="op.method">{{ op.method }}</span></td>
+                    <td><code>{{ op.path }}</code></td>
+                    <td>{{ op.module ?? "—" }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </section>
+    </div>
+  }
+</div>

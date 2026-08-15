@@ -10,6 +10,7 @@
     <nav class="nav">
       <a routerLink="/tenants" routerLinkActive="activo">Clientes</a>
       <a routerLink="/precios" routerLinkActive="activo">Planes y precios</a>
+      <a routerLink="/roles" routerLinkActive="activo">Roles</a>
     </nav>
     <span class="quien">{{ auth.usuario()?.email }}</span>
     <button type="button" class="btn-texto" (click)="auth.salir()">Salir</button>

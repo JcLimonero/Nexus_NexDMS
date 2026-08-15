@@ -21,6 +21,12 @@ export const routes: Routes = [
       import("./routes/precios/precios").then((m) => m.Precios),
     title: "Planes y precios — Administración NexDMS",
   },
+  {
+    path: "roles",
+    canActivate: [authGuard],
+    loadComponent: () => import("./routes/roles/roles").then((m) => m.Roles),
+    title: "Catálogo de roles — Administración NexDMS",
+  },
   { path: "", pathMatch: "full", redirectTo: "tenants" },
   { path: "**", redirectTo: "tenants" },
 ];
