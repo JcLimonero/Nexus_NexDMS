@@ -86,6 +86,7 @@ export class NavService {
         { path: "/warehouse/apartados", title: "Apartados", type: "link" },
         { path: "/warehouse/costeo", title: "Costeo", type: "link" },
         { path: "/warehouse/conteos", title: "Conteos físicos", type: "link" },
+        { path: "/warehouse/escaneo", title: "Inventario rápido", type: "link" },
       ],
     },
     {

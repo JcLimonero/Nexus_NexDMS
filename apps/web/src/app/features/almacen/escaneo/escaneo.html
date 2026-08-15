@@ -1,0 +1,163 @@
+<div class="container-fluid escaneo">
+  <div class="row">
+    <div class="col-lg-7">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Inventario rápido</h5>
+            <span>Escanea código de barras o teclea el SKU</span>
+          </div>
+          <div style="min-width: 220px">
+            <select
+              class="form-select"
+              [ngModel]="branchId()"
+              (ngModelChange)="onBranchChange($event)"
+            >
+              @for (b of branches(); track b.id) {
+                <option [value]="b.id">{{ b.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="input-group input-group-lg mb-3">
+            <span class="input-group-text">
+              <i class="icon-scan">⌗</i>
+            </span>
+            <input
+              #scanInput
+              type="text"
+              class="form-control"
+              placeholder="Escanea o teclea código / SKU y presiona Enter"
+              [(ngModel)]="codigo"
+              (keyup.enter)="buscar()"
+              autocomplete="off"
+              autofocus
+            />
+            <button class="btn btn-primary" (click)="buscar()" [disabled]="buscando()">
+              @if (buscando()) {
+                <span class="spinner-border spinner-border-sm"></span>
+              } @else {
+                Buscar
+              }
+            </button>
+          </div>
+
+          @if (parte(); as p) {
+            <div class="card border-primary">
+              <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                  <div>
+                    <h5 class="mb-1">{{ p.name }}</h5>
+                    <div class="text-muted">
+                      <code>{{ p.sku }}</code>
+                      @if (p.barcode) {
+                        · <code>{{ p.barcode }}</code>
+                      }
+                    </div>
+                  </div>
+                  <div class="text-end">
+                    <div class="text-muted small">Existencia</div>
+                    <div class="h3 mb-0" [class.text-danger]="p.stockQuantity <= p.minStock">
+                      {{ p.stockQuantity }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row text-muted small mt-2">
+                  <div class="col-6">
+                    Costo promedio: {{ p.averageCost | currency: "MXN" : "symbol-narrow" }}
+                  </div>
+                  <div class="col-6 text-end">
+                    P. público: {{ p.publicPrice | currency: "MXN" : "symbol-narrow" }}
+                  </div>
+                </div>
+
+                <hr />
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">Ajustar a existencia física</label>
+                    <div class="input-group">
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="fisico"
+                        min="0"
+                        step="1"
+                        (keyup.enter)="ajustarAFisico()"
+                      />
+                      <button class="btn btn-success" (click)="ajustarAFisico()" [disabled]="procesando()">
+                        Ajustar
+                      </button>
+                    </div>
+                    <small class="text-muted">Genera el ajuste de entrada/salida necesario.</small>
+                  </div>
+
+                  <div class="col-md-6">
+                    <label class="form-label fw-semibold">Entrada de compra</label>
+                    <div class="input-group">
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="entradaQty"
+                        min="1"
+                        step="1"
+                        placeholder="Cant."
+                      />
+                      <input
+                        type="number"
+                        class="form-control"
+                        [(ngModel)]="entradaCosto"
+                        min="0.01"
+                        step="0.01"
+                        placeholder="Costo"
+                      />
+                      <button class="btn btn-outline-primary" (click)="entrada()" [disabled]="procesando()">
+                        Entrada
+                      </button>
+                    </div>
+                    <small class="text-muted">Suma stock y recalcula el costo promedio.</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          } @else {
+            <div class="text-center text-muted py-5">
+              Esperando escaneo…
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-5">
+      <div class="card">
+        <div class="card-header">
+          <h6 class="mb-0">Procesado en esta sesión</h6>
+        </div>
+        <div class="card-body p-0">
+          @if (registros().length === 0) {
+            <div class="text-center text-muted py-4">Aún nada</div>
+          } @else {
+            <div class="list-group list-group-flush">
+              @for (r of registros(); track $index) {
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                  <div>
+                    <div class="fw-semibold">{{ r.name }}</div>
+                    <code class="small">{{ r.sku }}</code>
+                  </div>
+                  <div class="text-end">
+                    <span class="badge bg-light text-dark">{{ r.accion }}</span>
+                    <div class="small text-muted">{{ r.detalle }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

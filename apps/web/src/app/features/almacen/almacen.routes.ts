@@ -71,6 +71,12 @@ export const warehouseRoutes: Routes = [
     data: { title: "Costeo", breadcrumb: "Costeo" },
   },
   {
+    path: "escaneo",
+    loadComponent: () =>
+      import("./escaneo/escaneo").then((m) => m.Escaneo),
+    data: { title: "Inventario rápido", breadcrumb: "Inventario rápido" },
+  },
+  {
     path: "conteos",
     children: [
       {

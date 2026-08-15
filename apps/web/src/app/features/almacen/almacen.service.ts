@@ -17,6 +17,18 @@ const WAREHOUSE_TRANSFERS_URL = "/api/v1/warehouse-transfers";
 const UNIT_RESERVATIONS_URL = "/api/v1/unit-reservations";
 const STOCK_MOVEMENTS_URL = "/api/v1/stock-movements";
 const STOCK_COUNTS_URL = "/api/v1/stock-counts";
+const PARTS_URL = "/api/v1/parts";
+
+export interface PartScan {
+  id: string;
+  sku: string;
+  barcode: string | null;
+  name: string;
+  stockQuantity: number;
+  minStock: number;
+  averageCost: number;
+  publicPrice: number;
+}
 
 export interface ValuationItem {
   partId: string;
@@ -253,5 +265,21 @@ export class AlmacenService {
       CANCELLED: "Cancelado",
     };
     return labels[status] ?? status;
+  }
+
+  // ── Inventario rápido por escaneo ──
+  scanPart(code: string, branchId: string): Observable<PartScan> {
+    const params = new HttpParams().set("code", code).set("branchId", branchId);
+    return this.http.get<PartScan>(`${PARTS_URL}/scan`, { params });
+  }
+
+  crearAjuste(dto: {
+    partId: string;
+    branchId: string;
+    type: "ADJUSTMENT_IN" | "ADJUSTMENT_OUT";
+    quantity: number;
+    notes?: string;
+  }): Observable<unknown> {
+    return this.http.post(`${STOCK_MOVEMENTS_URL}/adjustment`, dto);
   }
 }
