@@ -2,7 +2,7 @@ import { Injectable, inject } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
 import { Router } from "@angular/router";
 import { BrandingService } from "../shared/services/branding.service";
-import { Observable, tap, catchError, of } from "rxjs";
+import { Observable, tap, map, catchError, of } from "rxjs";
 
 const API_URL = "/api/v1/auth";
 const STORAGE_ACCESS = "nexdms_accessToken";
@@ -65,6 +65,43 @@ export class AuthService {
           }
         }),
       );
+  }
+
+  /**
+   * Entra con una sesión ya emitida (handoff desde el portal de superadmin):
+   * guarda los tokens, resuelve el usuario y su marca con /me, y deja la sesión
+   * lista. Devuelve si logró establecerla.
+   */
+  entrarConToken(
+    accessToken: string,
+    refreshToken: string,
+  ): Observable<boolean> {
+    localStorage.setItem(STORAGE_ACCESS, accessToken);
+    if (refreshToken) localStorage.setItem(STORAGE_REFRESH, refreshToken);
+    return this.http.get<AuthUser & { branding?: LoginResponse["branding"] }>(
+      `${API_URL}/me`,
+    ).pipe(
+      tap((me) => {
+        localStorage.setItem(
+          STORAGE_USER,
+          JSON.stringify({
+            id: me.id,
+            firstName: me.firstName,
+            lastName: me.lastName,
+            email: me.email,
+            roles: me.roles,
+            scope: me.scope,
+          }),
+        );
+        this.branding.establecer(me.branding);
+      }),
+      map(() => true),
+      catchError(() => {
+        localStorage.removeItem(STORAGE_ACCESS);
+        localStorage.removeItem(STORAGE_REFRESH);
+        return of(false);
+      }),
+    );
   }
 
   logout(): void {

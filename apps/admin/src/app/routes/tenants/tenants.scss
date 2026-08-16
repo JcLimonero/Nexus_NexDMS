@@ -213,3 +213,15 @@
   font-size: 12px;
   font-weight: 700;
 }
+
+/* "Entrar" al DMS del cliente: acción destacada entre las de la fila. */
+.btn-chico.entrar {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}

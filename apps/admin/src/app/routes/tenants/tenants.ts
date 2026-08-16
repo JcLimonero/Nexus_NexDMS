@@ -128,6 +128,27 @@ export class Tenants implements OnInit {
     setTimeout(() => this.aviso.set(null), 3500);
   }
 
+  /** Abre el DMS del cliente con la sesión ya puesta, en otra pestaña. */
+  entrar(t: Tenant): void {
+    if (!t.isActive) {
+      this.avisar("El cliente está suspendido; reactívalo para entrar", "error");
+      return;
+    }
+    // La pestaña se abre antes de la respuesta para no toparse con el bloqueo
+    // de pop-ups (debe salir del gesto del clic).
+    const tab = window.open("", "_blank");
+    this.srv.entrarComo(t.id).subscribe({
+      next: (res) => {
+        if (tab) tab.location.href = res.url;
+        else window.location.href = res.url;
+      },
+      error: (err) => {
+        tab?.close();
+        this.avisar(err?.error?.message || "No se pudo entrar al cliente", "error");
+      },
+    });
+  }
+
   cargar(): void {
     this.cargando.set(true);
     this.srv.listar().subscribe({

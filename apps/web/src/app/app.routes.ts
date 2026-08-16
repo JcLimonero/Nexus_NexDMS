@@ -24,6 +24,13 @@ export const routes: Routes = [
       import("./pages/monitor/monitor-acceso").then((m) => m.MonitorAcceso),
     data: { title: "Acceso a las pantallas del taller" },
   },
+  // Entrada por handoff desde el portal de superadmin ("entrar como" cliente).
+  // Pública: ella misma establece la sesión con los tokens del fragmento.
+  {
+    path: "sso",
+    loadComponent: () => import("./pages/sso/sso").then((m) => m.Sso),
+    data: { title: "Entrando…" },
+  },
   {
     path: "monitor/taller",
     loadComponent: () =>

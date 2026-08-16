@@ -112,6 +112,33 @@ export class UsersService {
     return user.roles?.map((r) => r.role) ?? [];
   }
 
+  /**
+   * Un usuario administrador del cliente, para "entrar como" desde el portal de
+   * superadmin. Prefiere un ADMIN activo; si no hay, cualquier usuario activo
+   * del cliente. Recarga con sus roles para poder armar el token.
+   */
+  async findTenantAdmin(tenantId: string): Promise<User | null> {
+    const candidato = await this.userRepo
+      .createQueryBuilder('u')
+      .innerJoin('u.roles', 'r')
+      .where('u.tenant_id = :tenantId', { tenantId })
+      .andWhere('u.deleted_at IS NULL')
+      .andWhere('u.is_active = true')
+      .andWhere('r.role IN (:...roles)', { roles: ['ADMIN', 'SUPERADMIN'] })
+      .orderBy('u.created_at', 'ASC')
+      .getOne();
+
+    const id = candidato?.id;
+    if (id) {
+      return this.userRepo.findOne({ where: { id }, relations: ['roles'] });
+    }
+    return this.userRepo.findOne({
+      where: { tenantId, deletedAt: IsNull(), isActive: true },
+      relations: ['roles'],
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   async save(user: User): Promise<User> {
     return this.userRepo.save(user);
   }

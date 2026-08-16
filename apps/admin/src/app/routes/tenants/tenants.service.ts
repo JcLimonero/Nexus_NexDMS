@@ -63,6 +63,17 @@ export class TenantsService {
     return this.http.patch<Tenant>(`/api/v1/tenants/${id}/suspend`, {});
   }
 
+  /**
+   * "Entrar como" el cliente: pide al backend una sesión de DMS y devuelve la
+   * liga lista para abrir con la sesión puesta.
+   */
+  entrarComo(id: string): Observable<{ url: string; dmsUrl: string }> {
+    return this.http.post<{ url: string; dmsUrl: string }>(
+      `/api/v1/auth/impersonate/${id}`,
+      {},
+    );
+  }
+
   /** Catálogo completo de módulos con su plan mínimo. */
   catalogo(): Observable<{ modules: Modulo[] }> {
     return this.http.get<{ modules: Modulo[] }>("/api/v1/modules/catalog");

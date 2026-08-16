@@ -1,5 +1,7 @@
 import {
+  BadRequestException,
   Injectable,
+  NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -150,6 +152,63 @@ export class AuthService {
       // La marca viaja ya en el login para pintar el DMS de una vez, sin la
       // llamada extra a /auth/me y el parpadeo que traería.
       branding: await this.brandingDelTenant(user.tenantId),
+    };
+  }
+
+  /**
+   * "Entrar como" un cliente desde el portal de superadmin: emite una sesión de
+   * DMS para el administrador de ese cliente. No pide su contraseña —el
+   * superadmin ya tiene el control—, y solo lo puede invocar un SUPERADMIN
+   * (lo hace cumplir el guard del endpoint). Devuelve además la liga lista para
+   * abrir el DMS con la sesión puesta.
+   */
+  async impersonate(tenantId: string) {
+    const admin = await this.usersService.findTenantAdmin(tenantId);
+    if (!admin) {
+      throw new NotFoundException(
+        'El cliente no tiene usuarios para entrar',
+      );
+    }
+    const defaultBranch = await this.usersService.getDefaultBranchForUser(
+      admin.id,
+    );
+    if (!defaultBranch) {
+      throw new BadRequestException(
+        'El usuario del cliente no tiene sucursal asignada',
+      );
+    }
+    const roles = this.usersService.getRoleNames(admin);
+    const payload: UserPayload = {
+      sub: admin.id,
+      tenantId: admin.tenantId,
+      branchId: defaultBranch.branchId,
+      legalEntityId: defaultBranch.legalEntityId,
+      roles,
+      scope: admin.scope,
+    };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(
+      { sub: admin.id, tenantId: admin.tenantId },
+      { expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d') },
+    );
+    try {
+      await this.redis.setex(
+        `${REFRESH_KEY_PREFIX}${admin.id}`,
+        REFRESH_TTL_SECONDS,
+        refreshToken,
+      );
+    } catch {
+      // Sin refresh en Redis la sesión igual sirve para la demo; no se corta.
+    }
+
+    // El DMS vive en otro origen: se entrega la liga con los tokens en el
+    // fragmento (#), que no viaja al servidor ni queda en logs.
+    const dmsUrl = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
+    return {
+      accessToken,
+      refreshToken,
+      dmsUrl,
+      url: `${dmsUrl}/sso#at=${accessToken}&rt=${refreshToken}`,
     };
   }
 

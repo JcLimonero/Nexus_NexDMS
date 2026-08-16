@@ -3,15 +3,19 @@ import {
   Controller,
   Get,
   HttpCode,
+  Param,
   Patch,
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { LIMITE_ACCESO } from '../../common/throttler/limites';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
@@ -53,6 +57,19 @@ export class AuthController {
   @HttpCode(204)
   logout(@CurrentUser() user: UserPayload) {
     return this.authService.logout(user.sub);
+  }
+
+  /**
+   * "Entrar como" un cliente: solo un SUPERADMIN puede pedirlo. Devuelve la liga
+   * al DMS del cliente con la sesión ya puesta.
+   */
+  @Post('impersonate/:tenantId')
+  @HttpCode(200)
+  @UseGuards(AuthGuard, RolesGuard)
+  @Roles('SUPERADMIN')
+  @ApiBearerAuth()
+  impersonate(@Param('tenantId', ParseUUIDPipe) tenantId: string) {
+    return this.authService.impersonate(tenantId);
   }
 
   @Patch('change-password')
