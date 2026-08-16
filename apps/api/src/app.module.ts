@@ -19,6 +19,7 @@ import { StockLocationsModule } from './modules/stock-locations/stock-locations.
 import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
 import { StockCountsModule } from './modules/stock-counts/stock-counts.module';
 import { RoleMapModule } from './modules/role-map/role-map.module';
+import { CustomRolesModule } from './modules/custom-roles/custom-roles.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
 import { SaasModule } from './modules/saas/saas.module';
 import { VehicleHistoryModule } from './modules/vehicle-history/vehicle-history.module';
@@ -133,6 +134,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     StockMovementsModule,
     StockCountsModule,
     RoleMapModule,
+    CustomRolesModule,
     SuppliersModule,
     UsersModule,
     CashRegisterModule,

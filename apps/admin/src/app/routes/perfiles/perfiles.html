@@ -1,0 +1,117 @@
+<div class="panel">
+  <app-barra
+    titulo="Roles a medida"
+    subtitulo="Perfiles con nombre propio que cada cliente arma con los roles base"
+  />
+
+  @if (aviso(); as a) {
+    <p class="aviso" [attr.data-tono]="a.tono">{{ a.texto }}</p>
+  }
+
+  @if (cargando()) {
+    <p class="aviso">Cargando…</p>
+  } @else {
+    <div class="selector-tenant">
+      <label>Cliente</label>
+      <select
+        [ngModel]="tenantId()"
+        (ngModelChange)="onTenantChange($event)"
+      >
+        @for (t of tenants(); track t.id) {
+          <option [value]="t.id">{{ t.name }}</option>
+        }
+      </select>
+    </div>
+
+    <div class="perfiles-layout">
+      <section class="lista-perfiles">
+        <div class="encabezado">
+          <h2>Perfiles del cliente</h2>
+          <button type="button" class="btn" (click)="nuevo()">Nuevo perfil</button>
+        </div>
+
+        @if (perfiles().length === 0) {
+          <p class="vacio">Este cliente aún no tiene perfiles a medida.</p>
+        } @else {
+          @for (p of perfiles(); track p.id) {
+            <article class="tarjeta-perfil" [class.editando]="editandoId() === p.id">
+              <div class="linea">
+                <div>
+                  <h3>{{ p.name }}</h3>
+                  @if (p.description) {
+                    <p class="desc">{{ p.description }}</p>
+                  }
+                </div>
+                <div class="acciones">
+                  <button type="button" class="btn-texto" (click)="editar(p)">Editar</button>
+                  <button type="button" class="btn-texto peligro" (click)="eliminar(p)">Eliminar</button>
+                </div>
+              </div>
+              <div class="bases">
+                @for (r of p.baseRoles; track r) {
+                  <span class="pastilla">{{ etiqueta(r) }}</span>
+                }
+              </div>
+              <p class="cobertura">
+                Alcanza {{ p.resolvedModules.length }} módulo(s) · {{ p.operationCount }} operaciones
+              </p>
+            </article>
+          }
+        }
+      </section>
+
+      <section class="editor">
+        <h2>{{ editandoId() ? "Editar perfil" : "Nuevo perfil" }}</h2>
+
+        <label class="campo">
+          <span>Nombre</span>
+          <input type="text" [(ngModel)]="nombre" placeholder="p. ej. Mostrador plus" />
+        </label>
+
+        <label class="campo">
+          <span>Descripción (opcional)</span>
+          <input type="text" [(ngModel)]="descripcion" placeholder="Para qué sirve este perfil" />
+        </label>
+
+        <div class="campo">
+          <span>Roles base que lo componen</span>
+          <div class="bases-grid">
+            @for (r of basesDisponibles(); track r.role) {
+              <button
+                type="button"
+                class="base-op"
+                [class.activa]="seleccionado(r.role)"
+                (click)="toggleBase(r.role)"
+              >
+                <strong>{{ etiqueta(r.role) }}</strong>
+                <small>{{ r.modules.length }} mód</small>
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="preview">
+          <span class="titulo">Cobertura del perfil</span>
+          @if (vistaPrevia().length === 0) {
+            <p class="vacio">Selecciona roles base para ver qué módulos cubre.</p>
+          } @else {
+            <div class="chips">
+              @for (m of vistaPrevia(); track m) {
+                <span class="chip">{{ m }}</span>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="botones">
+          @if (editandoId()) {
+            <button type="button" class="btn-texto" (click)="cancelar()">Cancelar</button>
+          }
+          <button type="button" class="btn" (click)="guardar()" [disabled]="guardando()">
+            {{ editandoId() ? "Guardar cambios" : "Crear perfil" }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</div>
