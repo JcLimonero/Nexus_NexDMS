@@ -39,6 +39,12 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  /** Marca del cliente para vestir el acceso; pública, sin sesión. */
+  @Get('branding/:slug')
+  brandingPublico(@Param('slug') slug: string) {
+    return this.authService.brandingPublicoPorSlug(slug);
+  }
+
   @Post('refresh')
   @HttpCode(200)
   @Throttle(LIMITE_ACCESO)

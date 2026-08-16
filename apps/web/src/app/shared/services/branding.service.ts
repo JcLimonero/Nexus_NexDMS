@@ -12,6 +12,8 @@ export interface Paleta {
 }
 
 export interface Branding {
+  /** Nombre del cliente, para rotular la pestaña del navegador. */
+  nombre?: string | null;
   paletaId: string;
   paleta: Paleta;
   logoUrl: string | null;

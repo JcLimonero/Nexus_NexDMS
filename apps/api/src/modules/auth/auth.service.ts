@@ -373,6 +373,17 @@ export class AuthService {
     };
   }
 
+  /**
+   * Marca pública de un cliente por su identificador (slug), para vestir la
+   * pantalla de acceso antes de iniciar sesión. Solo expone nombre, colores y
+   * logotipo —nada sensible—, así que no requiere sesión.
+   */
+  async brandingPublicoPorSlug(slug: string) {
+    const t = await this.tenantRepo.findOne({ where: { slug } });
+    if (!t) throw new NotFoundException('Cliente no encontrado');
+    return this.brandingDelTenant(t.id);
+  }
+
   /** Paleta y logotipo del cliente, resueltos para pintar. */
   private async brandingDelTenant(tenantId: string) {
     const t = await this.tenantRepo.findOne({ where: { id: tenantId } });
@@ -387,6 +398,9 @@ export class AuthService {
       }
     }
     return {
+      // El nombre viaja con la marca para rotular la pestaña con el cliente,
+      // que es clave cuando el superadmin abre varios a la vez.
+      nombre: t?.name ?? null,
       paletaId: t?.palette ?? PALETA_POR_OMISION.id,
       paleta: paletaPorId(t?.palette),
       logoUrl,
