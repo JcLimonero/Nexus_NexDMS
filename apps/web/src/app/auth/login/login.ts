@@ -9,6 +9,8 @@ import {
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 
 import { AuthService } from "../auth.service";
+import { BrandingService } from "../../shared/services/branding.service";
+import { TenantContext } from "../../shared/tenant/tenant-context";
 
 @Component({
   selector: "app-login",
@@ -21,6 +23,12 @@ export class Login implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
+  private branding = inject(BrandingService);
+  private tenant = inject(TenantContext);
+
+  /** Cliente de la liga (`/<slug>/…`): rotula el acceso y lo acota. */
+  public clienteNombre: string | null = null;
+  private tenantId: string | null = null;
 
   /**
    * A dónde ir tras entrar. Lo pone el guard cuando alguien abre un enlace
@@ -186,6 +194,22 @@ export class Login implements OnInit {
     if (this.auth.isAuthenticated()) {
       this.router.navigateByUrl(this.destino());
     }
+
+    // Si se entró por la liga de un cliente, se viste el acceso con su marca y
+    // se acota el login a ese cliente.
+    const slug = this.tenant.slug;
+    if (slug) {
+      this.auth.brandingPorSlug(slug).subscribe({
+        next: (b) => {
+          this.clienteNombre = b?.nombre ?? null;
+          this.tenantId = b?.id ?? null;
+          this.branding.establecer(b);
+        },
+        error: () => {
+          /* slug desconocido: se entra al acceso genérico */
+        },
+      });
+    }
   }
 
   login() {
@@ -197,6 +221,7 @@ export class Login implements OnInit {
       .login({
         email: this.loginForm.value["email"],
         password: this.loginForm.value["password"],
+        tenantId: this.tenantId ?? undefined,
       })
       .subscribe({
         next: (res) => {

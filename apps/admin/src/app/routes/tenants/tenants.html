@@ -253,6 +253,23 @@
     </header>
 
     @if (ficha(); as f) {
+      <!-- Liga de acceso del cliente, para copiar y compartir -->
+      <section class="liga-acceso">
+        <span class="etiqueta">Liga de acceso</span>
+        <div class="liga-fila">
+          <input type="text" class="mono" [value]="f.accessUrl" readonly />
+          <button type="button" class="btn-chico" (click)="copiar(f.accessUrl)">
+            {{ copiado() === f.accessUrl ? "¡Copiada!" : "Copiar" }}
+          </button>
+          <a class="btn-chico" [href]="f.accessUrl" target="_blank" rel="noopener">
+            Abrir
+          </a>
+        </div>
+        <p class="ayuda">
+          El cliente entra aquí con su usuario; la pantalla ya sale con su marca.
+        </p>
+      </section>
+
       <!-- Lo que paga y cómo va: el resumen antes del detalle -->
       <section class="indicadores compactos">
         <div class="indicador">

@@ -225,3 +225,36 @@
     cursor: not-allowed;
   }
 }
+
+/* Liga de acceso del cliente en la ficha. */
+.liga-acceso {
+  margin: 0 0 1rem;
+
+  .etiqueta {
+    display: block;
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+  }
+  .liga-fila {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+
+    input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.6rem;
+      color: var(--text-primary);
+    }
+    a.btn-chico { text-decoration: none; display: inline-flex; align-items: center; }
+  }
+  .ayuda {
+    margin: 0.35rem 0 0;
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+  }
+}

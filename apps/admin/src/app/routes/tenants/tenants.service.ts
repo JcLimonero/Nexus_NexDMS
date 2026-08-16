@@ -160,6 +160,8 @@ export interface FichaComercial {
 
 export interface Ficha {
   tenant: Tenant & FichaComercial;
+  /** Liga de acceso del cliente (`nex-dms/<slug>`), para copiar y compartir. */
+  accessUrl: string;
   cobro: {
     plan: { key: Plan; name: string; precio: number };
     extras: { key: string; name: string; precio: number }[];

@@ -68,6 +68,18 @@ export class AuthService {
   }
 
   /**
+   * Marca pública de un cliente por su slug, para vestir y acotar el acceso
+   * cuando se entra por su liga (`/<slug>/…`). Incluye el id del cliente.
+   */
+  brandingPorSlug(
+    slug: string,
+  ): Observable<LoginResponse["branding"] & { id: string }> {
+    return this.http.get<LoginResponse["branding"] & { id: string }>(
+      `${API_URL}/branding/${slug}`,
+    );
+  }
+
+  /**
    * Entra con una sesión ya emitida (handoff desde el portal de superadmin):
    * guarda los tokens, resuelve el usuario y su marca con /me, y deja la sesión
    * lista. Devuelve si logró establecerla.

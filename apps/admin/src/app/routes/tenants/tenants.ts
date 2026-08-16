@@ -128,6 +128,20 @@ export class Tenants implements OnInit {
     setTimeout(() => this.aviso.set(null), 3500);
   }
 
+  /** La última liga copiada, para el acuse "¡Copiada!" en el botón. */
+  copiado = signal<string | null>(null);
+
+  /** Copia la liga de acceso al portapapeles. */
+  copiar(texto: string): void {
+    navigator.clipboard?.writeText(texto).then(
+      () => {
+        this.copiado.set(texto);
+        setTimeout(() => this.copiado.set(null), 2000);
+      },
+      () => this.avisar("No se pudo copiar", "error"),
+    );
+  }
+
   /** Abre el DMS del cliente con la sesión ya puesta, en otra pestaña. */
   entrar(t: Tenant): void {
     if (!t.isActive) {

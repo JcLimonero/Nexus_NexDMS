@@ -59,6 +59,17 @@ export class BrandingService {
     });
   }
 
+  /**
+   * Viste la pantalla de acceso con la marca pública de un cliente, cuando se
+   * entra por su liga (`/<slug>/…`) sin sesión todavía.
+   */
+  cargarPublicaPorSlug(slug: string): void {
+    this.http.get<Branding>(`/api/v1/auth/branding/${slug}`).subscribe({
+      next: (b) => this.aplicar(b),
+      error: () => {},
+    });
+  }
+
   /** Recibe la marca ya resuelta —por ejemplo, la del login— y la aplica. */
   establecer(branding: Branding | null | undefined): void {
     if (branding) this.aplicar(branding);

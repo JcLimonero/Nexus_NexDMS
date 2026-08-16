@@ -13,7 +13,11 @@
         <div class="card-body">
           <div class="text-center">
             <h4>Iniciar sesión</h4>
-            <h6>Ingresa tu correo electrónico y contraseña</h6>
+            @if (clienteNombre) {
+              <h6 class="cliente-acceso">Acceso a <strong>{{ clienteNombre }}</strong></h6>
+            } @else {
+              <h6>Ingresa tu correo electrónico y contraseña</h6>
+            }
             @if (destinoPendiente) {
               <p class="destino-pendiente">
                 Al entrar te llevamos {{ destinoPendiente }}.

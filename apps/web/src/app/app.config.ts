@@ -11,7 +11,7 @@ import {
   provideAppInitializer,
   provideZoneChangeDetection,
 } from "@angular/core";
-import { registerLocaleData } from "@angular/common";
+import { APP_BASE_HREF, registerLocaleData } from "@angular/common";
 import localeEsMX from "@angular/common/locales/es-MX";
 import { provideAnimations } from "@angular/platform-browser/animations";
 import {
@@ -32,6 +32,7 @@ import { routes } from "./app.routes";
 import { NexDMSTitleStrategy } from "./shared/services/nexdms-title.strategy";
 import { BrandingService } from "./shared/services/branding.service";
 import { AuthService } from "./auth/auth.service";
+import { baseHrefDeTenant, slugDeLaUrl } from "./shared/tenant/tenant-context";
 
 /**
  * Español de México en fechas y números.
@@ -61,14 +62,23 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     { provide: TitleStrategy, useClass: NexDMSTitleStrategy },
+    // El cliente en la ruta (`/<slug>/…`) se vuelve la raíz de la app: así el
+    // slug se mantiene en toda la navegación sin tocar rutas ni routerLinks.
+    { provide: APP_BASE_HREF, useFactory: baseHrefDeTenant },
     // La marca del cliente se aplica antes de la primera pantalla: primero la
     // última guardada —instantánea, sin parpadeo de los colores de fábrica— y,
-    // si hay sesión, se refresca contra el servidor.
+    // si hay sesión, se refresca contra el servidor. Si se entró por la liga de
+    // un cliente (`/<slug>/…`) sin sesión, se viste con su marca pública.
     provideAppInitializer(() => {
       const branding = inject(BrandingService);
       branding.aplicarGuardado();
       const auth = inject(AuthService);
-      if (auth.isAuthenticated()) branding.cargar();
+      if (auth.isAuthenticated()) {
+        branding.cargar();
+      } else {
+        const slug = slugDeLaUrl();
+        if (slug) branding.cargarPublicaPorSlug(slug);
+      }
     }),
     importProvidersFrom(
       CalendarModule.forRoot({

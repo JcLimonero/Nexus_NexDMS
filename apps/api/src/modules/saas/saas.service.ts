@@ -19,6 +19,7 @@ import {
 } from './entities/saas.entities';
 import { PALETAS, paletaPorId } from '../tenants/branding.paletas';
 import { StorageService } from '../../common/storage/storage.service';
+import { ConfigService } from '@nestjs/config';
 
 /** Lo que un cliente paga al mes, desglosado. */
 export interface Cobro {
@@ -40,6 +41,7 @@ export class SaasService {
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
     private readonly storage: StorageService,
+    private readonly config: ConfigService,
   ) {}
 
   // ─── Planes ─────────────────────────────────────────────────
@@ -312,9 +314,12 @@ export class SaasService {
     );
     const vencidos = pagos.filter((p) => this.vencido(p));
 
+    const dmsUrl = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
     return {
       tenant: t,
       cobro,
+      // Liga de acceso del cliente: su espacio en el DMS (`/<slug>/`).
+      accessUrl: t.slug ? `${dmsUrl}/${t.slug}` : dmsUrl,
       modulos: {
         activos: activos.length,
         incluidosEnPlan: modulesForPlan(t.plan).length,

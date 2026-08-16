@@ -202,13 +202,16 @@ export class AuthService {
     }
 
     // El DMS vive en otro origen: se entrega la liga con los tokens en el
-    // fragmento (#), que no viaja al servidor ni queda en logs.
+    // fragmento (#), que no viaja al servidor ni queda en logs. La liga cuelga
+    // del slug del cliente para caer en su espacio (`/<slug>/…`).
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
     const dmsUrl = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
+    const base = tenant?.slug ? `${dmsUrl}/${tenant.slug}` : dmsUrl;
     return {
       accessToken,
       refreshToken,
       dmsUrl,
-      url: `${dmsUrl}/sso#at=${accessToken}&rt=${refreshToken}`,
+      url: `${base}/sso#at=${accessToken}&rt=${refreshToken}`,
     };
   }
 
@@ -381,7 +384,8 @@ export class AuthService {
   async brandingPublicoPorSlug(slug: string) {
     const t = await this.tenantRepo.findOne({ where: { slug } });
     if (!t) throw new NotFoundException('Cliente no encontrado');
-    return this.brandingDelTenant(t.id);
+    // El id acompaña a la marca para acotar el acceso a este cliente.
+    return { id: t.id, ...(await this.brandingDelTenant(t.id)) };
   }
 
   /** Paleta y logotipo del cliente, resueltos para pintar. */
