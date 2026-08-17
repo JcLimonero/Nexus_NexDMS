@@ -313,8 +313,10 @@ export class RecibirPage implements OnInit {
   async copiarLigaCliente(): Promise<void> {
     const liga = this.ligaCliente();
     if (!liga) return;
+    // Además de copiar, se abre en otra pestaña para revisarla de una vez.
+    window.open(liga, "_blank", "noopener");
     if (await copiarAlPortapapeles(liga)) {
-      this.avisar("Liga copiada", "ok");
+      this.avisar("Liga copiada y abierta en otra pestaña", "ok");
     } else {
       // Sin portapapeles no se deja al asesor sin salida: se le enseña la
       // liga para que la copie a mano.
