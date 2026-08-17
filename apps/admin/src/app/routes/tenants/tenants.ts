@@ -200,7 +200,14 @@ export class Tenants implements OnInit {
       plan: t.plan,
       isActive: t.isActive,
     };
-    this.planId = t.saasPlanId ?? "";
+    // Preselecciona el plan del cliente. Si no tiene un plan comercial ligado
+    // (`saasPlanId`), se toma el que corresponde a su nivel (BASIC/PRO/…), para
+    // que el select no abra en blanco o en el primero.
+    this.planId =
+      t.saasPlanId ||
+      this.planesALaVenta().find((p) => p.key === t.plan)?.id ||
+      this.planesALaVenta()[0]?.id ||
+      "";
     this.formAbierto.set(true);
   }
 
