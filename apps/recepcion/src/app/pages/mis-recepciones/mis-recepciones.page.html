@@ -1,12 +1,14 @@
 <div class="pantalla">
   <header class="cabecera">
-    @if (logoUrl(); as url) {
-      <img class="logo-cliente" [src]="url" alt="Logotipo" />
-    }
-    <div>
-      <div class="quien">{{ auth.user()?.firstName }} {{ auth.user()?.lastName }}</div>
-      <div class="sub">
-        {{ pendientes() }} por recibir · {{ fecha() | date: "EEEE d 'de' MMMM" }}
+    <div class="ident">
+      @if (logoUrl(); as url) {
+        <img class="logo-cliente" [src]="url" alt="Logotipo" />
+      }
+      <div>
+        <div class="quien">{{ auth.user()?.firstName }} {{ auth.user()?.lastName }}</div>
+        <div class="sub">
+          {{ pendientes() }} por recibir · {{ fecha() | date: "EEEE d 'de' MMMM" }}
+        </div>
       </div>
     </div>
     <button type="button" class="salir" (click)="auth.logout()">
