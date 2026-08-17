@@ -5,13 +5,15 @@
  * —la del DMS y la del iPad— y porque el número de teléfono tiene una regla
  * que no conviene reescribir en cada sitio.
  */
+import { slugDeLaUrl } from "../tenant/tenant-context";
 
-/** Dirección pública de seguimiento de una orden. */
+/** Dirección pública de seguimiento de una orden, en el portal del cliente. */
 export function ligaDeSeguimiento(token: string): string {
-  // Se arma sobre el origen actual porque la misma aplicación sirve `/t/:token`:
-  // así funciona igual en la demo, en la red del taller y en producción, sin
-  // una variable de entorno que alguien olvide cambiar al desplegar.
-  return `${location.origin}/t/${token}`;
+  // El DMS sirve `/t/:token`, así que basta el origen actual; se cuelga del
+  // slug del cliente para que abra con su marca.
+  const slug = slugDeLaUrl();
+  const base = slug ? `${location.origin}/${slug}` : location.origin;
+  return `${base}/t/${token}`;
 }
 
 /**

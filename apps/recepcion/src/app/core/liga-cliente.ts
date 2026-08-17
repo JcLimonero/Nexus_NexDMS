@@ -6,13 +6,17 @@
  * el resto del flujo de recepción: un cambio aquí hay que llevarlo también
  * allá, sobre todo la regla de la lada del teléfono.
  */
+import { slugDeLaUrl } from "./tenant-context";
 
-/** Dirección pública de seguimiento de una orden. */
+/** Dirección pública de seguimiento de una orden, en el portal del cliente. */
 export function ligaDeSeguimiento(token: string): string {
-  // Se arma sobre el origen actual porque la misma aplicación sirve `/t/:token`:
-  // así funciona igual en la demo, en la red del taller y en producción, sin
-  // una variable de entorno que alguien olvide cambiar al desplegar.
-  return `${location.origin}/t/${token}`;
+  const slug = slugDeLaUrl();
+  // La página `/t/:token` la sirve el DMS, no este portal de recepción: si
+  // estamos en su subdominio (`recepcion.`), se apunta al del DMS (`app.`).
+  // Y cuelga del slug del cliente para que abra con su marca.
+  const origin = location.origin.replace(/^(https?:\/\/)recepcion\./, "$1app.");
+  const base = slug ? `${origin}/${slug}` : origin;
+  return `${base}/t/${token}`;
 }
 
 /**
