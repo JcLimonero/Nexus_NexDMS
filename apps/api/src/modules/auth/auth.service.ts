@@ -388,6 +388,24 @@ export class AuthService {
     return { id: t.id, ...(await this.brandingDelTenant(t.id)) };
   }
 
+  /**
+   * Usuarios de demostración de un cliente (por slug), para el panel de
+   * credenciales de su acceso. Solo fuera de producción: en producción ese
+   * panel no existe. No devuelve contraseñas; todas las cuentas demo usan la
+   * misma (`demo123`), que la pantalla muestra aparte.
+   */
+  async demoUsers(slug: string) {
+    if (this.config.get('NODE_ENV') === 'production') return [];
+    const t = await this.tenantRepo.findOne({ where: { slug } });
+    if (!t) return [];
+    const users = await this.usersService.demoUsers(t.id);
+    return users.map((u) => ({
+      email: u.email,
+      nombre: `${u.firstName} ${u.lastName}`.trim(),
+      roles: this.usersService.getRoleNames(u),
+    }));
+  }
+
   /** Paleta y logotipo del cliente, resueltos para pintar. */
   private async brandingDelTenant(tenantId: string) {
     const t = await this.tenantRepo.findOne({ where: { id: tenantId } });

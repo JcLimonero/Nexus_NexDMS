@@ -167,9 +167,11 @@
           <!-- Solo en compilaciones de desarrollo (ver demoMode) -->
           @if (demoMode) {
             <div class="demo-panel">
-              <div class="demo-title">Cuentas de demostración</div>
+              <div class="demo-title">
+                {{ clienteNombre ? "Cuentas de " + clienteNombre : "Cuentas de demostración" }}
+              </div>
               <div class="demo-accounts">
-                @for (c of demoCuentas; track c.email) {
+                @for (c of demoCuentas(); track c.email) {
                   <button
                     type="button"
                     class="demo-account"

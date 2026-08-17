@@ -45,6 +45,12 @@ export class AuthController {
     return this.authService.brandingPublicoPorSlug(slug);
   }
 
+  /** Credenciales de demostración del cliente (solo fuera de producción). */
+  @Get('demo-users/:slug')
+  demoUsers(@Param('slug') slug: string) {
+    return this.authService.demoUsers(slug);
+  }
+
   @Post('refresh')
   @HttpCode(200)
   @Throttle(LIMITE_ACCESO)

@@ -61,8 +61,10 @@ import { TenantContext } from "../../core/tenant-context";
         <!-- Solo en compilaciones de desarrollo (ver modoDemo) -->
         @if (modoDemo) {
           <div class="demo">
-            <div class="demo-titulo">Asesores de demostración</div>
-            @for (t of tecnicosDemo; track t.email) {
+            <div class="demo-titulo">
+              {{ clienteNombre() ? "Cuentas de " + clienteNombre() : "Asesores de demostración" }}
+            </div>
+            @for (t of tecnicosDemo(); track t.email) {
               <button type="button" class="demo-fila" (click)="usar(t)">
                 <span class="demo-nombre">{{ t.nombre }}</span>
                 <span class="demo-cred">{{ t.email }} · {{ t.password }}</span>
@@ -239,6 +241,34 @@ export class LoginPage implements OnInit {
         /* slug desconocido: acceso genérico */
       },
     });
+    // Las cuentas del panel pasan a ser las de este cliente (recepción/admin).
+    this.auth.demoUsers(slug).subscribe({
+      next: (us) => {
+        const relevantes = us.filter(
+          (u) =>
+            u.roles.includes("RECEPTIONIST") || u.roles.includes("ADMIN"),
+        );
+        const lista = (relevantes.length ? relevantes : us).map((u) => ({
+          nombre: this.etiquetaRol(u.roles),
+          email: u.email,
+          password: "demo123",
+        }));
+        if (lista.length) this.tecnicosDemo.set(lista);
+      },
+      error: () => {
+        /* sin cuentas del cliente: quedan las genéricas */
+      },
+    });
+  }
+
+  /** Etiqueta legible del rol para el panel de cuentas. */
+  private etiquetaRol(roles: string[]): string {
+    const map: Record<string, string> = {
+      ADMIN: "Administrador",
+      RECEPTIONIST: "Recepción",
+      MECHANIC: "Técnico",
+    };
+    return map[roles[0]] ?? roles[0] ?? "Usuario";
   }
 
   /**
@@ -249,11 +279,13 @@ export class LoginPage implements OnInit {
    */
   readonly modoDemo = isDevMode();
 
-  readonly tecnicosDemo = [
-    { nombre: "Andrés Recepción", email: "recepcion@demo.local", password: "demo1234" },
-    { nombre: "Asesor 2", email: "asesor2@demo.local", password: "demo1234" },
-    { nombre: "Asesor 3", email: "asesor3@demo.local", password: "demo1234" },
-  ];
+  tecnicosDemo = signal<
+    { nombre: string; email: string; password: string }[]
+  >([
+    { nombre: "Andrés Recepción", email: "recepcion@demo.local", password: "demo123" },
+    { nombre: "Asesor 2", email: "asesor2@demo.local", password: "demo123" },
+    { nombre: "Asesor 3", email: "asesor3@demo.local", password: "demo123" },
+  ]);
 
   /** Llena el formulario y entra: en el taller nadie teclea un correo largo. */
   usar(t: { email: string; password: string }): void {

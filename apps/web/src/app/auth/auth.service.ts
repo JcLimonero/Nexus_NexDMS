@@ -67,6 +67,15 @@ export class AuthService {
       );
   }
 
+  /** Usuarios de demostración del cliente (por slug), para el panel de acceso. */
+  demoUsersPorSlug(
+    slug: string,
+  ): Observable<{ email: string; nombre: string; roles: string[] }[]> {
+    return this.http.get<
+      { email: string; nombre: string; roles: string[] }[]
+    >(`${API_URL}/demo-users/${slug}`);
+  }
+
   /**
    * Marca pública de un cliente por su slug, para vestir y acotar el acceso
    * cuando se entra por su liga (`/<slug>/…`). Incluye el id del cliente.

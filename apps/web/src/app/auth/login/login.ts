@@ -1,4 +1,4 @@
-import { Component, inject, isDevMode, OnInit } from "@angular/core";
+import { Component, inject, isDevMode, OnInit, signal } from "@angular/core";
 import {
   FormBuilder,
   Validators,
@@ -84,7 +84,13 @@ export class Login implements OnInit {
    */
   public readonly demoMode = isDevMode();
 
-  public readonly demoCuentas = [
+  /**
+   * Cuentas de demostración. Por defecto las genéricas; si se entró por la liga
+   * de un cliente (`/<slug>/…`) se reemplazan por las de ese cliente.
+   */
+  public demoCuentas = signal<
+    { rol: string; email: string; password: string; detalle: string }[]
+  >([
     {
       rol: "Administrador",
       email: "admin@demo.local",
@@ -94,7 +100,7 @@ export class Login implements OnInit {
     {
       rol: "Recepción",
       email: "recepcion@demo.local",
-      password: "demo1234",
+      password: "demo123",
       detalle: "Solo el módulo de recepción de unidades",
     },
     {
@@ -103,7 +109,21 @@ export class Login implements OnInit {
       password: "demo123",
       detalle: "Para la app del taller",
     },
-  ];
+  ]);
+
+  /** Etiqueta legible de un rol, para el panel de cuentas del cliente. */
+  private etiquetaRol(roles: string[]): string {
+    const map: Record<string, string> = {
+      ADMIN: "Administrador",
+      MANAGER: "Gerente",
+      CASHIER: "Cajero",
+      SELLER: "Vendedor",
+      WAREHOUSE: "Almacén",
+      RECEPTIONIST: "Recepción",
+      MECHANIC: "Técnico",
+    };
+    return map[roles[0]] ?? roles[0] ?? "Usuario";
+  }
 
   public readonly demoPortales = [
     {
@@ -207,6 +227,24 @@ export class Login implements OnInit {
         },
         error: () => {
           /* slug desconocido: se entra al acceso genérico */
+        },
+      });
+      // Las cuentas del panel pasan a ser las de este cliente.
+      this.auth.demoUsersPorSlug(slug).subscribe({
+        next: (us) => {
+          if (us.length) {
+            this.demoCuentas.set(
+              us.map((u) => ({
+                rol: this.etiquetaRol(u.roles),
+                email: u.email,
+                password: "demo123",
+                detalle: u.nombre,
+              })),
+            );
+          }
+        },
+        error: () => {
+          /* sin cuentas del cliente: quedan las genéricas */
         },
       });
     }

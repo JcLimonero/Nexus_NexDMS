@@ -112,6 +112,15 @@ export class UsersService {
     return user.roles?.map((r) => r.role) ?? [];
   }
 
+  /** Usuarios activos del cliente, para el panel de credenciales de la demo. */
+  async demoUsers(tenantId: string): Promise<User[]> {
+    return this.userRepo.find({
+      where: { tenantId, deletedAt: IsNull(), isActive: true },
+      relations: ['roles'],
+      order: { createdAt: 'ASC' },
+    });
+  }
+
   /**
    * Un usuario administrador del cliente, para "entrar como" desde el portal de
    * superadmin. Prefiere un ADMIN activo; si no hay, cualquier usuario activo

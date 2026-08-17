@@ -71,6 +71,15 @@ export class AuthService {
     >(`/api/v1/auth/branding/${slug}`);
   }
 
+  /** Usuarios de demostración del cliente, para el panel de acceso. */
+  demoUsers(
+    slug: string,
+  ): Observable<{ email: string; nombre: string; roles: string[] }[]> {
+    return this.http.get<
+      { email: string; nombre: string; roles: string[] }[]
+    >(`/api/v1/auth/demo-users/${slug}`);
+  }
+
   logout(): void {
     localStorage.removeItem(STORAGE_TOKEN);
     localStorage.removeItem(STORAGE_USER);
