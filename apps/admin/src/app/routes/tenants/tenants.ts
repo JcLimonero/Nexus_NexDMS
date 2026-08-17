@@ -415,7 +415,12 @@ export class Tenants implements OnInit {
       next: (f) => {
         this.ficha.set(f);
         this.datos = {
-          saasPlanId: f.tenant.saasPlanId ?? "",
+          // Si no tiene plan comercial ligado, se propone el que corresponde a
+          // su nivel (BASIC/PRO/…) para que no abra en "Sin plan asignado".
+          saasPlanId:
+            f.tenant.saasPlanId ||
+            this.planesComerciales().find((p) => p.key === f.tenant.plan)?.id ||
+            "",
           contactName: f.tenant.contactName ?? "",
           contactEmail: f.tenant.contactEmail ?? "",
           contactPhone: f.tenant.contactPhone ?? "",
