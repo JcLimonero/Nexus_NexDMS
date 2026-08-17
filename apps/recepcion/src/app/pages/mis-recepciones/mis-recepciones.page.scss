@@ -30,13 +30,21 @@
 }
 
 .salir {
-  width: 40px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   height: 40px;
+  padding: 0 14px;
   border: none;
   border-radius: 8px;
   background: rgb(255 255 255 / 12%);
   color: #fff;
-  font-size: 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.salir:hover {
+  background: rgb(255 255 255 / 22%);
 }
 
 .filtros {

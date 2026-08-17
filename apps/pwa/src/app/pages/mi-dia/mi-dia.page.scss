@@ -59,6 +59,34 @@
   cursor: pointer;
 }
 
+/* Logotipo del cliente en la cabecera. */
+.topbar .logo-cliente {
+  height: 40px;
+  max-width: 130px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  padding: 3px 6px;
+}
+
+/* Salir visible, no solo el símbolo. */
+.btn-salir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--card);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-salir:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
 .content {
   padding: 16px;
   max-width: 560px;

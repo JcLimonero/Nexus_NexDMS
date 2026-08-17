@@ -9,7 +9,9 @@
         {{ pendientes() }} por recibir · {{ fecha() | date: "EEEE d 'de' MMMM" }}
       </div>
     </div>
-    <button type="button" class="salir" (click)="auth.logout()" aria-label="Salir">⎋</button>
+    <button type="button" class="salir" (click)="auth.logout()">
+      <span aria-hidden="true">⎋</span> Salir
+    </button>
   </header>
 
   <div class="filtros">

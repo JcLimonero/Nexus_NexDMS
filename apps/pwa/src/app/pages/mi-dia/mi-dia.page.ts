@@ -4,6 +4,7 @@ import { Router, RouterModule } from "@angular/router";
 import { forkJoin } from "rxjs";
 
 import { AuthService } from "../../core/auth.service";
+import { BrandingService } from "../../core/branding.service";
 import {
   MecanicoApiService,
   MyAppointment,
@@ -17,13 +18,19 @@ import {
   template: `
     <header class="topbar">
       <div class="who">
-        <div class="avatar">{{ initials() }}</div>
+        @if (logoUrl(); as url) {
+          <img class="logo-cliente" [src]="url" alt="Logotipo" />
+        } @else {
+          <div class="avatar">{{ initials() }}</div>
+        }
         <div>
           <div class="name">{{ userName() }}</div>
           <div class="date">{{ todayLabel }}</div>
         </div>
       </div>
-      <button class="icon-btn" (click)="logout()" title="Cerrar sesión">⎋</button>
+      <button class="btn-salir" (click)="logout()" title="Cerrar sesión">
+        <span aria-hidden="true">⎋</span> Salir
+      </button>
     </header>
 
     <main class="content">
@@ -85,6 +92,12 @@ export class MiDiaPage implements OnInit {
   private api = inject(MecanicoApiService);
   private auth = inject(AuthService);
   private router = inject(Router);
+  private brandingSrv = inject(BrandingService);
+
+  /** Logotipo del cliente para la cabecera. */
+  readonly logoUrl = computed(
+    () => this.brandingSrv.branding()?.logoUrl ?? null,
+  );
 
   loading = signal(true);
   error = signal<string | null>(null);
