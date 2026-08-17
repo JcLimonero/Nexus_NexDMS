@@ -7,9 +7,12 @@
             <h5>Ubicaciones de almacén</h5>
             <span>Gestiona las ubicaciones por sucursal</span>
           </div>
-          <a class="btn btn-primary" routerLink="/parts-inventory/locations/nueva">
-            <i class="icofont icofont-plus me-1"></i> Nueva ubicación
-          </a>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <app-importador entidad="stock-locations" (importado)="load()"></app-importador>
+            <a class="btn btn-primary" routerLink="/parts-inventory/locations/nueva">
+              <i class="icofont icofont-plus me-1"></i> Nueva ubicación
+            </a>
+          </div>
         </div>
         <div class="card-body">
           <div class="row">

@@ -10,11 +10,12 @@ import { BranchesService } from "../../services/branches.service";
 import { Part, PartVehicleType } from "../../models/part.model";
 import { PartCategory } from "../../models/part-category.model";
 import { FeatherIcons } from "../../../../shared/components/feather-icons/feather-icons";
+import { Importador } from "../../../../shared/components/importador/importador";
 
 @Component({
   selector: "app-partes-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons, Importador],
   templateUrl: "./partes-list.html",
   styleUrls: ["./partes-list.scss"],
 })

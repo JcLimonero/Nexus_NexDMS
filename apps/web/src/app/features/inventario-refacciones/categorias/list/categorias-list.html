@@ -7,9 +7,12 @@
             <h5>Categorías de partes</h5>
             <span>Gestiona las categorías del inventario</span>
           </div>
-          <a class="btn btn-primary" routerLink="/parts-inventory/categories/nuevo">
-            <i class="icofont icofont-plus me-1"></i> Nueva categoría
-          </a>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <app-importador entidad="part-categories" (importado)="load()"></app-importador>
+            <a class="btn btn-primary" routerLink="/parts-inventory/categories/nuevo">
+              <i class="icofont icofont-plus me-1"></i> Nueva categoría
+            </a>
+          </div>
         </div>
       </div>
 

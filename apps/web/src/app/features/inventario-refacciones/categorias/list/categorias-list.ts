@@ -8,11 +8,12 @@ import { debounceTime, switchMap } from "rxjs/operators";
 import { InventarioRefaccionesService } from "../../inventario-refacciones.service";
 import { PartCategory } from "../../models/part-category.model";
 import { FeatherIcons } from "../../../../shared/components/feather-icons/feather-icons";
+import { Importador } from "../../../../shared/components/importador/importador";
 
 @Component({
   selector: "app-categorias-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons, Importador],
   templateUrl: "./categorias-list.html",
   styleUrls: ["./categorias-list.scss"],
 })

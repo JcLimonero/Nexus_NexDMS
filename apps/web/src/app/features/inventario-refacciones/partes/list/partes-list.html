@@ -7,9 +7,12 @@
             <h5>Partes / Refacciones</h5>
             <span>Gestiona el inventario de refacciones</span>
           </div>
-          <a class="btn btn-primary" routerLink="/parts-inventory/nuevo">
-            <i class="icofont icofont-plus me-1"></i> Nueva parte
-          </a>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <app-importador entidad="parts" (importado)="load()"></app-importador>
+            <a class="btn btn-primary" routerLink="/parts-inventory/nuevo">
+              <i class="icofont icofont-plus me-1"></i> Nueva parte
+            </a>
+          </div>
         </div>
         <div class="card-body">
           <div class="row g-2">

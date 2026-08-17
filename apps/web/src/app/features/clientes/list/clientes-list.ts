@@ -15,11 +15,12 @@ import {
   ClientsResponse,
 } from "../models/client.model";
 import { FeatherIcons } from "../../../shared/components/feather-icons/feather-icons";
+import { Importador } from "../../../shared/components/importador/importador";
 
 @Component({
   selector: "app-clientes-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons, Importador],
   templateUrl: "./clientes-list.html",
   styleUrls: ["./clientes-list.scss"],
 })

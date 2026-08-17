@@ -7,11 +7,12 @@ import { InventarioRefaccionesService } from "../../inventario-refacciones.servi
 import { BranchesService } from "../../services/branches.service";
 import { StockLocation } from "../../models/stock-location.model";
 import { FeatherIcons } from "../../../../shared/components/feather-icons/feather-icons";
+import { Importador } from "../../../../shared/components/importador/importador";
 
 @Component({
   selector: "app-ubicaciones-list",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons, Importador],
   templateUrl: "./ubicaciones-list.html",
   styleUrls: ["./ubicaciones-list.scss"],
 })
