@@ -13,7 +13,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: linear-gradient(to bottom, #203848, #16283a);
+  background: linear-gradient(to bottom, var(--navy-600, #203848), var(--navy-800, #16283a));
   color: #fff;
 
   .titulo {
@@ -79,7 +79,7 @@
       color: #047857;
     }
     &.activo {
-      background: #203848;
+      background: var(--navy-600, #203848);
       color: #fff;
       font-weight: 600;
     }
@@ -180,7 +180,7 @@ input[type="range"] {
 
 .principal {
   border: none;
-  background: #105078;
+  background: var(--primary, #105078);
   color: #fff;
 
   &:disabled {
@@ -415,7 +415,7 @@ input[type="range"] {
   &[data-tipo="BROKEN"]  { --color-marca: #9d174d; }
   &[data-tipo="MISSING"] { --color-marca: #6d28d9; }
   &[data-tipo="WEAR"]    { --color-marca: #0f766e; }
-  &[data-tipo="OTHER"]   { --color-marca: #203848; }
+  &[data-tipo="OTHER"]   { --color-marca: var(--navy-600, #203848); }
 }
 
 .marca {
@@ -507,7 +507,7 @@ input[type="range"] {
     cursor: pointer;
 
     &:not(:last-child) { border-right: 1px solid #cbd5e1; }
-    &.activo { background: #105078; color: #fff; }
+    &.activo { background: var(--primary, #105078); color: #fff; }
   }
 }
 
@@ -533,7 +533,7 @@ input[type="range"] {
   font-size: 15px;
 
   &.resaltada {
-    border-color: #105078;
+    border-color: var(--primary, #105078);
     background: #f0f6fa;
   }
 
