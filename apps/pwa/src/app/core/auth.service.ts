@@ -45,9 +45,13 @@ export class AuthService {
     return !!this.token;
   }
 
-  login(email: string, password: string): Observable<LoginResponse> {
+  login(
+    email: string,
+    password: string,
+    tenantId?: string,
+  ): Observable<LoginResponse> {
     return this.http
-      .post<LoginResponse>("/api/v1/auth/login", { email, password })
+      .post<LoginResponse>("/api/v1/auth/login", { email, password, tenantId })
       .pipe(
         tap((res) => {
           localStorage.setItem(STORAGE_TOKEN, res.accessToken);
@@ -56,6 +60,15 @@ export class AuthService {
           this.branding.establecer(res.branding);
         }),
       );
+  }
+
+  /** Marca pública del cliente (por su slug) para vestir y acotar el acceso. */
+  brandingPublica(slug: string): Observable<
+    import("./branding.service").Branding & { id: string; nombre?: string }
+  > {
+    return this.http.get<
+      import("./branding.service").Branding & { id: string; nombre?: string }
+    >(`/api/v1/auth/branding/${slug}`);
   }
 
   logout(): void {

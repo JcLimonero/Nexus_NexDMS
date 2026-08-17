@@ -314,12 +314,27 @@ export class SaasService {
     );
     const vencidos = pagos.filter((p) => this.vencido(p));
 
-    const dmsUrl = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
+    // Bases de cada portal (config por despliegue); la liga de cada cliente
+    // cuelga de su slug: `<base>/<slug>`.
+    const bases = {
+      dms: this.config.get<string>('WEB_APP_URL', 'http://app.localhost'),
+      recepcion: this.config.get<string>(
+        'RECEPCION_APP_URL',
+        'http://recepcion.localhost',
+      ),
+      tecnico: this.config.get<string>('PWA_APP_URL', 'http://pwa.localhost'),
+    };
+    const liga = (base: string) => (t.slug ? `${base}/${t.slug}` : base);
     return {
       tenant: t,
       cobro,
-      // Liga de acceso del cliente: su espacio en el DMS (`/<slug>/`).
-      accessUrl: t.slug ? `${dmsUrl}/${t.slug}` : dmsUrl,
+      // Liga de acceso del cliente por portal.
+      accessUrl: liga(bases.dms),
+      accessUrls: {
+        dms: liga(bases.dms),
+        recepcion: liga(bases.recepcion),
+        tecnico: liga(bases.tecnico),
+      },
       modulos: {
         activos: activos.length,
         incluidosEnPlan: modulesForPlan(t.plan).length,

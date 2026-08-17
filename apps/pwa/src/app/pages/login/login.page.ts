@@ -1,8 +1,16 @@
-import { Component, inject, isDevMode, signal } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  inject,
+  isDevMode,
+  signal,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
 import { AuthService } from "../../core/auth.service";
+import { BrandingService } from "../../core/branding.service";
+import { TenantContext } from "../../core/tenant-context";
 
 @Component({
   selector: "app-login-page",
@@ -19,7 +27,11 @@ import { AuthService } from "../../core/auth.service";
           </div>
         </div>
         <h1>Iniciar sesión</h1>
-        <p class="hint">Ingresa con tu cuenta de taller</p>
+        @if (clienteNombre()) {
+          <p class="hint">Acceso a <strong>{{ clienteNombre() }}</strong></p>
+        } @else {
+          <p class="hint">Ingresa con tu cuenta de taller</p>
+        }
 
         <label>Correo electrónico</label>
         <input
@@ -199,14 +211,35 @@ import { AuthService } from "../../core/auth.service";
     `,
   ],
 })
-export class LoginPage {
+export class LoginPage implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
+  private branding = inject(BrandingService);
+  private tenant = inject(TenantContext);
 
   email = "";
   password = "";
   loading = signal(false);
   error = signal<string | null>(null);
+
+  /** Cliente de la liga (`/<slug>/…`): rotula el acceso y lo acota. */
+  clienteNombre = signal<string | null>(null);
+  private tenantId: string | null = null;
+
+  ngOnInit(): void {
+    const slug = this.tenant.slug;
+    if (!slug) return;
+    this.auth.brandingPublica(slug).subscribe({
+      next: (b) => {
+        this.clienteNombre.set(b?.nombre ?? null);
+        this.tenantId = b?.id ?? null;
+        this.branding.establecer(b);
+      },
+      error: () => {
+        /* slug desconocido: acceso genérico */
+      },
+    });
+  }
 
   /**
    * Credenciales a la vista para la demostración. Solo aparecen en
@@ -233,7 +266,7 @@ export class LoginPage {
     if (!this.email || !this.password || this.loading()) return;
     this.loading.set(true);
     this.error.set(null);
-    this.auth.login(this.email, this.password).subscribe({
+    this.auth.login(this.email, this.password, this.tenantId ?? undefined).subscribe({
       next: () => {
         this.loading.set(false);
         this.router.navigate(["/"]);

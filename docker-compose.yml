@@ -182,6 +182,7 @@ services:
       - web
       - pwa
       - admin
+      - recepcion
     networks:
       - nexDMS_net
 

@@ -160,8 +160,10 @@ export interface FichaComercial {
 
 export interface Ficha {
   tenant: Tenant & FichaComercial;
-  /** Liga de acceso del cliente (`nex-dms/<slug>`), para copiar y compartir. */
+  /** Liga de acceso del cliente (DMS); se conserva por compatibilidad. */
   accessUrl: string;
+  /** Liga por portal (`<base>/<slug>`), para copiar y compartir. */
+  accessUrls: { dms: string; recepcion: string; tecnico: string };
   cobro: {
     plan: { key: Plan; name: string; precio: number };
     extras: { key: string; name: string; precio: number }[];

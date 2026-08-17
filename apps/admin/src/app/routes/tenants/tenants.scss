@@ -258,3 +258,11 @@
     color: var(--text-muted);
   }
 }
+
+.liga-acceso .liga-fila { margin-bottom: 0.4rem; }
+.liga-acceso .liga-rotulo {
+  min-width: 78px;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}

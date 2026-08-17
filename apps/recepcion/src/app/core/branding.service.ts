@@ -12,6 +12,8 @@ export interface Paleta {
 }
 
 export interface Branding {
+  /** Nombre del cliente, para rotular el acceso. */
+  nombre?: string | null;
   paletaId: string;
   paleta: Paleta;
   logoUrl: string | null;
@@ -52,6 +54,14 @@ export class BrandingService {
     });
   }
 
+  /** Viste el acceso con la marca pública del cliente al entrar por su liga. */
+  cargarPublicaPorSlug(slug: string): void {
+    this.http.get<Branding>(`/api/v1/auth/branding/${slug}`).subscribe({
+      next: (b) => this.aplicar(b),
+      error: () => {},
+    });
+  }
+
   establecer(branding: Branding | null | undefined): void {
     if (branding) this.aplicar(branding);
   }
@@ -64,6 +74,8 @@ export class BrandingService {
   private aplicar(b: Branding): void {
     localStorage.setItem(CLAVE, JSON.stringify(b));
     this.branding.set(b);
+    // El cliente al frente de la pestaña, para no confundir portales abiertos.
+    if (b.nombre) document.title = `${b.nombre} · NexDMS Recepción`;
     const r = document.documentElement.style;
     const p = b.paleta;
     // Solo los tonos de marca y de acción; neutrales y semánticos se quedan.
