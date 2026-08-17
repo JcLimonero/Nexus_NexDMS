@@ -28,6 +28,7 @@ export class Login implements OnInit {
 
   /** Cliente de la liga (`/<slug>/…`): rotula el acceso y lo acota. */
   public clienteNombre: string | null = null;
+  public logoCliente: string | null = null;
   private tenantId: string | null = null;
 
   /**
@@ -222,6 +223,7 @@ export class Login implements OnInit {
       this.auth.brandingPorSlug(slug).subscribe({
         next: (b) => {
           this.clienteNombre = b?.nombre ?? null;
+          this.logoCliente = b?.logoUrl ?? null;
           this.tenantId = b?.id ?? null;
           this.branding.establecer(b);
         },

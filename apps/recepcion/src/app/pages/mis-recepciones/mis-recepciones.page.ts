@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 
 import { Router } from "@angular/router";
 
 import { AuthService } from "../../core/auth.service";
+import { BrandingService } from "../../core/branding.service";
 import {
   CitaDelDia,
   RecepcionApiService,
@@ -30,6 +31,12 @@ export class MisRecepcionesPage implements OnInit {
   private api = inject(RecepcionApiService);
   private router = inject(Router);
   readonly auth = inject(AuthService);
+  private brandingSrv = inject(BrandingService);
+
+  /** Logotipo del cliente para la cabecera. */
+  readonly logoUrl = computed(
+    () => this.brandingSrv.branding()?.logoUrl ?? null,
+  );
 
   cargando = signal(true);
   error = signal<string | null>(null);

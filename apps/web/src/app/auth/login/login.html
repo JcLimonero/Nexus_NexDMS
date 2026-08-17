@@ -2,12 +2,16 @@
   <div class="auth-bg">
     <div class="authentication-box login-authentication-box">
       <div class="text-center login-logo-wrapper">
-        <img
-          src="assets/nexus_images/logo/logo_white.png"
-          alt="NexDMS"
-          loading="lazy"
-          class="login-logo"
-        />
+        @if (logoCliente) {
+          <img [src]="logoCliente" [alt]="clienteNombre || 'Logotipo'" class="login-logo login-logo-cliente" />
+        } @else {
+          <img
+            src="assets/nexus_images/logo/logo_white.png"
+            alt="NexDMS"
+            loading="lazy"
+            class="login-logo"
+          />
+        }
       </div>
       <div class="card mt-4">
         <div class="card-body">

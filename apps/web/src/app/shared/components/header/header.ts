@@ -1,11 +1,19 @@
 import { DOCUMENT, SlicePipe } from "@angular/common";
-import { Component, OnDestroy, OnInit, inject, output } from "@angular/core";
+import {
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  output,
+} from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 
 import { TranslateModule, TranslateService } from "@ngx-translate/core";
 
 import { Menu, NavService } from "../../services/nav.service";
+import { BrandingService } from "../../services/branding.service";
 import { FeatherIcons } from "../feather-icons/feather-icons";
 
 @Component({
@@ -26,6 +34,12 @@ export class Header implements OnInit, OnDestroy {
   navServices = inject(NavService);
   private document = inject(DOCUMENT);
   private translate = inject(TranslateService);
+  private brandingService = inject(BrandingService);
+
+  /** Logotipo del cliente para la cabecera; si no hay, cae al de NexDMS. */
+  readonly logoUrl = computed(
+    () => this.brandingService.branding()?.logoUrl ?? null,
+  );
 
   public menuItems: Menu[] = [];
   public items: Menu[] = [];

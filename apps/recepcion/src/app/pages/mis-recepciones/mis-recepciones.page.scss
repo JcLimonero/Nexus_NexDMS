@@ -182,3 +182,11 @@
   color: #fff;
   font-weight: 600;
 }
+
+/* Logotipo del cliente en la cabecera de recepción. */
+.cabecera .logo-cliente {
+  max-height: 36px;
+  max-width: 130px;
+  object-fit: contain;
+  margin-right: 4px;
+}

@@ -20,9 +20,13 @@ import { TenantContext } from "../../core/tenant-context";
     <div class="login-wrap">
       <div class="login-card">
         <div class="brand">
-          <span class="brand-mark">N</span>
+          @if (logoCliente()) {
+            <img class="brand-logo" [src]="logoCliente()" alt="Logotipo" />
+          } @else {
+            <span class="brand-mark">N</span>
+          }
           <div>
-            <div class="brand-name">NexDMS</div>
+            <div class="brand-name">{{ clienteNombre() || "NexDMS" }}</div>
             <div class="brand-sub">Técnico</div>
           </div>
         </div>
@@ -146,6 +150,11 @@ import { TenantContext } from "../../core/tenant-context";
         align-items: center;
         justify-content: center;
       }
+      .brand-logo {
+        max-height: 44px;
+        max-width: 160px;
+        object-fit: contain;
+      }
       .brand-name {
         font-weight: 700;
         color: var(--navy-600);
@@ -226,6 +235,7 @@ export class LoginPage implements OnInit {
 
   /** Cliente de la liga (`/<slug>/…`): rotula el acceso y lo acota. */
   clienteNombre = signal<string | null>(null);
+  logoCliente = signal<string | null>(null);
   private tenantId: string | null = null;
 
   ngOnInit(): void {
@@ -234,6 +244,7 @@ export class LoginPage implements OnInit {
     this.auth.brandingPublica(slug).subscribe({
       next: (b) => {
         this.clienteNombre.set(b?.nombre ?? null);
+        this.logoCliente.set(b?.logoUrl ?? null);
         this.tenantId = b?.id ?? null;
         this.branding.establecer(b);
       },
