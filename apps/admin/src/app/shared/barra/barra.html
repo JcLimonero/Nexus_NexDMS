@@ -1,19 +1,33 @@
-<header class="barra">
+<header class="app-bar">
+  <a class="marca" routerLink="/tenants" aria-label="NexDMS · Administración">
+    <span class="marca-mark">N</span>
+    <span class="marca-txt">
+      <span class="marca-nombre">NexDMS</span>
+      <span class="marca-tag">Administración</span>
+    </span>
+  </a>
+
+  <nav class="nav">
+    <a routerLink="/tenants" routerLinkActive="activo">Clientes</a>
+    <a routerLink="/precios" routerLinkActive="activo">Planes y precios</a>
+    <a routerLink="/roles" routerLinkActive="activo">Roles</a>
+    <a routerLink="/perfiles" routerLinkActive="activo">Roles a medida</a>
+  </nav>
+
+  <div class="usuario">
+    <span class="chip" [title]="auth.usuario()?.email">
+      <span class="avatar">{{ (auth.usuario()?.email || "?").charAt(0).toUpperCase() }}</span>
+      <span class="email">{{ auth.usuario()?.email }}</span>
+    </span>
+    <button type="button" class="btn-salir" (click)="auth.salir()">Salir</button>
+  </div>
+</header>
+
+<div class="page-head">
   <div>
     <h1>{{ titulo() }}</h1>
     @if (subtitulo()) {
       <p>{{ subtitulo() }}</p>
     }
   </div>
-
-  <div class="barra-derecha">
-    <nav class="nav">
-      <a routerLink="/tenants" routerLinkActive="activo">Clientes</a>
-      <a routerLink="/precios" routerLinkActive="activo">Planes y precios</a>
-      <a routerLink="/roles" routerLinkActive="activo">Roles</a>
-      <a routerLink="/perfiles" routerLinkActive="activo">Roles a medida</a>
-    </nav>
-    <span class="quien">{{ auth.usuario()?.email }}</span>
-    <button type="button" class="btn-texto" (click)="auth.salir()">Salir</button>
-  </div>
-</header>
+</div>

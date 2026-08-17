@@ -78,13 +78,26 @@ body {
   border-radius: var(--radius-lg);
   padding: var(--space-24);
   margin-bottom: var(--space-24);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
 
   h2 {
     margin: 0 0 var(--space-16);
     font-size: var(--text-section-title);
     font-weight: var(--text-section-title-weight);
     color: var(--text-primary);
+  }
+}
+
+/* Título de sección + acción, a los lados. */
+.titulo-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+
+  h2 {
+    margin: 0;
   }
 }
 
@@ -228,7 +241,7 @@ textarea {
 
   th,
   td {
-    padding: 10px var(--space-8);
+    padding: 12px var(--space-12);
     border-bottom: 1px solid var(--border);
     text-align: left;
   }
@@ -239,6 +252,27 @@ textarea {
     text-transform: uppercase;
     letter-spacing: var(--text-overline-tracking);
     color: var(--text-secondary);
+    background: var(--bg);
+    border-bottom: 2px solid var(--border-strong);
+  }
+
+  /* Encabezados redondeados en los extremos. */
+  th:first-child {
+    border-top-left-radius: var(--radius-md);
+  }
+  th:last-child {
+    border-top-right-radius: var(--radius-md);
+  }
+
+  tbody tr {
+    transition: background 0.1s;
+  }
+  /* La fila resalta al pasar: se sigue de un vistazo en tablas largas. */
+  tbody tr:hover td {
+    background: var(--nexus-50);
+  }
+  tbody tr:last-child td {
+    border-bottom: none;
   }
 
   .num {
@@ -484,20 +518,34 @@ textarea {
 }
 
 .indicador {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--space-16);
+  padding: var(--space-16) var(--space-16) var(--space-16);
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+
+  /* Acento superior de marca: le da carácter de tarjeta de indicador. */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--nexus-500), var(--nexus-700));
+  }
 
   /* Lo que hay que atender se distingue por la forma, no solo por el color. */
   &.alerta {
     border-color: var(--danger);
     background: var(--danger-bg);
 
+    &::before {
+      background: var(--danger);
+    }
     .cifra {
       color: var(--danger);
     }
@@ -513,10 +561,12 @@ textarea {
 }
 
 .cifra {
-  font-size: var(--text-2xl);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--navy-600);
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  margin-top: 2px;
 }
 
 .pie {

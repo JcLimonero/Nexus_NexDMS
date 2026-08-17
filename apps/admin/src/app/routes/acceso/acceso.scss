@@ -43,17 +43,26 @@
 .marca-icono {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: var(--primary);
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--nexus-500), var(--nexus-700));
   color: var(--text-on-brand);
   font-weight: var(--font-bold);
+  font-size: 22px;
+  box-shadow: 0 6px 14px -4px rgba(16, 80, 120, 0.55);
+}
+
+.marca strong {
+  font-size: var(--text-lg);
+  letter-spacing: -0.01em;
 }
 
 .marca-sub {
   font-size: var(--text-caption);
-  color: var(--text-secondary);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 label {
