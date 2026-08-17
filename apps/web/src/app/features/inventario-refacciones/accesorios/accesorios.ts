@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
+import { Importador } from "../../../shared/components/importador/importador";
 
 import { CatalogoService } from "../../catalogo/catalogo.service";
 import { GlobalModel } from "../../catalogo/models/modelo-global.model";
@@ -18,7 +19,7 @@ import { Accesorio, AccesoriosService } from "./accesorios.service";
 @Component({
   selector: "app-accesorios",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, Importador],
   templateUrl: "./accesorios.html",
   styleUrls: ["./accesorios.scss"],
 })

@@ -8,6 +8,12 @@ import {
   VehicleTypeEnum,
 } from '../customer-vehicles/entities/customer-vehicle.entity';
 import { Branch } from '../branches/entities/branch.entity';
+import {
+  ServiceType,
+  ServiceTypeCategoryEnum,
+} from '../service-types/entities/service-type.entity';
+import { ServiceKit } from '../service-kits/entities/service-kit.entity';
+import { UnitAccessory } from '../unit-accessories/entities/unit-accessory.entity';
 
 /** Una columna de la plantilla de importación. */
 export interface ColDef {
@@ -369,6 +375,130 @@ export const IMPORTABLES: ImportDef[] = [
             plate: f.plate?.trim() || null,
             vin: f.vin?.trim() || null,
             mileage: entero(f.mileage),
+          }),
+        );
+        insertados++;
+      }
+      return { insertados, errores };
+    },
+  },
+  // Tipos de servicio ────────────────────────────────────────────────
+  {
+    key: 'service-types',
+    label: 'Tipos de servicio',
+    columnas: [
+      { header: 'Nombre', key: 'name', required: true, ejemplo: 'Servicio de 10,000 km' },
+      { header: 'Código', key: 'code', required: true, ejemplo: 'SRV-10K' },
+      {
+        header: 'Categoría',
+        key: 'category',
+        required: true,
+        ejemplo: 'MAINTENANCE',
+        opciones: ['MAINTENANCE', 'REVISION', 'DIAGNOSIS', 'REPAIR', 'OTHER'],
+      },
+      { header: 'Descripción', key: 'description', ejemplo: 'Aceite, filtros, revisión' },
+      { header: 'Duración (min)', key: 'durationMin', ejemplo: 60 },
+    ],
+    async importar(filas, { em, tenantId }) {
+      const errores: FilaError[] = [];
+      let insertados = 0;
+      const repo = em.getRepository(ServiceType);
+      for (const f of filas) {
+        if (!f.name?.trim() || !f.code?.trim()) {
+          errores.push({ fila: f.__fila, mensaje: 'Faltan nombre o código' });
+          continue;
+        }
+        const cat = aEnum(f.category, [
+          'MAINTENANCE', 'REVISION', 'DIAGNOSIS', 'REPAIR', 'OTHER',
+        ]);
+        if (!cat) {
+          errores.push({ fila: f.__fila, mensaje: 'Categoría inválida' });
+          continue;
+        }
+        await repo.save(
+          repo.create({
+            tenantId,
+            branchId: null,
+            code: f.code.trim(),
+            name: f.name.trim(),
+            category: cat as ServiceTypeCategoryEnum,
+            description: f.description?.trim() || null,
+            durationMin: entero(f.durationMin) || 60,
+          }),
+        );
+        insertados++;
+      }
+      return { insertados, errores };
+    },
+  },
+
+  // Kits de servicio ──────────────────────────────────────────────────
+  {
+    key: 'service-kits',
+    label: 'Kits de servicio',
+    columnas: [
+      { header: 'Código', key: 'code', required: true, ejemplo: 'KIT-AFIN' },
+      { header: 'Nombre', key: 'name', required: true, ejemplo: 'Kit de afinación' },
+      { header: 'Descripción', key: 'description', ejemplo: 'Bujías, filtros, aceite' },
+      { header: 'Minutos de mano de obra', key: 'laborMinutes', ejemplo: 90 },
+      { header: 'Precio de mano de obra', key: 'laborPrice', ejemplo: 650 },
+    ],
+    async importar(filas, { em, tenantId }) {
+      const errores: FilaError[] = [];
+      let insertados = 0;
+      const repo = em.getRepository(ServiceKit);
+      for (const f of filas) {
+        if (!f.name?.trim() || !f.code?.trim()) {
+          errores.push({ fila: f.__fila, mensaje: 'Faltan nombre o código' });
+          continue;
+        }
+        await repo.save(
+          repo.create({
+            tenantId,
+            code: f.code.trim(),
+            kitType: 'GENERICO',
+            name: f.name.trim(),
+            description: f.description?.trim() || null,
+            laborMinutes: entero(f.laborMinutes),
+            laborPrice: num(f.laborPrice),
+            active: true,
+          }),
+        );
+        insertados++;
+      }
+      return { insertados, errores };
+    },
+  },
+
+  // Accesorios de unidades ────────────────────────────────────────────
+  {
+    key: 'unit-accessories',
+    label: 'Accesorios de unidades',
+    columnas: [
+      { header: 'Nombre', key: 'name', required: true, ejemplo: 'Tapetes' },
+      { header: 'SKU', key: 'sku', ejemplo: 'ACC-TAP' },
+      { header: 'Precio', key: 'price', ejemplo: 890 },
+      { header: 'Clave SAT', key: 'satProductKey', ejemplo: '25174800' },
+      { header: 'Descripción', key: 'description', ejemplo: 'Juego de tapetes de hule' },
+    ],
+    async importar(filas, { em, tenantId }) {
+      const errores: FilaError[] = [];
+      let insertados = 0;
+      const repo = em.getRepository(UnitAccessory);
+      for (const f of filas) {
+        if (!f.name?.trim()) {
+          errores.push({ fila: f.__fila, mensaje: 'Falta el nombre' });
+          continue;
+        }
+        await repo.save(
+          repo.create({
+            tenantId,
+            name: f.name.trim(),
+            sku: f.sku?.trim() || null,
+            price: num(f.price),
+            satProductKey: f.satProductKey?.trim() || null,
+            description: f.description?.trim() || null,
+            isActive: true,
           }),
         );
         insertados++;

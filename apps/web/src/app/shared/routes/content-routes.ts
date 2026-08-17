@@ -37,6 +37,14 @@ export const content: Routes = [
       ),
   },
   {
+    path: "importar-catalogos",
+    data: { breadcrumb: "Importar catálogos", title: "Importar catálogos" },
+    loadComponent: () =>
+      import("../../../app/features/importaciones/importaciones").then(
+        (m) => m.Importaciones,
+      ),
+  },
+  {
     path: "units-inventory",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Inventario unidades" , module: "units-inventory" },
