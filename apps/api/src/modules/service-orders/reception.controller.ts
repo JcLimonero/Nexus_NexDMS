@@ -115,6 +115,35 @@ export class ReceptionController {
     return this.reception.recibirCita(user, appointmentId, datos);
   }
 
+  /** Recepción sin cita (walk-in): abre la orden con cliente y unidad al vuelo. */
+  @Post('walk-in')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
+  recibirSinCita(
+    @CurrentUser() user: UserPayload,
+    @Body()
+    dto: {
+      branchId: string;
+      clientId?: string;
+      cliente?: { firstName: string; lastName?: string; phone: string };
+      vehicleId?: string;
+      vehiculo?: {
+        vehicleType: string;
+        make: string;
+        model: string;
+        year?: number;
+        plate?: string;
+        vin?: string;
+        mileage?: number;
+        color?: string;
+      };
+      reportedFault?: string;
+      serviceTypeId?: string;
+      kmIn?: number;
+    },
+  ) {
+    return this.reception.recibirSinCita(user, dto);
+  }
+
   // ─── Consulta de la evidencia ────────────────────
   //
   // Van antes de `:serviceOrderId` porque Nest resuelve las rutas por orden

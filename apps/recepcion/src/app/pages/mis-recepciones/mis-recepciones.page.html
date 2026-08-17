@@ -30,6 +30,9 @@
     <button type="button" class="alcance" [class.activo]="soloMias()" (click)="alternarAlcance()">
       {{ soloMias() ? "Solo mías" : "Todo el mostrador" }}
     </button>
+    <button type="button" class="walkin-btn" (click)="abrirWalkin()">
+      + Recepción sin cita
+    </button>
   </div>
 
   @if (cargando()) {
@@ -66,4 +69,51 @@
       </li>
     }
   </ul>
+
+  @if (walkinAbierto()) {
+    <div class="walkin-fondo" (click)="walkinAbierto.set(false)"></div>
+    <div class="walkin-modal" role="dialog" aria-modal="true">
+      <header>
+        <h2>Recepción sin cita</h2>
+        <button type="button" class="cerrar" (click)="walkinAbierto.set(false)">×</button>
+      </header>
+
+      <div class="cuerpo">
+        <h3>Cliente</h3>
+        <div class="grid">
+          <label>Nombre *<input [(ngModel)]="walkin.firstName" placeholder="Juan" /></label>
+          <label>Apellido<input [(ngModel)]="walkin.lastName" placeholder="Pérez" /></label>
+          <label>Teléfono *<input [(ngModel)]="walkin.phone" inputmode="tel" placeholder="33…" /></label>
+        </div>
+
+        <h3>Unidad</h3>
+        <div class="grid">
+          <label>Tipo *
+            <select [(ngModel)]="walkin.vehicleType">
+              @for (t of tiposUnidad; track t.v) {
+                <option [value]="t.v">{{ t.n }}</option>
+              }
+            </select>
+          </label>
+          <label>Marca *<input [(ngModel)]="walkin.make" placeholder="Nissan" /></label>
+          <label>Modelo *<input [(ngModel)]="walkin.model" placeholder="Versa" /></label>
+          <label>Año<input type="number" [(ngModel)]="walkin.year" placeholder="2020" /></label>
+          <label>Placa<input [(ngModel)]="walkin.plate" placeholder="JAL-1234" /></label>
+          <label>Kilometraje<input type="number" [(ngModel)]="walkin.kmIn" placeholder="45000" /></label>
+        </div>
+
+        <h3>Motivo</h3>
+        <label class="ancho">Trabajo reportado
+          <textarea [(ngModel)]="walkin.reportedFault" rows="2" placeholder="Qué reporta el cliente"></textarea>
+        </label>
+      </div>
+
+      <footer>
+        <button type="button" class="btn-sec" (click)="walkinAbierto.set(false)">Cancelar</button>
+        <button type="button" class="btn-pri" (click)="crearWalkin()" [disabled]="guardandoWalkin()">
+          {{ guardandoWalkin() ? "Abriendo…" : "Recibir y tomar fotos" }}
+        </button>
+      </footer>
+    </div>
+  }
 </div>

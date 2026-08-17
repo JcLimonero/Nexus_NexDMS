@@ -57,4 +57,29 @@ export class RecepcionApiService {
       .set("soloMias", String(soloMias));
     return this.http.get<CitaDelDia[]>(`${RECEPCION_URL}/agenda`, { params });
   }
+
+  /**
+   * Recepción sin cita (walk-in): el cliente llega sin agendar. Da de alta (o
+   * reutiliza) cliente y unidad y abre la orden en Recibida, sin cita.
+   */
+  recibirSinCita(dto: {
+    branchId: string;
+    cliente: { firstName: string; lastName?: string; phone: string };
+    vehiculo: {
+      vehicleType: string;
+      make: string;
+      model: string;
+      year?: number;
+      plate?: string;
+      color?: string;
+      mileage?: number;
+    };
+    reportedFault?: string;
+    kmIn?: number;
+  }): Observable<{ id: string; folio: string }> {
+    return this.http.post<{ id: string; folio: string }>(
+      `${RECEPCION_URL}/walk-in`,
+      dto,
+    );
+  }
 }

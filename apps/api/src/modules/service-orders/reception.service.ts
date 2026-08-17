@@ -386,6 +386,122 @@ export class ReceptionService {
     return orden;
   }
 
+  /**
+   * Recepción sin cita (walk-in): el cliente llega sin agendar. Crea o reutiliza
+   * cliente y vehículo y abre la orden en estado Recibida, sin cita, para entrar
+   * al mismo walk-around (fotos y daños) que una cita.
+   */
+  async recibirSinCita(
+    user: UserPayload,
+    dto: {
+      branchId: string;
+      clientId?: string;
+      cliente?: { firstName: string; lastName?: string; phone: string };
+      vehicleId?: string;
+      vehiculo?: {
+        vehicleType: string;
+        make: string;
+        model: string;
+        year?: number;
+        plate?: string;
+        vin?: string;
+        mileage?: number;
+        color?: string;
+      };
+      reportedFault?: string;
+      serviceTypeId?: string;
+      kmIn?: number;
+    },
+  ) {
+    if (!dto.branchId) throw new BadRequestException('Falta la sucursal');
+
+    // Cliente: por id, por teléfono existente, o de alta nuevo.
+    let clientId = dto.clientId ?? null;
+    if (!clientId && dto.cliente?.phone?.trim()) {
+      const existente = await this.clientRepo.findOne({
+        where: { tenantId: user.tenantId, phone: dto.cliente.phone.trim() },
+      });
+      clientId = existente?.id ?? null;
+    }
+    if (!clientId) {
+      if (!dto.cliente?.firstName?.trim() || !dto.cliente?.phone?.trim()) {
+        throw new BadRequestException(
+          'El cliente necesita al menos nombre y teléfono',
+        );
+      }
+      const nuevo = await this.clientRepo.save(
+        this.clientRepo.create({
+          tenantId: user.tenantId,
+          clientType: ClientTypeEnum.INDIVIDUAL,
+          isCompany: false,
+          firstName: dto.cliente.firstName.trim(),
+          lastName: dto.cliente.lastName?.trim() || '—',
+          phone: dto.cliente.phone.trim(),
+        } as never),
+      );
+      clientId = (nuevo as unknown as { id: string }).id;
+    }
+
+    // Vehículo: existente o de alta nuevo.
+    let vehicleId = dto.vehicleId ?? null;
+    if (!vehicleId) {
+      const v = dto.vehiculo;
+      if (!v?.make || !v?.model || !v?.vehicleType) {
+        throw new BadRequestException(
+          'La unidad necesita al menos tipo, marca y modelo',
+        );
+      }
+      const nueva = await this.vehicleRepo.save(
+        this.vehicleRepo.create({
+          tenantId: user.tenantId,
+          ownerId: clientId,
+          vehicleType: v.vehicleType,
+          make: v.make,
+          model: v.model,
+          year: v.year || new Date().getFullYear(),
+          plate: v.plate || null,
+          vin: v.vin || null,
+          color: v.color || null,
+          mileage: v.mileage ?? 0,
+        } as never),
+      );
+      vehicleId = (nueva as unknown as { id: string }).id;
+    }
+
+    const folio = await this.dataSource
+      .query<{ last_value: number }[]>(
+        `INSERT INTO service_order_folio_seq (tenant_id, year, last_value)
+         VALUES ($1, $2, 1)
+         ON CONFLICT (tenant_id, year) DO UPDATE
+           SET last_value = service_order_folio_seq.last_value + 1
+         RETURNING last_value`,
+        [user.tenantId, new Date().getFullYear()],
+      )
+      .then(
+        (r) =>
+          `OS-${new Date().getFullYear()}-${String(r[0]?.last_value ?? 1).padStart(4, '0')}`,
+      );
+
+    return this.soRepo.save(
+      this.soRepo.create({
+        tenantId: user.tenantId,
+        branchId: dto.branchId,
+        ownerId: clientId,
+        vehicleId,
+        userId: user.sub,
+        mechanicId: null,
+        appointmentId: null,
+        serviceTypeId: dto.serviceTypeId ?? null,
+        folio,
+        status: ServiceOrderStatusEnum.RECEIVED,
+        reportedFault: dto.reportedFault?.trim() || 'Recepción sin cita',
+        kmIn: dto.kmIn ?? 0,
+        total: 0,
+        receivedAt: new Date(),
+      } as never),
+    );
+  }
+
   /** Estado completo de la recepción de una orden. */
   async getReception(user: UserPayload, serviceOrderId: string) {
     const so = await this.soRepo.findOne({

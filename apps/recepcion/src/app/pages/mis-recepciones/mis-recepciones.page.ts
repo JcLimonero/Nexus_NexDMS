@@ -128,4 +128,82 @@ export class MisRecepcionesPage implements OnInit {
   pendientes(): number {
     return this.citas().filter((c) => !c.recibida).length;
   }
+
+  // ── Recepción sin cita (walk-in) ──
+  walkinAbierto = signal(false);
+  guardandoWalkin = signal(false);
+  readonly tiposUnidad = [
+    { v: "MOTORCYCLE", n: "Motocicleta" },
+    { v: "CAR", n: "Automóvil" },
+    { v: "SUV", n: "SUV" },
+    { v: "MINIVAN", n: "Minivan" },
+    { v: "TRUCK", n: "Camioneta / Pick-up" },
+    { v: "VAN", n: "Van" },
+  ];
+  walkin = this.walkinVacio();
+
+  private walkinVacio() {
+    return {
+      firstName: "",
+      lastName: "",
+      phone: "",
+      vehicleType: "CAR",
+      make: "",
+      model: "",
+      year: null as number | null,
+      plate: "",
+      reportedFault: "",
+      kmIn: null as number | null,
+    };
+  }
+
+  abrirWalkin(): void {
+    this.walkin = this.walkinVacio();
+    this.walkinAbierto.set(true);
+  }
+
+  crearWalkin(): void {
+    if (this.guardandoWalkin()) return;
+    const w = this.walkin;
+    if (!w.firstName.trim() || !w.phone.trim()) {
+      this.error.set("El cliente necesita nombre y teléfono");
+      return;
+    }
+    if (!w.make.trim() || !w.model.trim()) {
+      this.error.set("La unidad necesita marca y modelo");
+      return;
+    }
+    this.error.set(null);
+    this.guardandoWalkin.set(true);
+    this.api
+      .recibirSinCita({
+        branchId: this.branchId(),
+        cliente: {
+          firstName: w.firstName.trim(),
+          lastName: w.lastName.trim() || undefined,
+          phone: w.phone.trim(),
+        },
+        vehiculo: {
+          vehicleType: w.vehicleType,
+          make: w.make.trim(),
+          model: w.model.trim(),
+          year: w.year || undefined,
+          plate: w.plate.trim() || undefined,
+        },
+        reportedFault: w.reportedFault.trim() || undefined,
+        kmIn: w.kmIn || undefined,
+      })
+      .subscribe({
+        next: (orden) => {
+          this.guardandoWalkin.set(false);
+          this.walkinAbierto.set(false);
+          // Entra al mismo walk-around (fotos y daños) que una cita.
+          void this.router.navigate(["/recibir", orden.id]);
+        },
+        error: (e) => {
+          this.guardandoWalkin.set(false);
+          this.error.set(e?.error?.message || "No se pudo abrir la recepción");
+        },
+      });
+  }
 }
