@@ -9,12 +9,8 @@
 .page-wrapper .page-body-wrapper .page-sidebar,
 .page-wrapper .page-body-wrapper .page-sidebar.dark-sidebar {
   width: var(--sidebar-width);
-  background: linear-gradient(
-    to bottom,
-    var(--sidebar-bg-from),
-    var(--sidebar-bg-via) 55%,
-    var(--sidebar-bg-to)
-  ) !important;
+  /* Color plano (sin degradado) para el fondo del menú. */
+  background: var(--sidebar-bg-via) !important;
   box-shadow: var(--shadow-lg);
 }
 
