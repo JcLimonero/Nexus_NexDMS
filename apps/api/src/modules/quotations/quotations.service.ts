@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, EntityManager, Repository } from 'typeorm';
+import { DataSource, EntityManager, In, Repository } from 'typeorm';
 import { Quotation } from './entities/quotation.entity';
 import {
   QuotationStatusEnum,
@@ -38,6 +38,7 @@ import {
   BasePriceTier,
   PartPriceResolver,
 } from '../price-lists/pricing.service';
+import { PurchaseRequisition } from '../purchase-requisitions/entities/purchase-requisition.entity';
 
 type QuotationRefData = {
   partId: string;
@@ -74,6 +75,8 @@ export class QuotationsService {
     private readonly catalogUnitRepo: Repository<CatalogUnit>,
     @InjectRepository(QuotationItemPhoto)
     private readonly photoRepo: Repository<QuotationItemPhoto>,
+    @InjectRepository(PurchaseRequisition)
+    private readonly requisitionRepo: Repository<PurchaseRequisition>,
     private readonly dataSource: DataSource,
     private readonly branchesService: BranchesService,
     private readonly unitSalesService: UnitSalesService,
@@ -367,7 +370,65 @@ export class QuotationsService {
         await this.saveItemsData(em, saved.id, itemsData);
         return saved.id;
       })
-      .then((id) => this.findOne(user, id));
+      .then(async (id) => {
+        // Las partes bajo demanda del presupuesto entran a la cola de compras.
+        await this.generarRequisicionesBajoDemanda(
+          user,
+          dto.branchId,
+          id,
+          dto.items,
+        );
+        return this.findOne(user, id);
+      });
+  }
+
+  /**
+   * Crea requisiciones pendientes para las refacciones marcadas "bajo demanda"
+   * que aparezcan en el presupuesto. Es best-effort: si falla, no tumba el
+   * presupuesto ya creado.
+   */
+  private async generarRequisicionesBajoDemanda(
+    user: UserPayload,
+    branchId: string,
+    quotationId: string,
+    items: CreateQuotationItemDto[],
+  ): Promise<void> {
+    try {
+      const need = new Map<string, number>();
+      for (const it of items) {
+        if (it.partId) {
+          need.set(it.partId, (need.get(it.partId) ?? 0) + it.quantity);
+        }
+        for (const r of it.refacciones ?? []) {
+          need.set(r.partId, (need.get(r.partId) ?? 0) + r.quantity);
+        }
+      }
+      if (!need.size) return;
+
+      const onDemand = await this.partRepo.find({
+        where: {
+          id: In([...need.keys()]),
+          branchId,
+          tenantId: user.tenantId,
+          isOnDemand: true,
+        },
+      });
+      for (const p of onDemand) {
+        await this.requisitionRepo.save(
+          this.requisitionRepo.create({
+            tenantId: user.tenantId,
+            branchId,
+            partId: p.id,
+            quantity: need.get(p.id) ?? 1,
+            sourceType: 'quotation',
+            sourceId: quotationId,
+            requestedBy: user.sub,
+          }),
+        );
+      }
+    } catch {
+      // No bloquea el presupuesto; la cola se puede llenar manualmente.
+    }
   }
 
   async findAll(

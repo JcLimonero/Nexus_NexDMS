@@ -119,6 +119,10 @@ export class Part {
   @Column({ name: 'preferred_supplier_id', type: 'uuid', nullable: true })
   preferredSupplierId: string | null;
 
+  /** No se mantiene en stock; se pide cuando un trabajo la necesita. */
+  @Column({ name: 'is_on_demand', type: 'boolean', default: false })
+  isOnDemand: boolean;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
