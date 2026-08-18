@@ -249,6 +249,8 @@ export class NavService {
       "sale-surveys": ["sales"],
       "sales-appointments": ["sales"],
       deliveries: ["workshop", "sales"],
+      // Importar catálogos vive bajo Almacén y no es un módulo propio.
+      "importar-catalogos": ["warehouse", "parts-inventory"],
     };
     const permitido = (path?: string): boolean => {
       const key = keyOf(path);
