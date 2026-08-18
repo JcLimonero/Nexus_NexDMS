@@ -67,6 +67,14 @@ export const content: Routes = [
       ),
   },
   {
+    path: "service-surveys",
+    data: { breadcrumb: "Encuestas de servicio", title: "Encuestas de servicio" },
+    loadComponent: () =>
+      import("../../../app/features/encuestas-servicio/encuestas-servicio").then(
+        (m) => m.EncuestasServicio,
+      ),
+  },
+  {
     path: "units-inventory",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Inventario unidades" , module: "units-inventory" },
@@ -265,6 +273,7 @@ export const content: Routes = [
       ),
   },
 ];
+
 
 
 

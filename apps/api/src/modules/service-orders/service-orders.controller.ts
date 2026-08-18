@@ -61,6 +61,13 @@ export class ServiceOrdersController {
     return this.serviceOrdersService.findAll(user, filters);
   }
 
+  /** Resultados de las encuestas de servicio (general y por pregunta). */
+  @Get('surveys/resumen')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'AUDITOR')
+  resumenEncuestas(@CurrentUser() user: UserPayload) {
+    return this.serviceOrdersService.resumenEncuestas(user);
+  }
+
   /**
    * La orden en papel: es lo que el cliente firma al dejar la unidad y con lo
    * que se discute a la entrega. Va como PDF y no como pantalla imprimible

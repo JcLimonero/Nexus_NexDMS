@@ -69,6 +69,7 @@ export class NavService {
         { path: "/workshop/tablero-taller", title: "Monitor de taller", type: "link" },
         { path: "/workshop/tablero-citas", title: "Monitor de citas", type: "link" },
         { path: "/deliveries", title: "Entregas de taller", type: "link", queryParams: { tipo: "SERVICE" } },
+        { path: "/service-surveys", title: "Encuestas de servicio", type: "link" },
         // Garantía por cada trabajo hecho en el taller (independiente de la
         // garantía de venta de la unidad). Hoy comparte pantalla con la de
         // unidades; se separará cuando el backend distinga el tipo.

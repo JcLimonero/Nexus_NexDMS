@@ -1047,6 +1047,52 @@ export class ServiceOrdersService {
     return this.findOne(user, id);
   }
 
+  /** Resultados de las encuestas de servicio: general y por pregunta. */
+  async resumenEncuestas(user: UserPayload) {
+    const surveys = await this.surveyRepo.find({
+      where: { tenantId: user.tenantId },
+    });
+    const respondidas = surveys.filter((s) => s.answeredAt);
+    const promedioGeneral =
+      respondidas.length > 0
+        ? Math.round(
+            (respondidas.reduce((a, s) => a + (Number(s.score) || 0), 0) /
+              respondidas.length) *
+              10,
+          ) / 10
+        : null;
+
+    // Promedio por pregunta de puntaje (agrupado por id/label del snapshot).
+    const acc = new Map<
+      string,
+      { label: string; suma: number; conteo: number }
+    >();
+    for (const s of respondidas) {
+      for (const q of s.questions ?? []) {
+        if (q.type !== 'RATING') continue;
+        const val = Number(s.answers?.[q.id]);
+        if (!Number.isFinite(val) || val <= 0) continue;
+        const cur = acc.get(q.id) ?? { label: q.label, suma: 0, conteo: 0 };
+        cur.suma += val;
+        cur.conteo += 1;
+        acc.set(q.id, cur);
+      }
+    }
+    const preguntas = [...acc.entries()].map(([id, v]) => ({
+      id,
+      label: v.label,
+      promedio: Math.round((v.suma / v.conteo) * 10) / 10,
+      respuestas: v.conteo,
+    }));
+
+    return {
+      total: surveys.length,
+      respondidas: respondidas.length,
+      promedioGeneral,
+      preguntas,
+    };
+  }
+
   async cancel(user: UserPayload, id: string): Promise<ServiceOrder> {
     const so = await this.findOne(user, id);
     if (so.status === ServiceOrderStatusEnum.DELIVERED) {
