@@ -7,6 +7,8 @@ import { PurchaseOrdersController } from './purchase-orders.controller';
 import { PurchaseOrdersService } from './purchase-orders.service';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
+import { PartSupplier } from '../parts/entities/part-supplier.entity';
+import { PartEquivalence } from '../parts/entities/part-equivalence.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { Supplier } from '../suppliers/entities/supplier.entity';
 import { BranchesModule } from '../branches/branches.module';
@@ -19,6 +21,8 @@ import { BranchesModule } from '../branches/branches.module';
       FolioSequence,
       Branch,
       Part,
+      PartSupplier,
+      PartEquivalence,
       StockMovement,
       Supplier,
     ]),

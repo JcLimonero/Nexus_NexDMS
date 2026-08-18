@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, Repository } from 'typeorm';
+import { XMLParser } from 'fast-xml-parser';
 import { PurchaseOrder } from './entities/purchase-order.entity';
 import { PurchaseOrderItem } from './entities/purchase-order-item.entity';
 import { PurchaseOrderStatusEnum } from './entities/purchase-order.entity';
@@ -18,6 +19,8 @@ import { In } from 'typeorm';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
+import { PartSupplier } from '../parts/entities/part-supplier.entity';
+import { PartEquivalence } from '../parts/entities/part-equivalence.entity';
 import { Supplier } from '../suppliers/entities/supplier.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { StockMovementTypeEnum } from '../stock-movements/entities/stock-movement.entity';
@@ -38,9 +41,43 @@ export class PurchaseOrdersService {
     private readonly movementRepo: Repository<StockMovement>,
     @InjectRepository(Supplier)
     private readonly supplierRepo: Repository<Supplier>,
+    @InjectRepository(PartSupplier)
+    private readonly partSupplierRepo: Repository<PartSupplier>,
+    @InjectRepository(PartEquivalence)
+    private readonly partEquivalenceRepo: Repository<PartEquivalence>,
     private readonly dataSource: DataSource,
     private readonly branchesService: BranchesService,
   ) {}
+
+  /** Registra/actualiza el precio de una parte para un proveedor (top 3). */
+  private async registrarPrecioProveedor(
+    em: EntityManager,
+    tenantId: string,
+    partId: string,
+    supplierId: string,
+    price: number,
+  ): Promise<void> {
+    const hoy = new Date().toISOString().slice(0, 10);
+    const existing = await em.findOne(PartSupplier, {
+      where: { partId, supplierId },
+    });
+    if (existing) {
+      existing.lastPrice = price;
+      existing.lastPurchasedAt = hoy;
+      existing.timesPurchased = existing.timesPurchased + 1;
+      await em.save(existing);
+      return;
+    }
+    const ps = em.create(PartSupplier, {
+      tenantId,
+      partId,
+      supplierId,
+      lastPrice: price,
+      lastPurchasedAt: hoy,
+      timesPurchased: 1,
+    });
+    await em.save(ps);
+  }
 
   private applyScope(
     qb: ReturnType<Repository<PurchaseOrder>['createQueryBuilder']>,
@@ -453,6 +490,16 @@ export class PurchaseOrdersService {
 
           const stockBefore = part.stockQuantity;
           const stockAfter = stockBefore + line.quantityReceived;
+          const unitCost = Number(item.unitPrice) || 0;
+
+          // Costo promedio ponderado (igual que la entrada manual de almacén):
+          // recibir por orden de compra ahora sí actualiza el costeo.
+          const avgBefore = Number(part.averageCost) || 0;
+          const nuevoProm =
+            stockBefore > 0
+              ? (stockBefore * avgBefore + line.quantityReceived * unitCost) /
+                stockAfter
+              : unitCost;
 
           const movement = em.create(StockMovement, {
             tenantId: user.tenantId,
@@ -463,6 +510,7 @@ export class PurchaseOrdersService {
             quantity: line.quantityReceived,
             stockBefore,
             stockAfter,
+            unitCost,
             referenceId: order.id,
             referenceType: 'purchase_order',
             notes: dto.notes ?? null,
@@ -470,7 +518,21 @@ export class PurchaseOrdersService {
           await em.save(movement);
 
           part.stockQuantity = stockAfter;
+          part.averageCost = Math.round(nuevoProm * 100) / 100;
+          part.purchasePrice = unitCost;
+          if (!part.preferredSupplierId) {
+            part.preferredSupplierId = order.supplierId;
+          }
           await em.save(part);
+
+          // Historial de precio por proveedor (base del top 3).
+          await this.registrarPrecioProveedor(
+            em,
+            user.tenantId,
+            item.partId,
+            order.supplierId,
+            unitCost,
+          );
         }
 
         const updatedItems = await em.find(PurchaseOrderItem, {
@@ -524,5 +586,172 @@ export class PurchaseOrdersService {
     }
     await this.orderRepo.save(order);
     return this.findOne(user, id);
+  }
+
+  // ─── Top 3 de proveedores por refacción ─────────────────────
+
+  /** Los 3 proveedores más recientes de una parte, con su último precio. */
+  async topProveedores(user: UserPayload, partId: string) {
+    const rows = await this.partSupplierRepo
+      .createQueryBuilder('ps')
+      .innerJoin(Supplier, 's', 's.id = ps.supplier_id')
+      .select([
+        'ps.supplier_id AS "supplierId"',
+        's.name AS "supplierName"',
+        'ps.last_price AS "lastPrice"',
+        'ps.last_purchased_at AS "lastPurchasedAt"',
+        'ps.times_purchased AS "timesPurchased"',
+        'ps.supplier_sku AS "supplierSku"',
+      ])
+      .where('ps.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('ps.part_id = :partId', { partId })
+      .orderBy('ps.last_purchased_at', 'DESC', 'NULLS LAST')
+      .addOrderBy('ps.times_purchased', 'DESC')
+      .limit(3)
+      .getRawMany();
+    return rows;
+  }
+
+  // ─── Importar factura de compra (CFDI XML) ──────────────────
+
+  /**
+   * Crea una orden de compra en borrador a partir del XML del CFDI del
+   * proveedor: empareja el emisor por RFC y los conceptos por SKU (o
+   * equivalencia). Devuelve la orden creada y los conceptos no emparejados.
+   */
+  async importarCfdiXml(
+    user: UserPayload,
+    branchId: string,
+    xml: string,
+  ): Promise<{
+    order: PurchaseOrder;
+    emparejados: number;
+    noEmparejados: { sku: string; descripcion: string; cantidad: number }[];
+  }> {
+    this.assertCanWrite(user);
+    await this.branchesService.assertBranchInScope(user, branchId);
+
+    const parser = new XMLParser({
+      ignoreAttributes: false,
+      attributeNamePrefix: '@_',
+      removeNSPrefix: true,
+    });
+    let doc: Record<string, any>;
+    try {
+      doc = parser.parse(xml) as Record<string, any>;
+    } catch {
+      throw new BadRequestException('El archivo no es un XML válido');
+    }
+
+    const comp = doc?.Comprobante;
+    if (!comp) {
+      throw new BadRequestException('El XML no parece un CFDI (falta Comprobante)');
+    }
+
+    const rfc: string | undefined = comp?.Emisor?.['@_Rfc'];
+    const nombre: string | undefined = comp?.Emisor?.['@_Nombre'];
+    if (!rfc) {
+      throw new BadRequestException('El CFDI no trae RFC del emisor');
+    }
+
+    const supplier = await this.supplierRepo.findOne({
+      where: { tenantId: user.tenantId, rfc },
+    });
+    if (!supplier) {
+      throw new BadRequestException(
+        `No hay proveedor con RFC ${rfc}${nombre ? ` (${nombre})` : ''}. ` +
+          'Regístralo antes de importar su factura.',
+      );
+    }
+
+    const uuid: string | undefined =
+      comp?.Complemento?.TimbreFiscalDigital?.['@_UUID'];
+
+    const rawConceptos = comp?.Conceptos?.Concepto;
+    const conceptos: any[] = Array.isArray(rawConceptos)
+      ? rawConceptos
+      : rawConceptos
+        ? [rawConceptos]
+        : [];
+    if (!conceptos.length) {
+      throw new BadRequestException('El CFDI no tiene conceptos');
+    }
+
+    // Equivalencias del tenant para resolver SKUs alternos → part.
+    const equivs = await this.partEquivalenceRepo.find({
+      where: { tenantId: user.tenantId },
+    });
+    const equivMap = new Map(
+      equivs.map((e) => [e.equivalentSku.toUpperCase(), e.partId]),
+    );
+
+    const lines: { partId: string; quantity: number; unitPrice: number }[] = [];
+    const noEmparejados: {
+      sku: string;
+      descripcion: string;
+      cantidad: number;
+    }[] = [];
+
+    for (const c of conceptos) {
+      const sku: string = String(c?.['@_NoIdentificacion'] ?? '').trim();
+      const descripcion: string = String(c?.['@_Descripcion'] ?? '').trim();
+      const cantidad = Number(c?.['@_Cantidad']) || 0;
+      const valorUnitario = Number(c?.['@_ValorUnitario']) || 0;
+      if (cantidad <= 0) continue;
+
+      let part: Part | null = null;
+      if (sku) {
+        part = await this.partRepo.findOne({
+          where: { sku, branchId, tenantId: user.tenantId },
+        });
+        if (!part) {
+          const equivPartId = equivMap.get(sku.toUpperCase());
+          if (equivPartId) {
+            part = await this.partRepo.findOne({
+              where: { id: equivPartId, branchId, tenantId: user.tenantId },
+            });
+          }
+        }
+      }
+
+      if (part) {
+        lines.push({
+          partId: part.id,
+          quantity: Math.round(cantidad),
+          unitPrice: valorUnitario,
+        });
+      } else {
+        noEmparejados.push({ sku, descripcion, cantidad });
+      }
+    }
+
+    if (!lines.length) {
+      throw new BadRequestException(
+        'Ningún concepto del CFDI coincide con refacciones de la sucursal ' +
+          '(por SKU o equivalencia). Registra las partes o sus equivalencias.',
+      );
+    }
+
+    const fecha: string =
+      (comp?.['@_Fecha'] as string)?.slice(0, 10) ??
+      new Date().toISOString().slice(0, 10);
+
+    const order = await this.create(user, {
+      branchId,
+      supplierId: supplier.id,
+      orderedAt: fecha,
+      notes: uuid ? `Importada de CFDI ${uuid}` : 'Importada de CFDI',
+      lines,
+    });
+
+    if (uuid) {
+      await this.orderRepo.update(order.id, { supplierInvoiceUuid: uuid });
+    }
+
+    return {
+      order: await this.findOne(user, order.id),
+      emparejados: lines.length,
+      noEmparejados,
+    };
   }
 }

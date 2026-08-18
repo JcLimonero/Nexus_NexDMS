@@ -115,6 +115,10 @@ export class Part {
   @Column({ name: 'image_key', type: 'varchar', length: 500, nullable: true })
   imageKey: string | null;
 
+  /** Proveedor principal (para requisiciones y sugerencias de compra). */
+  @Column({ name: 'preferred_supplier_id', type: 'uuid', nullable: true })
+  preferredSupplierId: string | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
