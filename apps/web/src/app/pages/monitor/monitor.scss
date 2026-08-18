@@ -180,6 +180,15 @@
     font-size: 14px;
     color: var(--text-muted);
   }
+
+  /* La especialidad del mecánico, como etiqueta discreta bajo su nombre. */
+  small.especialidad {
+    color: var(--accent, #2563eb);
+    font-weight: var(--font-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 12px;
+  }
 }
 
 /* Fuera del turno el carril queda gris; la franja del turno lo abre en

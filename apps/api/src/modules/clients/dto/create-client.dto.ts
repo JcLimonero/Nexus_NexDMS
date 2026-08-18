@@ -87,6 +87,11 @@ export class CreateClientDto {
   @Min(0)
   fixedDiscount?: number;
 
+  /** Límite de crédito para entregar con adeudo (null/omitido = sin límite). */
+  @IsOptional()
+  @IsNumber()
+  creditLimit?: number | null;
+
   @IsOptional()
   @IsString()
   notes?: string;

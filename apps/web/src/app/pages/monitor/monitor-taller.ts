@@ -46,6 +46,8 @@ interface CarrilTecnico {
   id: string;
   nombre: string;
   iniciales: string;
+  /** Especialidad del mecánico (hojalatero, pintor…); null si no tiene. */
+  especialidad: string | null;
   disponible: boolean;
   motivo: string | null;
   /** Su turno, ya en porcentaje sobre la línea de tiempo. */
@@ -113,6 +115,7 @@ export class MonitorTaller implements OnInit, OnDestroy {
       id: t.id,
       nombre: t.nombre,
       iniciales: t.iniciales,
+      especialidad: t.especialidad ?? null,
       disponible: t.disponible,
       motivo: t.motivo,
       franjas: (t.ventanas ?? []).map((v) => {

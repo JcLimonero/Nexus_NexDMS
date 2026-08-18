@@ -83,6 +83,7 @@ export interface Magneto {
     id: string;
     nombre: string;
     iniciales: string;
+    especialidad: string | null;
     disponible: boolean;
     motivo: string | null;
     ventanas: { inicio: string; fin: string }[];

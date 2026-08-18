@@ -36,4 +36,9 @@ export class CreateUserDto {
   @IsUUID('4', { each: true })
   @IsOptional()
   branchIds?: string[];
+
+  /** Especialidad del mecánico (hojalatero, pintor, general…). */
+  @IsString()
+  @IsOptional()
+  specialty?: string;
 }

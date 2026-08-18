@@ -66,6 +66,15 @@ export const settingsRoutes: Routes = [
     },
   },
   {
+    path: "credito",
+    loadComponent: () =>
+      import("./credito/credito-config").then((m) => m.CreditoConfig),
+    data: {
+      title: "Crédito y adeudos",
+      breadcrumb: "Crédito y adeudos",
+    },
+  },
+  {
     path: "general",
     loadComponent: () =>
       import("../../components/placeholder/placeholder").then(

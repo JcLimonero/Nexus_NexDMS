@@ -71,6 +71,7 @@ export class ClienteForm implements OnInit {
       city: ["", [Validators.maxLength(100)]],
       state: ["", [Validators.maxLength(100)]],
       fixedDiscount: [0, [Validators.min(0)]],
+      creditLimit: [null as number | null, [Validators.min(0)]],
       notes: [""],
     });
 
@@ -131,6 +132,7 @@ export class ClienteForm implements OnInit {
           city: client.city ?? "",
           state: client.state ?? "",
           fixedDiscount: client.fixedDiscount ?? 0,
+          creditLimit: client.creditLimit ?? null,
           notes: client.notes ?? "",
         });
         this.loading.set(false);
@@ -165,6 +167,10 @@ export class ClienteForm implements OnInit {
       city: raw.city || undefined,
       state: raw.state || undefined,
       fixedDiscount: raw.fixedDiscount,
+      creditLimit:
+        raw.creditLimit === null || raw.creditLimit === ""
+          ? null
+          : Number(raw.creditLimit),
       notes: raw.notes || undefined,
     };
 

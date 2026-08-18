@@ -3,6 +3,15 @@ import { HttpClient } from "@angular/common/http";
 import { Observable } from "rxjs";
 
 const BRANCHES_URL = "/api/v1/branches";
+const TENANTS_URL = "/api/v1/tenants";
+
+/** Reglas de "salir con adeudo" (R6) del tenant. */
+export interface CreditConfig {
+  /** Tope de días de la fecha promesa de pago (0/omitido = sin tope). */
+  promiseDaysCap?: number;
+  /** Valida el límite de crédito del cliente al entregar con adeudo. */
+  creditCheckEnabled?: boolean;
+}
 
 export interface BranchConfigSafe {
   id: string;
@@ -50,6 +59,21 @@ export class ConfiguracionService {
     return this.http.patch<BranchConfigSafe>(
       `${BRANCHES_URL}/${branchId}/config`,
       dto
+    );
+  }
+
+  getCreditConfig(): Observable<{ creditConfig: CreditConfig | null }> {
+    return this.http.get<{ creditConfig: CreditConfig | null }>(
+      `${TENANTS_URL}/me/credit-config`
+    );
+  }
+
+  setCreditConfig(
+    creditConfig: CreditConfig | null
+  ): Observable<{ creditConfig: CreditConfig | null }> {
+    return this.http.patch<{ creditConfig: CreditConfig | null }>(
+      `${TENANTS_URL}/me/credit-config`,
+      { creditConfig }
     );
   }
 }

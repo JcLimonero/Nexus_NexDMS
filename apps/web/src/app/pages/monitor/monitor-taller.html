@@ -83,6 +83,9 @@
             <span class="avatar">{{ c.iniciales }}</span>
             <span class="recurso-datos">
               <strong>{{ c.nombre }}</strong>
+              @if (c.especialidad) {
+                <small class="especialidad">{{ c.especialidad }}</small>
+              }
               @if (!c.disponible) {
                 <small>{{ c.motivo === "ausente" ? "Ausente" : "Fuera de turno" }}</small>
               }

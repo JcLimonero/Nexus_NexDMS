@@ -87,6 +87,32 @@ export class TenantsService {
     return { serviceFlow: tenant.serviceFlow };
   }
 
+  /** Reglas de "salir con adeudo" (R6); null = sin restricciones extra. */
+  async getCreditConfig(
+    tenantId: string,
+  ): Promise<{ creditConfig: Tenant['creditConfig'] }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    return { creditConfig: tenant.creditConfig ?? null };
+  }
+
+  async setCreditConfig(
+    tenantId: string,
+    creditConfig: Tenant['creditConfig'],
+  ): Promise<{ creditConfig: Tenant['creditConfig'] }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    const limpio =
+      creditConfig && Object.keys(creditConfig).length > 0 ? creditConfig : null;
+    tenant.creditConfig = limpio;
+    await this.tenantRepo.save(tenant);
+    return { creditConfig: tenant.creditConfig };
+  }
+
   async setEnabledModules(
     tenantId: string,
     enabledModules: string[] | null,

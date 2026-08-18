@@ -441,6 +441,7 @@ export class ServicePhasesService {
           id: t.id,
           nombre: `${t.firstName} ${t.lastName}`.trim(),
           iniciales: `${t.firstName?.[0] ?? ''}${t.lastName?.[0] ?? ''}`.toUpperCase(),
+          especialidad: t.specialty ?? null,
           disponible: d?.disponible ?? false,
           motivo: d?.motivo ?? null,
           ventanas: d?.ventanas ?? [],

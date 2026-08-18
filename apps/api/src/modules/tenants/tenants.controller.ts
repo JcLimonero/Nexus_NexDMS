@@ -88,6 +88,25 @@ export class TenantsController {
     return this.tenantsService.setServiceFlow(user.tenantId, body.serviceFlow);
   }
 
+  /** Reglas de "salir con adeudo" (R6) del tenant. */
+  @Get('me/credit-config')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  getMyCreditConfig(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getCreditConfig(user.tenantId);
+  }
+
+  @Patch('me/credit-config')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyCreditConfig(
+    @CurrentUser() user: UserPayload,
+    @Body()
+    body: {
+      creditConfig: { promiseDaysCap?: number; creditCheckEnabled?: boolean } | null;
+    },
+  ) {
+    return this.tenantsService.setCreditConfig(user.tenantId, body.creditConfig);
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(

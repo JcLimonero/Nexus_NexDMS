@@ -914,6 +914,49 @@ export class ServiceOrdersService {
         'Indica la forma de pago, o marca "entregar con adeudo"',
       );
     }
+
+    // Reglas configurables de "salir con adeudo" (R6): tope de días de la fecha
+    // promesa y límite de crédito del cliente. Se validan antes de entregar.
+    if (dto.conAdeudo) {
+      const tenant = await this.tenantRepo.findOne({
+        where: { id: so.tenantId },
+      });
+      const cfg = tenant?.creditConfig ?? null;
+      const cap = cfg?.promiseDaysCap ?? 0;
+      if (cap > 0 && dto.fechaPromesaPago) {
+        const dias = Math.ceil(
+          (new Date(dto.fechaPromesaPago).getTime() - Date.now()) / 86_400_000,
+        );
+        if (dias > cap) {
+          throw new BadRequestException(
+            `La fecha promesa no puede exceder ${cap} días.`,
+          );
+        }
+      }
+      if (cfg?.creditCheckEnabled) {
+        const client = await this.clientRepo.findOne({
+          where: { id: so.ownerId },
+        });
+        const limite =
+          client?.creditLimit != null ? Number(client.creditLimit) : null;
+        if (limite != null) {
+          const filas = await this.dataSource.query<{ s: string }[]>(
+            `SELECT COALESCE(SUM(total - paid_amount), 0) AS s
+             FROM receivables
+             WHERE tenant_id = $1 AND client_id = $2 AND status IN ('OPEN', 'PARTIAL')`,
+            [so.tenantId, so.ownerId],
+          );
+          const usado = Number(filas[0]?.s ?? 0);
+          const total = Number(so.total) || 0;
+          if (usado + total > limite) {
+            throw new BadRequestException(
+              `Excede el límite de crédito del cliente ($${limite}). Adeudo actual: $${usado}.`,
+            );
+          }
+        }
+      }
+    }
+
     const deliveredAt = new Date();
     await this.soRepo.update(id, {
       status: ServiceOrderStatusEnum.DELIVERED,

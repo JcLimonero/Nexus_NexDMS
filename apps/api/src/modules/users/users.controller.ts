@@ -55,6 +55,7 @@ export class UsersController {
       firstName?: string;
       lastName?: string;
       phone?: string | null;
+      specialty?: string | null;
       scope?: ScopeEnum;
       isActive?: boolean;
       roles?: RoleEnum[];

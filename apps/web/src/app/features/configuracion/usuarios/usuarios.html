@@ -207,6 +207,17 @@
           <label class="form-label">Teléfono</label>
           <input class="form-control" [(ngModel)]="form.phone" />
         </div>
+        <div class="col-md-6">
+          <label class="form-label">Especialidad</label>
+          <input
+            class="form-control"
+            [(ngModel)]="form.specialty"
+            placeholder="Hojalatero, pintor, general…"
+          />
+          <div class="form-text">
+            Solo aplica a mecánicos; aparece en el tablero de taller.
+          </div>
+        </div>
         @if (!editando()) {
           <div class="col-md-6">
             <label class="form-label">Contraseña</label>

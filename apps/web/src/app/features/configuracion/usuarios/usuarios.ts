@@ -158,6 +158,7 @@ export class Usuarios implements OnInit, OnDestroy {
     email: "",
     password: "",
     phone: "",
+    specialty: "",
     scope: "SUCURSAL",
     roles: [] as string[],
     branchIds: [] as string[],
@@ -171,6 +172,7 @@ export class Usuarios implements OnInit, OnDestroy {
       email: "",
       password: "",
       phone: "",
+      specialty: "",
       scope: "SUCURSAL",
       roles: [],
       branchIds: this.branchId() ? [this.branchId()] : [],
@@ -186,6 +188,7 @@ export class Usuarios implements OnInit, OnDestroy {
       email: u.email,
       password: "",
       phone: u.phone ?? "",
+      specialty: u.specialty ?? "",
       scope: u.scope,
       roles: [...u.roles],
       branchIds: [...u.branchIds],
@@ -256,6 +259,7 @@ export class Usuarios implements OnInit, OnDestroy {
           firstName: this.form.firstName,
           lastName: this.form.lastName,
           phone: this.form.phone || null,
+          specialty: this.form.specialty || null,
           scope: this.form.scope as Usuario["scope"],
           roles: this.form.roles,
           branchIds: this.form.branchIds,
@@ -278,6 +282,7 @@ export class Usuarios implements OnInit, OnDestroy {
         roles: this.form.roles,
         scope: this.form.scope,
         branchIds: this.form.branchIds,
+        specialty: this.form.specialty || null,
       })
       .subscribe({ next: listo, error: falló });
   }

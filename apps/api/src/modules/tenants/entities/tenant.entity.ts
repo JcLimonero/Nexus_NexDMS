@@ -44,6 +44,17 @@ export class Tenant {
   pldConfig: Record<string, number> | null;
 
   /**
+   * Reglas de "salir con adeudo" (R6).
+   * - promiseDaysCap: tope de días de la fecha promesa (0/undefined = sin tope).
+   * - creditCheckEnabled: valida el límite de crédito del cliente al entregar.
+   */
+  @Column({ name: 'credit_config', type: 'jsonb', nullable: true })
+  creditConfig: {
+    promiseDaysCap?: number;
+    creditCheckEnabled?: boolean;
+  } | null;
+
+  /**
    * Paquete comercial contratado. El nivel técnico sigue viviendo en `plan`:
    * este campo dice cuál de los paquetes con ese nivel se le vendió, que es lo
    * que determina el precio.

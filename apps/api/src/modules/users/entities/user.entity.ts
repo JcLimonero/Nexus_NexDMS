@@ -86,6 +86,10 @@ export class User {
   @Column({ name: 'phone', type: 'varchar', length: 20, nullable: true })
   phone: string | null;
 
+  /** Especialidad del mecánico (hojalatero, pintor, general…). */
+  @Column({ name: 'specialty', type: 'varchar', length: 100, nullable: true })
+  specialty: string | null;
+
   @Column({ name: 'avatar_key', type: 'varchar', length: 500, nullable: true })
   avatarKey: string | null;
 

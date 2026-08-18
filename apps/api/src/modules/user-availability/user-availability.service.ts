@@ -19,6 +19,7 @@ export interface MechanicInfo {
   id: string;
   firstName: string;
   lastName: string;
+  specialty?: string | null;
 }
 
 export interface AvailableSlot {
@@ -221,12 +222,13 @@ export class UserAvailabilityService {
     if (ids.length === 0) return [];
     const users = await this.userRepo.find({
       where: { id: In(ids) },
-      select: ['id', 'firstName', 'lastName'],
+      select: ['id', 'firstName', 'lastName', 'specialty'],
     });
     return users.map((u) => ({
       id: u.id,
       firstName: u.firstName,
       lastName: u.lastName,
+      specialty: u.specialty,
     }));
   }
 

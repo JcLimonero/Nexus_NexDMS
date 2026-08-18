@@ -61,6 +61,8 @@ export interface Usuario {
   lastName: string;
   email: string;
   phone: string | null;
+  /** Especialidad del mecánico (hojalatero, pintor, general…). */
+  specialty: string | null;
   scope: "GLOBAL" | "LEGAL_ENTITY" | "SUCURSAL";
   isActive: boolean;
   lastLoginAt: string | null;
@@ -78,6 +80,7 @@ export interface NuevoUsuario {
   roles: string[];
   scope: string;
   branchIds: string[];
+  specialty?: string | null;
 }
 
 export interface DiaDeTrabajo {

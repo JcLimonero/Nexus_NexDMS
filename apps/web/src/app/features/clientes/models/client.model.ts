@@ -22,6 +22,8 @@ export interface Client {
   city: string | null;
   state: string | null;
   fixedDiscount: number;
+  /** Límite de crédito para entregar con adeudo (null = sin límite). */
+  creditLimit: number | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -103,5 +105,6 @@ export interface CreateClientDto {
   city?: string;
   state?: string;
   fixedDiscount?: number;
+  creditLimit?: number | null;
   notes?: string;
 }

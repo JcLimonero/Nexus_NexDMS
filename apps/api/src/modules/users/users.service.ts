@@ -61,6 +61,7 @@ export class UsersService {
       email: dto.email,
       passwordHash,
       scope: dto.scope,
+      specialty: dto.specialty ?? null,
       isActive: true,
     });
     const saved = await this.userRepo.save(user);
@@ -275,6 +276,7 @@ export class UsersService {
       lastName: u.lastName,
       email: u.email,
       phone: u.phone,
+      specialty: u.specialty,
       scope: u.scope,
       isActive: u.isActive,
       lastLoginAt: u.lastLoginAt,
@@ -309,6 +311,7 @@ export class UsersService {
       firstName?: string;
       lastName?: string;
       phone?: string | null;
+      specialty?: string | null;
       scope?: ScopeEnum;
       isActive?: boolean;
       roles?: RoleEnum[];
@@ -364,6 +367,7 @@ export class UsersService {
       firstName: dto.firstName ?? u.firstName,
       lastName: dto.lastName ?? u.lastName,
       phone: dto.phone === undefined ? u.phone : dto.phone,
+      specialty: dto.specialty === undefined ? u.specialty : dto.specialty,
       scope: dto.scope ?? u.scope,
       isActive: dto.isActive ?? u.isActive,
     });

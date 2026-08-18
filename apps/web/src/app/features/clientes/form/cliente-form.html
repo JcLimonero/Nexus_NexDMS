@@ -129,6 +129,20 @@
                 <label class="form-label">Descuento fijo (%)</label>
                 <input type="number" class="form-control" formControlName="fixedDiscount" min="0" step="0.01" />
               </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Límite de crédito</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  formControlName="creditLimit"
+                  min="0"
+                  step="0.01"
+                  placeholder="Sin límite"
+                />
+                <div class="form-text">
+                  Tope para entregar servicios con adeudo. Vacío = sin límite.
+                </div>
+              </div>
               <div class="col-12 mb-3">
                 <label class="form-label">Notas</label>
                 <textarea class="form-control" formControlName="notes" rows="3"></textarea>
