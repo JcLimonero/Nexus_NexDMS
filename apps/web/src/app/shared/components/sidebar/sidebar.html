@@ -132,6 +132,7 @@
                 @if (childrenItem.type === "link" && childrenItem.path) {
                   <a
                     [routerLink]="childrenItem.path"
+                    [queryParams]="childrenItem.queryParams || null"
                     routerLinkActive="active"
                     [routerLinkActiveOptions]="{ exact: false }"
                   >

@@ -12,6 +12,7 @@ export interface Menu {
   badgeValue?: string;
   active?: boolean;
   bookmark?: boolean;
+  queryParams?: Record<string, string>;
   children?: Menu[];
 }
 
@@ -67,6 +68,7 @@ export class NavService {
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
         { path: "/workshop/tablero-taller", title: "Monitor de taller", type: "link" },
         { path: "/workshop/tablero-citas", title: "Monitor de citas", type: "link" },
+        { path: "/deliveries", title: "Entregas de taller", type: "link", queryParams: { tipo: "SERVICE" } },
         // Garantía por cada trabajo hecho en el taller (independiente de la
         // garantía de venta de la unidad). Hoy comparte pantalla con la de
         // unidades; se separará cuando el backend distinga el tipo.
@@ -84,6 +86,7 @@ export class NavService {
         { path: "/quotes", title: "Presupuestos de venta", type: "link" },
         { path: "/sales", title: "Ventas de unidades", type: "link" },
         { path: "/sales", title: "Reservas", type: "link" },
+        { path: "/deliveries", title: "Entregas de unidad", type: "link", queryParams: { tipo: "UNIT_SALE" } },
         { path: "/used-units", title: "Seminuevos", type: "link" },
         // Garantía de la unidad vendida (distinta de la garantía por trabajo
         // de taller). Comparte pantalla con la de taller por ahora.

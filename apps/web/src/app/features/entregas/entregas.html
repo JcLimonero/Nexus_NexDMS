@@ -1,0 +1,85 @@
+<div class="container-fluid">
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0">Actas de entrega</h5>
+      <small class="text-muted">
+        Checklist de entrega según el área: unidad vendida o vehículo del taller.
+      </small>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" [ngModel]="kind" (ngModelChange)="cambiarTipo($event)">
+            <option value="UNIT_SALE">Entrega de unidad</option>
+            <option value="SERVICE">Entrega de taller</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Sucursal</label>
+          <select class="form-select" [(ngModel)]="branchId">
+            @for (b of branches(); track b.id) {
+              <option [value]="b.id">{{ b.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Referencia</label>
+          <input class="form-control" [(ngModel)]="referenceLabel" placeholder="Folio de venta / orden" />
+        </div>
+      </div>
+
+      <h6 class="mt-4">Checklist</h6>
+      <div class="row">
+        @for (item of checklist(); track $index) {
+          <div class="col-md-6">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" [id]="'chk' + $index" [(ngModel)]="item.done" />
+              <label class="form-check-label" [for]="'chk' + $index">{{ item.label }}</label>
+            </div>
+          </div>
+        }
+      </div>
+
+      <div class="mt-3">
+        <label class="form-label">Observaciones</label>
+        <textarea class="form-control" rows="2" [(ngModel)]="notes"></textarea>
+      </div>
+
+      <button class="btn btn-primary mt-3" [disabled]="guardando()" (click)="guardar()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        Registrar entrega
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h6 class="mb-0">Historial</h6></div>
+    <div class="card-body">
+      @if (cargando()) {
+        <div class="spinner-border" role="status"></div>
+      } @else if (!entregas().length) {
+        <p class="text-muted mb-0">Sin actas registradas.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>Folio</th><th>Tipo</th><th>Referencia</th><th>Checklist</th><th>Fecha</th></tr>
+            </thead>
+            <tbody>
+              @for (d of entregas(); track d.id) {
+                <tr>
+                  <td><strong>{{ d.folio }}</strong></td>
+                  <td>{{ etiquetaKind(d.kind) }}</td>
+                  <td>{{ d.referenceLabel || "—" }}</td>
+                  <td>{{ hechos(d) }}</td>
+                  <td>{{ d.deliveredAt ? (d.deliveredAt | date: "dd/MM/yy HH:mm") : "—" }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

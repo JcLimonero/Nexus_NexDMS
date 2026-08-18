@@ -45,6 +45,12 @@ export const content: Routes = [
       ),
   },
   {
+    path: "deliveries",
+    data: { breadcrumb: "Entregas", title: "Entregas" },
+    loadComponent: () =>
+      import("../../../app/features/entregas/entregas").then((m) => m.Entregas),
+  },
+  {
     path: "units-inventory",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Inventario unidades" , module: "units-inventory" },
@@ -243,3 +249,4 @@ export const content: Routes = [
       ),
   },
 ];
+
