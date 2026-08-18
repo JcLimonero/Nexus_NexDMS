@@ -62,7 +62,7 @@ export class NavService {
     {
       path: "/units-inventory",
       title: "Inventario de unidades",
-      icon: "car",
+      icon: "truck",
       type: "link",
     },
     {
@@ -78,7 +78,7 @@ export class NavService {
     },
     {
       title: "Almacén",
-      icon: "truck",
+      icon: "archive",
       type: "sub",
       active: false,
       children: [

@@ -152,15 +152,6 @@
               </div>
             </div>
 
-            <div class="d-flex gap-2 mt-3">
-              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
-                @if (loading()) {
-                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
-                }
-                {{ isEdit() ? "Guardar cambios" : "Crear parte" }}
-              </button>
-              <a class="btn btn-outline-secondary" routerLink="/parts-inventory">Cancelar</a>
-            </div>
           </form>
 
           @if (isEdit()) {
@@ -242,6 +233,16 @@
               </div>
             </div>
           }
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="button" class="btn btn-primary" [disabled]="form.invalid || loading()" (click)="submit()">
+              @if (loading()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              {{ isEdit() ? "Guardar cambios" : "Crear parte" }}
+            </button>
+            <a class="btn btn-outline-secondary" routerLink="/parts-inventory">Cancelar</a>
+          </div>
         </div>
       </div>
     </div>

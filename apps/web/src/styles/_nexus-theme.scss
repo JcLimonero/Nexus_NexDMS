@@ -226,6 +226,20 @@ textarea.form-control {
   text-transform: none !important;
 }
 
+/* Nombre del usuario en el pie del menú: la razón social puede ser larga, así
+   que se permite en dos renglones con letra chica en vez de cortarse. */
+.sidebar-user-bottom .nombre-usuario {
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  word-break: break-word;
+}
+
 /* Encabezados de tabla: una sola voz tipográfica */
 .table th {
   font-size: var(--text-overline) !important;

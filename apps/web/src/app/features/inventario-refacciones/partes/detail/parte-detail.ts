@@ -4,7 +4,12 @@ import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { InventarioRefaccionesService } from "../../inventario-refacciones.service";
-import { Part } from "../../models/part.model";
+import { ComprasService } from "../../../compras/compras.service";
+import {
+  Part,
+  PartEquivalence,
+  PartSupplierTop,
+} from "../../models/part.model";
 
 @Component({
   selector: "app-parte-detail",
@@ -17,11 +22,15 @@ export class ParteDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private inventarioService = inject(InventarioRefaccionesService);
+  private comprasService = inject(ComprasService);
   private toastr = inject(ToastrService);
 
   parte = signal<Part | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  equivalencias = signal<PartEquivalence[]>([]);
+  topProveedores = signal<PartSupplierTop[]>([]);
+  proveedorNombre = signal<string | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
@@ -35,11 +44,23 @@ export class ParteDetail implements OnInit {
         this.parte.set(p);
         this.loading.set(false);
         this.error.set(null);
+        if (p.preferredSupplierId) {
+          this.comprasService.getSupplier(p.preferredSupplierId).subscribe({
+            next: (s) => this.proveedorNombre.set(s.name),
+          });
+        }
       },
       error: (err) => {
         this.loading.set(false);
         this.error.set(err?.error?.message || "Error al cargar parte");
       },
+    });
+
+    this.inventarioService.getEquivalences(id).subscribe({
+      next: (eqs) => this.equivalencias.set(eqs),
+    });
+    this.inventarioService.getTopSuppliers(id).subscribe({
+      next: (t) => this.topProveedores.set(t),
     });
   }
 
