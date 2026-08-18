@@ -85,6 +85,13 @@
             </label>
           </div>
         </div>
+        @if (kind === "CLIENT_RETURN" && refundMethod === "CREDIT_NOTE") {
+          <div class="col-md-6">
+            <label class="form-label">CFDI de la venta original (opcional)</label>
+            <input class="form-control" [(ngModel)]="cfdiId" placeholder="ID del CFDI para relacionar la nota de crédito" />
+            <div class="form-text">Necesario para poder emitir la nota de crédito.</div>
+          </div>
+        }
         <div class="col-12">
           <label class="form-label">Motivo</label>
           <input class="form-control" [(ngModel)]="reason" placeholder="Motivo de la devolución/reclamo" />
@@ -179,7 +186,7 @@
         <div class="table-responsive">
           <table class="table table-hover align-middle">
             <thead>
-              <tr><th>Folio</th><th>Tipo</th><th>Reembolso</th><th>Garantía</th><th>Total</th><th>Fecha</th></tr>
+              <tr><th>Folio</th><th>Tipo</th><th>Reembolso</th><th>Garantía</th><th>Total</th><th>Fecha</th><th>Nota de crédito</th></tr>
             </thead>
             <tbody>
               @for (d of devoluciones(); track d.id) {
@@ -190,6 +197,15 @@
                   <td>@if (d.isWarranty) { <span class="badge bg-info">Sí</span> } @else { — }</td>
                   <td>{{ d.refundTotal | currency }}</td>
                   <td>{{ d.createdAt | date: "dd/MM/yy HH:mm" }}</td>
+                  <td>
+                    @if (d.notaCreditoCfdiId) {
+                      <span class="badge bg-success">Emitida</span>
+                    } @else if (d.kind === "CLIENT_RETURN" && d.refundMethod === "CREDIT_NOTE" && d.cfdiId) {
+                      <button class="btn btn-sm btn-outline-primary" (click)="emitirNc(d)">Emitir NC</button>
+                    } @else {
+                      —
+                    }
+                  </td>
                 </tr>
               }
             </tbody>

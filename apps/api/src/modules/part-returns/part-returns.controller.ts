@@ -51,4 +51,14 @@ export class PartReturnsController {
   ) {
     return this.service.create(user, dto);
   }
+
+  /** Emite la nota de crédito (CFDI) de una devolución de cliente. */
+  @Post(':id/nota-credito')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  emitirNotaCredito(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.service.emitirNotaCredito(user, id);
+  }
 }

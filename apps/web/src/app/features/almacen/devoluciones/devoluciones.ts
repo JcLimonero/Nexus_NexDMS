@@ -57,6 +57,7 @@ export class Devoluciones implements OnInit {
   restock = true;
   reason = "";
   refundMethod: RefundMethod = "CREDIT_NOTE";
+  cfdiId = "";
   lineas = signal<Linea[]>([]);
 
   // Búsqueda de refacciones
@@ -169,6 +170,10 @@ export class Devoluciones implements OnInit {
         restock: this.restock,
         reason: this.reason || undefined,
         refundMethod: this.refundMethod,
+        cfdiId:
+          this.kind === "CLIENT_RETURN" && this.cfdiId
+            ? this.cfdiId
+            : undefined,
         lines: this.lineas().map((l) => ({
           partId: l.partId,
           quantity: l.quantity,
@@ -197,8 +202,20 @@ export class Devoluciones implements OnInit {
     this.isWarranty = false;
     this.restock = true;
     this.reason = "";
+    this.cfdiId = "";
     this.lineas.set([]);
     this.busqueda = "";
     this.resultados.set([]);
+  }
+
+  emitirNc(d: PartReturn): void {
+    this.srv.emitNotaCredito(d.id).subscribe({
+      next: (r) => {
+        this.toastr.success(`Nota de crédito emitida (${r.folio})`);
+        this.cargar();
+      },
+      error: (err) =>
+        this.toastr.error(err?.error?.message || "No se pudo emitir la NC"),
+    });
   }
 }

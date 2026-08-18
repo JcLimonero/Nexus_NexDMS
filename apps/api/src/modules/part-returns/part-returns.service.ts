@@ -17,6 +17,7 @@ import {
   StockMovement,
   StockMovementTypeEnum,
 } from '../stock-movements/entities/stock-movement.entity';
+import { CfdiService } from '../cfdi/cfdi.service';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @Injectable()
@@ -29,6 +30,7 @@ export class PartReturnsService {
     @InjectRepository(Part)
     private readonly partRepo: Repository<Part>,
     private readonly dataSource: DataSource,
+    private readonly cfdiService: CfdiService,
   ) {}
 
   async findAll(user: UserPayload, kind?: ReturnKindEnum) {
@@ -125,6 +127,7 @@ export class PartReturnsService {
           reason: dto.reason ?? null,
           refundMethod: dto.refundMethod ?? RefundMethodEnum.NONE,
           refundTotal,
+          cfdiId: dto.cfdiId ?? null,
           createdBy: user.sub,
         });
         const saved = await em.save(ret);
@@ -190,5 +193,37 @@ export class PartReturnsService {
         return saved.id;
       })
       .then((id) => this.findOne(user, id));
+  }
+
+  /**
+   * Emite la nota de crédito (CFDI de egreso) de una devolución de cliente,
+   * relacionándola con el CFDI de la venta original. Delega en el flujo de CFDI.
+   */
+  async emitirNotaCredito(user: UserPayload, id: string): Promise<PartReturn> {
+    const ret = await this.findOne(user, id);
+    if (ret.kind !== ReturnKindEnum.CLIENT_RETURN) {
+      throw new BadRequestException(
+        'Solo las devoluciones de cliente generan nota de crédito',
+      );
+    }
+    if (!ret.cfdiId) {
+      throw new BadRequestException(
+        'La devolución no tiene ligado el CFDI de la venta original',
+      );
+    }
+    if (ret.notaCreditoCfdiId) {
+      throw new BadRequestException(
+        'Esta devolución ya tiene una nota de crédito emitida',
+      );
+    }
+
+    const nc = await this.cfdiService.generarNotaCredito(user, ret.cfdiId, {
+      motivo: `Devolución ${ret.folio}`,
+      monto: Number(ret.refundTotal) || undefined,
+    });
+
+    ret.notaCreditoCfdiId = nc.id;
+    await this.repo.save(ret);
+    return this.findOne(user, id);
   }
 }

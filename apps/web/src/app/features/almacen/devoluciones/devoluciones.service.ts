@@ -22,6 +22,7 @@ export interface CreatePartReturnDto {
   restock?: boolean;
   reason?: string;
   refundMethod?: RefundMethod;
+  cfdiId?: string;
   lines: PartReturnLine[];
 }
 
@@ -46,6 +47,8 @@ export interface PartReturn {
   reason: string | null;
   refundMethod: RefundMethod;
   refundTotal: number;
+  cfdiId: string | null;
+  notaCreditoCfdiId: string | null;
   createdAt: string;
   items?: PartReturnItem[];
 }
@@ -67,5 +70,9 @@ export class DevolucionesService {
 
   createReturn(dto: CreatePartReturnDto): Observable<PartReturn> {
     return this.http.post<PartReturn>(URL, dto);
+  }
+
+  emitNotaCredito(id: string): Observable<PartReturn> {
+    return this.http.post<PartReturn>(`${URL}/${id}/nota-credito`, {});
   }
 }

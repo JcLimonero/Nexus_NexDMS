@@ -71,6 +71,11 @@ export class CreatePartReturnDto {
   @IsEnum(RefundMethodEnum)
   refundMethod?: RefundMethodEnum;
 
+  /** CFDI de la venta original, para poder emitir la nota de crédito. */
+  @IsOptional()
+  @IsUUID()
+  cfdiId?: string;
+
   @IsArray()
   @ArrayMinSize(1)
   @ValidateNested({ each: true })

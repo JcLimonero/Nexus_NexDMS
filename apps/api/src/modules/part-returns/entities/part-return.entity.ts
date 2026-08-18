@@ -75,6 +75,14 @@ export class PartReturn {
   })
   refundTotal: number;
 
+  /** CFDI de la venta original (para relacionar la nota de crédito). */
+  @Column({ name: 'cfdi_id', type: 'uuid', nullable: true })
+  cfdiId: string | null;
+
+  /** CFDI de la nota de crédito emitida por esta devolución. */
+  @Column({ name: 'nota_credito_cfdi_id', type: 'uuid', nullable: true })
+  notaCreditoCfdiId: string | null;
+
   @Column({ name: 'created_by', type: 'uuid', nullable: true })
   createdBy: string | null;
 
