@@ -124,7 +124,7 @@ export class NavService {
     },
     {
       path: "/quotes",
-      title: "Cotizaciones",
+      title: "Presupuestos",
       icon: "file-text",
       type: "link",
     },

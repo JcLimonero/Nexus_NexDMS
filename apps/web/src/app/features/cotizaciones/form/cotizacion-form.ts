@@ -347,7 +347,7 @@ export class CotizacionForm implements OnInit {
     if (editId) {
       this.cotizacionesService.updateQuotation(editId, dto).subscribe({
         next: (q) => {
-          this.toastr.success("Cotización actualizada");
+          this.toastr.success("Presupuesto actualizado");
           this.router.navigate(["/quotes", q.id]);
         },
         error: (err) => {
@@ -358,7 +358,7 @@ export class CotizacionForm implements OnInit {
     } else {
       this.cotizacionesService.createQuotation(dto).subscribe({
         next: (q) => {
-          this.toastr.success("Cotización creada");
+          this.toastr.success("Presupuesto creado");
           this.router.navigate(["/quotes", q.id]);
         },
         error: (err) => {

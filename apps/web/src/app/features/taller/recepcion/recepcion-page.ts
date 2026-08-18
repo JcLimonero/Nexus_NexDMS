@@ -63,7 +63,7 @@ const RADIO_MINIMO = 0.04;
  *
  * Flujo: cita del día → recibir la unidad (km, combustible, inventario) →
  * fotos guiadas por el catálogo con marcado de daños → servicios a realizar
- * → cotización que se envía al cliente para que la autorice.
+ * → presupuesto que se envía al cliente para que la autorice.
  */
 @Component({
   selector: "app-recepcion-page",
@@ -136,7 +136,7 @@ export class RecepcionPage implements OnInit {
   private cajaFoto: DOMRect | null = null;
   private arrastrando = false;
 
-  // Cotización
+  // Presupuesto
   servicios = signal<ServicioPredefinido[]>([]);
   kits = signal<KitResuelto[]>([]);
   lineas = signal<LineaCotizacion[]>([]);
@@ -498,7 +498,7 @@ export class RecepcionPage implements OnInit {
     return MARK_TYPES.find((m) => m.value === tipo)?.label ?? tipo;
   }
 
-  // ─── Servicios y cotización ──────────────────────
+  // ─── Servicios y presupuesto ──────────────────────
 
   agregarServicio(s: ServicioPredefinido): void {
     this.lineas.update((l) => [
@@ -563,7 +563,7 @@ export class RecepcionPage implements OnInit {
       next: (q) => {
         this.guardando.set(false);
         this.toastr.success(
-          `Cotización ${q.folio} enviada al cliente para su autorización`,
+          `Presupuesto ${q.folio} enviado al cliente para su autorización`,
         );
         this.cerrarRecepcion();
       },

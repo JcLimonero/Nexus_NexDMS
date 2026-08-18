@@ -472,11 +472,11 @@
         </div>
       }
 
-      <!-- Paso 3: servicios y cotización -->
+      <!-- Paso 3: servicios y presupuesto -->
       <div class="card">
         <div class="card-header">
           <h5>3. Servicios a realizar</h5>
-          <span>Genera la cotización que el cliente debe autorizar</span>
+          <span>Genera el presupuesto que el cliente debe autorizar</span>
         </div>
         <div class="card-body">
           @if (!listaParaCotizar()) {
@@ -520,7 +520,7 @@
             </div>
           }
 
-          <label>Conceptos de la cotización</label>
+          <label>Conceptos del presupuesto</label>
           @for (l of lineas(); track $index) {
             <div class="control-row mb-2">
               <input type="text" class="form-control" [(ngModel)]="l.description" placeholder="Descripción del servicio" />
@@ -537,7 +537,7 @@
 
           <div class="mb-3">
             <label>Condiciones</label>
-            <input type="text" class="form-control" [(ngModel)]="condiciones" placeholder="Condiciones de la cotización (opcional)" />
+            <input type="text" class="form-control" [(ngModel)]="condiciones" placeholder="Condiciones del presupuesto (opcional)" />
           </div>
 
           <div class="d-flex justify-content-between align-items-center">
@@ -547,7 +547,7 @@
               [disabled]="!listaParaCotizar() || lineas().length === 0 || guardando()"
               (click)="enviarCotizacion()"
             >
-              {{ guardando() ? "Enviando…" : "Enviar cotización al cliente" }}
+              {{ guardando() ? "Enviando…" : "Enviar presupuesto al cliente" }}
             </button>
           </div>
         </div>

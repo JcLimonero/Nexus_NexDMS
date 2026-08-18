@@ -40,7 +40,7 @@ export class CotizacionDetail implements OnInit {
   rejectReason = signal("");
   readonly QT = QuotationType;
 
-  /** Elección del vehículo para convertir una cotización de servicio. */
+  /** Elección del vehículo para convertir un presupuesto de servicio. */
   vehiculoAbierto = signal(false);
   vehiculosCliente = signal<{ vehicleId: string; descripcion: string }[]>([]);
   vehiculoElegido = "";
@@ -65,7 +65,7 @@ export class CotizacionDetail implements OnInit {
       },
       error: (err) => {
         this.loading.set(false);
-        this.error.set(err?.error?.message || "Error al cargar cotización");
+        this.error.set(err?.error?.message || "Error al cargar presupuesto");
       },
     });
   }
@@ -128,13 +128,13 @@ export class CotizacionDetail implements OnInit {
   onApprove(): void {
     const q = this.cotizacion();
     if (!q || this.approving()) return;
-    if (!confirm("¿Aprobar esta cotización?")) return;
+    if (!confirm("¿Aprobar este presupuesto?")) return;
 
     this.approving.set(true);
     this.cotizacionesService.approveQuotation(q.id).subscribe({
       next: (updated) => {
         this.cotizacion.set(updated);
-        this.toastr.success("Cotización aprobada");
+        this.toastr.success("Presupuesto aprobado");
         this.approving.set(false);
       },
       error: (err) => {
@@ -148,14 +148,14 @@ export class CotizacionDetail implements OnInit {
     const q = this.cotizacion();
     if (!q || this.rejecting()) return;
     const reason = this.rejectReason().trim();
-    if (!confirm("¿Rechazar esta cotización?")) return;
+    if (!confirm("¿Rechazar este presupuesto?")) return;
 
     this.rejecting.set(true);
     this.cotizacionesService.rejectQuotation(q.id, reason).subscribe({
       next: (updated) => {
         this.cotizacion.set(updated);
         this.rejectReason.set("");
-        this.toastr.success("Cotización rechazada");
+        this.toastr.success("Presupuesto rechazado");
         this.rejecting.set(false);
       },
       error: (err) => {
@@ -168,13 +168,13 @@ export class CotizacionDetail implements OnInit {
   onSend(): void {
     const q = this.cotizacion();
     if (!q || this.sending()) return;
-    if (!confirm("¿Enviar esta cotización al cliente?")) return;
+    if (!confirm("¿Enviar este presupuesto al cliente?")) return;
 
     this.sending.set(true);
     this.cotizacionesService.sendQuotation(q.id).subscribe({
       next: (updated) => {
         this.cotizacion.set(updated);
-        this.toastr.success("Cotización enviada");
+        this.toastr.success("Presupuesto enviado");
         this.sending.set(false);
       },
       error: (err) => {
@@ -192,7 +192,7 @@ export class CotizacionDetail implements OnInit {
     // unidad o de refacciones se convierte directo.
     if (q.type === QuotationType.SERVICE) {
       if (!q.clientId) {
-        this.toastr.warning("La cotización necesita un cliente");
+        this.toastr.warning("El presupuesto necesita un cliente");
         return;
       }
       this.vehiculoElegido = "";
@@ -217,7 +217,7 @@ export class CotizacionDetail implements OnInit {
       return;
     }
 
-    if (!confirm("¿Convertir esta cotización en venta de unidad?")) return;
+    if (!confirm("¿Convertir este presupuesto en venta de unidad?")) return;
     this.convertir();
   }
 
@@ -243,7 +243,7 @@ export class CotizacionDetail implements OnInit {
         );
         this.converting.set(false);
         this.toastr.success(
-          `Cotización convertida en ${result.folio}`,
+          `Presupuesto convertido en ${result.folio}`,
         );
         // Se lleva a lo creado: cerrar el círculo es el punto de convertir.
         const destino =

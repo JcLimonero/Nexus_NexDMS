@@ -244,7 +244,7 @@
                     [checked]="seleccionados().has(h.id)"
                     (change)="alternarSeleccion(h)"
                   />
-                  Incluir en la cotización
+                  Incluir en el presupuesto
                 </label>
               }
             </div>
@@ -254,7 +254,7 @@
 
       @if (seleccionados().size) {
         <h6 class="sub-titulo">
-          Cotización de {{ seleccionados().size }} trabajo(s)
+          Presupuesto de {{ seleccionados().size }} trabajo(s)
         </h6>
         @for (l of lineas(); track $index) {
           <div class="control-row mb-2">

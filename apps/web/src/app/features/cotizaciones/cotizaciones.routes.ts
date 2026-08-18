@@ -5,24 +5,24 @@ export const quotesRoutes: Routes = [
     path: "",
     loadComponent: () =>
       import("./list/cotizaciones-list").then((m) => m.CotizacionesList),
-    data: { title: "Cotizaciones", breadcrumb: "Cotizaciones" },
+    data: { title: "Presupuestos", breadcrumb: "Presupuestos" },
   },
   {
     path: "nueva",
     loadComponent: () =>
       import("./form/cotizacion-form").then((m) => m.CotizacionForm),
-    data: { title: "Nueva cotización", breadcrumb: "Nueva" },
+    data: { title: "Nuevo presupuesto", breadcrumb: "Nueva" },
   },
   {
     path: ":id/editar",
     loadComponent: () =>
       import("./form/cotizacion-form").then((m) => m.CotizacionForm),
-    data: { title: "Editar cotización", breadcrumb: "Editar" },
+    data: { title: "Editar presupuesto", breadcrumb: "Editar" },
   },
   {
     path: ":id",
     loadComponent: () =>
       import("./detail/cotizacion-detail").then((m) => m.CotizacionDetail),
-    data: { title: "Detalle cotización", breadcrumb: "Detalle" },
+    data: { title: "Detalle presupuesto", breadcrumb: "Detalle" },
   },
 ];

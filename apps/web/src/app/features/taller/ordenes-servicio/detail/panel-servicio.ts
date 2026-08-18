@@ -225,7 +225,7 @@ export class PanelServicio implements OnInit {
   }
 
   /**
-   * Precarga la cotización con lo que el técnico estimó. El asesor ajusta
+   * Precarga el presupuesto con lo que el técnico estimó. El asesor ajusta
    * precios, pero no debería empezar de una hoja en blanco.
    */
   private sugerirLineas(): void {
@@ -262,7 +262,7 @@ export class PanelServicio implements OnInit {
       return;
     }
     if (!lineas.length) {
-      this.toastr.warning("La cotización necesita conceptos");
+      this.toastr.warning("El presupuesto necesita conceptos");
       return;
     }
     this.guardando.set(true);
@@ -275,7 +275,7 @@ export class PanelServicio implements OnInit {
           this.lineas.set([]);
           this.condiciones = "";
           this.toastr.success(
-            `Cotización ${q.folio} enviada al cliente para autorización`,
+            `Presupuesto ${q.folio} enviado al cliente para autorización`,
           );
           this.cargar();
         },

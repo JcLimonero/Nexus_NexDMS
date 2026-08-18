@@ -3,7 +3,7 @@
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5>{{ isEdit() ? 'Editar cotización' : 'Nueva cotización' }}</h5>
+          <h5>{{ isEdit() ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</h5>
           <a class="btn btn-outline-secondary btn-sm" routerLink="/quotes">Volver</a>
         </div>
         <div class="card-body">
@@ -169,7 +169,7 @@
                 @if (loading()) {
                   <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                 }
-                {{ isEdit() ? 'Guardar' : 'Crear cotización' }}
+                {{ isEdit() ? 'Guardar' : 'Crear presupuesto' }}
               </button>
               <a class="btn btn-outline-secondary" routerLink="/quotes">Cancelar</a>
             </div>

@@ -60,7 +60,7 @@ export const routes: Routes = [
     path: "c/:token",
     loadComponent: () =>
       import("./pages/public/cotizacion-publica").then((m) => m.CotizacionPublica),
-    data: { title: "Autorizar cotización" },
+    data: { title: "Autorizar presupuesto" },
   },
   // El portal del cliente: sesión propia por código, sin login del taller.
   {

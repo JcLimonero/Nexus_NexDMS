@@ -92,7 +92,7 @@ export const content: Routes = [
   {
     path: "quotes",
     canActivate: [moduleGuard],
-    data: { breadcrumb: "Cotizaciones" , module: "quotes" },
+    data: { breadcrumb: "Presupuestos" , module: "quotes" },
     loadChildren: () =>
       import("../../../app/features/cotizaciones/cotizaciones.routes").then(
         (r) => r.quotesRoutes,

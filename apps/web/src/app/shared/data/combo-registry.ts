@@ -106,7 +106,7 @@ export const COMBO_REGISTRY: ComboRegistryEntry[] = [
     type: "form",
   },
 
-  // --- Cotización Form ---
+  // --- Presupuesto Form ---
   {
     component: "CotizacionForm",
     file: "app/features/cotizaciones/form/cotizacion-form.ts",
