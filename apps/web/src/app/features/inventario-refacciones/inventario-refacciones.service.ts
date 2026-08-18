@@ -7,6 +7,8 @@ import {
   PartsResponse,
   PartFilters,
   CreatePartDto,
+  PartEquivalence,
+  PartSupplierTop,
 } from "./models/part.model";
 import {
   PartCategory,
@@ -58,6 +60,38 @@ export class InventarioRefaccionesService {
     return this.http
       .delete<{ deleted: boolean }>(`${PARTS_URL}/${id}`)
       .pipe(map(() => undefined));
+  }
+
+  // Equivalencias (números de parte alternos)
+  getEquivalences(partId: string): Observable<PartEquivalence[]> {
+    return this.http.get<PartEquivalence[]>(
+      `${PARTS_URL}/${partId}/equivalences`
+    );
+  }
+
+  addEquivalence(
+    partId: string,
+    dto: { equivalentSku: string; brand?: string | null; note?: string | null }
+  ): Observable<PartEquivalence> {
+    return this.http.post<PartEquivalence>(
+      `${PARTS_URL}/${partId}/equivalences`,
+      dto
+    );
+  }
+
+  deleteEquivalence(partId: string, equivId: string): Observable<void> {
+    return this.http
+      .delete<{ deleted: boolean }>(
+        `${PARTS_URL}/${partId}/equivalences/${equivId}`
+      )
+      .pipe(map(() => undefined));
+  }
+
+  /** Top 3 de proveedores de la refacción (vive en el módulo de compras). */
+  getTopSuppliers(partId: string): Observable<PartSupplierTop[]> {
+    return this.http.get<PartSupplierTop[]>(
+      `/api/v1/purchase-orders/parts/${partId}/suppliers`
+    );
   }
 
   // Categorías

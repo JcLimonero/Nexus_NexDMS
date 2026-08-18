@@ -26,9 +26,29 @@ export interface Part {
   minStock: number;
   maxStock: number | null;
   imageKey: string | null;
+  preferredSupplierId: string | null;
+  isOnDemand: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PartEquivalence {
+  id: string;
+  partId: string;
+  equivalentSku: string;
+  brand: string | null;
+  note: string | null;
+  createdAt: string;
+}
+
+export interface PartSupplierTop {
+  supplierId: string;
+  supplierName: string;
+  lastPrice: number;
+  lastPurchasedAt: string | null;
+  timesPurchased: number;
+  supplierSku: string | null;
 }
 
 export interface PartsResponse {
@@ -64,5 +84,7 @@ export interface CreatePartDto {
   maxDiscountPct?: number;
   minStock?: number;
   maxStock?: number;
+  preferredSupplierId?: string | null;
+  isOnDemand?: boolean;
   isActive?: boolean;
 }

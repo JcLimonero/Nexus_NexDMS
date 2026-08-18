@@ -82,3 +82,29 @@ export interface ReceivePurchaseOrderDto {
   lines: ReceiveLineDto[];
   notes?: string;
 }
+
+// ─── Requisiciones (bajo demanda) e import de CFDI ───────────
+
+export interface PurchaseRequisition {
+  id: string;
+  tenantId: string;
+  branchId: string;
+  partId: string;
+  quantity: number;
+  status: "PENDING" | "ORDERED" | "CANCELLED";
+  sourceType: string;
+  sourceId: string | null;
+  note: string | null;
+  purchaseOrderId: string | null;
+  createdAt: string;
+  // Anexados por el backend para la lista:
+  partSku: string | null;
+  partName: string | null;
+  preferredSupplierId: string | null;
+}
+
+export interface ImportCfdiResult {
+  order: PurchaseOrder;
+  emparejados: number;
+  noEmparejados: { sku: string; descripcion: string; cantidad: number }[];
+}

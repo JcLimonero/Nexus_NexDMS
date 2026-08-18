@@ -5,11 +5,15 @@ import { RouterModule } from "@angular/router";
 import { Subject } from "rxjs";
 import { debounceTime, switchMap } from "rxjs/operators";
 
+import { Router } from "@angular/router";
+import { ToastrService } from "ngx-toastr";
+
 import { ComprasService } from "../../compras.service";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import {
   PurchaseOrder,
   PurchaseOrderStatus,
+  ImportCfdiResult,
 } from "../../models/purchase-order.model";
 import { Supplier } from "../../models/supplier.model";
 import { FeatherIcons } from "../../../../shared/components/feather-icons/feather-icons";
@@ -24,6 +28,16 @@ import { FeatherIcons } from "../../../../shared/components/feather-icons/feathe
 export class OrdenesCompraList implements OnInit {
   private comprasService = inject(ComprasService);
   private branchesService = inject(BranchesService);
+  private router = inject(Router);
+  private toastr = inject(ToastrService);
+
+  // Import de factura de compra (CFDI XML).
+  importOpen = signal(false);
+  importing = signal(false);
+  importBranchId = "";
+  importXml = "";
+  importFileName = signal<string>("");
+  importResult = signal<ImportCfdiResult | null>(null);
 
   ordenes = signal<PurchaseOrder[]>([]);
   suppliers = signal<Record<string, Supplier>>({});
@@ -119,5 +133,58 @@ export class OrdenesCompraList implements OnInit {
 
   getStatusLabel(status: string): string {
     return this.comprasService.getStatusLabel(status);
+  }
+
+  // ─── Importar CFDI XML ──────────────────────────────────────
+
+  abrirImport(): void {
+    this.importOpen.set(true);
+    this.importResult.set(null);
+    this.importXml = "";
+    this.importFileName.set("");
+    this.importBranchId = this.branches()[0]?.id ?? "";
+  }
+
+  cerrarImport(): void {
+    this.importOpen.set(false);
+  }
+
+  onXmlFile(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    this.importFileName.set(file.name);
+    const reader = new FileReader();
+    reader.onload = () => {
+      this.importXml = String(reader.result ?? "");
+    };
+    reader.readAsText(file);
+  }
+
+  importar(): void {
+    if (!this.importBranchId || !this.importXml.trim()) {
+      this.toastr.warning("Elige sucursal y archivo XML");
+      return;
+    }
+    this.importing.set(true);
+    this.comprasService
+      .importCfdiXml(this.importBranchId, this.importXml)
+      .subscribe({
+        next: (res) => {
+          this.importing.set(false);
+          this.importResult.set(res);
+          this.toastr.success(`Orden ${res.order.folio} creada en borrador`);
+          this.load();
+        },
+        error: (err) => {
+          this.importing.set(false);
+          this.toastr.error(err?.error?.message || "No se pudo importar el XML");
+        },
+      });
+  }
+
+  irAOrden(id: string): void {
+    this.cerrarImport();
+    this.router.navigate(["/purchases/purchase-orders", id]);
   }
 }

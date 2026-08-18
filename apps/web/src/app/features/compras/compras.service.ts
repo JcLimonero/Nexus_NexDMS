@@ -13,10 +13,13 @@ import {
   PurchaseOrderFilters,
   CreatePurchaseOrderDto,
   ReceivePurchaseOrderDto,
+  PurchaseRequisition,
+  ImportCfdiResult,
 } from "./models/purchase-order.model";
 
 const SUPPLIERS_URL = "/api/v1/suppliers";
 const PURCHASE_ORDERS_URL = "/api/v1/purchase-orders";
+const REQUISITIONS_URL = "/api/v1/purchase-requisitions";
 
 @Injectable({
   providedIn: "root",
@@ -114,5 +117,50 @@ export class ComprasService {
       CANCELLED: "Cancelada",
     };
     return labels[status] ?? status;
+  }
+
+  // ─── Importar factura de compra (CFDI XML) ──────────────────
+
+  importCfdiXml(branchId: string, xml: string): Observable<ImportCfdiResult> {
+    return this.http.post<ImportCfdiResult>(
+      `${PURCHASE_ORDERS_URL}/import-xml`,
+      { branchId, xml }
+    );
+  }
+
+  // ─── Requisiciones (cola de "por pedir") ────────────────────
+
+  getRequisitions(
+    status: "PENDING" | "ORDERED" | "CANCELLED" = "PENDING"
+  ): Observable<PurchaseRequisition[]> {
+    return this.http.get<PurchaseRequisition[]>(
+      `${REQUISITIONS_URL}?status=${status}`
+    );
+  }
+
+  createRequisition(dto: {
+    partId: string;
+    quantity: number;
+    branchId?: string;
+    note?: string;
+  }): Observable<PurchaseRequisition> {
+    return this.http.post<PurchaseRequisition>(REQUISITIONS_URL, dto);
+  }
+
+  cancelRequisition(id: string): Observable<PurchaseRequisition> {
+    return this.http.post<PurchaseRequisition>(
+      `${REQUISITIONS_URL}/${id}/cancel`,
+      {}
+    );
+  }
+
+  convertRequisitions(
+    requisitionIds: string[],
+    supplierId: string
+  ): Observable<{ order: PurchaseOrder; requisiciones: number }> {
+    return this.http.post<{ order: PurchaseOrder; requisiciones: number }>(
+      `${REQUISITIONS_URL}/convert`,
+      { requisitionIds, supplierId }
+    );
   }
 }

@@ -125,6 +125,26 @@
 
             <div class="row">
               <div class="col-md-6 mb-3">
+                <label class="form-label">Proveedor principal</label>
+                <select class="form-select" formControlName="preferredSupplierId">
+                  <option [ngValue]="null">Sin proveedor principal</option>
+                  @for (s of suppliers(); track s.id) {
+                    <option [ngValue]="s.id">{{ s.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-6 mb-3 d-flex align-items-end">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="isOnDemand" formControlName="isOnDemand" />
+                  <label class="form-check-label" for="isOnDemand">
+                    Bajo demanda (no se mantiene en stock; se pide al usarse)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
                 <div class="form-check">
                   <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
                   <label class="form-check-label" for="isActive">Activa</label>
@@ -142,6 +162,86 @@
               <a class="btn btn-outline-secondary" routerLink="/parts-inventory">Cancelar</a>
             </div>
           </form>
+
+          @if (isEdit()) {
+            <hr class="my-4" />
+            <div class="row">
+              <div class="col-lg-7">
+                <h6>Números de parte equivalentes</h6>
+                <p class="text-muted small">
+                  Otros SKU que refieren a esta misma refacción; se usan al
+                  buscar y al importar facturas de compra.
+                </p>
+                <div class="row g-2 align-items-end mb-2">
+                  <div class="col-sm-4">
+                    <label class="form-label">SKU equivalente</label>
+                    <input class="form-control form-control-sm" [(ngModel)]="nuevaEquiv.equivalentSku" />
+                  </div>
+                  <div class="col-sm-3">
+                    <label class="form-label">Marca</label>
+                    <input class="form-control form-control-sm" [(ngModel)]="nuevaEquiv.brand" />
+                  </div>
+                  <div class="col-sm-3">
+                    <label class="form-label">Nota</label>
+                    <input class="form-control form-control-sm" [(ngModel)]="nuevaEquiv.note" />
+                  </div>
+                  <div class="col-sm-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100" (click)="agregarEquivalencia()">
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+                @if (equivalencias().length) {
+                  <table class="table table-sm align-middle">
+                    <thead>
+                      <tr><th>SKU</th><th>Marca</th><th>Nota</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      @for (eq of equivalencias(); track eq.id) {
+                        <tr>
+                          <td><strong>{{ eq.equivalentSku }}</strong></td>
+                          <td>{{ eq.brand || "—" }}</td>
+                          <td>{{ eq.note || "—" }}</td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarEquivalencia(eq)">
+                              Quitar
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="text-muted">Sin equivalencias.</p>
+                }
+              </div>
+
+              <div class="col-lg-5">
+                <h6>Top proveedores</h6>
+                <p class="text-muted small">
+                  Últimos proveedores de esta refacción, para comparar al comprar.
+                </p>
+                @if (topProveedores().length) {
+                  <table class="table table-sm align-middle">
+                    <thead>
+                      <tr><th>Proveedor</th><th>Últ. precio</th><th>Comprado</th></tr>
+                    </thead>
+                    <tbody>
+                      @for (t of topProveedores(); track t.supplierId) {
+                        <tr>
+                          <td>{{ t.supplierName }}</td>
+                          <td>{{ t.lastPrice | currency }}</td>
+                          <td>{{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="text-muted">Aún sin compras registradas.</p>
+                }
+              </div>
+            </div>
+          }
         </div>
       </div>
     </div>

@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import {
   FormBuilder,
   FormGroup,
+  FormsModule,
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms";
@@ -11,9 +12,13 @@ import { ToastrService } from "ngx-toastr";
 
 import { InventarioRefaccionesService } from "../../inventario-refacciones.service";
 import { BranchesService } from "../../services/branches.service";
+import { ComprasService } from "../../../compras/compras.service";
+import { Supplier } from "../../../compras/models/supplier.model";
 import {
   CreatePartDto,
   PartVehicleType,
+  PartEquivalence,
+  PartSupplierTop,
 } from "../../models/part.model";
 import { PartCategory } from "../../models/part-category.model";
 import { StockLocation } from "../../models/stock-location.model";
@@ -21,7 +26,7 @@ import { StockLocation } from "../../models/stock-location.model";
 @Component({
   selector: "app-parte-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: "./parte-form.html",
   styleUrls: ["./parte-form.scss"],
 })
@@ -31,6 +36,7 @@ export class ParteForm implements OnInit {
   private route = inject(ActivatedRoute);
   private inventarioService = inject(InventarioRefaccionesService);
   private branchesService = inject(BranchesService);
+  private comprasService = inject(ComprasService);
   private toastr = inject(ToastrService);
 
   form!: FormGroup;
@@ -40,6 +46,12 @@ export class ParteForm implements OnInit {
   branches = signal<{ id: string; name: string }[]>([]);
   categorias = signal<PartCategory[]>([]);
   ubicaciones = signal<StockLocation[]>([]);
+  suppliers = signal<Supplier[]>([]);
+
+  // Equivalencias y top-3 de proveedores (solo en edición).
+  equivalencias = signal<PartEquivalence[]>([]);
+  topProveedores = signal<PartSupplierTop[]>([]);
+  nuevaEquiv = { equivalentSku: "", brand: "", note: "" };
 
   readonly vehicleTypes = [
     { value: PartVehicleType.MOTORCYCLE, label: "Moto" },
@@ -57,6 +69,9 @@ export class ParteForm implements OnInit {
     });
     this.inventarioService.getCategories({ limit: 200 }).subscribe({
       next: (res) => this.categorias.set(res.data),
+    });
+    this.comprasService.getSuppliers({ isActive: true, limit: 500 }).subscribe({
+      next: (res) => this.suppliers.set(res.data),
     });
 
     this.form = this.fb.group({
@@ -77,6 +92,8 @@ export class ParteForm implements OnInit {
       maxDiscountPct: [0, [Validators.min(0), Validators.max(100)]],
       minStock: [0, [Validators.min(0)]],
       maxStock: [null as number | null, [Validators.min(0)]],
+      preferredSupplierId: [null as string | null],
+      isOnDemand: [false],
       isActive: [true],
     });
 
@@ -117,11 +134,17 @@ export class ParteForm implements OnInit {
           maxDiscountPct: p.maxDiscountPct ?? 0,
           minStock: p.minStock ?? 0,
           maxStock: p.maxStock,
+          preferredSupplierId: p.preferredSupplierId ?? null,
+          isOnDemand: p.isOnDemand ?? false,
           isActive: p.isActive,
         });
         this.form.get("branchId")?.disable();
         this.inventarioService.getLocations(p.branchId).subscribe({
           next: (locs) => this.ubicaciones.set(locs),
+        });
+        this.cargarEquivalencias(id);
+        this.inventarioService.getTopSuppliers(id).subscribe({
+          next: (t) => this.topProveedores.set(t),
         });
         this.loading.set(false);
       },
@@ -154,6 +177,8 @@ export class ParteForm implements OnInit {
       maxDiscountPct: Number(raw.maxDiscountPct) || 0,
       minStock: Number(raw.minStock) || 0,
       maxStock: raw.maxStock != null ? Number(raw.maxStock) : undefined,
+      preferredSupplierId: raw.preferredSupplierId || null,
+      isOnDemand: raw.isOnDemand ?? false,
       isActive: raw.isActive,
     };
 
@@ -183,5 +208,49 @@ export class ParteForm implements OnInit {
         },
       });
     }
+  }
+
+  // ─── Equivalencias ──────────────────────────────────────────
+
+  private cargarEquivalencias(id: string): void {
+    this.inventarioService.getEquivalences(id).subscribe({
+      next: (eqs) => this.equivalencias.set(eqs),
+    });
+  }
+
+  agregarEquivalencia(): void {
+    const id = this.parteId();
+    const sku = this.nuevaEquiv.equivalentSku.trim();
+    if (!id || !sku) {
+      this.toastr.warning("Captura el número de parte equivalente");
+      return;
+    }
+    this.inventarioService
+      .addEquivalence(id, {
+        equivalentSku: sku,
+        brand: this.nuevaEquiv.brand || null,
+        note: this.nuevaEquiv.note || null,
+      })
+      .subscribe({
+        next: () => {
+          this.toastr.success("Equivalencia agregada");
+          this.nuevaEquiv = { equivalentSku: "", brand: "", note: "" };
+          this.cargarEquivalencias(id);
+        },
+        error: (err) =>
+          this.toastr.error(err?.error?.message || "No se pudo agregar"),
+      });
+  }
+
+  quitarEquivalencia(eq: PartEquivalence): void {
+    const id = this.parteId();
+    if (!id) return;
+    this.inventarioService.deleteEquivalence(id, eq.id).subscribe({
+      next: () => {
+        this.toastr.success("Equivalencia quitada");
+        this.cargarEquivalencias(id);
+      },
+      error: () => this.toastr.error("No se pudo quitar"),
+    });
   }
 }

@@ -7,9 +7,17 @@
             <h5>Órdenes de compra</h5>
             <span>Gestiona las órdenes de compra a proveedores</span>
           </div>
-          <a class="btn btn-primary" routerLink="/purchases/purchase-orders/nueva">
-            <i class="icofont icofont-plus me-1"></i> Nueva orden
-          </a>
+          <div class="d-flex gap-2">
+            <a class="btn btn-outline-secondary" routerLink="/purchases/requisiciones">
+              <i class="icofont icofont-listing-box me-1"></i> Por pedir
+            </a>
+            <button type="button" class="btn btn-outline-primary" (click)="abrirImport()">
+              <i class="icofont icofont-file-xml me-1"></i> Importar XML
+            </button>
+            <a class="btn btn-primary" routerLink="/purchases/purchase-orders/nueva">
+              <i class="icofont icofont-plus me-1"></i> Nueva orden
+            </a>
+          </div>
         </div>
         <div class="card-body">
           <div class="row g-2">
@@ -153,3 +161,72 @@
     </div>
   </div>
 </div>
+
+@if (importOpen()) {
+  <div
+    style="position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1050;"
+    (click)="cerrarImport()"
+  ></div>
+  <div
+    role="dialog"
+    aria-modal="true"
+    style="position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 1051; width: min(640px, 94vw); max-height: 90vh; overflow: auto;"
+    class="card shadow"
+  >
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">Importar factura de compra (XML)</h5>
+      <button type="button" class="btn-close" (click)="cerrarImport()"></button>
+    </div>
+    <div class="card-body">
+      <p class="text-muted small">
+        Sube el XML del CFDI del proveedor. Se empareja el emisor por RFC y los
+        conceptos por SKU o equivalencia; la orden se crea en borrador.
+      </p>
+      <div class="mb-3">
+        <label class="form-label">Sucursal</label>
+        <select class="form-select" [(ngModel)]="importBranchId">
+          <option value="">Seleccionar…</option>
+          @for (b of branches(); track b.id) {
+            <option [value]="b.id">{{ b.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Archivo XML</label>
+        <input type="file" class="form-control" accept=".xml,text/xml,application/xml" (change)="onXmlFile($event)" />
+        @if (importFileName()) {
+          <div class="form-text">{{ importFileName() }}</div>
+        }
+      </div>
+
+      @if (importResult(); as r) {
+        <div class="alert alert-success">
+          Orden <strong>{{ r.order.folio }}</strong> creada en borrador ·
+          {{ r.emparejados }} concepto(s) emparejado(s).
+        </div>
+        @if (r.noEmparejados.length) {
+          <div class="alert alert-warning">
+            <strong>No emparejados ({{ r.noEmparejados.length }}):</strong>
+            <ul class="mb-0">
+              @for (n of r.noEmparejados; track n.sku) {
+                <li>{{ n.sku || "sin SKU" }} — {{ n.descripcion }} (x{{ n.cantidad }})</li>
+              }
+            </ul>
+          </div>
+        }
+        <button class="btn btn-primary" (click)="irAOrden(r.order.id)">Ver orden</button>
+      }
+    </div>
+    @if (!importResult()) {
+      <div class="card-footer d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary" (click)="cerrarImport()">Cancelar</button>
+        <button type="button" class="btn btn-primary" [disabled]="importing()" (click)="importar()">
+          @if (importing()) {
+            <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+          }
+          Importar
+        </button>
+      </div>
+    }
+  </div>
+}

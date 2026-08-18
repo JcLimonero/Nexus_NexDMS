@@ -36,6 +36,12 @@ export const purchasesRoutes: Routes = [
     ],
   },
   {
+    path: "requisiciones",
+    loadComponent: () =>
+      import("./requisiciones/requisiciones").then((m) => m.Requisiciones),
+    data: { title: "Por pedir", breadcrumb: "Por pedir" },
+  },
+  {
     path: "purchase-orders",
     children: [
       {
@@ -65,3 +71,4 @@ export const purchasesRoutes: Routes = [
     ],
   },
 ];
+
