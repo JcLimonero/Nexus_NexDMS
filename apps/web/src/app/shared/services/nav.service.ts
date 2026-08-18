@@ -135,7 +135,7 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
-        { path: "/quotes/servicio/nuevo", title: "Presupuesto de servicio", type: "link" },
+        { path: "/quotes/servicio", title: "Presupuestos de servicio", type: "link" },
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/workshop/citas", title: "Citas", type: "link" },

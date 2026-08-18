@@ -1,7 +1,13 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import {
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { RouterModule } from "@angular/router";
+import { ActivatedRoute, RouterModule } from "@angular/router";
 import { Subject } from "rxjs";
 import { debounceTime, switchMap } from "rxjs/operators";
 
@@ -20,6 +26,22 @@ import { FeatherIcons } from "../../../shared/components/feather-icons/feather-i
 export class CotizacionesList implements OnInit {
   private cotizacionesService = inject(CotizacionesService);
   private branchesService = inject(BranchesService);
+  private route = inject(ActivatedRoute);
+
+  /** Servicio (taller) o venta (unidades): cada uno su propia lista. */
+  modo = signal<"servicio" | "venta">("venta");
+  esServicio = computed(() => this.modo() === "servicio");
+  titulo = computed(() =>
+    this.esServicio() ? "Presupuestos de servicio" : "Presupuestos de venta",
+  );
+  nuevoLink = computed(() =>
+    this.esServicio() ? "/quotes/servicio/nuevo" : "/quotes/nueva",
+  );
+  editarLink(q: Quotation): unknown[] {
+    return this.esServicio()
+      ? ["/quotes", "servicio", q.id, "editar"]
+      : ["/quotes", q.id, "editar"];
+  }
 
   cotizaciones = signal<Quotation[]>([]);
   branches = signal<{ id: string; name: string }[]>([]);
@@ -38,6 +60,9 @@ export class CotizacionesList implements OnInit {
   private loadSubject = new Subject<void>();
 
   ngOnInit(): void {
+    this.modo.set(
+      (this.route.snapshot.data["modo"] as "servicio" | "venta") ?? "venta",
+    );
     this.branchesService.getAll().subscribe({
       next: (res) =>
         this.branches.set(res.data.map((b) => ({ id: b.id, name: b.name }))),
@@ -49,7 +74,9 @@ export class CotizacionesList implements OnInit {
         switchMap(() =>
           this.cotizacionesService.getQuotations({
             status: this.statusFilter() as QuotationStatus | undefined,
-            type: this.typeFilter() as QuotationType | undefined,
+            type: this.esServicio()
+              ? QuotationType.SERVICE
+              : (this.typeFilter() as QuotationType | undefined),
             branchId: this.branchFilter() || undefined,
             page: this.meta()?.page ?? 1,
             limit: 20,
@@ -58,7 +85,11 @@ export class CotizacionesList implements OnInit {
       )
       .subscribe({
         next: (res) => {
-          this.cotizaciones.set(res.data);
+          // La venta muestra todo lo que no es servicio.
+          const rows = this.esServicio()
+            ? res.data
+            : res.data.filter((q) => q.type !== "SERVICE");
+          this.cotizaciones.set(rows);
           this.meta.set(res.meta);
           this.loading.set(false);
           this.error.set(null);

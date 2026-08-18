@@ -4,11 +4,11 @@
       <div class="card cotizaciones-header-card">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div>
-            <h5>Presupuestos</h5>
-            <span>Refacciones, servicios y unidades</span>
+            <h5>{{ titulo() }}</h5>
+            <span>{{ esServicio() ? 'Trabajos con sus refacciones (taller)' : 'Venta de unidades y refacciones' }}</span>
           </div>
-          <a class="btn btn-primary" routerLink="/quotes/nueva">
-            <i class="icofont icofont-plus me-1"></i> Nuevo presupuesto
+          <a class="btn btn-primary" [routerLink]="nuevoLink()">
+            <i class="icofont icofont-plus me-1"></i> {{ esServicio() ? 'Nuevo presupuesto de servicio' : 'Nuevo presupuesto' }}
           </a>
         </div>
         <div class="card-body">
@@ -27,18 +27,6 @@
                 <option value="ACCEPTED">Aceptada</option>
                 <option value="REJECTED">Rechazada</option>
                 <option value="CONVERTED">Convertida</option>
-              </select>
-            </div>
-            <div class="col-md-2">
-              <select
-                class="form-select"
-                [ngModel]="typeFilter()"
-                (ngModelChange)="typeFilter.set($event); onFilterChange()"
-              >
-                <option value="">Todos los tipos</option>
-                <option value="PARTS">Refacciones</option>
-                <option value="SERVICE">Servicio</option>
-                <option value="UNIT">Unidad</option>
               </select>
             </div>
             <div class="col-md-2">
@@ -116,7 +104,7 @@
                         @if (q.status === 'DRAFT') {
                           <a
                             class="table-action-btn ms-2"
-                            [routerLink]="['/quotes', q.id, 'editar']"
+                            [routerLink]="editarLink(q)"
                             title="Editar"
                           >
                             <app-feather-icons [icon]="'edit-2'" />
@@ -127,7 +115,7 @@
                   } @empty {
                     <tr>
                       <td colspan="8" class="text-center text-muted py-4">
-                        No hay cotizaciones. <a routerLink="/quotes/nueva">Crear la primera</a>
+                        No hay presupuestos. <a [routerLink]="nuevoLink()">Crear el primero</a>
                       </td>
                     </tr>
                   }
