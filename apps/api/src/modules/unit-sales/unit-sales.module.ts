@@ -17,6 +17,7 @@ import { Tenant } from '../tenants/entities/tenant.entity';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { StorageModule } from '../../common/storage/storage.module';
 import { SaleDocumentsModule } from '../sale-documents/sale-documents.module';
+import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { SaleDocumentsModule } from '../sale-documents/sale-documents.module';
     UnitAccessoriesModule,
     StorageModule,
     SaleDocumentsModule,
+    SaleSurveysModule,
   ],
   controllers: [UnitSalesController],
   providers: [UnitSalesService, UnitSalePaymentsService],

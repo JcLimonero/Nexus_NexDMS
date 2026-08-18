@@ -42,6 +42,7 @@ import { Tenant } from '../tenants/entities/tenant.entity';
 import { hasModule } from '../modules/module-registry';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { SaleDocumentsService } from '../sale-documents/sale-documents.service';
+import { SaleSurveysService } from '../sale-surveys/sale-surveys.service';
 
 @Injectable()
 export class UnitSalesService {
@@ -69,6 +70,7 @@ export class UnitSalesService {
     private readonly unitAccessoriesService: UnitAccessoriesService,
     private readonly pagosService: UnitSalePaymentsService,
     private readonly saleDocuments: SaleDocumentsService,
+    private readonly saleSurveysService: SaleSurveysService,
   ) {}
 
   private async generateFolio(
@@ -375,6 +377,23 @@ export class UnitSalesService {
           await this.cfdiService.generarIngreso('UnitSale', updatedSale.id);
         } catch (e) {
           this.logger.warn('CFDI no generado', e);
+        }
+        // Encuesta post-venta automática (best-effort): al cerrar la venta se
+        // genera con las preguntas configuradas para el área de ventas.
+        try {
+          const client = await this.clientRepo.findOne({
+            where: { id: updatedSale.clientId },
+          });
+          const nombre = client
+            ? client.companyName ||
+              `${client.firstName ?? ''} ${client.lastName ?? ''}`.trim()
+            : null;
+          await this.saleSurveysService.create(user, {
+            referenceLabel: updatedSale.folio,
+            clientName: nombre || undefined,
+          });
+        } catch (e) {
+          this.logger.warn('Encuesta de venta no generada', e);
         }
         return updatedSale;
       });
