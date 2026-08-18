@@ -17,6 +17,35 @@
           Tu respuesta nos ayuda a mejorar el servicio del taller.
         </p>
       </div>
+    } @else if (configurable()) {
+      <h1>¿Cómo fue tu servicio?</h1>
+      @if (folio()) { <p class="muted">Orden {{ folio() }}</p> }
+      @if (intro()) { <p class="muted">{{ intro() }}</p> }
+
+      @for (q of questions(); track q.id) {
+        <div class="cfg-q">
+          <label class="comment-label">{{ q.label }}</label>
+          @if (q.type === "RATING") {
+            <div class="stars">
+              @for (n of [1, 2, 3, 4, 5]; track n) {
+                <button
+                  type="button"
+                  class="star"
+                  [class.on]="+(answers[q.id] || 0) >= n"
+                  (click)="answers[q.id] = n"
+                  [attr.aria-label]="n + ' estrellas'"
+                >★</button>
+              }
+            </div>
+          } @else {
+            <textarea rows="2" [(ngModel)]="answers[q.id]"></textarea>
+          }
+        </div>
+      }
+
+      <button class="btn-send" [disabled]="!completoConfig() || saving()" (click)="submit()">
+        {{ saving() ? "Enviando…" : "Enviar respuesta" }}
+      </button>
     } @else {
       <h1>¿Cómo fue tu servicio?</h1>
       @if (folio()) {

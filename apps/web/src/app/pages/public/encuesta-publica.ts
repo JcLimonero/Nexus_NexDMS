@@ -27,16 +27,31 @@ export class EncuestaPublica implements OnInit {
   score = signal(0);
   comment = "";
 
+  // Encuesta configurable (preguntas por área).
+  intro = signal<string | null>(null);
+  thanks = signal<string | null>(null);
+  questions = signal<{ id: string; label: string; type: "RATING" | "TEXT" }[]>(
+    [],
+  );
+  answers: Record<string, number | string> = {};
+
   ngOnInit(): void {
     this.token = this.route.snapshot.paramMap.get("token") ?? "";
     this.http
-      .get<{ folio: string | null; answered: boolean }>(
-        `/api/v1/public/surveys/${this.token}`,
-      )
+      .get<{
+        folio: string | null;
+        answered: boolean;
+        intro: string | null;
+        thanks: string | null;
+        questions: { id: string; label: string; type: "RATING" | "TEXT" }[];
+      }>(`/api/v1/public/surveys/${this.token}`)
       .subscribe({
         next: (d) => {
           this.folio.set(d.folio);
           this.answered.set(d.answered);
+          this.intro.set(d.intro);
+          this.thanks.set(d.thanks);
+          this.questions.set(d.questions ?? []);
           this.loading.set(false);
         },
         error: () => {
@@ -46,18 +61,29 @@ export class EncuestaPublica implements OnInit {
       });
   }
 
+  configurable(): boolean {
+    return this.questions().length > 0;
+  }
+
+  completoConfig(): boolean {
+    return this.questions()
+      .filter((q) => q.type === "RATING")
+      .every((q) => Number(this.answers[q.id]) > 0);
+  }
+
   setScore(n: number): void {
     if (!this.answered() && !this.sent()) this.score.set(n);
   }
 
   submit(): void {
-    if (this.score() < 1 || this.saving()) return;
+    if (this.saving()) return;
+    const body = this.configurable()
+      ? { answers: this.answers }
+      : { score: this.score(), comment: this.comment.trim() || undefined };
+    if (this.configurable() ? !this.completoConfig() : this.score() < 1) return;
     this.saving.set(true);
     this.http
-      .post(`/api/v1/public/surveys/${this.token}`, {
-        score: this.score(),
-        comment: this.comment.trim() || undefined,
-      })
+      .post(`/api/v1/public/surveys/${this.token}`, body)
       .subscribe({
         next: () => {
           this.saving.set(false);

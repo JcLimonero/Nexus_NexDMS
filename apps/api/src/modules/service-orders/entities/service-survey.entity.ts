@@ -25,12 +25,25 @@ export class ServiceSurvey {
   @Column({ name: 'token', type: 'uuid', default: () => 'uuid_generate_v4()' })
   token: string;
 
-  /** 1-5; null = sin responder */
+  /** 1-5 (promedio de puntajes); null = sin responder */
   @Column({ name: 'score', type: 'int', nullable: true })
   score: number | null;
 
   @Column({ name: 'comment', type: 'text', nullable: true })
   comment: string | null;
+
+  /** Snapshot de las preguntas configuradas (SERVICE) al crear la encuesta. */
+  @Column({ name: 'questions', type: 'jsonb', default: () => "'[]'" })
+  questions: { id: string; label: string; type: 'RATING' | 'TEXT' }[];
+
+  @Column({ name: 'answers', type: 'jsonb', default: () => "'{}'" })
+  answers: Record<string, number | string>;
+
+  @Column({ name: 'intro', type: 'text', nullable: true })
+  intro: string | null;
+
+  @Column({ name: 'thanks', type: 'text', nullable: true })
+  thanks: string | null;
 
   @Column({ name: 'sent_at', type: 'timestamp', nullable: true })
   sentAt: Date | null;

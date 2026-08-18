@@ -126,6 +126,9 @@ export class PublicPortalService {
       folio: survey.serviceOrder?.folio ?? null,
       answered: survey.answeredAt !== null,
       score: survey.score,
+      intro: survey.intro,
+      thanks: survey.thanks,
+      questions: survey.questions ?? [],
     };
   }
 
@@ -135,10 +138,27 @@ export class PublicPortalService {
     if (survey.answeredAt) {
       throw new BadRequestException('Esta encuesta ya fue respondida');
     }
-    survey.score = dto.score;
-    survey.comment = dto.comment?.trim() || null;
+
+    if (dto.answers && survey.questions?.length) {
+      // Encuesta configurable: promedio de las preguntas de puntaje.
+      const ratingIds = survey.questions
+        .filter((q) => q.type === 'RATING')
+        .map((q) => q.id);
+      const ratings = ratingIds
+        .map((id) => Number(dto.answers?.[id]))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      survey.answers = dto.answers;
+      survey.score =
+        ratings.length > 0
+          ? Math.round(ratings.reduce((a, n) => a + n, 0) / ratings.length)
+          : null;
+    } else {
+      // Encuesta clásica de puntaje único.
+      survey.score = dto.score ?? null;
+      survey.comment = dto.comment?.trim() || null;
+    }
     survey.answeredAt = new Date();
     await this.surveyRepo.save(survey);
-    return { ok: true };
+    return { ok: true, thanks: survey.thanks };
   }
 }

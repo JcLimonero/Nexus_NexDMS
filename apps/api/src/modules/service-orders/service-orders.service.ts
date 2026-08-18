@@ -42,6 +42,8 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { CfdiService } from '../cfdi/cfdi.service';
 import { FinanceService } from '../finance/finance.service';
+import { SurveysService } from '../surveys/surveys.service';
+import { SurveyAreaEnum } from '../surveys/entities/survey-config.entity';
 import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { Client } from '../clients/entities/client.entity';
@@ -123,6 +125,7 @@ export class ServiceOrdersService {
     private readonly storageService: StorageService,
     private readonly eventEmitter: EventEmitter2,
     private readonly financeService: FinanceService,
+    private readonly surveysService: SurveysService,
   ) {}
 
   private applyScope(
@@ -1008,10 +1011,17 @@ export class ServiceOrdersService {
         where: { serviceOrderId: id },
       });
       if (!survey) {
+        const cfg = await this.surveysService.getConfig(
+          so.tenantId,
+          SurveyAreaEnum.SERVICE,
+        );
         survey = await this.surveyRepo.save(
           this.surveyRepo.create({
             tenantId: so.tenantId,
             serviceOrderId: id,
+            questions: cfg.questions,
+            intro: cfg.intro,
+            thanks: cfg.thanks,
           }),
         );
       }
