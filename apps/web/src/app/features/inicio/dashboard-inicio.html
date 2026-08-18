@@ -93,7 +93,8 @@
                 <div class="status-bar-track">
                   <div
                     class="status-bar"
-                    [style.width.%]="(s.count / maxStatusCount()) * 100"
+                    [style.width.%]="statusPct(s.count)"
+                    [style.background]="statusColor(s.status)"
                   ></div>
                 </div>
                 <span class="status-count">{{ s.count }}</span>

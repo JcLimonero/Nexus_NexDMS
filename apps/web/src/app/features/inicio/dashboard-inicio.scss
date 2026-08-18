@@ -125,8 +125,9 @@
 .status-bar {
   height: 100%;
   border-radius: var(--radius-pill);
-  background: linear-gradient(to right, var(--nexus-500), var(--nexus-700));
-  min-width: 6px;
+  /* Color plano por estatus (se asigna inline); sin degradado. */
+  background: var(--nexus-600);
+  transition: width 0.3s ease;
 }
 
 .status-count {

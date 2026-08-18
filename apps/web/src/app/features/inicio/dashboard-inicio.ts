@@ -29,6 +29,15 @@ const STATUS_LABELS: Record<string, string> = {
   READY: "Listas",
 };
 
+/** Color plano (sin degradado) por estatus, para leer el mix de un vistazo. */
+const STATUS_COLORS: Record<string, string> = {
+  RECEIVED: "#64748b",
+  DIAGNOSIS: "#2563eb",
+  IN_PROGRESS: "#f59e0b",
+  WAITING_PARTS: "#ea580c",
+  READY: "#16a34a",
+};
+
 @Component({
   selector: "app-dashboard-inicio",
   standalone: true,
@@ -103,9 +112,23 @@ export class DashboardInicio implements OnInit {
     });
   }
 
-  maxStatusCount(): number {
+  /** Total de órdenes activas; la barra muestra la participación de cada estatus. */
+  totalStatus(): number {
     const d = this.data();
     if (!d) return 1;
-    return Math.max(1, ...d.taller.porEstatus.map((s) => s.count));
+    return Math.max(
+      1,
+      d.taller.porEstatus.reduce((a, s) => a + s.count, 0),
+    );
+  }
+
+  /** Porcentaje del total para un estatus (con mínimo visible). */
+  statusPct(count: number): number {
+    const pct = (count / this.totalStatus()) * 100;
+    return count > 0 ? Math.max(4, pct) : 0;
+  }
+
+  statusColor(status: string): string {
+    return STATUS_COLORS[status] ?? "#64748b";
   }
 }
