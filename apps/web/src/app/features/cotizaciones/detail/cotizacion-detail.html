@@ -112,14 +112,31 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (item of q.items; track item.id) {
+                  @for (t of trabajos(q); track t.id) {
                     <tr>
-                      <td>{{ getItemDescription(item) }}</td>
-                      <td class="text-center">{{ item.quantity }}</td>
-                      <td class="text-end">${{ item.unitPrice | number:'1.2-2' }}</td>
-                      <td class="text-end">${{ item.discount | number:'1.2-2' }}</td>
-                      <td class="text-end">${{ item.subtotal | number:'1.2-2' }}</td>
+                      <td>
+                        <strong>{{ getItemDescription(t) }}</strong>
+                        @if (t.urgency) {
+                          <span class="badge bg-light text-dark ms-1">{{ t.urgency }}</span>
+                        }
+                        @if (t.technicianNote) {
+                          <div class="text-muted small">🔧 {{ t.technicianNote }}</div>
+                        }
+                      </td>
+                      <td class="text-center">{{ t.quantity }}</td>
+                      <td class="text-end">${{ t.unitPrice | number:'1.2-2' }}</td>
+                      <td class="text-end">${{ t.discount | number:'1.2-2' }}</td>
+                      <td class="text-end">${{ t.subtotal | number:'1.2-2' }}</td>
                     </tr>
+                    @for (r of refaccionesDe(q, t.id); track r.id) {
+                      <tr class="text-muted">
+                        <td class="ps-4">↳ {{ getItemDescription(r) }}</td>
+                        <td class="text-center">{{ r.quantity }}</td>
+                        <td class="text-end">${{ r.unitPrice | number:'1.2-2' }}</td>
+                        <td class="text-end">${{ r.discount | number:'1.2-2' }}</td>
+                        <td class="text-end">${{ r.subtotal | number:'1.2-2' }}</td>
+                      </tr>
+                    }
                   }
                 </tbody>
               </table>

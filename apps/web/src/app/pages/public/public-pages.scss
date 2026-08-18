@@ -596,3 +596,22 @@ h2 {
   font-weight: 800;
   color: var(--navy-600, #203848);
 }
+
+/* Desglose de un trabajo: mano de obra + refacciones */
+.c-desglose {
+  margin: 8px 14px 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border, #e4e9ee);
+}
+.c-desglose .dl {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary, #45586a);
+  padding: 2px 0;
+}
+.c-desglose .dl span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

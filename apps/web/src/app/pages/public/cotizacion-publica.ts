@@ -14,16 +14,23 @@ import { ActivatedRoute } from "@angular/router";
 
 type Decision = "ACCEPTED" | "REJECTED" | "CALLBACK";
 
-interface Concepto {
-  id: string;
+interface Refaccion {
   descripcion: string;
   cantidad: number;
   precio: number;
   subtotal: number;
+}
+
+interface Concepto {
+  id: string;
+  descripcion: string;
+  manoObra: number;
   urgencia: "URGENTE" | "RECOMENDADO" | "OPCIONAL";
   notaTecnico: string | null;
   estado: string;
   fotos: string[];
+  refacciones: Refaccion[];
+  total: number;
 }
 
 interface CotizacionData {
@@ -115,7 +122,7 @@ export class CotizacionPublica implements OnInit {
     );
   });
   totalAceptado = computed(
-    () => this.aceptadas().reduce((s, c) => s + c.subtotal, 0) * (1 + this.IVA),
+    () => this.aceptadas().reduce((s, c) => s + c.total, 0) * (1 + this.IVA),
   );
   hayDecision = computed(() => Object.keys(this.decisiones()).length > 0);
 

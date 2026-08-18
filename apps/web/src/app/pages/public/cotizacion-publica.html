@@ -56,12 +56,20 @@
               <div class="c-top">
                 <span class="c-urg urg-{{ c.urgencia }}">{{ URG[c.urgencia] }}</span>
                 <strong class="c-titulo">{{ c.descripcion }}</strong>
-                <span class="c-monto">{{ money(c.subtotal) }}</span>
+                <span class="c-monto">{{ money(c.total) }}</span>
               </div>
 
-              @if (c.cantidad > 1) {
-                <span class="c-cant">Cantidad: {{ c.cantidad }} · {{ money(c.precio) }} c/u</span>
-              }
+              <div class="c-desglose">
+                @if (c.manoObra > 0) {
+                  <div class="dl"><span>Mano de obra</span><span>{{ money(c.manoObra) }}</span></div>
+                }
+                @for (r of c.refacciones; track $index) {
+                  <div class="dl">
+                    <span>{{ r.cantidad > 1 ? r.cantidad + ' × ' : '' }}{{ r.descripcion }}</span>
+                    <span>{{ money(r.subtotal) }}</span>
+                  </div>
+                }
+              </div>
 
               @if (c.notaTecnico) {
                 <div class="c-nota">

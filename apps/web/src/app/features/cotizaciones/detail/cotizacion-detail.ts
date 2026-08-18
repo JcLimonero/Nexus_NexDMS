@@ -54,6 +54,14 @@ export class CotizacionDetail implements OnInit {
       : ["/quotes", id, "editar"];
   }
 
+  /** Trabajos (padres) y sus refacciones (hijas), para mostrarlos anidados. */
+  trabajos(q: Quotation): QuotationItem[] {
+    return (q.items ?? []).filter((i) => !i.parentItemId);
+  }
+  refaccionesDe(q: Quotation, id: string): QuotationItem[] {
+    return (q.items ?? []).filter((i) => i.parentItemId === id);
+  }
+
   /** Elección del vehículo para convertir un presupuesto de servicio. */
   vehiculoAbierto = signal(false);
   vehiculosCliente = signal<{ vehicleId: string; descripcion: string }[]>([]);

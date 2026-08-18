@@ -1062,22 +1062,36 @@ export class ReceptionService {
 
     // Cada concepto llega con su urgencia, la nota del técnico, su estado y las
     // fotos firmadas, para que el cliente decida trabajo por trabajo.
+    // El cliente decide por TRABAJO: cada trabajo (padre) trae su mano de obra,
+    // sus refacciones y su total; las refacciones no se autorizan por separado.
+    const todos = q.items ?? [];
+    const trabajos = todos.filter((i) => !i.parentItemId);
     const conceptos = await Promise.all(
-      (q.items ?? []).map(async (i) => ({
-        id: i.id,
-        descripcion: i.description,
-        cantidad: i.quantity,
-        precio: Number(i.unitPrice),
-        subtotal: Number(i.subtotal),
-        urgencia: i.urgency,
-        notaTecnico: i.technicianNote,
-        estado: i.lineStatus,
-        fotos: (
-          await Promise.all(
-            (i.photos ?? []).map((p) => this.ligaDeFoto(p.storageKey)),
-          )
-        ).filter((u): u is string => !!u),
-      })),
+      trabajos.map(async (t) => {
+        const refs = todos.filter((x) => x.parentItemId === t.id);
+        const manoObra = Number(t.subtotal);
+        const totalRefs = refs.reduce((s, r) => s + Number(r.subtotal), 0);
+        return {
+          id: t.id,
+          descripcion: t.description,
+          manoObra,
+          urgencia: t.urgency,
+          notaTecnico: t.technicianNote,
+          estado: t.lineStatus,
+          fotos: (
+            await Promise.all(
+              (t.photos ?? []).map((p) => this.ligaDeFoto(p.storageKey)),
+            )
+          ).filter((u): u is string => !!u),
+          refacciones: refs.map((r) => ({
+            descripcion: r.description,
+            cantidad: r.quantity,
+            precio: Number(r.unitPrice),
+            subtotal: Number(r.subtotal),
+          })),
+          total: manoObra + totalRefs,
+        };
+      }),
     );
 
     return {
@@ -1234,7 +1248,11 @@ export class ReceptionService {
     if (so && aceptadas > 0) {
       await this.materializarLineas(
         so.id,
-        items.filter((i) => i.lineStatus === QuotationLineStatusEnum.ACCEPTED),
+        items.filter(
+          (i) =>
+            i.lineStatus === QuotationLineStatusEnum.ACCEPTED && !i.parentItemId,
+        ),
+        items,
       );
       if (so.status === ServiceOrderStatusEnum.RECEIVED) {
         await this.soRepo.update(so.id, {
@@ -1259,28 +1277,36 @@ export class ReceptionService {
    */
   private async materializarLineas(
     serviceOrderId: string,
-    aceptadas: QuotationItem[],
+    trabajos: QuotationItem[],
+    todos: QuotationItem[],
   ): Promise<void> {
-    if (!aceptadas.length) return;
+    if (!trabajos.length) return;
     const opRepo = this.dataSource.getRepository(ServiceOrderOperation);
     const partRepo = this.dataSource.getRepository(ServiceOrderPart);
     let orden = await opRepo.count({ where: { serviceOrderId } });
 
     const ops: ServiceOrderOperation[] = [];
     const parts: ServiceOrderPart[] = [];
-    for (const it of aceptadas) {
+    const agregarParte = (r: QuotationItem) => {
+      if (!r.partId) return;
+      parts.push(
+        partRepo.create({
+          serviceOrderId,
+          partId: r.partId,
+          quantity: r.quantity,
+          unitPrice: Number(r.unitPrice),
+          subtotal: Number(r.subtotal),
+          notes: 'Autorizado en presupuesto',
+        }),
+      );
+    };
+
+    for (const it of trabajos) {
       if (it.partId) {
-        parts.push(
-          partRepo.create({
-            serviceOrderId,
-            partId: it.partId,
-            quantity: it.quantity,
-            unitPrice: Number(it.unitPrice),
-            subtotal: Number(it.subtotal),
-            notes: 'Autorizado en presupuesto',
-          }),
-        );
+        // Presupuesto de refacciones sueltas: el trabajo ES una refacción.
+        agregarParte(it);
       } else {
+        // Trabajo de servicio: su mano de obra entra como operación.
         ops.push(
           opRepo.create({
             serviceOrderId,
@@ -1292,6 +1318,10 @@ export class ReceptionService {
             sortOrder: orden++,
           }),
         );
+      }
+      // Sus refacciones (hijas) entran como partes de la orden.
+      for (const r of todos.filter((x) => x.parentItemId === it.id)) {
+        agregarParte(r);
       }
     }
     if (parts.length) await partRepo.save(parts);
