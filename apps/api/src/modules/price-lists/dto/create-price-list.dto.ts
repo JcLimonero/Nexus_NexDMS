@@ -1,5 +1,6 @@
 import {
   IsBoolean,
+  IsDateString,
   IsEnum,
   IsNumber,
   IsOptional,
@@ -27,6 +28,15 @@ export class CreatePriceListDto {
   @Min(0)
   @Max(100)
   discountPct?: number;
+
+  /** Vigencia (YYYY-MM-DD); null/omitido = sin límite por ese extremo. */
+  @IsOptional()
+  @IsDateString()
+  validFrom?: string | null;
+
+  @IsOptional()
+  @IsDateString()
+  validTo?: string | null;
 
   @IsOptional()
   @IsBoolean()

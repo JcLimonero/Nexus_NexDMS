@@ -24,6 +24,8 @@ export interface Client {
   fixedDiscount: number;
   /** Límite de crédito para entregar con adeudo (null = sin límite). */
   creditLimit: number | null;
+  /** Lista de precios asignada (null = precios estándar). */
+  priceListId: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -106,5 +108,6 @@ export interface CreateClientDto {
   state?: string;
   fixedDiscount?: number;
   creditLimit?: number | null;
+  priceListId?: string | null;
   notes?: string;
 }

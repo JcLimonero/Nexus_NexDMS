@@ -143,6 +143,18 @@
                   Tope para entregar servicios con adeudo. Vacío = sin límite.
                 </div>
               </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Lista de precios</label>
+                <select class="form-select" formControlName="priceListId">
+                  <option [ngValue]="null">Precios estándar</option>
+                  @for (pl of priceLists(); track pl.id) {
+                    <option [ngValue]="pl.id">{{ pl.name }}</option>
+                  }
+                </select>
+                <div class="form-text">
+                  Si se asigna y está vigente, sus precios rigen las cotizaciones del cliente.
+                </div>
+              </div>
               <div class="col-12 mb-3">
                 <label class="form-label">Notas</label>
                 <textarea class="form-control" formControlName="notes" rows="3"></textarea>

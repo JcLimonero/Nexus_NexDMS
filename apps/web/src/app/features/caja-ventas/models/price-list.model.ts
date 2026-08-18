@@ -11,9 +11,24 @@ export interface PriceList {
   name: string;
   type: PriceListType;
   discountPct: number;
+  validFrom: string | null;
+  validTo: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface PriceListItem {
+  id: string;
+  priceListId: string;
+  partId: string;
+  price: number;
+  createdAt: string;
+}
+
+export interface UpsertPriceListItemDto {
+  partId: string;
+  price: number;
 }
 
 export interface PriceListFilters {
@@ -26,5 +41,7 @@ export interface CreatePriceListDto {
   name: string;
   type: PriceListType;
   discountPct?: number;
+  validFrom?: string | null;
+  validTo?: string | null;
   isActive?: boolean;
 }

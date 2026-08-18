@@ -11,6 +11,7 @@ import { ToastrService } from "ngx-toastr";
 
 import { ClientesService } from "../clientes.service";
 import { ClientTypesService } from "../client-types.service";
+import { CajaVentasService } from "../../caja-ventas/caja-ventas.service";
 import {
   DEFAULT_LADA,
   formatPhoneForApi,
@@ -33,6 +34,7 @@ export class ClienteForm implements OnInit {
   private route = inject(ActivatedRoute);
   private clientesService = inject(ClientesService);
   private clientTypesService = inject(ClientTypesService);
+  private cajaService = inject(CajaVentasService);
   private toastr = inject(ToastrService);
 
   form!: FormGroup;
@@ -40,6 +42,7 @@ export class ClienteForm implements OnInit {
   isEdit = signal(false);
   clientId = signal<string | null>(null);
   clientTypes = signal<ClientTypeOption[]>([]);
+  priceLists = signal<{ id: string; name: string }[]>([]);
 
   readonly phoneLadas = PHONE_LADAS;
 
@@ -50,6 +53,11 @@ export class ClienteForm implements OnInit {
 
     this.clientTypesService.getAll().subscribe({
       next: (types) => this.clientTypes.set(types),
+    });
+
+    this.cajaService.getPriceLists({ isActive: true }).subscribe({
+      next: (lists) =>
+        this.priceLists.set(lists.map((l) => ({ id: l.id, name: l.name }))),
     });
 
     this.form = this.fb.group({
@@ -72,6 +80,7 @@ export class ClienteForm implements OnInit {
       state: ["", [Validators.maxLength(100)]],
       fixedDiscount: [0, [Validators.min(0)]],
       creditLimit: [null as number | null, [Validators.min(0)]],
+      priceListId: [null as string | null],
       notes: [""],
     });
 
@@ -133,6 +142,7 @@ export class ClienteForm implements OnInit {
           state: client.state ?? "",
           fixedDiscount: client.fixedDiscount ?? 0,
           creditLimit: client.creditLimit ?? null,
+          priceListId: client.priceListId ?? null,
           notes: client.notes ?? "",
         });
         this.loading.set(false);
@@ -171,6 +181,7 @@ export class ClienteForm implements OnInit {
         raw.creditLimit === null || raw.creditLimit === ""
           ? null
           : Number(raw.creditLimit),
+      priceListId: raw.priceListId || null,
       notes: raw.notes || undefined,
     };
 

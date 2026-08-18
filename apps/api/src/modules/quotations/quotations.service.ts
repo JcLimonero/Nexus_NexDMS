@@ -33,6 +33,11 @@ import { UnitSaleFinancingTypeEnum } from '../unit-sales/entities/unit-sale.enti
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
 import { QuotationItemPhoto } from './entities/quotation-item-photo.entity';
 import { StorageService } from '../../common/storage/storage.service';
+import {
+  PricingService,
+  BasePriceTier,
+  PartPriceResolver,
+} from '../price-lists/pricing.service';
 
 type QuotationRefData = {
   partId: string;
@@ -74,6 +79,7 @@ export class QuotationsService {
     private readonly unitSalesService: UnitSalesService,
     private readonly serviceOrdersService: ServiceOrdersService,
     private readonly storage: StorageService,
+    private readonly pricing: PricingService,
   ) {}
 
   /**
@@ -149,22 +155,6 @@ export class QuotationsService {
     return `COT-${year}-${String(seq).padStart(4, '0')}`;
   }
 
-  private getPriceFromPart(
-    part: Part,
-    priceList: QuotationPriceListEnum,
-  ): number {
-    switch (priceList) {
-      case QuotationPriceListEnum.PUBLIC:
-        return Number(part.publicPrice);
-      case QuotationPriceListEnum.WHOLESALE:
-        return Number(part.wholesalePrice);
-      case QuotationPriceListEnum.BUSINESS:
-        return Number(part.businessPrice);
-      default:
-        return Number(part.publicPrice);
-    }
-  }
-
   private getPriceFromCatalogUnit(
     unit: CatalogUnit,
     priceList: QuotationPriceListEnum,
@@ -181,9 +171,19 @@ export class QuotationsService {
     branchId: string,
     priceList: QuotationPriceListEnum,
     items: CreateQuotationItemDto[],
+    clientId?: string | null,
   ): Promise<{ itemsData: QuotationItemData[]; subtotal: number }> {
     let subtotal = 0;
     const itemsData: QuotationItemData[] = [];
+
+    // El precio de las refacciones sale de la lista del cliente si está
+    // vigente; si no, del nivel elegido en la cotización (público/mayoreo/…).
+    const priceFor: PartPriceResolver = await this.pricing.forClient(
+      user.tenantId,
+      clientId,
+      priceList as unknown as BasePriceTier,
+    );
+
     for (const item of items) {
       let unitPrice = item.unitPrice ?? 0;
       let description = item.description ?? '';
@@ -195,7 +195,7 @@ export class QuotationsService {
         if (!part) {
           throw new NotFoundException(`Parte ${item.partId} no encontrada`);
         }
-        unitPrice = this.getPriceFromPart(part, priceList);
+        unitPrice = priceFor(part);
         description = part.name;
       } else if (item.catalogUnitId) {
         const unit = await this.catalogUnitRepo.findOne({
@@ -228,7 +228,7 @@ export class QuotationsService {
         if (!part) {
           throw new NotFoundException(`Parte ${r.partId} no encontrada`);
         }
-        const rPrice = r.unitPrice ?? this.getPriceFromPart(part, priceList);
+        const rPrice = r.unitPrice ?? priceFor(part);
         const rSub = r.quantity * rPrice;
         subtotal += rSub;
         refacciones.push({
@@ -324,6 +324,7 @@ export class QuotationsService {
       dto.branchId,
       dto.priceList,
       dto.items,
+      dto.clientId ?? null,
     );
 
     const discountAmount = (subtotal * discountPct) / 100;
@@ -492,6 +493,7 @@ export class QuotationsService {
         branchId,
         priceList,
         dto.items,
+        dto.clientId ?? quotation.clientId ?? null,
       );
       const discountAmount = (subtotal * discountPct) / 100;
       const subtotalAfterDiscount = subtotal - discountAmount;

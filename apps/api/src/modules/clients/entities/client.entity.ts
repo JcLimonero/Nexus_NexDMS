@@ -99,6 +99,10 @@ export class Client {
   })
   creditLimit: number | null;
 
+  /** Lista de precios asignada al cliente (null = precios estándar). */
+  @Column({ name: 'price_list_id', type: 'uuid', nullable: true })
+  priceListId: string | null;
+
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes: string | null;
 

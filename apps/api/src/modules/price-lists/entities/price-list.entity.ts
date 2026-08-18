@@ -42,6 +42,13 @@ export class PriceList {
   })
   discountPct: number;
 
+  /** Vigencia de la lista; null = sin límite por ese extremo. */
+  @Column({ name: 'valid_from', type: 'date', nullable: true })
+  validFrom: string | null;
+
+  @Column({ name: 'valid_to', type: 'date', nullable: true })
+  validTo: string | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

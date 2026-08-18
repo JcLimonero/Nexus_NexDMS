@@ -6,9 +6,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { PriceList } from './entities/price-list.entity';
+import { PriceListItem } from './entities/price-list-item.entity';
 import { CreatePriceListDto } from './dto/create-price-list.dto';
 import { UpdatePriceListDto } from './dto/update-price-list.dto';
 import { FilterPriceListsDto } from './dto/filter-price-lists.dto';
+import { UpsertPriceListItemDto } from './dto/price-list-item.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 
@@ -17,6 +19,8 @@ export class PriceListsService {
   constructor(
     @InjectRepository(PriceList)
     private readonly repo: Repository<PriceList>,
+    @InjectRepository(PriceListItem)
+    private readonly itemRepo: Repository<PriceListItem>,
   ) {}
 
   private applyScope(
@@ -112,6 +116,8 @@ export class PriceListsService {
       name: dto.name,
       type: dto.type,
       discountPct: dto.discountPct ?? 0,
+      validFrom: dto.validFrom ?? null,
+      validTo: dto.validTo ?? null,
       isActive: dto.isActive ?? true,
     });
     return this.repo.save(list);
@@ -135,5 +141,53 @@ export class PriceListsService {
   async remove(user: UserPayload, id: string): Promise<void> {
     await this.findOne(user, id);
     await this.repo.delete(id);
+  }
+
+  // ─── Precios por parte dentro de la lista ───────────────────
+
+  async listItems(user: UserPayload, id: string): Promise<PriceListItem[]> {
+    await this.findOne(user, id); // valida acceso a la lista
+    return this.itemRepo.find({
+      where: { priceListId: id },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  /** Alta o actualización del precio de una parte en la lista (upsert). */
+  async upsertItem(
+    user: UserPayload,
+    id: string,
+    dto: UpsertPriceListItemDto,
+  ): Promise<PriceListItem> {
+    await this.findOne(user, id);
+    const existing = await this.itemRepo.findOne({
+      where: { priceListId: id, partId: dto.partId },
+    });
+    if (existing) {
+      existing.price = dto.price;
+      return this.itemRepo.save(existing);
+    }
+    const item = this.itemRepo.create({
+      tenantId: user.tenantId,
+      priceListId: id,
+      partId: dto.partId,
+      price: dto.price,
+    });
+    return this.itemRepo.save(item);
+  }
+
+  async removeItem(
+    user: UserPayload,
+    id: string,
+    itemId: string,
+  ): Promise<void> {
+    await this.findOne(user, id);
+    const item = await this.itemRepo.findOne({
+      where: { id: itemId, priceListId: id },
+    });
+    if (!item) {
+      throw new NotFoundException(`Ítem ${itemId} no encontrado en la lista`);
+    }
+    await this.itemRepo.delete(itemId);
   }
 }

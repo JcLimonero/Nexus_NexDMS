@@ -20,6 +20,8 @@ import {
   PriceList,
   PriceListFilters,
   CreatePriceListDto,
+  PriceListItem,
+  UpsertPriceListItemDto,
 } from "./models/price-list.model";
 
 const CASH_REGISTER_URL = "/api/v1/cash-register";
@@ -175,6 +177,28 @@ export class CajaVentasService {
   deletePriceList(id: string): Observable<void> {
     return this.http
       .delete(`${PRICE_LISTS_URL}/${id}`)
+      .pipe(map(() => undefined));
+  }
+
+  // ─── Precios por parte dentro de la lista ───────────────────
+
+  getPriceListItems(listId: string): Observable<PriceListItem[]> {
+    return this.http.get<PriceListItem[]>(`${PRICE_LISTS_URL}/${listId}/items`);
+  }
+
+  upsertPriceListItem(
+    listId: string,
+    dto: UpsertPriceListItemDto
+  ): Observable<PriceListItem> {
+    return this.http.post<PriceListItem>(
+      `${PRICE_LISTS_URL}/${listId}/items`,
+      dto
+    );
+  }
+
+  deletePriceListItem(listId: string, itemId: string): Observable<void> {
+    return this.http
+      .delete(`${PRICE_LISTS_URL}/${listId}/items/${itemId}`)
       .pipe(map(() => undefined));
   }
 }
