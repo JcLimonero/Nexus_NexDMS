@@ -53,43 +53,77 @@ export class NavService {
         { path: "/leads", title: "Leads", type: "link" },
       ],
     },
+    // ── Taller (servicio) ──────────────────────────────────
     {
-      path: "/parts-inventory",
-      title: "Inventario de refacciones",
-      icon: "box",
-      type: "link",
+      title: "Taller",
+      icon: "tool",
+      type: "sub",
+      active: false,
+      children: [
+        { path: "/reception", title: "Recepción de unidades", type: "link" },
+        { path: "/workshop/citas", title: "Citas", type: "link" },
+        { path: "/workshop/agenda", title: "Agenda", type: "link" },
+        { path: "/quotes/servicio", title: "Presupuestos de servicio", type: "link" },
+        { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
+        { path: "/workshop/tablero-taller", title: "Monitor de taller", type: "link" },
+        { path: "/workshop/tablero-citas", title: "Monitor de citas", type: "link" },
+        // Garantía por cada trabajo hecho en el taller (independiente de la
+        // garantía de venta de la unidad). Hoy comparte pantalla con la de
+        // unidades; se separará cuando el backend distinga el tipo.
+        { path: "/warranties", title: "Garantías de taller", type: "link" },
+      ],
     },
+    // ── Ventas de unidades ─────────────────────────────────
     {
-      path: "/units-inventory",
-      title: "Inventario de unidades",
+      title: "Ventas de unidades",
       icon: "truck",
-      type: "link",
-    },
-    {
-      title: "Compras",
-      icon: "shopping-cart",
       type: "sub",
       active: false,
       children: [
-        { path: "/purchases/proveedores", title: "Proveedores", type: "link" },
-        { path: "/purchases/purchase-orders", title: "Órdenes de compra", type: "link" },
+        { path: "/units-inventory", title: "Inventario de unidades", type: "link" },
+        { path: "/quotes", title: "Presupuestos de venta", type: "link" },
+        { path: "/sales", title: "Ventas de unidades", type: "link" },
+        { path: "/sales", title: "Reservas", type: "link" },
         { path: "/used-units", title: "Seminuevos", type: "link" },
+        // Garantía de la unidad vendida (distinta de la garantía por trabajo
+        // de taller). Comparte pantalla con la de taller por ahora.
+        { path: "/warranties", title: "Garantías de unidades", type: "link" },
       ],
     },
+    // ── Refacciones (inventario, compras y almacén) ────────
     {
-      title: "Almacén",
-      icon: "archive",
+      title: "Refacciones",
+      icon: "box",
       type: "sub",
       active: false,
       children: [
-        { path: "/warehouse/transferencias", title: "Transferencias", type: "link" },
-        { path: "/warehouse/apartados", title: "Apartados", type: "link" },
-        { path: "/warehouse/costeo", title: "Costeo", type: "link" },
-        { path: "/warehouse/conteos", title: "Conteos físicos", type: "link" },
-        { path: "/warehouse/escaneo", title: "Inventario rápido", type: "link" },
-        { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
+        { path: "/parts-inventory", title: "Inventario de refacciones", type: "link" },
+        {
+          title: "Compras",
+          type: "sub",
+          active: false,
+          children: [
+            { path: "/purchases/proveedores", title: "Proveedores", type: "link" },
+            { path: "/purchases/purchase-orders", title: "Órdenes de compra", type: "link" },
+            { path: "/purchases/requisiciones", title: "Por pedir", type: "link" },
+          ],
+        },
+        {
+          title: "Almacén",
+          type: "sub",
+          active: false,
+          children: [
+            { path: "/warehouse/transferencias", title: "Transferencias", type: "link" },
+            { path: "/warehouse/apartados", title: "Apartados", type: "link" },
+            { path: "/warehouse/costeo", title: "Costeo", type: "link" },
+            { path: "/warehouse/conteos", title: "Conteos físicos", type: "link" },
+            { path: "/warehouse/escaneo", title: "Inventario rápido", type: "link" },
+            { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
+          ],
+        },
       ],
     },
+    // ── Transversales ──────────────────────────────────────
     {
       title: "Caja y ventas",
       icon: "dollar-sign",
@@ -101,64 +135,10 @@ export class NavService {
       ],
     },
     {
-      title: "Unidades",
-      icon: "shopping-bag",
-      type: "sub",
-      active: false,
-      children: [
-        { path: "/sales", title: "Ventas de unidades", type: "link" },
-        { path: "/sales", title: "Reservas", type: "link" },
-        { path: "/quotes", title: "Presupuestos de venta", type: "link" },
-      ],
-    },
-    {
       path: "/finance",
       title: "Finanzas",
       icon: "credit-card",
       type: "link",
-    },
-    {
-      path: "/pld",
-      title: "Cumplimiento PLD",
-      icon: "shield",
-      type: "link",
-    },
-    {
-      path: "/reception",
-      title: "Recepción de unidades",
-      icon: "clipboard",
-      type: "link",
-    },
-    {
-      title: "Taller",
-      icon: "settings",
-      type: "sub",
-      active: false,
-      children: [
-        { path: "/quotes/servicio", title: "Presupuestos de servicio", type: "link" },
-        { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
-        { path: "/workshop/agenda", title: "Agenda", type: "link" },
-        { path: "/workshop/citas", title: "Citas", type: "link" },
-        { path: "/workshop/tablero-taller", title: "Monitor de taller", type: "link" },
-        { path: "/workshop/tablero-citas", title: "Monitor de citas", type: "link" },
-      ],
-    },
-    {
-      path: "/warranties",
-      title: "Garantías",
-      icon: "shield",
-      type: "link",
-    },
-    {
-      title: "Reportes",
-      icon: "bar-chart",
-      type: "sub",
-      active: false,
-      children: [
-        { path: "/reports", title: "Inicio", type: "link" },
-        { path: "/reports/comisiones", title: "Comisiones", type: "link" },
-        { path: "/reports/general", title: "Reportes generales", type: "link" },
-      ],
     },
     {
       // Solo los CFDI que el concesionario emite a sus clientes. Lo que el
@@ -172,6 +152,23 @@ export class NavService {
       children: [
         { path: "/billing", title: "Inicio", type: "link" },
         { path: "/billing/facturas", title: "Facturas (CFDI)", type: "link" },
+      ],
+    },
+    {
+      path: "/pld",
+      title: "Cumplimiento PLD",
+      icon: "shield",
+      type: "link",
+    },
+    {
+      title: "Reportes",
+      icon: "bar-chart",
+      type: "sub",
+      active: false,
+      children: [
+        { path: "/reports", title: "Inicio", type: "link" },
+        { path: "/reports/comisiones", title: "Comisiones", type: "link" },
+        { path: "/reports/general", title: "Reportes generales", type: "link" },
       ],
     },
     {
