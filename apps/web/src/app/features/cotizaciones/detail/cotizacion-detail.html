@@ -8,12 +8,12 @@
             @if (canEdit()) {
               <a
                 class="btn btn-warning btn-sm"
-                [routerLink]="['/quotes', cotizacion()?.id, 'editar']"
+                [routerLink]="editarLink()"
               >
                 Editar
               </a>
             }
-            <a class="btn btn-outline-secondary btn-sm" routerLink="/quotes">Volver</a>
+            <a class="btn btn-outline-secondary btn-sm" [routerLink]="volverLink()">Volver</a>
           </div>
         </div>
         <div class="card-body">

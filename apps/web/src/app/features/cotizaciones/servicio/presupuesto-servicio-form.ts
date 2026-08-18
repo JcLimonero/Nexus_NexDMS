@@ -7,7 +7,7 @@ import {
   Validators,
 } from "@angular/forms";
 import { CommonModule } from "@angular/common";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { CotizacionesService } from "../cotizaciones.service";
@@ -16,6 +16,7 @@ import { InventarioRefaccionesService } from "../../inventario-refacciones/inven
 import { ClientesService } from "../../clientes/clientes.service";
 import {
   CreateQuotationDto,
+  Quotation,
   QuotationLineUrgency,
   QuotationPriceList,
   QuotationType,
@@ -37,6 +38,7 @@ import { ClientListItem } from "../../clientes/models/client.model";
 export class PresupuestoServicioForm implements OnInit {
   private fb = inject(FormBuilder);
   private router = inject(Router);
+  private route = inject(ActivatedRoute);
   private cotizaciones = inject(CotizacionesService);
   private branchesService = inject(BranchesService);
   private inventario = inject(InventarioRefaccionesService);
@@ -45,6 +47,8 @@ export class PresupuestoServicioForm implements OnInit {
 
   form!: FormGroup;
   loading = signal(false);
+  isEdit = signal(false);
+  id = signal<string | null>(null);
   branches = signal<{ id: string; name: string }[]>([]);
   clients = signal<ClientListItem[]>([]);
   parts = signal<Part[]>([]);
@@ -74,12 +78,62 @@ export class PresupuestoServicioForm implements OnInit {
       if (b) this.loadParts(b);
       else this.parts.set([]);
     });
+
+    const editId = this.route.snapshot.paramMap.get("id");
+    if (editId) {
+      this.isEdit.set(true);
+      this.id.set(editId);
+      this.cotizaciones.getQuotation(editId).subscribe({
+        next: (q) => {
+          if (q.status !== "DRAFT") {
+            this.router.navigate(["/quotes", editId]);
+            return;
+          }
+          this.poblar(q);
+        },
+        error: () => this.router.navigate(["/quotes/servicio"]),
+      });
+    }
   }
 
   private loadParts(branchId: string): void {
     this.inventario
       .getParts({ branchId, limit: 500, searchScope: "local" })
       .subscribe({ next: (res) => this.parts.set(res.data) });
+  }
+
+  /** Reconstruye los trabajos (padres) con sus refacciones (hijas) al editar. */
+  private poblar(q: Quotation): void {
+    this.form.patchValue({
+      branchId: q.branchId,
+      clientId: q.clientId || "",
+      conditions: q.conditions || "",
+      validityDate: q.validityDate?.slice(0, 10) || "",
+    });
+    this.loadParts(q.branchId);
+    const items = q.items ?? [];
+    this.trabajos.clear();
+    for (const t of items.filter((it) => !it.parentItemId)) {
+      const grupo = this.nuevoTrabajo();
+      grupo.patchValue({
+        descripcion: t.description,
+        urgency: t.urgency ?? QuotationLineUrgency.RECOMENDADO,
+        manoObra: t.unitPrice,
+        technicianNote: t.technicianNote ?? "",
+      });
+      const refs = grupo.get("refacciones") as FormArray;
+      for (const r of items.filter((x) => x.parentItemId === t.id)) {
+        const rg = this.nuevaRefaccion();
+        rg.patchValue({
+          partId: r.partId,
+          quantity: r.quantity,
+          unitPrice: r.unitPrice,
+        });
+        refs.push(rg);
+      }
+      this.trabajos.push(grupo);
+    }
+    if (!this.trabajos.length) this.trabajos.push(this.nuevoTrabajo());
   }
 
   get trabajos(): FormArray {
@@ -190,14 +244,22 @@ export class PresupuestoServicioForm implements OnInit {
       items,
     };
     this.loading.set(true);
-    this.cotizaciones.createQuotation(dto).subscribe({
+    const editId = this.id();
+    const req = editId
+      ? this.cotizaciones.updateQuotation(editId, dto)
+      : this.cotizaciones.createQuotation(dto);
+    req.subscribe({
       next: (q) => {
-        this.toastr.success("Presupuesto de servicio creado");
+        this.toastr.success(
+          editId
+            ? "Presupuesto de servicio actualizado"
+            : "Presupuesto de servicio creado",
+        );
         this.router.navigate(["/quotes", q.id]);
       },
       error: (err) => {
         this.loading.set(false);
-        this.toastr.error(err?.error?.message || "Error al crear el presupuesto");
+        this.toastr.error(err?.error?.message || "Error al guardar el presupuesto");
       },
     });
   }

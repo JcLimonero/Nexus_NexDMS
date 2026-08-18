@@ -3,7 +3,7 @@
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-          <h5>Nuevo presupuesto de servicio</h5>
+          <h5>{{ isEdit() ? 'Editar presupuesto de servicio' : 'Nuevo presupuesto de servicio' }}</h5>
           <a class="btn btn-outline-secondary btn-sm" routerLink="/quotes/servicio">Volver</a>
         </div>
         <div class="card-body">
@@ -133,7 +133,7 @@
                 @if (loading()) {
                   <span class="spinner-border spinner-border-sm me-1" role="status"></span>
                 }
-                Crear presupuesto de servicio
+                {{ isEdit() ? 'Guardar cambios' : 'Crear presupuesto de servicio' }}
               </button>
               <a class="btn btn-outline-secondary" routerLink="/quotes/servicio">Cancelar</a>
             </div>

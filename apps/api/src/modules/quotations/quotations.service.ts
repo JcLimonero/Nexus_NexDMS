@@ -19,7 +19,10 @@ import {
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
-import { CreateQuotationDto } from './dto/create-quotation.dto';
+import {
+  CreateQuotationDto,
+  CreateQuotationItemDto,
+} from './dto/create-quotation.dto';
 import { FilterQuotationsDto } from './dto/filter-quotations.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
@@ -30,6 +33,26 @@ import { UnitSaleFinancingTypeEnum } from '../unit-sales/entities/unit-sale.enti
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
 import { QuotationItemPhoto } from './entities/quotation-item-photo.entity';
 import { StorageService } from '../../common/storage/storage.service';
+
+type QuotationRefData = {
+  partId: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
+};
+type QuotationItemData = {
+  partId?: string;
+  catalogUnitId?: string;
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  discount: number;
+  subtotal: number;
+  urgency?: QuotationLineUrgencyEnum;
+  technicianNote?: string | null;
+  refacciones: QuotationRefData[];
+};
 
 @Injectable()
 export class QuotationsService {
@@ -152,6 +175,124 @@ export class QuotationsService {
     return Number(unit.listPrice);
   }
 
+  /** Resuelve precios y arma los ítems: trabajos con sus refacciones hijas. */
+  private async buildItemsData(
+    user: UserPayload,
+    branchId: string,
+    priceList: QuotationPriceListEnum,
+    items: CreateQuotationItemDto[],
+  ): Promise<{ itemsData: QuotationItemData[]; subtotal: number }> {
+    let subtotal = 0;
+    const itemsData: QuotationItemData[] = [];
+    for (const item of items) {
+      let unitPrice = item.unitPrice ?? 0;
+      let description = item.description ?? '';
+
+      if (item.partId) {
+        const part = await this.partRepo.findOne({
+          where: { id: item.partId, branchId, tenantId: user.tenantId },
+        });
+        if (!part) {
+          throw new NotFoundException(`Parte ${item.partId} no encontrada`);
+        }
+        unitPrice = this.getPriceFromPart(part, priceList);
+        description = part.name;
+      } else if (item.catalogUnitId) {
+        const unit = await this.catalogUnitRepo.findOne({
+          where: { id: item.catalogUnitId, branchId, tenantId: user.tenantId },
+        });
+        if (!unit) {
+          throw new NotFoundException(
+            `Unidad ${item.catalogUnitId} no encontrada`,
+          );
+        }
+        unitPrice = this.getPriceFromCatalogUnit(unit, priceList);
+        description = `${unit.brand} ${unit.model} ${unit.year}`;
+      } else if (item.description) {
+        description = item.description;
+      } else {
+        throw new BadRequestException(
+          'Cada ítem debe tener parte, unidad o descripción',
+        );
+      }
+
+      const discount = item.discount ?? 0;
+      const itemSubtotal = item.quantity * unitPrice - discount;
+      subtotal += itemSubtotal;
+
+      const refacciones: QuotationRefData[] = [];
+      for (const r of item.refacciones ?? []) {
+        const part = await this.partRepo.findOne({
+          where: { id: r.partId, branchId, tenantId: user.tenantId },
+        });
+        if (!part) {
+          throw new NotFoundException(`Parte ${r.partId} no encontrada`);
+        }
+        const rPrice = r.unitPrice ?? this.getPriceFromPart(part, priceList);
+        const rSub = r.quantity * rPrice;
+        subtotal += rSub;
+        refacciones.push({
+          partId: r.partId,
+          description: part.name,
+          quantity: r.quantity,
+          unitPrice: rPrice,
+          subtotal: rSub,
+        });
+      }
+
+      itemsData.push({
+        partId: item.partId ?? undefined,
+        catalogUnitId: item.catalogUnitId ?? undefined,
+        description,
+        quantity: item.quantity,
+        unitPrice,
+        discount,
+        subtotal: itemSubtotal,
+        urgency: item.urgency,
+        technicianNote: item.technicianNote ?? null,
+        refacciones,
+      });
+    }
+    return { itemsData, subtotal };
+  }
+
+  /** Guarda los trabajos y sus refacciones (hijas) bajo la cotización. */
+  private async saveItemsData(
+    em: EntityManager,
+    quotationId: string,
+    itemsData: QuotationItemData[],
+  ): Promise<void> {
+    for (const it of itemsData) {
+      const qi = em.create(QuotationItem, {
+        quotationId,
+        partId: it.partId ?? null,
+        catalogUnitId: it.catalogUnitId ?? null,
+        description: it.description,
+        quantity: it.quantity,
+        unitPrice: it.unitPrice,
+        discount: it.discount,
+        subtotal: it.subtotal,
+        ...(it.urgency ? { urgency: it.urgency } : {}),
+        technicianNote: it.technicianNote ?? null,
+      });
+      await em.save(qi);
+      for (const r of it.refacciones) {
+        await em.save(
+          em.create(QuotationItem, {
+            quotationId,
+            parentItemId: qi.id,
+            partId: r.partId,
+            description: r.description,
+            quantity: r.quantity,
+            unitPrice: r.unitPrice,
+            discount: 0,
+            subtotal: r.subtotal,
+          }),
+        );
+      }
+    }
+  }
+
   async create(user: UserPayload, dto: CreateQuotationDto): Promise<Quotation> {
     const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER'];
     if (!allowed.some((r) => user.roles?.includes(r))) {
@@ -178,109 +319,12 @@ export class QuotationsService {
       status = QuotationStatusEnum.PENDING_APPROVAL;
     }
 
-    let subtotal = 0;
-    type RefData = {
-      partId: string;
-      description: string;
-      quantity: number;
-      unitPrice: number;
-      subtotal: number;
-    };
-    const itemsData: Array<{
-      partId?: string;
-      catalogUnitId?: string;
-      description: string;
-      quantity: number;
-      unitPrice: number;
-      discount: number;
-      subtotal: number;
-      urgency?: QuotationLineUrgencyEnum;
-      technicianNote?: string | null;
-      refacciones: RefData[];
-    }> = [];
-
-    for (const item of dto.items) {
-      let unitPrice = item.unitPrice;
-      let description = item.description ?? '';
-
-      if (item.partId) {
-        const part = await this.partRepo.findOne({
-          where: {
-            id: item.partId,
-            branchId: dto.branchId,
-            tenantId: user.tenantId,
-          },
-        });
-        if (!part) {
-          throw new NotFoundException(`Parte ${item.partId} no encontrada`);
-        }
-        unitPrice = this.getPriceFromPart(part, dto.priceList);
-        description = part.name;
-      } else if (item.catalogUnitId) {
-        const unit = await this.catalogUnitRepo.findOne({
-          where: {
-            id: item.catalogUnitId,
-            branchId: dto.branchId,
-            tenantId: user.tenantId,
-          },
-        });
-        if (!unit) {
-          throw new NotFoundException(
-            `Unidad ${item.catalogUnitId} no encontrada`,
-          );
-        }
-        unitPrice = this.getPriceFromCatalogUnit(unit, dto.priceList);
-        description = `${unit.brand} ${unit.model} ${unit.year}`;
-      } else if (item.description) {
-        description = item.description;
-      } else {
-        throw new BadRequestException(
-          'Cada ítem debe tener parte, unidad o descripción',
-        );
-      }
-
-      const discount = item.discount ?? 0;
-      const itemSubtotal = item.quantity * unitPrice - discount;
-      subtotal += itemSubtotal;
-
-      // Refacciones del trabajo: cada una resuelve su precio y suma al total.
-      const refacciones: RefData[] = [];
-      for (const r of item.refacciones ?? []) {
-        const part = await this.partRepo.findOne({
-          where: {
-            id: r.partId,
-            branchId: dto.branchId,
-            tenantId: user.tenantId,
-          },
-        });
-        if (!part) {
-          throw new NotFoundException(`Parte ${r.partId} no encontrada`);
-        }
-        const rPrice = r.unitPrice ?? this.getPriceFromPart(part, dto.priceList);
-        const rSub = r.quantity * rPrice;
-        subtotal += rSub;
-        refacciones.push({
-          partId: r.partId,
-          description: part.name,
-          quantity: r.quantity,
-          unitPrice: rPrice,
-          subtotal: rSub,
-        });
-      }
-
-      itemsData.push({
-        partId: item.partId ?? undefined,
-        catalogUnitId: item.catalogUnitId ?? undefined,
-        description,
-        quantity: item.quantity,
-        unitPrice,
-        discount,
-        subtotal: itemSubtotal,
-        urgency: item.urgency,
-        technicianNote: item.technicianNote ?? null,
-        refacciones,
-      });
-    }
+    const { itemsData, subtotal } = await this.buildItemsData(
+      user,
+      dto.branchId,
+      dto.priceList,
+      dto.items,
+    );
 
     const discountAmount = (subtotal * discountPct) / 100;
     const subtotalAfterDiscount = subtotal - discountAmount;
@@ -319,39 +363,7 @@ export class QuotationsService {
           validityDate,
         });
         const saved = await em.save(quotation);
-
-        for (const it of itemsData) {
-          const qi = em.create(QuotationItem, {
-            quotationId: saved.id,
-            partId: it.partId ?? null,
-            catalogUnitId: it.catalogUnitId ?? null,
-            description: it.description,
-            quantity: it.quantity,
-            unitPrice: it.unitPrice,
-            discount: it.discount,
-            subtotal: it.subtotal,
-            ...(it.urgency ? { urgency: it.urgency } : {}),
-            technicianNote: it.technicianNote ?? null,
-          });
-          await em.save(qi);
-
-          // Las refacciones del trabajo cuelgan del ítem recién guardado.
-          for (const r of it.refacciones) {
-            await em.save(
-              em.create(QuotationItem, {
-                quotationId: saved.id,
-                parentItemId: qi.id,
-                partId: r.partId,
-                description: r.description,
-                quantity: r.quantity,
-                unitPrice: r.unitPrice,
-                discount: 0,
-                subtotal: r.subtotal,
-              }),
-            );
-          }
-        }
-
+        await this.saveItemsData(em, saved.id, itemsData);
         return saved.id;
       })
       .then((id) => this.findOne(user, id));
@@ -462,7 +474,57 @@ export class QuotationsService {
         'Solo se pueden editar cotizaciones en borrador',
       );
     }
-    await this.quotationRepo.update(id, dto as Partial<Quotation>);
+
+    const branchId = dto.branchId ?? quotation.branchId;
+    const priceList = (dto.priceList ??
+      quotation.priceList) as QuotationPriceListEnum;
+
+    // Con ítems: se reconstruyen (se borran los viejos y se crean los nuevos)
+    // y se recalculan los totales. Sin ítems: solo la cabecera.
+    if (dto.items?.length) {
+      const branch = await this.branchRepo.findOne({
+        where: { id: branchId, tenantId: user.tenantId },
+      });
+      const taxRate = Number(branch?.taxRate) || 0.16;
+      const discountPct = dto.discountPct ?? Number(quotation.discountPct) ?? 0;
+      const { itemsData, subtotal } = await this.buildItemsData(
+        user,
+        branchId,
+        priceList,
+        dto.items,
+      );
+      const discountAmount = (subtotal * discountPct) / 100;
+      const subtotalAfterDiscount = subtotal - discountAmount;
+      const taxAmount = Math.round(subtotalAfterDiscount * taxRate * 100) / 100;
+      const total = subtotalAfterDiscount + taxAmount;
+      const validityDate = dto.validityDate
+        ? new Date(dto.validityDate)
+        : quotation.validityDate
+          ? new Date(quotation.validityDate)
+          : null;
+
+      await this.dataSource.transaction(async (em) => {
+        await em.delete(QuotationItem, { quotationId: id });
+        await em.update(Quotation, id, {
+          branchId,
+          clientId: dto.clientId ?? quotation.clientId ?? null,
+          priceList,
+          type: dto.type ?? quotation.type,
+          conditions: dto.conditions ?? quotation.conditions ?? null,
+          discountPct,
+          discountAmount,
+          taxAmount,
+          subtotal,
+          total,
+          validityDate,
+        });
+        await this.saveItemsData(em, id, itemsData);
+      });
+    } else {
+      const rest = { ...dto } as Record<string, unknown>;
+      delete rest['items'];
+      await this.quotationRepo.update(id, rest as Partial<Quotation>);
+    }
     return this.findOne(user, id);
   }
 

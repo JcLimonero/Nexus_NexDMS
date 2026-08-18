@@ -40,6 +40,20 @@ export class CotizacionDetail implements OnInit {
   rejectReason = signal("");
   readonly QT = QuotationType;
 
+  /** Vuelve a la lista de su flujo (servicio o venta). */
+  esServicio(): boolean {
+    return this.cotizacion()?.type === QuotationType.SERVICE;
+  }
+  volverLink(): string {
+    return this.esServicio() ? "/quotes/servicio" : "/quotes";
+  }
+  editarLink(): unknown[] {
+    const id = this.cotizacion()?.id;
+    return this.esServicio()
+      ? ["/quotes", "servicio", id, "editar"]
+      : ["/quotes", id, "editar"];
+  }
+
   /** Elección del vehículo para convertir un presupuesto de servicio. */
   vehiculoAbierto = signal(false);
   vehiculosCliente = signal<{ vehicleId: string; descripcion: string }[]>([]);

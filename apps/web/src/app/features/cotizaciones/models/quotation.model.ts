@@ -41,6 +41,7 @@ export interface QuotationItem {
   urgency?: QuotationLineUrgency;
   technicianNote?: string | null;
   photos?: { id: string; url: string | null }[];
+  parentItemId?: string | null;
   part?: { id: string; name: string };
   catalogUnit?: { id: string; brand: string; model: string; year: number };
 }
