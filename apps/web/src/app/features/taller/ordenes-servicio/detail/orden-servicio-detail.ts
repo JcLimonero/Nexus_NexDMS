@@ -234,6 +234,56 @@ export class OrdenServicioDetail implements OnInit {
       });
   }
 
+  // ── Vale de compra ligado a la orden (R2) ──
+  valeAbierto = signal(false);
+  guardandoVale = signal(false);
+  valeMonto = signal<number | null>(null);
+  valeConcepto = signal("");
+  valeProveedor = signal("");
+
+  abrirVale(): void {
+    this.valeMonto.set(null);
+    this.valeConcepto.set("");
+    this.valeProveedor.set("");
+    this.valeAbierto.set(true);
+  }
+
+  confirmarVale(): void {
+    const o = this.orden();
+    if (!o || this.guardandoVale()) return;
+    const monto = this.valeMonto();
+    if (!monto || monto <= 0) {
+      this.toastr.warning("Indica el monto");
+      return;
+    }
+    if (!this.valeConcepto().trim()) {
+      this.toastr.warning("Indica qué se compró");
+      return;
+    }
+    this.guardandoVale.set(true);
+    this.tallerService
+      .valeDeCompra(o.branchId, {
+        amount: monto,
+        concept: this.valeConcepto().trim(),
+        reference: this.valeProveedor().trim() || undefined,
+        serviceOrderId: o.id,
+      })
+      .subscribe({
+        next: () => {
+          this.guardandoVale.set(false);
+          this.valeAbierto.set(false);
+          this.toastr.success("Vale de compra registrado en caja");
+        },
+        error: (err) => {
+          this.guardandoVale.set(false);
+          this.toastr.error(
+            err?.error?.message ||
+              "No se pudo registrar el vale (¿hay caja abierta?)",
+          );
+        },
+      });
+  }
+
   onAssignMechanic(): void {
     const o = this.orden();
     const mechanicId = this.selectedMechanicId();

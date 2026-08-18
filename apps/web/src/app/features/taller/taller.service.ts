@@ -67,6 +67,25 @@ export class TallerService {
     );
   }
 
+  /**
+   * Vale de compra: registra un egreso de caja ligado a esta orden (para qué
+   * auto se compró la refacción). Requiere una caja abierta en la sucursal.
+   */
+  valeDeCompra(
+    branchId: string,
+    dto: {
+      amount: number;
+      concept: string;
+      reference?: string;
+      serviceOrderId: string;
+    }
+  ): Observable<unknown> {
+    return this.http.post(
+      `/api/v1/cash-register/movements?branchId=${branchId}`,
+      { kind: "EXPENSE", ...dto }
+    );
+  }
+
   /** Entrega la orden: con cobro (paymentMethod) o con adeudo (genera CxC). */
   deliver(
     id: string,

@@ -70,6 +70,7 @@ export class CashRegisterController {
       amount: number;
       concept: string;
       reference?: string;
+      serviceOrderId?: string;
     },
   ) {
     return this.cashRegisterService.registrarMovimiento(user, branchId, dto);

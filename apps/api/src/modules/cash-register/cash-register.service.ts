@@ -209,6 +209,7 @@ export class CashRegisterService {
       amount: number;
       concept: string;
       reference?: string;
+      serviceOrderId?: string;
     },
   ): Promise<CashMovement> {
     this.assertCanWrite(user);
@@ -227,6 +228,7 @@ export class CashRegisterService {
         amount: String(dto.amount),
         concept: dto.concept.trim(),
         reference: dto.reference ?? null,
+        serviceOrderId: dto.serviceOrderId ?? null,
         createdBy: { id: user.sub } as never,
       }),
     );

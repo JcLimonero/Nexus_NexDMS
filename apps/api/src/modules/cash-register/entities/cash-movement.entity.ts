@@ -49,6 +49,10 @@ export class CashMovement {
   @Column({ name: 'reference', type: 'varchar', length: 120, nullable: true })
   reference: string | null;
 
+  /** Orden de servicio para la que se compró (vale de compra ligado a la OS). */
+  @Column({ name: 'service_order_id', type: 'uuid', nullable: true })
+  serviceOrderId: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
