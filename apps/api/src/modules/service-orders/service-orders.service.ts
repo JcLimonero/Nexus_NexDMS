@@ -1093,6 +1093,73 @@ export class ServiceOrdersService {
     };
   }
 
+  /** Lista de encuestas de servicio respondidas, con cliente y vehículo. */
+  async listaEncuestas(user: UserPayload) {
+    return this.surveyRepo
+      .createQueryBuilder('s')
+      .innerJoin(ServiceOrder, 'so', 'so.id = s.service_order_id')
+      .leftJoin('clients', 'c', 'c.id = so.owner_id')
+      .leftJoin('customer_vehicles', 'v', 'v.id = so.vehicle_id')
+      .select([
+        's.id AS "id"',
+        'so.folio AS "folio"',
+        's.score AS "score"',
+        's.answered_at AS "answeredAt"',
+        `COALESCE(c.company_name, NULLIF(TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')), '')) AS "clientName"`,
+        `NULLIF(TRIM(COALESCE(v.make,'') || ' ' || COALESCE(v.model,'')), '') AS "vehicle"`,
+        'v.plate AS "plate"',
+      ])
+      .where('s.tenant_id = :t', { t: user.tenantId })
+      .andWhere('s.answered_at IS NOT NULL')
+      .orderBy('s.answered_at', 'DESC')
+      .getRawMany();
+  }
+
+  /** Ficha de una encuesta: cliente, vehículo, servicio realizado y respuestas. */
+  async fichaEncuesta(user: UserPayload, surveyId: string) {
+    const survey = await this.surveyRepo.findOne({
+      where: { id: surveyId, tenantId: user.tenantId },
+    });
+    if (!survey) throw new NotFoundException('Encuesta no encontrada');
+    const so = await this.findOne(user, survey.serviceOrderId);
+
+    const ops = await this.dataSource.query<{ description: string }[]>(
+      `SELECT description FROM service_order_operations
+       WHERE service_order_id = $1 ORDER BY created_at ASC`,
+      [so.id],
+    );
+
+    const clientName = so.owner
+      ? so.owner.companyName ||
+        `${so.owner.firstName ?? ''} ${so.owner.lastName ?? ''}`.trim()
+      : null;
+
+    const respuestas = (survey.questions ?? []).map((q) => ({
+      label: q.label,
+      type: q.type,
+      value: survey.answers?.[q.id] ?? null,
+    }));
+
+    return {
+      folio: so.folio,
+      deliveredAt: so.deliveredAt,
+      total: so.total,
+      cliente: { nombre: clientName, telefono: so.owner?.phone ?? null },
+      vehiculo: so.vehicle
+        ? `${so.vehicle.make ?? ''} ${so.vehicle.model ?? ''} ${so.vehicle.year ?? ''}`.trim()
+        : null,
+      placa: so.vehicle?.plate ?? null,
+      trabajos: ops.map((o) => o.description),
+      refacciones: (so.parts ?? [])
+        .map((p) => p.part?.name ?? null)
+        .filter((n): n is string => !!n),
+      score: survey.score,
+      comment: survey.comment,
+      respondidaEn: survey.answeredAt,
+      respuestas,
+    };
+  }
+
   async cancel(user: UserPayload, id: string): Promise<ServiceOrder> {
     const so = await this.findOne(user, id);
     if (so.status === ServiceOrderStatusEnum.DELIVERED) {

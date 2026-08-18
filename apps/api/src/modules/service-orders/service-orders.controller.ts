@@ -68,6 +68,23 @@ export class ServiceOrdersController {
     return this.serviceOrdersService.resumenEncuestas(user);
   }
 
+  /** Encuestas de servicio respondidas (lista con cliente/vehículo). */
+  @Get('surveys/list')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'AUDITOR')
+  listaEncuestas(@CurrentUser() user: UserPayload) {
+    return this.serviceOrdersService.listaEncuestas(user);
+  }
+
+  /** Ficha de una encuesta respondida. */
+  @Get('surveys/:surveyId/ficha')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'AUDITOR')
+  fichaEncuesta(
+    @CurrentUser() user: UserPayload,
+    @Param('surveyId', ParseUUIDPipe) surveyId: string,
+  ) {
+    return this.serviceOrdersService.fichaEncuesta(user, surveyId);
+  }
+
   /**
    * La orden en papel: es lo que el cliente firma al dejar la unidad y con lo
    * que se discute a la entrega. Va como PDF y no como pantalla imprimible
