@@ -20,6 +20,7 @@ import {
   CreateQuotationItemDto,
   QuotationType,
   QuotationPriceList,
+  QuotationLineUrgency,
 } from "../models/quotation.model";
 import { Part } from "../../inventario-refacciones/models/part.model";
 import { CatalogUnit } from "../../inventario-unidades/models/catalog-unit.model";
@@ -65,6 +66,16 @@ export class CotizacionForm implements OnInit {
     { value: QuotationPriceList.WHOLESALE, label: "Mayoreo" },
     { value: QuotationPriceList.BUSINESS, label: "Empresa" },
   ];
+
+  readonly urgencyOptions = [
+    { value: QuotationLineUrgency.URGENTE, label: "Urgente" },
+    { value: QuotationLineUrgency.RECOMENDADO, label: "Recomendado" },
+    { value: QuotationLineUrgency.OPCIONAL, label: "Opcional" },
+  ];
+
+  /** Fotos ya subidas por línea (índice → fotos). Solo en edición. */
+  fotosPorLinea = signal<Record<number, { id: string; url: string | null }[]>>({});
+  subiendoFoto = signal<number | null>(null);
 
   ngOnInit(): void {
     this.form = this.fb.group({
@@ -122,18 +133,24 @@ export class CotizacionForm implements OnInit {
             validityDate: q.validityDate?.slice(0, 10) || "",
           });
           this.items.clear();
-          for (const it of q.items || []) {
+          const fotos: Record<number, { id: string; url: string | null }[]> = {};
+          (q.items || []).forEach((it, i) => {
             this.items.push(
               this.fb.group({
+                id: [it.id],
                 partId: [it.partId || ""],
                 catalogUnitId: [it.catalogUnitId || ""],
                 description: [it.description],
                 quantity: [it.quantity, [Validators.required, Validators.min(1)]],
                 unitPrice: [it.unitPrice, [Validators.required, Validators.min(0)]],
                 discount: [it.discount || 0, [Validators.min(0)]],
+                urgency: [it.urgency || QuotationLineUrgency.RECOMENDADO],
+                technicianNote: [it.technicianNote || ""],
               })
             );
-          }
+            if (it.photos?.length) fotos[i] = it.photos;
+          });
+          this.fotosPorLinea.set(fotos);
           this.loadParts(q.branchId);
           this.loadUnits(q.branchId);
         },
@@ -150,12 +167,15 @@ export class CotizacionForm implements OnInit {
 
   private createItemGroup(): FormGroup {
     return this.fb.group({
+      id: [""],
       partId: [""],
       catalogUnitId: [""],
       description: [""],
       quantity: [1, [Validators.required, Validators.min(1)]],
       unitPrice: [0, [Validators.required, Validators.min(0)]],
       discount: [0, [Validators.min(0)]],
+      urgency: [QuotationLineUrgency.RECOMENDADO],
+      technicianNote: [""],
     });
   }
 
@@ -169,6 +189,42 @@ export class CotizacionForm implements OnInit {
 
   removeItem(index: number): void {
     if (this.items.length > 1) this.items.removeAt(index);
+  }
+
+  fotosDe(index: number): { id: string; url: string | null }[] {
+    return this.fotosPorLinea()[index] ?? [];
+  }
+
+  /**
+   * Sube una foto de lo que se recomienda cambiar a esta línea. Solo funciona
+   * si el presupuesto ya está guardado (la línea necesita id).
+   */
+  subirFoto(index: number, ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const qid = this.id();
+    const itemId = this.items.at(index).get("id")?.value;
+    if (!qid || !itemId) {
+      this.toastr.info("Guarda el presupuesto primero para poder subir fotos.");
+      input.value = "";
+      return;
+    }
+    this.subiendoFoto.set(index);
+    this.cotizacionesService.uploadItemPhoto(qid, itemId, file).subscribe({
+      next: (foto) => {
+        const map = { ...this.fotosPorLinea() };
+        map[index] = [...(map[index] ?? []), foto];
+        this.fotosPorLinea.set(map);
+        this.subiendoFoto.set(null);
+        this.toastr.success("Foto agregada");
+      },
+      error: (err) => {
+        this.subiendoFoto.set(null);
+        this.toastr.error(err?.error?.message || "No se pudo subir la foto");
+      },
+    });
+    input.value = "";
   }
 
   private loadParts(branchId: string): void {
@@ -260,6 +316,8 @@ export class CotizacionForm implements OnInit {
         quantity: Number(it.quantity),
         unitPrice: Number(it.unitPrice),
         discount: Number(it.discount) || 0,
+        urgency: it.urgency || undefined,
+        technicianNote: it.technicianNote?.trim() || undefined,
       };
       if (hasPart) item.partId = it.partId;
       else if (hasUnit) item.catalogUnitId = it.catalogUnitId;

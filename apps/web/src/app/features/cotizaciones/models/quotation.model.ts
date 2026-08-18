@@ -21,6 +21,13 @@ export enum QuotationPriceList {
   BUSINESS = "BUSINESS",
 }
 
+/** Urgencia del trabajo, como la ve el cliente (badges de Ricardo). */
+export enum QuotationLineUrgency {
+  URGENTE = "URGENTE",
+  RECOMENDADO = "RECOMENDADO",
+  OPCIONAL = "OPCIONAL",
+}
+
 export interface QuotationItem {
   id: string;
   quotationId: string;
@@ -31,6 +38,9 @@ export interface QuotationItem {
   unitPrice: number;
   discount: number;
   subtotal: number;
+  urgency?: QuotationLineUrgency;
+  technicianNote?: string | null;
+  photos?: { id: string; url: string | null }[];
   part?: { id: string; name: string };
   catalogUnit?: { id: string; brand: string; model: string; year: number };
 }
@@ -86,6 +96,8 @@ export interface CreateQuotationItemDto {
   quantity: number;
   unitPrice?: number;
   discount?: number;
+  urgency?: QuotationLineUrgency;
+  technicianNote?: string;
 }
 
 export interface CreateQuotationDto {

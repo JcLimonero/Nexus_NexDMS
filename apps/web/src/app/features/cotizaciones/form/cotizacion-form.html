@@ -118,6 +118,35 @@
                       <i class="icofont icofont-trash"></i>
                     </button>
                   </div>
+
+                  <!-- Urgencia + nota del técnico + fotos, lo que el cliente verá -->
+                  <div class="col-12 mt-2 mb-1">
+                    <div class="row g-2 align-items-center">
+                      <div class="col-md-2">
+                        <select class="form-select form-select-sm" formControlName="urgency" aria-label="Urgencia">
+                          @for (u of urgencyOptions; track u.value) {
+                            <option [ngValue]="u.value">{{ u.label }}</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm" formControlName="technicianNote" placeholder="Nota del técnico para el cliente…" />
+                      </div>
+                      <div class="col-md-4 d-flex align-items-center gap-2 flex-wrap">
+                        <label class="btn btn-outline-secondary btn-sm mb-0" [class.disabled]="subiendoFoto() === i">
+                          <i class="icofont icofont-camera me-1"></i>
+                          {{ subiendoFoto() === i ? 'Subiendo…' : 'Foto' }}
+                          <input type="file" accept="image/*" hidden (change)="subirFoto(i, $event)" />
+                        </label>
+                        @for (f of fotosDe(i); track f.id) {
+                          <img [src]="f.url" alt="Foto" style="height:34px;width:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border,#dde3e9);" />
+                        }
+                        @if (!isEdit() && !fotosDe(i).length) {
+                          <small class="text-muted">Guarda para subir fotos</small>
+                        }
+                      </div>
+                    </div>
+                  </div>
                 </div>
               }
             </div>

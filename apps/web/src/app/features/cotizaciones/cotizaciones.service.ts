@@ -37,6 +37,20 @@ export class CotizacionesService {
     return this.http.post<Quotation>(QUOTATIONS_URL, dto);
   }
 
+  /** Sube una foto de lo que se recomienda cambiar a una línea del presupuesto. */
+  uploadItemPhoto(
+    quotationId: string,
+    itemId: string,
+    file: File,
+  ): Observable<{ id: string; url: string | null }> {
+    const fd = new FormData();
+    fd.append("file", file);
+    return this.http.post<{ id: string; url: string | null }>(
+      `${QUOTATIONS_URL}/${quotationId}/items/${itemId}/photos`,
+      fd,
+    );
+  }
+
   updateQuotation(id: string, dto: Partial<CreateQuotationDto>): Observable<Quotation> {
     return this.http.patch<Quotation>(`${QUOTATIONS_URL}/${id}`, dto);
   }
