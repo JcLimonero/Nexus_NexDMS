@@ -82,6 +82,12 @@ export const routes: Routes = [
     data: { title: "Encuesta de servicio" },
   },
   {
+    path: "sv/:token",
+    loadComponent: () =>
+      import("./pages/public/encuesta-venta").then((m) => m.EncuestaVenta),
+    data: { title: "Encuesta de venta" },
+  },
+  {
     path: "auth/forgot-password",
     loadComponent: () =>
       import("./pages/authentication/forget-pwd/forget-pwd").then(

@@ -88,6 +88,7 @@ export class NavService {
         { path: "/sales", title: "Ventas de unidades", type: "link" },
         { path: "/sales", title: "Reservas", type: "link" },
         { path: "/deliveries", title: "Entregas de unidad", type: "link", queryParams: { tipo: "UNIT_SALE" } },
+        { path: "/sale-surveys", title: "Encuestas de venta", type: "link" },
         { path: "/used-units", title: "Seminuevos", type: "link" },
         // Garantía de la unidad vendida (distinta de la garantía por trabajo
         // de taller). Comparte pantalla con la de taller por ahora.

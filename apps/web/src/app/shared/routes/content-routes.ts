@@ -59,6 +59,14 @@ export const content: Routes = [
       ),
   },
   {
+    path: "sale-surveys",
+    data: { breadcrumb: "Encuestas de venta", title: "Encuestas de venta" },
+    loadComponent: () =>
+      import("../../../app/features/encuestas-venta/encuestas-venta").then(
+        (m) => m.EncuestasVenta,
+      ),
+  },
+  {
     path: "units-inventory",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Inventario unidades" , module: "units-inventory" },
@@ -257,5 +265,6 @@ export const content: Routes = [
       ),
   },
 ];
+
 
 
