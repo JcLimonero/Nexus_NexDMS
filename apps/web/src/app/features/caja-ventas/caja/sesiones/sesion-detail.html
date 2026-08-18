@@ -121,7 +121,7 @@
                       @for (d of denominaciones; track d) {
                         @if (s.denominations[d]) {
                           <tr>
-                            <th class="text-muted">{{ d | currency:'MXN':'symbol-narrow':'1.2-2' }} × {{ s.denominations[d] }}</th>
+                            <th class="text-muted">{{ d | money}} × {{ s.denominations[d] }}</th>
                             <td class="text-end">{{ d * s.denominations[d] | number:'1.2-2' }}</td>
                           </tr>
                         }
@@ -236,12 +236,12 @@
       <div class="arqueo-grid">
         @for (d of denominaciones; track d) {
           <label class="arqueo-fila">
-            <span>{{ d | currency:'MXN':'symbol-narrow':'1.2-2' }}</span>
+            <span>{{ d | money}}</span>
             <input type="number" min="0" class="form-control" [(ngModel)]="arqueo[d]" placeholder="0" />
           </label>
         }
       </div>
-      <div class="arqueo-total">Total contado: <strong>{{ totalArqueo() | currency:'MXN':'symbol-narrow':'1.2-2' }}</strong></div>
+      <div class="arqueo-total">Total contado: <strong>{{ totalArqueo() | money}}</strong></div>
       <label>
         <span>Notas</span>
         <input class="form-control" [(ngModel)]="notasCierre" />

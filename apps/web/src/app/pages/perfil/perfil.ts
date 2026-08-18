@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../shared/pipes/money.pipe";
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -71,7 +72,7 @@ interface Suscripcion {
 @Component({
   selector: "app-perfil",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [MoneyPipe, CommonModule, FormsModule],
   templateUrl: "./perfil.html",
   styleUrls: ["./perfil.scss"],
 })

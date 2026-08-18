@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../shared/pipes/money.pipe";
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -29,7 +30,7 @@ interface Linea {
 @Component({
   selector: "app-devoluciones",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [MoneyPipe, CommonModule, FormsModule],
   templateUrl: "./devoluciones.html",
 })
 export class Devoluciones implements OnInit {

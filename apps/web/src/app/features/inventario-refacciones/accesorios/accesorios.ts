@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../shared/pipes/money.pipe";
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -19,7 +20,7 @@ import { Accesorio, AccesoriosService } from "./accesorios.service";
 @Component({
   selector: "app-accesorios",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, Importador],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterModule, Importador],
   templateUrl: "./accesorios.html",
   styleUrls: ["./accesorios.scss"],
 })

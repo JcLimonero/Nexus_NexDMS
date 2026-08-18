@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../../shared/pipes/money.pipe";
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -22,7 +23,7 @@ const ETIQUETA_MOV: Record<string, string> = {
 @Component({
   selector: "app-sesion-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [MoneyPipe, CommonModule, FormsModule, RouterModule],
   templateUrl: "./sesion-detail.html",
   styleUrls: ["./sesion-detail.scss"],
 })

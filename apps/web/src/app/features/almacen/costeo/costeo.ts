@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../shared/pipes/money.pipe";
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -9,7 +10,7 @@ import { BranchesService } from "../../inventario-refacciones/services/branches.
 @Component({
   selector: "app-costeo",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [MoneyPipe, CommonModule, FormsModule],
   templateUrl: "./costeo.html",
   styleUrls: ["./costeo.scss"],
 })

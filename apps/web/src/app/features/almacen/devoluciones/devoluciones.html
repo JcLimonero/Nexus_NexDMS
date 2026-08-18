@@ -151,7 +151,7 @@
                       <option value="DEFECTIVE">Defectuosa</option>
                     </select>
                   </td>
-                  <td>{{ l.quantity * l.unitPrice | currency }}</td>
+                  <td>{{ l.quantity * l.unitPrice | money }}</td>
                   <td><button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarLinea(l.partId)">Quitar</button></td>
                 </tr>
               }
@@ -159,7 +159,7 @@
             <tfoot>
               <tr>
                 <th colspan="4" class="text-end">Total</th>
-                <th>{{ total() | currency }}</th>
+                <th>{{ total() | money }}</th>
                 <th></th>
               </tr>
             </tfoot>
@@ -195,7 +195,7 @@
                   <td>{{ etiquetaKind(d.kind) }}</td>
                   <td>{{ etiquetaRefund(d.refundMethod) }}</td>
                   <td>@if (d.isWarranty) { <span class="badge bg-info">Sí</span> } @else { — }</td>
-                  <td>{{ d.refundTotal | currency }}</td>
+                  <td>{{ d.refundTotal | money }}</td>
                   <td>{{ d.createdAt | date: "dd/MM/yy HH:mm" }}</td>
                   <td>
                     @if (d.notaCreditoCfdiId) {

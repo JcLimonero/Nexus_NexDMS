@@ -232,7 +232,7 @@
                               {{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}
                             </div>
                           </td>
-                          <td>{{ t.lastPrice | currency }}</td>
+                          <td>{{ t.lastPrice | money }}</td>
                           <td>
                             <div class="input-group input-group-sm">
                               <input type="number" min="0" class="form-control" [(ngModel)]="t.warrantyMonths" />

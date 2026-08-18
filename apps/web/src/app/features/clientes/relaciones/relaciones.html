@@ -171,7 +171,7 @@
                 </div>
                 <div class="resumen-dato">
                   <strong>
-                    {{ ficha()!.resumen.gastoTotal | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                    {{ ficha()!.resumen.gastoTotal | money}}
                   </strong>
                   <span>facturado</span>
                 </div>
@@ -263,7 +263,7 @@
                           <td>{{ etiquetaEstado(s.estado) }}</td>
                           <td class="text-end">{{ s.kmEntrada | number }}</td>
                           <td class="text-end">
-                            {{ s.total | currency: "MXN" : "symbol-narrow" : "1.0-2" }}
+                            {{ s.total | money}}
                           </td>
                         </tr>
 

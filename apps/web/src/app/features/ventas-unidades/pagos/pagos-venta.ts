@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../shared/pipes/money.pipe";
 import { Component, computed, effect, inject, input, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
@@ -26,7 +27,7 @@ import {
 @Component({
   selector: "app-pagos-venta",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [MoneyPipe, CommonModule, FormsModule],
   templateUrl: "./pagos-venta.html",
   styleUrls: ["./pagos-venta.scss"],
 })

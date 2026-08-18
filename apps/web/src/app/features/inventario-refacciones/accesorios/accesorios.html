@@ -129,7 +129,7 @@
                         }
                       </td>
                       <td class="text-end">
-                        {{ a.price | currency: "MXN" : "symbol-narrow" : "1.0-2" }}
+                        {{ a.price | money}}
                       </td>
                       <td>
                         @if (a.isActive) {

@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../../shared/pipes/money.pipe";
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
@@ -26,7 +27,7 @@ import { StockLocation } from "../../models/stock-location.model";
 @Component({
   selector: "app-parte-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: "./parte-form.html",
   styleUrls: ["./parte-form.scss"],
 })

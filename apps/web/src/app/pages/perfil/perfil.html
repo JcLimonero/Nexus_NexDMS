@@ -111,20 +111,20 @@
             <div class="suscripcion-resumen">
               <div class="dato">
                 <strong>
-                  {{ sub.cobro.total | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                  {{ sub.cobro.total | money}}
                 </strong>
                 <span>al mes</span>
                 <small>
                   Plan {{ sub.cobro.plan.name }}
                   @for (e of sub.cobro.extras; track e.key) {
                     · {{ e.name }}
-                    +{{ e.precio | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                    +{{ e.precio | money}}
                   }
                 </small>
               </div>
               <div class="dato" [class.alerta]="sub.resumen.adeudo > 0">
                 <strong>
-                  {{ sub.resumen.adeudo | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                  {{ sub.resumen.adeudo | money}}
                 </strong>
                 <span>adeudo</span>
                 <small>{{ sub.resumen.vencidos }} periodos vencidos</small>
@@ -166,7 +166,7 @@
                       <tr>
                         <td class="mono">{{ p.period }}</td>
                         <td class="text-end">
-                          {{ p.amount | currency: "MXN" : "symbol-narrow" : "1.0-2" }}
+                          {{ p.amount | money}}
                         </td>
                         <td>
                           <span
@@ -194,3 +194,4 @@
     </div>
   }
 </div>
+

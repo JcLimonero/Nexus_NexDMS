@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../shared/pipes/money.pipe";
 import {
   AfterViewInit,
   Component,
@@ -25,7 +26,7 @@ interface RegistroEscaneo {
 @Component({
   selector: "app-escaneo",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [MoneyPipe, CommonModule, FormsModule],
   templateUrl: "./escaneo.html",
   styleUrls: ["./escaneo.scss"],
 })

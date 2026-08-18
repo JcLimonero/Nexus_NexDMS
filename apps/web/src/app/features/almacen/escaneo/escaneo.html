@@ -67,10 +67,10 @@
 
                 <div class="row text-muted small mt-2">
                   <div class="col-6">
-                    Costo promedio: {{ p.averageCost | currency: "MXN" : "symbol-narrow" }}
+                    Costo promedio: {{ p.averageCost | money}}
                   </div>
                   <div class="col-6 text-end">
-                    P. público: {{ p.publicPrice | currency: "MXN" : "symbol-narrow" }}
+                    P. público: {{ p.publicPrice | money}}
                   </div>
                 </div>
 

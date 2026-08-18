@@ -110,7 +110,7 @@
                     @for (p of resultados(); track p.id) {
                       <tr>
                         <td><strong>{{ p.sku }}</strong> · {{ p.name }}</td>
-                        <td>{{ p.publicPrice | currency }}</td>
+                        <td>{{ p.publicPrice | money }}</td>
                         <td>
                           <input
                             type="number"
@@ -152,7 +152,7 @@
                     @for (it of items(); track it.id) {
                       <tr>
                         <td>{{ nombreParte(it.partId) }}</td>
-                        <td>{{ it.price | currency }}</td>
+                        <td>{{ it.price | money }}</td>
                         <td>
                           <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarItem(it)">
                             Quitar

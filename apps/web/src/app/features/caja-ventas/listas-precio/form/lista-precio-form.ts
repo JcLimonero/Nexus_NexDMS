@@ -1,3 +1,4 @@
+import { MoneyPipe } from "../../../../shared/pipes/money.pipe";
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: "app-lista-precio-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
+  imports: [MoneyPipe, CommonModule, ReactiveFormsModule, FormsModule, RouterModule],
   templateUrl: "./lista-precio-form.html",
   styleUrls: ["./lista-precio-form.scss"],
 })

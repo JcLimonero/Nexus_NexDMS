@@ -4,7 +4,7 @@
   <div class="pagos">
     <div class="cabecera">
       <div class="total">
-        Pagado: <strong>{{ r.total | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+        Pagado: <strong>{{ r.total | money}}</strong>
         <span class="sub">{{ r.pagos.length }} pago(s)</span>
       </div>
       @if (editable()) {
@@ -45,7 +45,7 @@
                 <td>{{ etiquetaTipo[p.kind] }}</td>
                 <td>{{ etiquetaForma[p.method] }}</td>
                 <td>{{ p.reference || "—" }}</td>
-                <td class="text-end">{{ p.amount | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</td>
+                <td class="text-end">{{ p.amount | money}}</td>
                 <td>
                   @if (p.tieneComprobante) {
                     <button class="btn btn-light btn-sm" (click)="verComprobante(p)">
