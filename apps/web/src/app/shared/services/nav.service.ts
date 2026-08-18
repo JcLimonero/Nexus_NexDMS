@@ -186,6 +186,8 @@ export class NavService {
       children: [
         { path: "/settings", title: "Inicio", type: "link" },
         { path: "/settings/sucursales", title: "Sucursales", type: "link" },
+        { path: "/settings/encuestas", title: "Encuestas", type: "link" },
+        { path: "/settings/credito", title: "Crédito y adeudos", type: "link" },
         { path: "/settings/general", title: "General", type: "link" },
         { path: "/modulos", title: "Módulos y licencia", type: "link" },
         {
