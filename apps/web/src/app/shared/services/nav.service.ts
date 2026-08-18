@@ -118,6 +118,7 @@ export class NavService {
             { path: "/warehouse/costeo", title: "Costeo", type: "link" },
             { path: "/warehouse/conteos", title: "Conteos físicos", type: "link" },
             { path: "/warehouse/escaneo", title: "Inventario rápido", type: "link" },
+            { path: "/warehouse/devoluciones", title: "Devoluciones y garantías", type: "link" },
             { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
           ],
         },

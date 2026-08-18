@@ -77,6 +77,12 @@ export const warehouseRoutes: Routes = [
     data: { title: "Inventario rápido", breadcrumb: "Inventario rápido" },
   },
   {
+    path: "devoluciones",
+    loadComponent: () =>
+      import("./devoluciones/devoluciones").then((m) => m.Devoluciones),
+    data: { title: "Devoluciones", breadcrumb: "Devoluciones" },
+  },
+  {
     path: "conteos",
     children: [
       {

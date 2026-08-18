@@ -1,0 +1,201 @@
+<div class="container-fluid">
+  <!-- Alta -->
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0">Devoluciones y garantías de refacción</h5>
+      <small class="text-muted">
+        Devolución de un cliente (reingresa a stock) o reclamo a un proveedor
+        (sale hacia él). La nota de crédito CFDI se emite aparte.
+      </small>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" [(ngModel)]="kind">
+            <option value="CLIENT_RETURN">Devolución de cliente</option>
+            <option value="SUPPLIER_CLAIM">Reclamo a proveedor</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Sucursal</label>
+          <select class="form-select" [(ngModel)]="branchId">
+            @for (b of branches(); track b.id) {
+              <option [value]="b.id">{{ b.name }}</option>
+            }
+          </select>
+        </div>
+
+        @if (kind === "CLIENT_RETURN") {
+          <div class="col-md-4 position-relative">
+            <label class="form-label">Cliente</label>
+            <input
+              class="form-control"
+              [ngModel]="clientLabel"
+              (ngModelChange)="clientLabel = $event; buscarCliente($event)"
+              placeholder="Buscar cliente…"
+            />
+            @if (clientResults().length) {
+              <ul class="list-group position-absolute w-100" style="z-index: 5">
+                @for (c of clientResults(); track c.id) {
+                  <li class="list-group-item list-group-item-action" role="button" (click)="elegirCliente(c)">
+                    {{ c.companyName || (c.firstName + " " + (c.lastName || "")) }}
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        } @else {
+          <div class="col-md-4">
+            <label class="form-label">Proveedor</label>
+            <select class="form-select" [(ngModel)]="supplierId">
+              <option value="">Sin proveedor</option>
+              @for (s of suppliers(); track s.id) {
+                <option [value]="s.id">{{ s.name }}</option>
+              }
+            </select>
+          </div>
+        }
+      </div>
+
+      <div class="row g-3 mt-1">
+        <div class="col-md-4">
+          <label class="form-label">Reembolso</label>
+          <select class="form-select" [(ngModel)]="refundMethod">
+            @if (kind === "CLIENT_RETURN") {
+              <option value="CREDIT_NOTE">Nota de crédito</option>
+              <option value="CASH">Efectivo</option>
+              <option value="NONE">Sin reembolso</option>
+            } @else {
+              <option value="REPLACEMENT">Reemplazo</option>
+              <option value="CREDIT_NOTE">Nota de crédito</option>
+              <option value="NONE">Sin reembolso</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-8 d-flex align-items-end gap-4">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="warr" [(ngModel)]="isWarranty" />
+            <label class="form-check-label" for="warr">Por garantía</label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="restock" [(ngModel)]="restock" />
+            <label class="form-check-label" for="restock">
+              Afecta inventario ({{ kind === "CLIENT_RETURN" ? "reingresa" : "sale" }})
+            </label>
+          </div>
+        </div>
+        <div class="col-12">
+          <label class="form-label">Motivo</label>
+          <input class="form-control" [(ngModel)]="reason" placeholder="Motivo de la devolución/reclamo" />
+        </div>
+      </div>
+
+      <hr />
+
+      <!-- Refacciones -->
+      <div class="row g-2 align-items-end mb-2">
+        <div class="col-md-6">
+          <label class="form-label">Agregar refacción</label>
+          <input
+            class="form-control"
+            [(ngModel)]="busqueda"
+            (keyup.enter)="buscarPartes()"
+            placeholder="SKU o nombre…"
+          />
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-outline-primary w-100" (click)="buscarPartes()">Buscar</button>
+        </div>
+      </div>
+      @if (resultados().length) {
+        <ul class="list-group mb-3">
+          @for (p of resultados(); track p.id) {
+            <li class="list-group-item list-group-item-action d-flex justify-content-between" role="button" (click)="agregarLinea(p)">
+              <span><strong>{{ p.sku }}</strong> · {{ p.name }}</span>
+              <span class="text-muted">stock {{ p.stockQuantity }}</span>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (lineas().length) {
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Refacción</th>
+                <th style="width: 90px">Cantidad</th>
+                <th style="width: 120px">Precio</th>
+                <th style="width: 130px">Condición</th>
+                <th style="width: 110px">Subtotal</th>
+                <th style="width: 70px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (l of lineas(); track l.partId) {
+                <tr>
+                  <td><strong>{{ l.sku }}</strong> · {{ l.name }}</td>
+                  <td><input type="number" min="1" class="form-control form-control-sm" [(ngModel)]="l.quantity" /></td>
+                  <td><input type="number" min="0" step="0.01" class="form-control form-control-sm" [(ngModel)]="l.unitPrice" /></td>
+                  <td>
+                    <select class="form-select form-select-sm" [(ngModel)]="l.condition">
+                      <option value="GOOD">Buena</option>
+                      <option value="DEFECTIVE">Defectuosa</option>
+                    </select>
+                  </td>
+                  <td>{{ l.quantity * l.unitPrice | currency }}</td>
+                  <td><button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarLinea(l.partId)">Quitar</button></td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <th colspan="4" class="text-end">Total</th>
+                <th>{{ total() | currency }}</th>
+                <th></th>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      }
+
+      <button class="btn btn-primary mt-2" [disabled]="guardando()" (click)="guardar()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        Registrar devolución
+      </button>
+    </div>
+  </div>
+
+  <!-- Listado -->
+  <div class="card">
+    <div class="card-header"><h6 class="mb-0">Historial</h6></div>
+    <div class="card-body">
+      @if (cargando()) {
+        <div class="spinner-border" role="status"></div>
+      } @else if (!devoluciones().length) {
+        <p class="text-muted mb-0">Sin devoluciones registradas.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>Folio</th><th>Tipo</th><th>Reembolso</th><th>Garantía</th><th>Total</th><th>Fecha</th></tr>
+            </thead>
+            <tbody>
+              @for (d of devoluciones(); track d.id) {
+                <tr>
+                  <td><strong>{{ d.folio }}</strong></td>
+                  <td>{{ etiquetaKind(d.kind) }}</td>
+                  <td>{{ etiquetaRefund(d.refundMethod) }}</td>
+                  <td>@if (d.isWarranty) { <span class="badge bg-info">Sí</span> } @else { — }</td>
+                  <td>{{ d.refundTotal | currency }}</td>
+                  <td>{{ d.createdAt | date: "dd/MM/yy HH:mm" }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>
