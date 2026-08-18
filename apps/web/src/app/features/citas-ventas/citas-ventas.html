@@ -1,0 +1,100 @@
+<div class="container-fluid">
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0">Citas de ventas</h5>
+      <small class="text-muted">
+        Prueba de manejo, entrega, visita o seguimiento — del área de ventas de
+        unidades (separadas de las citas de taller).
+      </small>
+    </div>
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <label class="form-label">Tipo</label>
+          <select class="form-select" [(ngModel)]="form.purpose">
+            @for (p of purposes; track p.value) {
+              <option [value]="p.value">{{ p.label }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Sucursal</label>
+          <select class="form-select" [(ngModel)]="form.branchId">
+            @for (b of branches(); track b.id) {
+              <option [value]="b.id">{{ b.name }}</option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Cliente</label>
+          <input class="form-control" [(ngModel)]="form.clientName" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Teléfono</label>
+          <input class="form-control" [(ngModel)]="form.clientPhone" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Unidad de interés</label>
+          <input class="form-control" [(ngModel)]="form.unitLabel" placeholder="Ej: Honda Civic 2026" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Fecha y hora</label>
+          <input type="datetime-local" class="form-control" [(ngModel)]="form.scheduledAt" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Notas</label>
+          <input class="form-control" [(ngModel)]="form.notes" />
+        </div>
+      </div>
+      <button class="btn btn-primary mt-3" [disabled]="guardando()" (click)="guardar()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        Agendar cita
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h6 class="mb-0">Próximas citas</h6></div>
+    <div class="card-body">
+      @if (cargando()) {
+        <div class="spinner-border" role="status"></div>
+      } @else if (!citas().length) {
+        <p class="text-muted mb-0">Sin citas de ventas.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Fecha</th><th>Tipo</th><th>Cliente</th><th>Unidad</th>
+                <th>Estado</th><th style="width: 200px"></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of citas(); track c.id) {
+                <tr>
+                  <td>{{ c.scheduledAt | date: "dd/MM/yy HH:mm" }}</td>
+                  <td>{{ purposeLabel(c.purpose) }}</td>
+                  <td>
+                    {{ c.clientName }}
+                    @if (c.clientPhone) { <div class="text-muted small">{{ c.clientPhone }}</div> }
+                  </td>
+                  <td>{{ c.unitLabel || "—" }}</td>
+                  <td><span class="badge bg-light text-dark">{{ statusLabel(c.status) }}</span></td>
+                  <td>
+                    @if (c.status === "SCHEDULED") {
+                      <button class="btn btn-sm btn-outline-success me-1" (click)="cambiarEstado(c, 'CONFIRMED')">Confirmar</button>
+                    }
+                    @if (c.status === "SCHEDULED" || c.status === "CONFIRMED") {
+                      <button class="btn btn-sm btn-outline-primary me-1" (click)="cambiarEstado(c, 'DONE')">Realizada</button>
+                      <button class="btn btn-sm btn-outline-danger" (click)="cambiarEstado(c, 'CANCELLED')">Cancelar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

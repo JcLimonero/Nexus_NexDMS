@@ -83,6 +83,7 @@ export class NavService {
       active: false,
       children: [
         { path: "/units-inventory", title: "Inventario de unidades", type: "link" },
+        { path: "/sales-appointments", title: "Citas de ventas", type: "link" },
         { path: "/quotes", title: "Presupuestos de venta", type: "link" },
         { path: "/sales", title: "Ventas de unidades", type: "link" },
         { path: "/sales", title: "Reservas", type: "link" },

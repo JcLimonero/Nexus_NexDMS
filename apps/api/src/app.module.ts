@@ -17,6 +17,7 @@ import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.
 import { PurchaseRequisitionsModule } from './modules/purchase-requisitions/purchase-requisitions.module';
 import { PartReturnsModule } from './modules/part-returns/part-returns.module';
 import { DeliveriesModule } from './modules/deliveries/deliveries.module';
+import { SalesAppointmentsModule } from './modules/sales-appointments/sales-appointments.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { StockLocationsModule } from './modules/stock-locations/stock-locations.module';
 import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
@@ -137,6 +138,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     PurchaseRequisitionsModule,
     PartReturnsModule,
     DeliveriesModule,
+    SalesAppointmentsModule,
     StockLocationsModule,
     StockMovementsModule,
     StockCountsModule,

@@ -51,6 +51,14 @@ export const content: Routes = [
       import("../../../app/features/entregas/entregas").then((m) => m.Entregas),
   },
   {
+    path: "sales-appointments",
+    data: { breadcrumb: "Citas de ventas", title: "Citas de ventas" },
+    loadComponent: () =>
+      import("../../../app/features/citas-ventas/citas-ventas").then(
+        (m) => m.CitasVentas,
+      ),
+  },
+  {
     path: "units-inventory",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Inventario unidades" , module: "units-inventory" },
@@ -249,4 +257,5 @@ export const content: Routes = [
       ),
   },
 ];
+
 
