@@ -108,4 +108,19 @@ export class QuotationItem {
   /** Fotos de lo que se recomienda cambiar, para que el cliente lo vea. */
   @OneToMany(() => QuotationItemPhoto, (p) => p.item)
   photos?: QuotationItemPhoto[];
+
+  // ── Trabajo → refacciones (R1 v2) ──
+  // Un ítem "trabajo" es padre (parentItemId null) y lleva la mano de obra;
+  // sus refacciones son ítems hijos que lo apuntan.
+
+  @Column({ name: 'parent_item_id', type: 'uuid', nullable: true })
+  parentItemId: string | null;
+
+  @ManyToOne(() => QuotationItem, (i) => i.children, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'parent_item_id' })
+  parent?: QuotationItem;
+
+  /** Refacciones que cuelgan de este trabajo. */
+  @OneToMany(() => QuotationItem, (i) => i.parent)
+  children?: QuotationItem[];
 }

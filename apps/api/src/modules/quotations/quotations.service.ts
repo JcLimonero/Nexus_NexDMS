@@ -179,6 +179,13 @@ export class QuotationsService {
     }
 
     let subtotal = 0;
+    type RefData = {
+      partId: string;
+      description: string;
+      quantity: number;
+      unitPrice: number;
+      subtotal: number;
+    };
     const itemsData: Array<{
       partId?: string;
       catalogUnitId?: string;
@@ -189,6 +196,7 @@ export class QuotationsService {
       subtotal: number;
       urgency?: QuotationLineUrgencyEnum;
       technicianNote?: string | null;
+      refacciones: RefData[];
     }> = [];
 
     for (const item of dto.items) {
@@ -234,6 +242,32 @@ export class QuotationsService {
       const discount = item.discount ?? 0;
       const itemSubtotal = item.quantity * unitPrice - discount;
       subtotal += itemSubtotal;
+
+      // Refacciones del trabajo: cada una resuelve su precio y suma al total.
+      const refacciones: RefData[] = [];
+      for (const r of item.refacciones ?? []) {
+        const part = await this.partRepo.findOne({
+          where: {
+            id: r.partId,
+            branchId: dto.branchId,
+            tenantId: user.tenantId,
+          },
+        });
+        if (!part) {
+          throw new NotFoundException(`Parte ${r.partId} no encontrada`);
+        }
+        const rPrice = r.unitPrice ?? this.getPriceFromPart(part, dto.priceList);
+        const rSub = r.quantity * rPrice;
+        subtotal += rSub;
+        refacciones.push({
+          partId: r.partId,
+          description: part.name,
+          quantity: r.quantity,
+          unitPrice: rPrice,
+          subtotal: rSub,
+        });
+      }
+
       itemsData.push({
         partId: item.partId ?? undefined,
         catalogUnitId: item.catalogUnitId ?? undefined,
@@ -244,6 +278,7 @@ export class QuotationsService {
         subtotal: itemSubtotal,
         urgency: item.urgency,
         technicianNote: item.technicianNote ?? null,
+        refacciones,
       });
     }
 
@@ -299,6 +334,22 @@ export class QuotationsService {
             technicianNote: it.technicianNote ?? null,
           });
           await em.save(qi);
+
+          // Las refacciones del trabajo cuelgan del ítem recién guardado.
+          for (const r of it.refacciones) {
+            await em.save(
+              em.create(QuotationItem, {
+                quotationId: saved.id,
+                parentItemId: qi.id,
+                partId: r.partId,
+                description: r.description,
+                quantity: r.quantity,
+                unitPrice: r.unitPrice,
+                discount: 0,
+                subtotal: r.subtotal,
+              }),
+            );
+          }
         }
 
         return saved.id;
