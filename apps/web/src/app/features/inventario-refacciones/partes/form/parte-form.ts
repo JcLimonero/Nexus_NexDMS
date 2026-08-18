@@ -253,4 +253,21 @@ export class ParteForm implements OnInit {
       error: () => this.toastr.error("No se pudo quitar"),
     });
   }
+
+  /** Guarda la garantía que ese proveedor da sobre la refacción. */
+  guardarGarantia(t: PartSupplierTop): void {
+    const id = this.parteId();
+    if (!id) return;
+    this.inventarioService
+      .setSupplierWarranty(id, {
+        supplierId: t.supplierId,
+        warrantyMonths: t.warrantyMonths ? Number(t.warrantyMonths) : null,
+        warrantyNote: t.warrantyNote || null,
+      })
+      .subscribe({
+        next: () => this.toastr.success("Garantía guardada"),
+        error: (err) =>
+          this.toastr.error(err?.error?.message || "No se pudo guardar"),
+      });
+  }
 }

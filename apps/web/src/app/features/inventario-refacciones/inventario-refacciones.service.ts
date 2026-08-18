@@ -94,6 +94,21 @@ export class InventarioRefaccionesService {
     );
   }
 
+  /** Registra la garantía que un proveedor da sobre la refacción. */
+  setSupplierWarranty(
+    partId: string,
+    dto: {
+      supplierId: string;
+      warrantyMonths?: number | null;
+      warrantyNote?: string | null;
+    }
+  ): Observable<unknown> {
+    return this.http.post(
+      `/api/v1/purchase-orders/parts/${partId}/supplier-warranty`,
+      dto
+    );
+  }
+
   // Categorías
   getCategories(filters: PartCategoryFilters = {}): Observable<PartCategoriesResponse> {
     let params = new HttpParams();

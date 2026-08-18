@@ -49,6 +49,8 @@ export interface PartSupplierTop {
   lastPurchasedAt: string | null;
   timesPurchased: number;
   supplierSku: string | null;
+  warrantyMonths: number | null;
+  warrantyNote: string | null;
 }
 
 export interface PartsResponse {

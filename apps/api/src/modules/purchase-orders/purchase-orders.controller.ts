@@ -52,6 +52,22 @@ export class PurchaseOrdersController {
     return this.purchaseOrdersService.topProveedores(user, partId);
   }
 
+  /** Registra la garantía que un proveedor da sobre una refacción. */
+  @Post('parts/:partId/supplier-warranty')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE')
+  setSupplierWarranty(
+    @CurrentUser() user: UserPayload,
+    @Param('partId', ParseUUIDPipe) partId: string,
+    @Body()
+    dto: {
+      supplierId: string;
+      warrantyMonths?: number | null;
+      warrantyNote?: string | null;
+    },
+  ) {
+    return this.purchaseOrdersService.setSupplierWarranty(user, partId, dto);
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
   findOne(

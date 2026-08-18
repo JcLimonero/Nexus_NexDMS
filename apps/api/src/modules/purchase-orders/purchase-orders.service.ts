@@ -602,6 +602,8 @@ export class PurchaseOrdersService {
         'ps.last_purchased_at AS "lastPurchasedAt"',
         'ps.times_purchased AS "timesPurchased"',
         'ps.supplier_sku AS "supplierSku"',
+        'ps.warranty_months AS "warrantyMonths"',
+        'ps.warranty_note AS "warrantyNote"',
       ])
       .where('ps.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('ps.part_id = :partId', { partId })
@@ -610,6 +612,48 @@ export class PurchaseOrdersService {
       .limit(3)
       .getRawMany();
     return rows;
+  }
+
+  /**
+   * Registra la garantía que un proveedor otorga sobre una refacción. Si aún
+   * no hay historial de ese proveedor para la parte, crea la relación.
+   */
+  async setSupplierWarranty(
+    user: UserPayload,
+    partId: string,
+    dto: {
+      supplierId: string;
+      warrantyMonths?: number | null;
+      warrantyNote?: string | null;
+    },
+  ): Promise<PartSupplier> {
+    const part = await this.partRepo.findOne({
+      where: { id: partId, tenantId: user.tenantId },
+    });
+    if (!part) {
+      throw new NotFoundException(`Parte ${partId} no encontrada`);
+    }
+    const supplier = await this.supplierRepo.findOne({
+      where: { id: dto.supplierId, tenantId: user.tenantId },
+    });
+    if (!supplier) {
+      throw new NotFoundException(`Proveedor ${dto.supplierId} no encontrado`);
+    }
+    let ps = await this.partSupplierRepo.findOne({
+      where: { partId, supplierId: dto.supplierId },
+    });
+    if (!ps) {
+      ps = this.partSupplierRepo.create({
+        tenantId: user.tenantId,
+        partId,
+        supplierId: dto.supplierId,
+        lastPrice: 0,
+        timesPurchased: 0,
+      });
+    }
+    ps.warrantyMonths = dto.warrantyMonths ?? null;
+    ps.warrantyNote = dto.warrantyNote ?? null;
+    return this.partSupplierRepo.save(ps);
   }
 
   // ─── Importar factura de compra (CFDI XML) ──────────────────

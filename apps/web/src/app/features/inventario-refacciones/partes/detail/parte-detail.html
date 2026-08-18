@@ -167,7 +167,7 @@
                 @if (topProveedores().length) {
                   <table class="table table-sm">
                     <thead>
-                      <tr><th>Proveedor</th><th>Últ. precio</th><th>Comprado</th></tr>
+                      <tr><th>Proveedor</th><th>Últ. precio</th><th>Comprado</th><th>Garantía</th></tr>
                     </thead>
                     <tbody>
                       @for (t of topProveedores(); track t.supplierId) {
@@ -175,6 +175,7 @@
                           <td>{{ t.supplierName }}</td>
                           <td>{{ t.lastPrice | number:'1.2-2' }}</td>
                           <td>{{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}</td>
+                          <td>{{ t.warrantyMonths ? t.warrantyMonths + " m" : "—" }}</td>
                         </tr>
                       }
                     </tbody>

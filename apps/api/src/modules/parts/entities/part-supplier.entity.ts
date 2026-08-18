@@ -39,6 +39,13 @@ export class PartSupplier {
   @Column({ name: 'times_purchased', type: 'int', default: 0 })
   timesPurchased: number;
 
+  /** Garantía que el proveedor otorga sobre esta refacción (meses). */
+  @Column({ name: 'warranty_months', type: 'int', nullable: true })
+  warrantyMonths: number | null;
+
+  @Column({ name: 'warranty_note', type: 'varchar', length: 300, nullable: true })
+  warrantyNote: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

@@ -208,21 +208,42 @@
               </div>
 
               <div class="col-lg-5">
-                <h6>Top proveedores</h6>
+                <h6>Top proveedores y garantía</h6>
                 <p class="text-muted small">
-                  Últimos proveedores de esta refacción, para comparar al comprar.
+                  Últimos proveedores de esta refacción. Registra la garantía
+                  (meses) que cada uno te da por lo que le compras.
                 </p>
                 @if (topProveedores().length) {
                   <table class="table table-sm align-middle">
                     <thead>
-                      <tr><th>Proveedor</th><th>Últ. precio</th><th>Comprado</th></tr>
+                      <tr>
+                        <th>Proveedor</th>
+                        <th>Últ. precio</th>
+                        <th style="width: 90px">Garantía</th>
+                        <th style="width: 70px"></th>
+                      </tr>
                     </thead>
                     <tbody>
                       @for (t of topProveedores(); track t.supplierId) {
                         <tr>
-                          <td>{{ t.supplierName }}</td>
+                          <td>
+                            {{ t.supplierName }}
+                            <div class="text-muted small">
+                              {{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}
+                            </div>
+                          </td>
                           <td>{{ t.lastPrice | currency }}</td>
-                          <td>{{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}</td>
+                          <td>
+                            <div class="input-group input-group-sm">
+                              <input type="number" min="0" class="form-control" [(ngModel)]="t.warrantyMonths" />
+                              <span class="input-group-text">m</span>
+                            </div>
+                          </td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="guardarGarantia(t)">
+                              Guardar
+                            </button>
+                          </td>
                         </tr>
                       }
                     </tbody>
