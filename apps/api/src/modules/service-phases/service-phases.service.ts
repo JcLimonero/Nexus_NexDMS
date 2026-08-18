@@ -41,6 +41,10 @@ export interface UnidadEnTablero {
   semaforo: Semaforo;
   /** Cuánto se pasó del estimado, en minutos. 0 si va en tiempo. */
   retraso: number;
+  /** Cuándo se recibió la unidad; base de la "vista por días". */
+  recibidaEn: string;
+  /** Fecha promesa de entrega, si se pactó. */
+  promisedAt: string | null;
 }
 
 @Injectable()
@@ -317,6 +321,8 @@ export class ServicePhasesService {
         estimadoTotal,
         semaforo,
         retraso: Math.max(0, referencia.transcurrido - referencia.estimado),
+        recibidaEn: o.createdAt.toISOString(),
+        promisedAt: o.promisedAt ? o.promisedAt.toISOString() : null,
       };
     });
   }

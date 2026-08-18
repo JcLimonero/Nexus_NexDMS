@@ -6,64 +6,135 @@
     </div>
 
     @if (loading()) {
-      <p class="muted center">Cargando cotización…</p>
+      <p class="muted center">Cargando presupuesto…</p>
     } @else if (error()) {
       <p class="error-box">{{ error() }}</p>
     } @else if (resultado(); as r) {
       <div class="thanks">
-        <div class="thanks-icon">{{ r === "aceptada" ? "✅" : "📝" }}</div>
-        <h1>
-          {{ r === "aceptada" ? "¡Autorización recibida!" : "Cotización rechazada" }}
-        </h1>
+        <div class="thanks-icon">✅</div>
+        <h1>¡Listo!</h1>
         <p class="muted">
-          @if (r === "aceptada") {
-            El taller ya puede iniciar el servicio. Te avisaremos cuando tu
-            unidad esté lista.
-          } @else {
-            Registramos tu respuesta. La sucursal se pondrá en contacto contigo.
-          }
+          Autorizaste <strong>{{ r.aceptadas }}</strong>
+          {{ r.aceptadas === 1 ? "trabajo" : "trabajos" }}
+          @if (r.aceptadas > 0) {
+            por <strong>{{ money(r.total) }}</strong>
+          }.
+          El taller comenzará con lo aprobado.
+        </p>
+        <p class="muted small">
+          💡 Los trabajos que no aprobaste quedan guardados; el asesor podrá
+          recordártelos en tu próxima visita.
         </p>
       </div>
     } @else if (data(); as d) {
-      <h1>Cotización {{ d.folio }}</h1>
+      <h1>Presupuesto {{ d.folio }}</h1>
       <p class="muted">{{ vehiculoLabel() }}</p>
 
       @if (d.respondida) {
-        <p class="status-banner">Esta cotización ya fue respondida.</p>
+        <p class="status-banner">Este presupuesto ya fue respondido.</p>
       } @else {
-        <h2>Servicios propuestos</h2>
+        <p class="lead">
+          Revisa cada trabajo y aprueba los que quieras. <strong>Tú decides.</strong>
+        </p>
+
         <div class="conceptos">
-          @for (c of d.conceptos; track c.descripcion) {
-            <div class="concepto">
-              <div class="c-desc">
-                {{ c.descripcion }}
-                @if (c.cantidad > 1) {
-                  <span class="c-cant">× {{ c.cantidad }}</span>
-                }
+          @for (c of d.conceptos; track c.id) {
+            <div
+              class="concepto-card"
+              [class.sel-si]="esDecision(c.id, 'ACCEPTED')"
+              [class.sel-no]="esDecision(c.id, 'REJECTED')"
+              [class.sel-duda]="esDecision(c.id, 'CALLBACK')"
+            >
+              @if (c.fotos.length) {
+                <div class="c-fotos">
+                  @for (f of c.fotos; track f) {
+                    <img [src]="f" alt="Foto del trabajo" />
+                  }
+                </div>
+              }
+
+              <div class="c-top">
+                <span class="c-urg urg-{{ c.urgencia }}">{{ URG[c.urgencia] }}</span>
+                <strong class="c-titulo">{{ c.descripcion }}</strong>
+                <span class="c-monto">{{ money(c.subtotal) }}</span>
               </div>
-              <div class="c-monto">{{ money(c.subtotal) }}</div>
+
+              @if (c.cantidad > 1) {
+                <span class="c-cant">Cantidad: {{ c.cantidad }} · {{ money(c.precio) }} c/u</span>
+              }
+
+              @if (c.notaTecnico) {
+                <div class="c-nota">
+                  <span>🔧</span>
+                  <span><b>Nota del técnico:</b> {{ c.notaTecnico }}</span>
+                </div>
+              }
+
+              <div class="c-acciones">
+                <button
+                  type="button"
+                  class="c-no"
+                  [class.on]="esDecision(c.id, 'REJECTED')"
+                  (click)="decidir(c.id, 'REJECTED')"
+                >✕ No por ahora</button>
+                <button
+                  type="button"
+                  class="c-si"
+                  [class.on]="esDecision(c.id, 'ACCEPTED')"
+                  (click)="decidir(c.id, 'ACCEPTED')"
+                >✓ Aprobar</button>
+              </div>
+              <button
+                type="button"
+                class="c-duda"
+                [class.on]="esDecision(c.id, 'CALLBACK')"
+                (click)="decidir(c.id, 'CALLBACK')"
+              >🤔 Tengo dudas — que me llamen</button>
             </div>
           }
-        </div>
-
-        <div class="totales">
-          <div><span>Subtotal</span><span>{{ money(d.subtotal) }}</span></div>
-          <div><span>IVA</span><span>{{ money(d.taxAmount) }}</span></div>
-          <div class="total"><span>Total</span><span>{{ money(d.total) }}</span></div>
         </div>
 
         @if (d.conditions) {
           <p class="muted small">{{ d.conditions }}</p>
         }
 
-        <label class="comment-label">¿Algún comentario? (opcional)</label>
-        <textarea rows="2" [(ngModel)]="nota" placeholder="Escribe aquí si tienes alguna indicación"></textarea>
+        <!-- Firma -->
+        <div class="firma-bloque">
+          <label>Firma para autorizar</label>
+          <div class="firma-lienzo">
+            <canvas
+              #firmaCanvas
+              (mousedown)="iniciarFirma($event)"
+              (mousemove)="moverFirma($event)"
+              (mouseup)="finFirma()"
+              (mouseleave)="finFirma()"
+              (touchstart)="iniciarFirma($event)"
+              (touchmove)="moverFirma($event)"
+              (touchend)="finFirma()"
+            ></canvas>
+            @if (!firmado()) {
+              <span class="firma-hint">Firma aquí con el dedo</span>
+            }
+          </div>
+          <button type="button" class="firma-limpiar" (click)="limpiarFirma()">
+            ↺ Borrar firma
+          </button>
+        </div>
 
-        <button class="btn-send" [disabled]="enviando()" (click)="responder(true)">
-          {{ enviando() ? "Enviando…" : "Autorizar el servicio" }}
-        </button>
-        <button class="btn-reject" [disabled]="enviando()" (click)="responder(false)">
-          No autorizar
+        <div class="totales-sticky">
+          <div class="ts-info">
+            <span>Autorizas</span>
+            <b>{{ aceptadas().length }} {{ aceptadas().length === 1 ? "trabajo" : "trabajos" }}</b>
+          </div>
+          <div class="ts-total">{{ money(totalAceptado()) }}</div>
+        </div>
+
+        <button
+          class="btn-send"
+          [disabled]="enviando() || !hayDecision()"
+          (click)="enviar()"
+        >
+          {{ enviando() ? "Enviando…" : "Autorizar y firmar" }}
         </button>
       }
 

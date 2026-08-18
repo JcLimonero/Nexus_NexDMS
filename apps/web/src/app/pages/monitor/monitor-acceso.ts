@@ -66,7 +66,7 @@ export class MonitorAcceso {
       para: "Monitor de citas",
       ruta: "/monitor/citas",
       email: "recepcion@demo.local",
-      password: "demo1234",
+      password: "demo123",
     },
   ];
 

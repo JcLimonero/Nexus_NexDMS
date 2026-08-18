@@ -136,6 +136,10 @@ export class Quotation {
   @Column({ name: 'pdf_key', type: 'varchar', length: 500, nullable: true })
   pdfKey: string | null;
 
+  /** Firma del cliente al autorizar, como imagen en almacenamiento privado. */
+  @Column({ name: 'signature_key', type: 'varchar', length: 500, nullable: true })
+  signatureKey: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

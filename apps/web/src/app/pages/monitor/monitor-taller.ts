@@ -11,7 +11,12 @@ import { ActivatedRoute } from "@angular/router";
 import { Title } from "@angular/platform-browser";
 
 import { BranchesService } from "../../features/inventario-refacciones/services/branches.service";
-import { Magneto, MonitorService, Semaforo } from "./monitor.service";
+import {
+  Magneto,
+  MonitorService,
+  Semaforo,
+  UnidadEnTablero,
+} from "./monitor.service";
 import { LineaDeTiempo } from "./linea-de-tiempo";
 
 /** Un trabajo ya colocado sobre la línea de tiempo, en porcentaje. */
@@ -86,6 +91,10 @@ export class MonitorTaller implements OnInit, OnDestroy {
   sucursales = signal<{ id: string; name: string }[]>([]);
   actualizado = signal<Date>(new Date());
   sinConexion = signal(false);
+  /** Vista del tablero: por tiempo (magneto) o por estado (columnas). */
+  vista = signal<"tiempo" | "estado">("tiempo");
+  /** Unidades para la vista por estado (endpoint tablero). */
+  unidades = signal<UnidadEnTablero[]>([]);
   /** El eje de horas, compartido con el tablero de citas. */
   readonly eje = new LineaDeTiempo();
   readonly horas = this.eje.horas;
@@ -244,6 +253,53 @@ export class MonitorTaller implements OnInit, OnDestroy {
       },
       error: () => this.sinConexion.set(true),
     });
+    // Las mismas unidades, pero como lista, para la vista por estado.
+    this.srv.tablero(b).subscribe({
+      next: (u) => this.unidades.set(u),
+    });
+  }
+
+  /** Semáforo por estado, como lo pidió Ricardo. Cada unidad cae en uno. */
+  readonly ESTADOS = [
+    { clave: "rojo", titulo: "Sin mecánico" },
+    { clave: "amarillo", titulo: "En reparación" },
+    { clave: "naranja", titulo: "Espera refacciones" },
+    { clave: "verde", titulo: "Terminada" },
+  ] as const;
+
+  tipoEstado(u: UnidadEnTablero): "rojo" | "amarillo" | "naranja" | "verde" {
+    if (u.estado === "READY") return "verde";
+    if (u.estado === "WAITING_PARTS") return "naranja";
+    // Sin nadie trabajándola: es la que hay que atender primero.
+    if (!u.responsable) return "rojo";
+    return "amarillo";
+  }
+
+  /** Las cuatro columnas del tablero por estado, en orden de urgencia. */
+  columnas = computed(() => {
+    const grupos: Record<string, UnidadEnTablero[]> = {
+      rojo: [],
+      amarillo: [],
+      naranja: [],
+      verde: [],
+    };
+    for (const u of this.unidades()) grupos[this.tipoEstado(u)].push(u);
+    return this.ESTADOS.map((e) => ({ ...e, unidades: grupos[e.clave] }));
+  });
+
+  cambiarVista(v: "tiempo" | "estado"): void {
+    this.vista.set(v);
+  }
+
+  /** Días que la unidad lleva en el taller; base de la "vista por días". */
+  diasEnTaller(iso: string): number {
+    const ms = Date.now() - new Date(iso).getTime();
+    return Math.max(0, Math.floor(ms / 86_400_000));
+  }
+
+  etiquetaDias(iso: string): string {
+    const d = this.diasEnTaller(iso);
+    return d === 0 ? "Hoy" : d === 1 ? "1 día" : `${d} días`;
   }
 
   duracion(min: number): string {

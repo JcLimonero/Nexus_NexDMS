@@ -4,6 +4,7 @@ import { Throttle } from '@nestjs/throttler';
 import { PublicPortalService } from './public-portal.service';
 import { AnswerSurveyDto } from './dto/answer-survey.dto';
 import { ReceptionService } from '../service-orders/reception.service';
+import { QuotationLineStatusEnum } from '../quotations/entities/quotation-item.entity';
 
 /**
  * Endpoints públicos (sin auth) accesibles por token:
@@ -68,5 +69,23 @@ export class PublicPortalController {
     @Body() dto: { acepta: boolean; nota?: string },
   ) {
     return this.receptionService.responderCotizacion(token, dto);
+  }
+
+  /** Autorización parcial: el cliente decide cada línea y firma. */
+  @Post('quotations/:token/lineas')
+  @Throttle({ short: { limit: 5, ttl: 60000 } })
+  answerQuotationLines(
+    @Param('token', ParseUUIDPipe) token: string,
+    @Body()
+    dto: {
+      lineas: {
+        itemId: string;
+        decision: QuotationLineStatusEnum;
+        nota?: string;
+      }[];
+      firma?: string;
+    },
+  ) {
+    return this.receptionService.responderCotizacionPorLinea(token, dto);
   }
 }

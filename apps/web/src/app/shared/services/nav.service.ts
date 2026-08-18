@@ -143,6 +143,8 @@ export class NavService {
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/workshop/citas", title: "Citas", type: "link" },
+        { path: "/workshop/tablero-taller", title: "Monitor de taller", type: "link" },
+        { path: "/workshop/tablero-citas", title: "Monitor de citas", type: "link" },
       ],
     },
     {

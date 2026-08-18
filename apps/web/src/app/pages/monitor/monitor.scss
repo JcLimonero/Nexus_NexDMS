@@ -635,3 +635,156 @@
     box-shadow: var(--focus-ring);
   }
 }
+
+/* ── Vista por estado: el semáforo que pidió Ricardo ──────────────────
+   Dos lecturas del mismo tablero. La de tiempo es el magneto; esta agrupa
+   por estado en cuatro columnas de color, pensada para leerse por días. */
+.vista-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  overflow: hidden;
+
+  button {
+    border: none;
+    background: var(--card);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--text-base);
+    height: var(--control-h);
+    padding: 0 16px;
+    cursor: pointer;
+
+    & + button {
+      border-left: 1px solid var(--border);
+    }
+    &:hover {
+      color: var(--text-primary);
+    }
+    &.activo {
+      background: var(--primary, #105078);
+      color: #fff;
+    }
+  }
+}
+
+.tablero-estado {
+  margin-top: var(--space-24);
+}
+
+.estado-columnas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.estado-col {
+  --c: var(--text-secondary);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--c);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 120px;
+
+  &[data-estado="rojo"] {
+    --c: var(--danger, #c0392b);
+  }
+  &[data-estado="amarillo"] {
+    --c: #c99a2e;
+  }
+  &[data-estado="naranja"] {
+    --c: #d97706;
+  }
+  &[data-estado="verde"] {
+    --c: var(--success, #157f52);
+  }
+}
+
+.estado-col-cab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  .estado-punto {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--c);
+    flex-shrink: 0;
+  }
+  h2 {
+    margin: 0;
+    flex: 1;
+    font-size: var(--text-lg, 18px);
+    font-weight: var(--font-semibold, 600);
+    color: var(--text-primary);
+  }
+  .estado-conteo {
+    font-size: var(--text-lg, 18px);
+    font-weight: var(--font-bold, 800);
+    color: var(--c);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.estado-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estado-col-vacia {
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 6px 0;
+  opacity: 0.6;
+}
+
+.estado-tarjeta {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--c);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: var(--text-base);
+    color: var(--text-primary);
+  }
+  .estado-datos {
+    font-size: var(--text-sm, 13px);
+    color: var(--text-secondary);
+  }
+  .estado-promesa {
+    margin-top: 8px;
+    font-size: var(--text-sm, 13px);
+    color: var(--text-secondary);
+    font-weight: var(--font-semibold, 600);
+  }
+}
+
+.estado-tarjeta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .estado-folio {
+    font-size: var(--text-sm, 13px);
+    font-weight: var(--font-bold, 800);
+    color: var(--c);
+  }
+  .estado-dias {
+    font-size: var(--text-sm, 13px);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+}

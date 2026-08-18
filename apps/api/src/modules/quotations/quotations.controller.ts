@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { QuotationsService } from './quotations.service';
@@ -103,5 +105,18 @@ export class QuotationsController {
     @Body() dto: { vehicleId?: string },
   ) {
     return this.quotationsService.convert(user, id, dto ?? {});
+  }
+
+  /** Sube una foto de lo que se recomienda cambiar a una línea del presupuesto. */
+  @Post(':id/items/:itemId/photos')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadItemPhoto(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('itemId', ParseUUIDPipe) itemId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.quotationsService.subirFotoLinea(user, id, itemId, file);
   }
 }

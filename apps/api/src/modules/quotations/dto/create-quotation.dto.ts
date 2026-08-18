@@ -13,6 +13,7 @@ import {
   QuotationTypeEnum,
   QuotationPriceListEnum,
 } from '../entities/quotation.entity';
+import { QuotationLineUrgencyEnum } from '../entities/quotation-item.entity';
 
 export class CreateQuotationItemDto {
   @IsOptional()
@@ -39,6 +40,16 @@ export class CreateQuotationItemDto {
   @IsNumber()
   @Min(0)
   discount?: number;
+
+  /** Urgencia del trabajo, como la verá el cliente. */
+  @IsOptional()
+  @IsEnum(QuotationLineUrgencyEnum)
+  urgency?: QuotationLineUrgencyEnum;
+
+  /** Nota del técnico para el cliente sobre esta línea. */
+  @IsOptional()
+  @IsString()
+  technicianNote?: string;
 }
 
 export class CreateQuotationDto {

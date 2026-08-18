@@ -33,7 +33,16 @@ import {
   QuotationStatusEnum,
   QuotationTypeEnum,
 } from '../quotations/entities/quotation.entity';
-import { QuotationItem } from '../quotations/entities/quotation-item.entity';
+import {
+  QuotationItem,
+  QuotationLineStatusEnum,
+} from '../quotations/entities/quotation-item.entity';
+import {
+  ServiceOrderOperation,
+  ChargeTypeEnum,
+  OperationSourceEnum,
+} from './entities/service-order-operation.entity';
+import { ServiceOrderPart } from './entities/service-order-part.entity';
 import {
   Client,
   ClientTypeEnum,
@@ -1041,7 +1050,7 @@ export class ReceptionService {
   async cotizacionPublica(token: string) {
     const q = await this.quotationRepo.findOne({
       where: { clientToken: token },
-      relations: ['items', 'branch'],
+      relations: ['items', 'items.photos', 'branch'],
     });
     if (!q) throw new NotFoundException('Cotización no encontrada');
 
@@ -1051,10 +1060,31 @@ export class ReceptionService {
     });
     const v = so?.vehicle as unknown as Record<string, unknown> | undefined;
 
+    // Cada concepto llega con su urgencia, la nota del técnico, su estado y las
+    // fotos firmadas, para que el cliente decida trabajo por trabajo.
+    const conceptos = await Promise.all(
+      (q.items ?? []).map(async (i) => ({
+        id: i.id,
+        descripcion: i.description,
+        cantidad: i.quantity,
+        precio: Number(i.unitPrice),
+        subtotal: Number(i.subtotal),
+        urgencia: i.urgency,
+        notaTecnico: i.technicianNote,
+        estado: i.lineStatus,
+        fotos: (
+          await Promise.all(
+            (i.photos ?? []).map((p) => this.ligaDeFoto(p.storageKey)),
+          )
+        ).filter((u): u is string => !!u),
+      })),
+    );
+
     return {
       folio: q.folio,
       status: q.status,
       respondida: q.clientRespondedAt !== null,
+      firmada: q.signatureKey !== null,
       subtotal: Number(q.subtotal),
       taxAmount: Number(q.taxAmount),
       total: Number(q.total),
@@ -1068,12 +1098,7 @@ export class ReceptionService {
             placa: (v['plate'] ?? null) as string | null,
           }
         : null,
-      conceptos: (q.items ?? []).map((i) => ({
-        descripcion: i.description,
-        cantidad: i.quantity,
-        precio: Number(i.unitPrice),
-        subtotal: Number(i.subtotal),
-      })),
+      conceptos,
     };
   }
 
@@ -1127,5 +1152,149 @@ export class ReceptionService {
           }
         : {}),
     };
+  }
+
+  /**
+   * Autorización parcial: el cliente decide cada línea (acepta / rechaza /
+   * pide llamada) y firma. Lo aceptado arranca el servicio; lo rechazado
+   * queda guardado en la línea para re-ofertar en otra visita.
+   */
+  async responderCotizacionPorLinea(
+    token: string,
+    dto: {
+      lineas: {
+        itemId: string;
+        decision: QuotationLineStatusEnum;
+        nota?: string;
+      }[];
+      firma?: string;
+    },
+  ) {
+    const q = await this.quotationRepo.findOne({
+      where: { clientToken: token },
+      relations: ['items'],
+    });
+    if (!q) throw new NotFoundException('Cotización no encontrada');
+    if (q.clientRespondedAt) {
+      throw new BadRequestException('Esta cotización ya fue respondida');
+    }
+
+    const porId = new Map((q.items ?? []).map((i) => [i.id, i]));
+    for (const l of dto.lineas ?? []) {
+      const item = porId.get(l.itemId);
+      if (!item) continue;
+      item.lineStatus = l.decision;
+      item.clientLineNote = l.nota?.trim() || null;
+    }
+    const items = [...porId.values()];
+    await this.quotationItemRepo.save(items);
+
+    const aceptadas = items.filter(
+      (i) => i.lineStatus === QuotationLineStatusEnum.ACCEPTED,
+    ).length;
+    const rechazadas = items.filter(
+      (i) => i.lineStatus === QuotationLineStatusEnum.REJECTED,
+    ).length;
+    const llamadas = items.filter(
+      (i) => i.lineStatus === QuotationLineStatusEnum.CALLBACK,
+    ).length;
+
+    // La firma llega como data URL; se guarda como imagen en almacenamiento
+    // privado y solo se conserva su llave. Si el almacenamiento falla no se
+    // tira la respuesta: la decisión del cliente pesa más que la constancia.
+    if (dto.firma) {
+      const m = /^data:(image\/\w+);base64,(.+)$/.exec(dto.firma);
+      if (m) {
+        try {
+          const key = `presupuestos/${q.id}/firma-${Date.now()}.png`;
+          await this.storage.upload(Buffer.from(m[2], 'base64'), key, m[1]);
+          q.signatureKey = key;
+        } catch (e) {
+          this.logger.warn(
+            `No se pudo guardar la firma de ${q.folio}: ${(e as Error).message}`,
+          );
+        }
+      }
+    }
+
+    q.status =
+      aceptadas > 0
+        ? QuotationStatusEnum.ACCEPTED
+        : rechazadas > 0
+          ? QuotationStatusEnum.REJECTED
+          : q.status;
+    q.clientRespondedAt = new Date();
+    await this.quotationRepo.save(q);
+
+    // El trabajo aprobado entra a la orden (materialización); si estaba recién
+    // recibida, arranca el servicio.
+    const so = await this.soRepo.findOne({
+      where: { receptionQuotationId: q.id },
+    });
+    if (so && aceptadas > 0) {
+      await this.materializarLineas(
+        so.id,
+        items.filter((i) => i.lineStatus === QuotationLineStatusEnum.ACCEPTED),
+      );
+      if (so.status === ServiceOrderStatusEnum.RECEIVED) {
+        await this.soRepo.update(so.id, {
+          status: ServiceOrderStatusEnum.DIAGNOSIS,
+        });
+      }
+    }
+
+    return {
+      ok: true,
+      aceptadas,
+      rechazadas,
+      llamadas,
+      firmada: !!q.signatureKey,
+    };
+  }
+
+  /**
+   * Las líneas que el cliente aprobó entran a la orden como trabajo real: las
+   * refacciones a `service_order_parts` y la mano de obra a
+   * `service_order_operations`, para que el técnico fiche y la caja cobre.
+   */
+  private async materializarLineas(
+    serviceOrderId: string,
+    aceptadas: QuotationItem[],
+  ): Promise<void> {
+    if (!aceptadas.length) return;
+    const opRepo = this.dataSource.getRepository(ServiceOrderOperation);
+    const partRepo = this.dataSource.getRepository(ServiceOrderPart);
+    let orden = await opRepo.count({ where: { serviceOrderId } });
+
+    const ops: ServiceOrderOperation[] = [];
+    const parts: ServiceOrderPart[] = [];
+    for (const it of aceptadas) {
+      if (it.partId) {
+        parts.push(
+          partRepo.create({
+            serviceOrderId,
+            partId: it.partId,
+            quantity: it.quantity,
+            unitPrice: Number(it.unitPrice),
+            subtotal: Number(it.subtotal),
+            notes: 'Autorizado en presupuesto',
+          }),
+        );
+      } else {
+        ops.push(
+          opRepo.create({
+            serviceOrderId,
+            description: it.description,
+            standardMinutes: 0,
+            laborPrice: Number(it.subtotal),
+            chargeType: ChargeTypeEnum.CLIENT,
+            source: OperationSourceEnum.RECEPTION,
+            sortOrder: orden++,
+          }),
+        );
+      }
+    }
+    if (parts.length) await partRepo.save(parts);
+    if (ops.length) await opRepo.save(ops);
   }
 }

@@ -12,7 +12,10 @@ import {
   QuotationTypeEnum,
   QuotationPriceListEnum,
 } from './entities/quotation.entity';
-import { QuotationItem } from './entities/quotation-item.entity';
+import {
+  QuotationItem,
+  QuotationLineUrgencyEnum,
+} from './entities/quotation-item.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
@@ -25,6 +28,8 @@ import { BranchesService } from '../branches/branches.service';
 import { UnitSalesService } from '../unit-sales/unit-sales.service';
 import { UnitSaleFinancingTypeEnum } from '../unit-sales/entities/unit-sale.entity';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
+import { QuotationItemPhoto } from './entities/quotation-item-photo.entity';
+import { StorageService } from '../../common/storage/storage.service';
 
 @Injectable()
 export class QuotationsService {
@@ -39,11 +44,50 @@ export class QuotationsService {
     private readonly partRepo: Repository<Part>,
     @InjectRepository(CatalogUnit)
     private readonly catalogUnitRepo: Repository<CatalogUnit>,
+    @InjectRepository(QuotationItemPhoto)
+    private readonly photoRepo: Repository<QuotationItemPhoto>,
     private readonly dataSource: DataSource,
     private readonly branchesService: BranchesService,
     private readonly unitSalesService: UnitSalesService,
     private readonly serviceOrdersService: ServiceOrdersService,
+    private readonly storage: StorageService,
   ) {}
+
+  /**
+   * Sube una foto a una línea del presupuesto (lo que se recomienda cambiar).
+   * El archivo va al almacenamiento privado; se devuelve una liga temporal.
+   */
+  async subirFotoLinea(
+    user: UserPayload,
+    quotationId: string,
+    itemId: string,
+    file: Express.Multer.File,
+  ): Promise<{ id: string; url: string | null }> {
+    if (!file) throw new BadRequestException('No se recibió ninguna imagen');
+    // La cotización debe ser del tenant; el ítem, de esa cotización.
+    const quotation = await this.quotationRepo.findOne({
+      where: { id: quotationId, tenantId: user.tenantId },
+    });
+    if (!quotation) throw new NotFoundException('Cotización no encontrada');
+    const item = await this.itemRepo.findOne({
+      where: { id: itemId, quotationId },
+    });
+    if (!item) throw new NotFoundException('Línea no encontrada');
+
+    const key = `presupuestos/${quotationId}/lineas/${itemId}/${Date.now()}`;
+    await this.storage.upload(file.buffer, key, file.mimetype);
+    const foto = await this.photoRepo.save(
+      this.photoRepo.create({ quotationItemId: itemId, storageKey: key }),
+    );
+
+    let url: string | null = null;
+    try {
+      url = await this.storage.getSignedUrl(key);
+    } catch {
+      url = null;
+    }
+    return { id: foto.id, url };
+  }
 
   private applyScope(
     qb: ReturnType<Repository<Quotation>['createQueryBuilder']>,
@@ -143,6 +187,8 @@ export class QuotationsService {
       unitPrice: number;
       discount: number;
       subtotal: number;
+      urgency?: QuotationLineUrgencyEnum;
+      technicianNote?: string | null;
     }> = [];
 
     for (const item of dto.items) {
@@ -196,6 +242,8 @@ export class QuotationsService {
         unitPrice,
         discount,
         subtotal: itemSubtotal,
+        urgency: item.urgency,
+        technicianNote: item.technicianNote ?? null,
       });
     }
 
@@ -247,6 +295,8 @@ export class QuotationsService {
             unitPrice: it.unitPrice,
             discount: it.discount,
             subtotal: it.subtotal,
+            ...(it.urgency ? { urgency: it.urgency } : {}),
+            technicianNote: it.technicianNote ?? null,
           });
           await em.save(qi);
         }

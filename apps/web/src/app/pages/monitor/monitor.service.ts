@@ -23,6 +23,10 @@ export interface UnidadEnTablero {
   estimadoTotal: number;
   semaforo: Semaforo;
   retraso: number;
+  /** Cuándo se recibió la unidad; base de la "vista por días". */
+  recibidaEn: string;
+  /** Fecha promesa de entrega, si se pactó. */
+  promisedAt: string | null;
 }
 
 /** Una cita colocada en la hora en que se espera. */

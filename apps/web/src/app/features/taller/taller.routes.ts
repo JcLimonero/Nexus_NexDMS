@@ -54,4 +54,19 @@ export const workshopRoutes: Routes = [
       import("./citas/citas-page").then((m) => m.CitasPage),
     data: { title: "Citas", breadcrumb: "Citas" },
   },
+  {
+    // Los mismos tableros que se cuelgan en la pantalla del taller, pero
+    // accesibles desde el DMS. Van bajo `workshop` (no bajo `/monitor`) para
+    // que usen la sesión del usuario que ya inició sesión, no la del monitor.
+    path: "tablero-taller",
+    loadComponent: () =>
+      import("../../pages/monitor/monitor-taller").then((m) => m.MonitorTaller),
+    data: { title: "Monitor de taller", breadcrumb: "Monitor de taller" },
+  },
+  {
+    path: "tablero-citas",
+    loadComponent: () =>
+      import("../../pages/monitor/monitor-citas").then((m) => m.MonitorCitas),
+    data: { title: "Monitor de citas", breadcrumb: "Monitor de citas" },
+  },
 ];

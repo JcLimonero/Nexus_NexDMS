@@ -4,6 +4,7 @@ import { QuotationsController } from './quotations.controller';
 import { QuotationsService } from './quotations.service';
 import { Quotation } from './entities/quotation.entity';
 import { QuotationItem } from './entities/quotation-item.entity';
+import { QuotationItemPhoto } from './entities/quotation-item-photo.entity';
 import { QuotationFolioSeq } from './entities/quotation-folio-seq.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
@@ -17,6 +18,7 @@ import { ServiceOrdersModule } from '../service-orders/service-orders.module';
     TypeOrmModule.forFeature([
       Quotation,
       QuotationItem,
+      QuotationItemPhoto,
       QuotationFolioSeq,
       Branch,
       Part,
