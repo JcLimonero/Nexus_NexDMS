@@ -158,6 +158,11 @@ export class OrdenServicioDetail implements OnInit {
     const o = this.orden();
     const status = this.selectedStatus();
     if (!o || !status || this.changingStatus()) return;
+    // Entregar no es un cambio de estado normal: pide cobro o adeudo.
+    if (status === ServiceOrderStatus.DELIVERED) {
+      this.abrirEntrega();
+      return;
+    }
     if (!confirm(`¿Cambiar estado a ${this.getStatusLabel(status)}?`)) return;
 
     this.changingStatus.set(true);
@@ -173,6 +178,60 @@ export class OrdenServicioDetail implements OnInit {
         this.changingStatus.set(false);
       },
     });
+  }
+
+  // ── Entrega: con cobro o con adeudo (R6) ──
+  entregaAbierta = signal(false);
+  entregando = signal(false);
+  entregaConAdeudo = signal(false);
+  entregaPago = signal("CASH");
+  entregaPromesa = signal("");
+  readonly pagoOpciones = [
+    { v: "CASH", n: "Efectivo" },
+    { v: "CARD", n: "Tarjeta" },
+    { v: "TRANSFER", n: "Transferencia" },
+    { v: "MIXED", n: "Mixto" },
+  ];
+
+  abrirEntrega(): void {
+    this.entregaConAdeudo.set(false);
+    this.entregaPago.set("CASH");
+    this.entregaPromesa.set("");
+    this.entregaAbierta.set(true);
+  }
+
+  confirmarEntrega(): void {
+    const o = this.orden();
+    if (!o || this.entregando()) return;
+    const conAdeudo = this.entregaConAdeudo();
+    if (conAdeudo && !this.entregaPromesa()) {
+      this.toastr.warning("Indica la fecha promesa de pago");
+      return;
+    }
+    this.entregando.set(true);
+    this.tallerService
+      .deliver(o.id, {
+        conAdeudo,
+        paymentMethod: conAdeudo ? undefined : this.entregaPago(),
+        fechaPromesaPago: conAdeudo ? this.entregaPromesa() : undefined,
+      })
+      .subscribe({
+        next: (updated) => {
+          this.orden.set(updated);
+          this.entregaAbierta.set(false);
+          this.entregando.set(false);
+          this.selectedStatus.set("");
+          this.toastr.success(
+            conAdeudo
+              ? "Entregada con adeudo — se generó la cuenta por cobrar"
+              : "Orden entregada",
+          );
+        },
+        error: (err) => {
+          this.entregando.set(false);
+          this.toastr.error(err?.error?.message || "No se pudo entregar");
+        },
+      });
   }
 
   onAssignMechanic(): void {

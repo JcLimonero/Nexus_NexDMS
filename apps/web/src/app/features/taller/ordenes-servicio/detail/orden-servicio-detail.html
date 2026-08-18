@@ -205,4 +205,45 @@
       }
     </div>
   </div>
+
+  @if (entregaAbierta()) {
+    <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;" (click)="entregaAbierta.set(false)"></div>
+    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(440px,94vw);max-height:90vh;overflow:auto;">
+      <div class="card-header"><h6 class="mb-0">Entregar unidad</h6></div>
+      <div class="card-body">
+        <label class="form-label d-block">¿Cómo se entrega?</label>
+        <div class="form-check">
+          <input class="form-check-input" type="radio" id="entCobro" [checked]="!entregaConAdeudo()" (change)="entregaConAdeudo.set(false)" />
+          <label class="form-check-label" for="entCobro">Cobrar y entregar</label>
+        </div>
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="radio" id="entAdeudo" [checked]="entregaConAdeudo()" (change)="entregaConAdeudo.set(true)" />
+          <label class="form-check-label" for="entAdeudo">Entregar con adeudo <small class="text-muted">(genera cuenta por cobrar)</small></label>
+        </div>
+
+        @if (!entregaConAdeudo()) {
+          <div class="mb-2">
+            <label class="form-label">Forma de pago</label>
+            <select class="form-select" [ngModel]="entregaPago()" (ngModelChange)="entregaPago.set($event)">
+              @for (p of pagoOpciones; track p.v) {
+                <option [ngValue]="p.v">{{ p.n }}</option>
+              }
+            </select>
+          </div>
+        } @else {
+          <div class="mb-2">
+            <label class="form-label">Fecha promesa de pago</label>
+            <input type="date" class="form-control" [ngModel]="entregaPromesa()" (ngModelChange)="entregaPromesa.set($event)" />
+            <small class="text-muted d-block mt-1">El auto sale amparado; el adeudo queda en cartera (Finanzas).</small>
+          </div>
+        }
+      </div>
+      <div class="card-footer d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="entregaAbierta.set(false)">Cancelar</button>
+        <button type="button" class="btn btn-primary btn-sm" [disabled]="entregando()" (click)="confirmarEntrega()">
+          {{ entregando() ? "Entregando…" : (entregaConAdeudo() ? "Entregar con adeudo" : "Cobrar y entregar") }}
+        </button>
+      </div>
+    </div>
+  }
 </div>

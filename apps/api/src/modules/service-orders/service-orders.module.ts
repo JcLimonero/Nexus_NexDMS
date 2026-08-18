@@ -40,6 +40,7 @@ import { AdditionalWorkController } from './additional-work.controller';
 import { AdditionalWorkService } from './additional-work.service';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { OrdenPdfService } from './orden-pdf.service';
+import { FinanceModule } from '../finance/finance.module';
 
 @Module({
   imports: [
@@ -74,6 +75,7 @@ import { OrdenPdfService } from './orden-pdf.service';
     BranchesModule,
     MechanicChecklistModule,
     ModulesModule,
+    FinanceModule,
   ],
   controllers: [
     ServiceOrdersController,

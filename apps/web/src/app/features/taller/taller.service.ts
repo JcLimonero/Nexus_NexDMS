@@ -67,6 +67,21 @@ export class TallerService {
     );
   }
 
+  /** Entrega la orden: con cobro (paymentMethod) o con adeudo (genera CxC). */
+  deliver(
+    id: string,
+    dto: {
+      paymentMethod?: string;
+      conAdeudo?: boolean;
+      fechaPromesaPago?: string;
+    }
+  ): Observable<ServiceOrder> {
+    return this.http.post<ServiceOrder>(
+      `${SERVICE_ORDERS_URL}/${id}/deliver`,
+      dto
+    );
+  }
+
   assignMechanic(id: string, mechanicId: string): Observable<ServiceOrder> {
     return this.http.post<ServiceOrder>(
       `${SERVICE_ORDERS_URL}/${id}/assign-mechanic`,

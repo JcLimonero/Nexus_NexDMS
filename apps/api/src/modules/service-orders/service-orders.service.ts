@@ -41,6 +41,7 @@ import { DeliverServiceOrderDto } from './dto/deliver-service-order.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { CfdiService } from '../cfdi/cfdi.service';
+import { FinanceService } from '../finance/finance.service';
 import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { Client } from '../clients/entities/client.entity';
@@ -121,6 +122,7 @@ export class ServiceOrdersService {
     private readonly branchesService: BranchesService,
     private readonly storageService: StorageService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly financeService: FinanceService,
   ) {}
 
   private applyScope(
@@ -906,13 +908,41 @@ export class ServiceOrdersService {
     if (laborCost < 0) {
       throw new BadRequestException('Debe registrar costo de mano de obra');
     }
+    // Se cobra al entregar (forma de pago) o sale con adeudo (cuenta por cobrar).
+    if (!dto.conAdeudo && !dto.paymentMethod) {
+      throw new BadRequestException(
+        'Indica la forma de pago, o marca "entregar con adeudo"',
+      );
+    }
     const deliveredAt = new Date();
     await this.soRepo.update(id, {
       status: ServiceOrderStatusEnum.DELIVERED,
-      paymentMethod: dto.paymentMethod,
+      paymentMethod: dto.paymentMethod ?? null,
       cfdiUuid: dto.cfdiUuid ?? null,
       deliveredAt,
     });
+
+    // Salir con adeudo: la unidad sale sin pagar y el saldo queda como cuenta
+    // por cobrar del cliente, con su fecha promesa de pago. Es el "vale de
+    // salida": el auto sale amparado y el adeudo queda registrado en cartera.
+    if (dto.conAdeudo) {
+      const total = Number(so.total) || 0;
+      if (total > 0) {
+        try {
+          await this.financeService.create(user, 'receivable', {
+            branchId: so.branchId,
+            clientId: so.ownerId,
+            referenceType: 'ServiceOrder',
+            referenceId: so.id,
+            concept: `Servicio ${so.folio}`,
+            total,
+            dueDate: dto.fechaPromesaPago,
+          });
+        } catch (e) {
+          this.logger.warn('Cuenta por cobrar no creada al entregar', e);
+        }
+      }
+    }
     const vehicle = await this.customerVehicleRepo.findOne({
       where: { id: so.vehicleId },
     });
