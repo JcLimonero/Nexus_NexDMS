@@ -89,6 +89,12 @@ export interface QuotationResponse {
   meta: { total: number; page: number; limit: number; totalPages: number };
 }
 
+export interface CreateQuotationRefaccionDto {
+  partId: string;
+  quantity: number;
+  unitPrice?: number;
+}
+
 export interface CreateQuotationItemDto {
   partId?: string;
   catalogUnitId?: string;
@@ -98,6 +104,7 @@ export interface CreateQuotationItemDto {
   discount?: number;
   urgency?: QuotationLineUrgency;
   technicianNote?: string;
+  refacciones?: CreateQuotationRefaccionDto[];
 }
 
 export interface CreateQuotationDto {

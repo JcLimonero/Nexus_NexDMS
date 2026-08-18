@@ -14,6 +14,15 @@ export const quotesRoutes: Routes = [
     data: { title: "Nuevo presupuesto", breadcrumb: "Nueva" },
   },
   {
+    // Presupuesto de servicio (taller): trabajos → refacciones, como el prototipo.
+    path: "servicio/nuevo",
+    loadComponent: () =>
+      import("./servicio/presupuesto-servicio-form").then(
+        (m) => m.PresupuestoServicioForm,
+      ),
+    data: { title: "Presupuesto de servicio", breadcrumb: "Servicio" },
+  },
+  {
     path: ":id/editar",
     loadComponent: () =>
       import("./form/cotizacion-form").then((m) => m.CotizacionForm),

@@ -108,6 +108,7 @@ export class NavService {
       children: [
         { path: "/sales", title: "Ventas de unidades", type: "link" },
         { path: "/sales", title: "Reservas", type: "link" },
+        { path: "/quotes", title: "Presupuestos de venta", type: "link" },
       ],
     },
     {
@@ -123,12 +124,6 @@ export class NavService {
       type: "link",
     },
     {
-      path: "/quotes",
-      title: "Presupuestos",
-      icon: "file-text",
-      type: "link",
-    },
-    {
       path: "/reception",
       title: "Recepción de unidades",
       icon: "clipboard",
@@ -140,6 +135,7 @@ export class NavService {
       type: "sub",
       active: false,
       children: [
+        { path: "/quotes/servicio/nuevo", title: "Presupuesto de servicio", type: "link" },
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/workshop/citas", title: "Citas", type: "link" },
