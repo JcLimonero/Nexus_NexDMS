@@ -13,6 +13,20 @@ export interface CreditConfig {
   creditCheckEnabled?: boolean;
 }
 
+export type SurveyArea = "SERVICE" | "SALES";
+export interface SurveyQuestion {
+  id: string;
+  label: string;
+  type: "RATING" | "TEXT";
+}
+export interface SurveyConfig {
+  area: SurveyArea;
+  intro: string | null;
+  thanks: string | null;
+  questions: SurveyQuestion[];
+  isActive: boolean;
+}
+
 export interface BranchConfigSafe {
   id: string;
   branchId: string;
@@ -75,5 +89,18 @@ export class ConfiguracionService {
       `${TENANTS_URL}/me/credit-config`,
       { creditConfig }
     );
+  }
+
+  // ─── Configuración de encuestas por área ────────────────────
+
+  getSurveyConfig(area: SurveyArea): Observable<SurveyConfig> {
+    return this.http.get<SurveyConfig>(`/api/v1/survey-configs/${area}`);
+  }
+
+  setSurveyConfig(
+    area: SurveyArea,
+    dto: Partial<SurveyConfig>
+  ): Observable<SurveyConfig> {
+    return this.http.put<SurveyConfig>(`/api/v1/survey-configs/${area}`, dto);
   }
 }

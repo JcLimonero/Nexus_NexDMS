@@ -75,6 +75,12 @@ export const settingsRoutes: Routes = [
     },
   },
   {
+    path: "encuestas",
+    loadComponent: () =>
+      import("./encuestas/encuestas-config").then((m) => m.EncuestasConfig),
+    data: { title: "Encuestas", breadcrumb: "Encuestas" },
+  },
+  {
     path: "general",
     loadComponent: () =>
       import("../../components/placeholder/placeholder").then(
