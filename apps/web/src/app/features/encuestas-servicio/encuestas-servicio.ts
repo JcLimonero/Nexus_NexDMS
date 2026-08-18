@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { HttpClient } from "@angular/common/http";
+import { MoneyPipe } from "../../shared/pipes/money.pipe";
 
 interface PreguntaResumen {
   id: string;
@@ -46,7 +47,7 @@ interface Ficha {
 @Component({
   selector: "app-encuestas-servicio",
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, MoneyPipe],
   template: `
     <div class="container-fluid">
       <div class="row mb-3">
@@ -155,7 +156,7 @@ interface Ficha {
             </div>
             <div class="col-6">
               <div class="text-muted small">Total del servicio</div>
-              <div>{{ f.total | currency: "MXN" : "symbol-narrow" }}</div>
+              <div>{{ f.total | money }}</div>
             </div>
           </div>
 

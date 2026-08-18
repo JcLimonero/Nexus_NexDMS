@@ -91,6 +91,18 @@ export class ConfiguracionService {
     );
   }
 
+  // ─── Divisa del tenant ──────────────────────────────────────
+
+  getCurrency(): Observable<{ currency: string }> {
+    return this.http.get<{ currency: string }>(`${TENANTS_URL}/me/currency`);
+  }
+
+  setCurrency(currency: string): Observable<{ currency: string }> {
+    return this.http.patch<{ currency: string }>(`${TENANTS_URL}/me/currency`, {
+      currency,
+    });
+  }
+
   // ─── Configuración de encuestas por área ────────────────────
 
   getSurveyConfig(area: SurveyArea): Observable<SurveyConfig> {

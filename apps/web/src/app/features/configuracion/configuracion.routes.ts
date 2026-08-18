@@ -83,9 +83,7 @@ export const settingsRoutes: Routes = [
   {
     path: "general",
     loadComponent: () =>
-      import("../../components/placeholder/placeholder").then(
-        (m) => m.Placeholder
-      ),
+      import("./general/general-config").then((m) => m.GeneralConfig),
     data: { title: "Configuración general", breadcrumb: "General" },
   },
 ];

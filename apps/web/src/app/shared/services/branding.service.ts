@@ -16,6 +16,8 @@ export interface Branding {
   nombre?: string | null;
   paletaId: string;
   paleta: Paleta;
+  /** Divisa del tenant (ISO 4217); por defecto MXN. */
+  currency?: string;
   logoUrl: string | null;
 }
 
@@ -73,6 +75,15 @@ export class BrandingService {
   /** Recibe la marca ya resuelta —por ejemplo, la del login— y la aplica. */
   establecer(branding: Branding | null | undefined): void {
     if (branding) this.aplicar(branding);
+  }
+
+  /** Actualiza solo la divisa en la marca activa (tras cambiarla en config). */
+  fijarDivisa(currency: string): void {
+    const actual = this.branding();
+    if (!actual) return;
+    const nueva = { ...actual, currency };
+    localStorage.setItem(CLAVE, JSON.stringify(nueva));
+    this.branding.set(nueva);
   }
 
   limpiar(): void {

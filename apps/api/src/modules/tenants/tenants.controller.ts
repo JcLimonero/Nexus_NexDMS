@@ -107,6 +107,22 @@ export class TenantsController {
     return this.tenantsService.setCreditConfig(user.tenantId, body.creditConfig);
   }
 
+  /** Divisa del tenant (ISO 4217). */
+  @Get('me/currency')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  getMyCurrency(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getCurrency(user.tenantId);
+  }
+
+  @Patch('me/currency')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyCurrency(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { currency: string },
+  ) {
+    return this.tenantsService.setCurrency(user.tenantId, body.currency);
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(

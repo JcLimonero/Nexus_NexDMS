@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tenant } from './entities/tenant.entity';
@@ -111,6 +115,32 @@ export class TenantsService {
     tenant.creditConfig = limpio;
     await this.tenantRepo.save(tenant);
     return { creditConfig: tenant.creditConfig };
+  }
+
+  /** Divisa (ISO 4217) del tenant. */
+  async getCurrency(tenantId: string): Promise<{ currency: string }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    return { currency: tenant.currency ?? 'MXN' };
+  }
+
+  async setCurrency(
+    tenantId: string,
+    currency: string,
+  ): Promise<{ currency: string }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    const code = (currency ?? '').toUpperCase();
+    if (!/^[A-Z]{3}$/.test(code)) {
+      throw new BadRequestException('Divisa inválida (usa código ISO, ej. MXN)');
+    }
+    tenant.currency = code;
+    await this.tenantRepo.save(tenant);
+    return { currency: tenant.currency };
   }
 
   async setEnabledModules(

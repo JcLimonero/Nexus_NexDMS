@@ -112,6 +112,10 @@ export class Tenant {
   @Column({ name: 'palette', type: 'varchar', length: 40, default: 'nexus' })
   palette: string;
 
+  /** Divisa del tenant (ISO 4217), p. ej. MXN, USD. */
+  @Column({ name: 'currency', type: 'varchar', length: 3, default: 'MXN' })
+  currency: string;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

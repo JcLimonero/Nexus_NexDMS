@@ -425,6 +425,7 @@ export class AuthService {
       nombre: t?.name ?? null,
       paletaId: t?.palette ?? PALETA_POR_OMISION.id,
       paleta: paletaPorId(t?.palette),
+      currency: t?.currency ?? 'MXN',
       logoUrl,
     };
   }
