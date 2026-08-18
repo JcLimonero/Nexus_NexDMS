@@ -242,6 +242,21 @@ export class NavService {
     const keyOf = (path?: string): string =>
       (path ?? "").split("/")[1] ?? "";
 
+    // Pantallas que son sub-features de un módulo licenciado y viven en una ruta
+    // propia: se muestran si su módulo padre está habilitado.
+    const ALIAS: Record<string, string[]> = {
+      "service-surveys": ["workshop"],
+      "sale-surveys": ["sales"],
+      "sales-appointments": ["sales"],
+      deliveries: ["workshop", "sales"],
+    };
+    const permitido = (path?: string): boolean => {
+      const key = keyOf(path);
+      if (allowed.has(key)) return true;
+      const padres = ALIAS[key];
+      return !!padres && padres.some((p) => allowed.has(p));
+    };
+
     const prune = (items: Menu[]): Menu[] =>
       items.reduce<Menu[]>((acc, item) => {
         if (item.children?.length) {
@@ -249,7 +264,7 @@ export class NavService {
           if (children.length) acc.push({ ...item, children });
           return acc;
         }
-        if (allowed.has(keyOf(item.path))) acc.push(item);
+        if (permitido(item.path)) acc.push(item);
         return acc;
       }, []);
 
