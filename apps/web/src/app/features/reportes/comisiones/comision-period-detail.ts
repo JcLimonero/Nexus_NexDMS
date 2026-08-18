@@ -74,6 +74,35 @@ export class ComisionPeriodDetail implements OnInit {
     return u ? `${u.firstName} ${u.lastName}` : "—";
   }
 
+  /** El área de negocio se deriva del tipo de referencia de la comisión. */
+  areaLabel(referenceType: string): string {
+    switch (referenceType) {
+      case "unit_sale":
+        return "Ventas de unidades";
+      case "service_order":
+        return "Taller";
+      case "sale":
+        return "Mostrador (refacciones)";
+      default:
+        return referenceType;
+    }
+  }
+
+  /** Subtotales de comisión agrupados por área. */
+  totalesPorArea(): { area: string; count: number; total: number }[] {
+    const p = this.period();
+    if (!p?.details?.length) return [];
+    const mapa = new Map<string, { count: number; total: number }>();
+    for (const d of p.details) {
+      const area = this.areaLabel(d.referenceType);
+      const acc = mapa.get(area) ?? { count: 0, total: 0 };
+      acc.count += 1;
+      acc.total += Number(d.amount) || 0;
+      mapa.set(area, acc);
+    }
+    return [...mapa.entries()].map(([area, v]) => ({ area, ...v }));
+  }
+
   canSubmitForReview(): boolean {
     const p = this.period();
     return !!p && p.status === CommissionPeriodStatus.OPEN;

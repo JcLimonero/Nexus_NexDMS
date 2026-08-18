@@ -98,6 +98,24 @@
             </div>
 
             @if (p.details && p.details.length > 0) {
+              <h6 class="mb-2">Comisiones por área</h6>
+              <div class="table-responsive mb-3">
+                <table class="table table-sm w-auto">
+                  <thead>
+                    <tr><th>Área</th><th class="text-center">Comisiones</th><th class="text-end">Monto</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (a of totalesPorArea(); track a.area) {
+                      <tr>
+                        <td>{{ a.area }}</td>
+                        <td class="text-center">{{ a.count }}</td>
+                        <td class="text-end">{{ a.total | number:'1.2-2' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
               <h6 class="mb-2">Detalle de comisiones</h6>
               <div class="table-responsive">
                 <table class="table table-sm">
@@ -105,7 +123,7 @@
                     <tr>
                       <th>Usuario</th>
                       <th>Concepto</th>
-                      <th>Tipo ref.</th>
+                      <th>Área</th>
                       <th class="text-end">Base</th>
                       <th class="text-end">Monto</th>
                       <th class="text-center">Estado</th>
@@ -116,7 +134,7 @@
                       <tr>
                         <td>{{ getUserName(d) }}</td>
                         <td>{{ d.concept }}</td>
-                        <td>{{ d.referenceType }}</td>
+                        <td>{{ areaLabel(d.referenceType) }}</td>
                         <td class="text-end">{{ d.baseAmount | number:'1.2-2' }}</td>
                         <td class="text-end">{{ d.amount | number:'1.2-2' }}</td>
                         <td class="text-center">
