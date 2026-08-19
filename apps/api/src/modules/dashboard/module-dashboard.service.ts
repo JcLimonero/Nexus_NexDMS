@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import {
   ServiceOrder,
@@ -146,6 +146,19 @@ export class ModuleDashboardService {
       alias: string,
     ): T => (branchId ? qb.andWhere(`${alias}.branch_id = :b`, { branchId }) : qb);
 
+    // unit_sales no tiene sucursal propia: se acota por la unidad vendida
+    // (catalog_units.branch_id), no por una columna directa.
+    const bu = <T extends SelectQueryBuilder<UnitSale>>(qb: T): T => {
+      if (branchId) {
+        qb.innerJoin(
+          'catalog_units',
+          'cu',
+          'cu.id = us.catalog_unit_id',
+        ).andWhere('cu.branch_id = :b', { b: branchId });
+      }
+      return qb;
+    };
+
     const wrap = (kpis: Kpi[], breakdown?: Breakdown): ModuleDashboard => ({
       module: def.key,
       name: def.name,
@@ -233,7 +246,7 @@ export class ModuleDashboardService {
       }
 
       case 'sales': {
-        const mes = await b(
+        const mes = await bu(
           this.unitSale
             .createQueryBuilder('us')
             .select('COUNT(*)', 'count')
@@ -241,14 +254,12 @@ export class ModuleDashboardService {
             .where('us.tenant_id = :t', { t })
             .andWhere('us.status = :s', { s: UnitSaleStatusEnum.COMPLETED })
             .andWhere('us.created_at >= :m', { m: monthStart }),
-          'us',
         ).getRawOne<{ count: string; total: string }>();
-        const proceso = await b(
+        const proceso = await bu(
           this.unitSale
             .createQueryBuilder('us')
             .where('us.tenant_id = :t', { t })
             .andWhere('us.status = :s', { s: UnitSaleStatusEnum.IN_PROGRESS }),
-          'us',
         ).getCount();
         const ticket =
           Number(mes?.count ?? 0) > 0

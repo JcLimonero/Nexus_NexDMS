@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, SelectQueryBuilder } from 'typeorm';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import {
   ServiceOrder,
@@ -97,7 +97,22 @@ export class DashboardService {
     ).getCount();
 
     // ── Ventas ──────────────────────────────────────
-    const ventasUnidadesMes = await withBranch(
+    // unit_sales no tiene sucursal propia: se acota por la sucursal de la
+    // unidad vendida (catalog_units.branch_id).
+    const porSucursalUnidad = <T extends SelectQueryBuilder<UnitSale>>(
+      qb: T,
+    ): T => {
+      if (branchId) {
+        qb.innerJoin(
+          'catalog_units',
+          'cu',
+          'cu.id = us.catalog_unit_id',
+        ).andWhere('cu.branch_id = :branchId', { branchId });
+      }
+      return qb;
+    };
+
+    const ventasUnidadesMes = await porSucursalUnidad(
       this.unitSaleRepo
         .createQueryBuilder('us')
         .select('COUNT(*)', 'count')
@@ -105,15 +120,13 @@ export class DashboardService {
         .where('us.tenant_id = :tenantId', { tenantId })
         .andWhere('us.status = :st', { st: UnitSaleStatusEnum.COMPLETED })
         .andWhere('us.created_at >= :monthStart', { monthStart }),
-      'us',
     ).getRawOne<{ count: string; total: string }>();
 
-    const ventasEnProceso = await withBranch(
+    const ventasEnProceso = await porSucursalUnidad(
       this.unitSaleRepo
         .createQueryBuilder('us')
         .where('us.tenant_id = :tenantId', { tenantId })
         .andWhere('us.status = :st', { st: UnitSaleStatusEnum.IN_PROGRESS }),
-      'us',
     ).getCount();
 
     // ── Caja / mostrador ────────────────────────────
