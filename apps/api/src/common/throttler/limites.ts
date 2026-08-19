@@ -19,12 +19,14 @@ const EN_PRODUCCION = process.env.NODE_ENV === 'production';
  * Intentos de acceso por minuto.
  *
  * Se cuentan por dirección IP, no por cuenta: en el login todavía no hay
- * sesión que identificar. Por eso en una demo, donde varias personas entran
- * a la vez desde la misma red, cinco se agotan enseguida.
+ * sesión que identificar. Como una agencia entera sale por una sola IP
+ * pública (NAT de la oficina), un tope muy bajo bloquea a usuarios legítimos
+ * entre sí; 20/min sigue siendo lento para adivinar contraseñas por fuerza
+ * bruta pero deja trabajar a la oficina compartida.
  */
 export const LIMITE_ACCESO = {
   medium: {
-    limit: EN_PRODUCCION ? 5 : 50,
+    limit: EN_PRODUCCION ? 20 : 50,
     ttl: seconds(60),
   },
 };
