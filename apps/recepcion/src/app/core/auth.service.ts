@@ -1,5 +1,6 @@
 import { Injectable, inject, signal } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
+import { Router } from "@angular/router";
 import { Observable, tap } from "rxjs";
 import { BrandingService } from "./branding.service";
 
@@ -25,6 +26,7 @@ interface LoginResponse {
 export class AuthService {
   private http = inject(HttpClient);
   private branding = inject(BrandingService);
+  private router = inject(Router);
 
   user = signal<PwaUser | null>(this.readUser());
 
@@ -88,5 +90,8 @@ export class AuthService {
     localStorage.removeItem(STORAGE_TOKEN);
     localStorage.removeItem(STORAGE_USER);
     this.user.set(null);
+    // Sin redirigir, limpiar la sesión no se nota y parece que el botón no
+    // hace nada; se manda al login (respetando la base del cliente).
+    void this.router.navigate(["/login"]);
   }
 }

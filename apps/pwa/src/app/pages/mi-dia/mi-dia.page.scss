@@ -4,48 +4,36 @@
   background: var(--bg);
 }
 
-.topbar {
+/* Header homologado con el de recepción. */
+.cabecera {
   position: sticky;
   top: 0;
   z-index: 10;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 16px;
-  background: linear-gradient(to bottom, var(--navy-600), var(--navy-800));
-  color: var(--card);
-}
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(to bottom, var(--navy-600, #203848), var(--navy-800, #16283a));
+  color: #fff;
 
-.who {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
+  .ident {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
 
-.avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 9999px;
-  background: linear-gradient(to bottom right, var(--nexus-600), var(--nexus-700));
-  color: var(--card);
-  font-weight: 700;
-  font-size: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
+  .quien {
+    font-weight: 600;
+  }
+  .sub {
+    font-size: 12px;
+    opacity: 0.75;
 
-.name {
-  font-weight: 600;
-  font-size: 15px;
-}
-
-.date {
-  font-size: var(--text-xs);
-  color: var(--text-on-dark);
-
-  /* Solo la inicial: capitalize mayúsculiza cada palabra ("12 De Agosto") */
-  &::first-letter { text-transform: uppercase; }
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
 }
 
 .icon-btn {
@@ -59,10 +47,10 @@
   cursor: pointer;
 }
 
-/* Logotipo del cliente en la cabecera. */
-.topbar .logo-cliente {
+/* Logotipo del cliente en la cabecera (igual que recepción). */
+.cabecera .logo-cliente {
   height: 40px;
-  max-width: 130px;
+  max-width: 150px;
   object-fit: contain;
   background: #fff;
   border-radius: 8px;
@@ -70,21 +58,22 @@
 }
 
 /* Salir visible, no solo el símbolo. */
-.btn-salir {
+.salir {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.14);
-  color: var(--card);
+  height: 40px;
+  padding: 0 14px;
   border: none;
   border-radius: 8px;
-  padding: 8px 14px;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
 }
-.btn-salir:hover {
-  background: rgba(255, 255, 255, 0.24);
+.salir:hover {
+  background: rgb(255 255 255 / 22%);
 }
 
 .content {
