@@ -41,7 +41,7 @@ import {
 import { PurchaseRequisition } from '../purchase-requisitions/entities/purchase-requisition.entity';
 
 type QuotationRefData = {
-  partId: string;
+  partId?: string;
   description: string;
   quantity: number;
   unitPrice: number;
@@ -225,22 +225,38 @@ export class QuotationsService {
 
       const refacciones: QuotationRefData[] = [];
       for (const r of item.refacciones ?? []) {
-        const part = await this.partRepo.findOne({
-          where: { id: r.partId, branchId, tenantId: user.tenantId },
-        });
-        if (!part) {
-          throw new NotFoundException(`Parte ${r.partId} no encontrada`);
+        if (r.partId) {
+          // Refacción del catálogo: el precio sale de la lista del cliente.
+          const part = await this.partRepo.findOne({
+            where: { id: r.partId, branchId, tenantId: user.tenantId },
+          });
+          if (!part) {
+            throw new NotFoundException(`Parte ${r.partId} no encontrada`);
+          }
+          const rPrice = r.unitPrice ?? priceFor(part);
+          const rSub = r.quantity * rPrice;
+          subtotal += rSub;
+          refacciones.push({
+            partId: r.partId,
+            description: part.name,
+            quantity: r.quantity,
+            unitPrice: rPrice,
+            subtotal: rSub,
+          });
+        } else {
+          // Refacción a mano (fuera de catálogo): nombre + precio capturados.
+          const nombre = (r.description ?? '').trim();
+          if (!nombre) continue;
+          const rPrice = r.unitPrice ?? 0;
+          const rSub = r.quantity * rPrice;
+          subtotal += rSub;
+          refacciones.push({
+            description: nombre,
+            quantity: r.quantity,
+            unitPrice: rPrice,
+            subtotal: rSub,
+          });
         }
-        const rPrice = r.unitPrice ?? priceFor(part);
-        const rSub = r.quantity * rPrice;
-        subtotal += rSub;
-        refacciones.push({
-          partId: r.partId,
-          description: part.name,
-          quantity: r.quantity,
-          unitPrice: rPrice,
-          subtotal: rSub,
-        });
       }
 
       itemsData.push({
@@ -284,7 +300,7 @@ export class QuotationsService {
           em.create(QuotationItem, {
             quotationId,
             parentItemId: qi.id,
-            partId: r.partId,
+            partId: r.partId ?? null,
             description: r.description,
             quantity: r.quantity,
             unitPrice: r.unitPrice,
@@ -400,7 +416,10 @@ export class QuotationsService {
           need.set(it.partId, (need.get(it.partId) ?? 0) + it.quantity);
         }
         for (const r of it.refacciones ?? []) {
-          need.set(r.partId, (need.get(r.partId) ?? 0) + r.quantity);
+          // Las refacciones a mano (sin partId) no generan requisición.
+          if (r.partId) {
+            need.set(r.partId, (need.get(r.partId) ?? 0) + r.quantity);
+          }
         }
       }
       if (!need.size) return;
