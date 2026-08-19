@@ -55,6 +55,7 @@ export interface ServiceOrder {
 }
 
 export interface ServiceOrderFilters {
+  search?: string;
   clientId?: string;
   mechanicId?: string;
   status?: ServiceOrderStatus;

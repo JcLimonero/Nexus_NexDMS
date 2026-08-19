@@ -16,6 +16,15 @@
         </div>
         <div class="card-body">
           <div class="row g-2">
+            <div class="col-md-4">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por folio, cliente, teléfono o placa…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="searchFilter.set($event); onFilterChange()"
+              />
+            </div>
             <div class="col-md-2">
               <select
                 class="form-select"

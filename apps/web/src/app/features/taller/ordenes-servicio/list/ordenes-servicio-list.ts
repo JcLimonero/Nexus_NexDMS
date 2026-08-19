@@ -36,6 +36,7 @@ export class OrdenesServicioList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   branchFilter = signal<string>("");
   mechanicFilter = signal<string>("");
@@ -53,6 +54,7 @@ export class OrdenesServicioList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.tallerService.getServiceOrders({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as ServiceOrderStatus | undefined,
             branchId: this.branchFilter() || undefined,
             mechanicId: this.mechanicFilter() || undefined,

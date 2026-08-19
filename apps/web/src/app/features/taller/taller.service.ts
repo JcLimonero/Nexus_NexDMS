@@ -35,6 +35,7 @@ export class TallerService {
     filters: ServiceOrderFilters = {}
   ): Observable<ServiceOrdersResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.clientId) params = params.set("clientId", filters.clientId);
     if (filters.mechanicId) params = params.set("mechanicId", filters.mechanicId);
     if (filters.status) params = params.set("status", filters.status);

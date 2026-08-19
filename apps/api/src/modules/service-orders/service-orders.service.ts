@@ -281,6 +281,18 @@ export class ServiceOrdersService {
         clientId: filters.clientId,
       });
     }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(so.folio ILIKE :s
+          OR owner.first_name ILIKE :s
+          OR owner.last_name ILIKE :s
+          OR owner.company_name ILIKE :s
+          OR owner.phone ILIKE :s
+          OR vehicle.plate ILIKE :s)`,
+        { s },
+      );
+    }
     if (filters.status) {
       qb.andWhere('so.status = :status', { status: filters.status });
     }
