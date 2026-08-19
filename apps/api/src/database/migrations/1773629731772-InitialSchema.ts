@@ -4,6 +4,11 @@ export class InitialSchema1773629731772 implements MigrationInterface {
   name = 'InitialSchema1773629731772';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    // Las columnas uuid usan DEFAULT uuid_generate_v4(), que vive en la
+    // extensión uuid-ossp. En local se creó a mano; en una BD nueva (Render)
+    // hay que crearla antes de la primera tabla o toda migración falla con
+    // "function uuid_generate_v4() does not exist".
+    await queryRunner.query(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`);
     await queryRunner.query(
       `CREATE TYPE "public"."users_role_enum" AS ENUM('ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'MECHANIC', 'SELLER')`,
     );
