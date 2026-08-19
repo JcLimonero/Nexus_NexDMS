@@ -1,0 +1,62 @@
+# Render Blueprint para el API de NexDMS (NestJS) + Postgres + Redis.
+#
+# Cómo usarlo:
+#   1. En Render: New > Blueprint, apunta a este repo (rama main).
+#   2. Render crea la BD, el Redis y el web service, y cablea DATABASE_URL
+#      y REDIS_URL automáticamente.
+#   3. Antes del primer deploy, define ENCRYPTION_KEY (ver nota abajo).
+#
+# Notas:
+# - Las migraciones se corren en cada deploy con el startCommand (idempotente:
+#   solo aplica las pendientes), así la BD nueva de Render deja de estar vacía.
+# - buildCommand usa --include=dev porque NODE_ENV=production haría que npm
+#   omitiera devDependencies (nest-cli, typeorm CLL) y el build/migración fallarían.
+# - Las llaves de integración (B2, Resend, Twilio, Facturapi) son opcionales:
+#   el API arranca sin ellas y solo fallan al usar esa función. Añádelas en el
+#   dashboard cuando las necesites (ver apps/api/.env.example).
+
+databases:
+  - name: nexdms-db
+    databaseName: nexdms
+    user: nexdms
+    plan: free
+
+services:
+  # Redis: dependencia dura del login (guarda el refresh token). Solo interno.
+  - type: redis
+    name: nexdms-redis
+    plan: free
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+  # API NestJS
+  - type: web
+    name: nexdms-api
+    runtime: node
+    rootDir: apps/api
+    plan: free
+    buildCommand: npm install --include=dev && npm run build
+    startCommand: npm run migration:run && npm run start:prod
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: nexdms-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: nexdms-redis
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 15m
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 7d
+      # 64 caracteres hex (32 bytes). Genera con:
+      #   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+      - key: ENCRYPTION_KEY
+        sync: false
