@@ -35,10 +35,18 @@ services:
     runtime: node
     rootDir: apps/api
     plan: free
-    buildCommand: npm install --include=dev && npm run build
+    # --ignore-scripts evita el postinstall roto de unrs-resolver (cadena de
+    # ESLint, no se usa para compilar); luego se reconstruye bcrypt, el único
+    # módulo nativo de runtime. --include=dev trae typescript/@nestjs-cli/@types
+    # que nest build necesita.
+    buildCommand: npm install --include=dev --ignore-scripts && npm rebuild bcrypt && npm run build
     startCommand: npm run migration:run && npm run start:prod
     healthCheckPath: /api/v1/health
     envVars:
+      # Node 24 (default de Render) dispara bugs de postinstall nativo; se fija
+      # la LTS estable.
+      - key: NODE_VERSION
+        value: "22"
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
