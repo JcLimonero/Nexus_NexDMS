@@ -45,6 +45,12 @@ async function runSeeds() {
       User,
       UserRole,
     ],
+    // Render (y managed en general) exige SSL en conexiones externas. Para
+    // sembrar la BD de la nube desde local: NODE_ENV=production npm run seed
+    ssl:
+      process.env.NODE_ENV === 'production'
+        ? { rejectUnauthorized: false }
+        : false,
     logging: process.env.NODE_ENV === 'development',
   });
 
