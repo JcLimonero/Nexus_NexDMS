@@ -1,5 +1,7 @@
 import { Routes } from "@angular/router";
 
+import { demoOnlyGuard } from "../../shared/utils/demo-mode";
+
 export const workshopRoutes: Routes = [
   {
     path: "",
@@ -53,6 +55,14 @@ export const workshopRoutes: Routes = [
     loadComponent: () =>
       import("./citas/citas-page").then((m) => m.CitasPage),
     data: { title: "Citas", breadcrumb: "Citas" },
+  },
+  {
+    // Demo screen: the guard closes it when the `demo-mode` switch is off.
+    path: "conversaciones",
+    canActivate: [demoOnlyGuard],
+    loadComponent: () =>
+      import("./conversaciones/conversaciones").then((m) => m.Conversaciones),
+    data: { title: "Conversaciones", breadcrumb: "Conversaciones" },
   },
   {
     // Los mismos tableros que se cuelgan en la pantalla del taller, pero
