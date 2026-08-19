@@ -79,7 +79,13 @@ export class MonitorCitas implements OnInit, OnDestroy {
     this.renovando = true;
     this.monitorAuth.renovar().subscribe((ok) => {
       this.renovando = false;
-      if (ok && reintentar) this.cargar();
+      if (ok) {
+        if (reintentar) this.cargar();
+      } else if (reintentar) {
+        // Sesión vencida y no renovable (p. ej. refresh caducado): en vez de
+        // quedarse en blanco, se vuelve al acceso del monitor para re-entrar.
+        this.monitorAuth.salir();
+      }
     });
   }
 

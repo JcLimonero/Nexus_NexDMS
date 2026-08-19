@@ -92,7 +92,12 @@ export class MonitorTaller implements OnInit, OnDestroy {
     this.renovando = true;
     this.monitorAuth.renovar().subscribe((ok) => {
       this.renovando = false;
-      if (ok && reintentar) this.cargar();
+      if (ok) {
+        if (reintentar) this.cargar();
+      } else if (reintentar) {
+        // Sesión vencida y no renovable: se vuelve al acceso del monitor.
+        this.monitorAuth.salir();
+      }
     });
   }
 
