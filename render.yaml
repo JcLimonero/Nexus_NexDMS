@@ -78,3 +78,18 @@ services:
         value: https://recepcion.nexusqsystem.com
       - key: PWA_APP_URL
         value: https://pwa.nexusqsystem.com
+      # Almacenamiento Backblaze B2 (S3-compatible) para logos/archivos. Sin
+      # esto, subir logotipo falla con "Could not load credentials". Copiar los
+      # valores desde apps/api/.env.
+      - key: B2_ENDPOINT
+        sync: false
+      - key: B2_BUCKET_NAME
+        sync: false
+      - key: B2_BUCKET_URL
+        sync: false
+      - key: B2_KEY_ID
+        sync: false
+      - key: B2_APP_KEY
+        sync: false
+      - key: B2_KEY_PREFIX
+        sync: false
