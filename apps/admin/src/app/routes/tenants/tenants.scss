@@ -129,6 +129,12 @@
     font-size: var(--text-caption);
     color: var(--text-muted);
   }
+
+  /* Isotipo: preview cuadrado. */
+  &.cuadrado {
+    width: 72px;
+    height: 72px;
+  }
 }
 
 .logo-acciones {

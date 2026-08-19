@@ -415,16 +415,21 @@ export class AuthService {
   /** Paleta y logotipo del cliente, resueltos para pintar. */
   private async brandingDelTenant(tenantId: string) {
     const t = await this.tenantRepo.findOne({ where: { id: tenantId } });
-    let logoUrl: string | null = null;
-    if (t?.logoKey) {
+    // Un día de vigencia: la sesión dura menos, y así la imagen no se cae a
+    // media jornada en el monitor del taller, que nadie recarga.
+    const ligaImagen = async (key: string | null): Promise<string | null> => {
+      if (!key) return null;
       try {
-        // Un día de vigencia: la sesión dura menos, y así el logotipo no se
-        // cae a media jornada en el monitor del taller, que nadie recarga.
-        logoUrl = await this.storage.getSignedUrl(t.logoKey, 24 * 3600);
+        return await this.storage.getSignedUrl(key, 24 * 3600);
       } catch {
-        /* sin almacenamiento se entra igual, solo que sin logotipo */
+        /* sin almacenamiento se entra igual, solo que sin imagen */
+        return null;
       }
-    }
+    };
+    const [logoUrl, iconUrl] = await Promise.all([
+      ligaImagen(t?.logoKey ?? null),
+      ligaImagen(t?.iconKey ?? null),
+    ]);
     return {
       // El nombre viaja con la marca para rotular la pestaña con el cliente,
       // que es clave cuando el superadmin abre varios a la vez.
@@ -433,6 +438,7 @@ export class AuthService {
       paleta: paletaPorId(t?.palette),
       currency: t?.currency ?? 'MXN',
       logoUrl,
+      iconUrl,
     };
   }
 }

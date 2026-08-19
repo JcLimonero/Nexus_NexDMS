@@ -95,7 +95,8 @@ export class SaasController {
   @Put('tenants/:id/branding')
   guardarBranding(
     @Param('id', ParseUUIDPipe) id: string,
-    @Body() dto: { paletaId?: string; logoKey?: string | null },
+    @Body()
+    dto: { paletaId?: string; logoKey?: string | null; iconKey?: string | null },
   ) {
     return this.saas.guardarBranding(id, dto);
   }
@@ -107,6 +108,15 @@ export class SaasController {
     @UploadedFile() file: Express.Multer.File,
   ) {
     return this.saas.subirLogo(id, file);
+  }
+
+  @Post('tenants/:id/branding/icon')
+  @UseInterceptors(FileInterceptor('file'))
+  subirIcono(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.saas.subirIcono(id, file);
   }
 
   /** Todo lo del cliente: ficha, cobro mensual, módulos e historial. */

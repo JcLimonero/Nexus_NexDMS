@@ -19,6 +19,8 @@ export interface Branding {
   /** Divisa del tenant (ISO 4217); por defecto MXN. */
   currency?: string;
   logoUrl: string | null;
+  /** Isotipo cuadrado del cliente; se usa como favicon de la pestaña. */
+  iconUrl?: string | null;
 }
 
 const CLAVE = "nexdms_branding";
@@ -96,6 +98,19 @@ export class BrandingService {
     localStorage.setItem(CLAVE, JSON.stringify(b));
     this.branding.set(b);
     this.pintarVariables(b.paleta);
+    this.pintarFavicon(b.iconUrl ?? null);
+  }
+
+  /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene. */
+  private pintarFavicon(iconUrl: string | null): void {
+    if (!iconUrl) return;
+    let link = document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = iconUrl;
   }
 
   /**

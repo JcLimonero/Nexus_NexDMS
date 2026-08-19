@@ -532,6 +532,40 @@
           </div>
         </div>
 
+        <h4 class="marca-titulo">Isotipo (ícono cuadrado)</h4>
+        <div class="logo-fila">
+          <div class="logo-vista cuadrado" [class.vacio]="!branding()?.iconUrl">
+            @if (branding()?.iconUrl; as url) {
+              <img [src]="url" alt="Isotipo del cliente" />
+            } @else {
+              <span>Sin isotipo</span>
+            }
+          </div>
+          <div class="logo-acciones">
+            <label class="btn-archivo">
+              {{ subiendoIcono() ? "Subiendo…" : "Subir isotipo" }}
+              <input
+                type="file"
+                accept="image/png,image/svg+xml,image/webp"
+                hidden
+                [disabled]="subiendoIcono()"
+                (change)="subirIcono($event)"
+              />
+            </label>
+            @if (branding()?.iconUrl) {
+              <button type="button" class="btn-secundario" (click)="quitarIcono()">
+                Quitar
+              </button>
+            }
+            <ul class="pista pista-logo">
+              <li><strong>Forma:</strong> cuadrado (1:1).</li>
+              <li><strong>Tamaño:</strong> 512×512 px, PNG o SVG transparente.</li>
+              <li><strong>Uso:</strong> favicon, monitores del taller e ícono del PWA.</li>
+              <li><strong>Simple:</strong> solo el símbolo o las iniciales, sin texto largo.</li>
+            </ul>
+          </div>
+        </div>
+
         <h4 class="marca-titulo">Paleta de colores</h4>
         <div class="paletas">
           @for (p of paletas(); track p.id) {

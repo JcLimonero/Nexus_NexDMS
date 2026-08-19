@@ -376,6 +376,7 @@ export class Tenants implements OnInit {
   branding = signal<Branding | null>(null);
   paletaElegida = signal<string>("nexus");
   subiendoLogo = signal(false);
+  subiendoIcono = signal(false);
 
   datos = {
     saasPlanId: "" as string | null,
@@ -527,6 +528,37 @@ export class Tenants implements OnInit {
       next: (b) => {
         this.branding.set(b);
         this.avisar("Logotipo quitado", "ok");
+      },
+    });
+  }
+
+  subirIcono(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    const t = this.fichaDe();
+    if (!file || !t) return;
+    this.subiendoIcono.set(true);
+    this.saas.subirIcono(t.id, file).subscribe({
+      next: (b) => {
+        this.branding.set(b);
+        this.subiendoIcono.set(false);
+        this.avisar("Isotipo actualizado", "ok");
+      },
+      error: (e) => {
+        this.subiendoIcono.set(false);
+        this.avisar(e?.error?.message || "No se pudo subir el isotipo", "error");
+      },
+    });
+    input.value = "";
+  }
+
+  quitarIcono(): void {
+    const t = this.fichaDe();
+    if (!t) return;
+    this.saas.guardarBranding(t.id, { iconKey: null }).subscribe({
+      next: (b) => {
+        this.branding.set(b);
+        this.avisar("Isotipo quitado", "ok");
       },
     });
   }

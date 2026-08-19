@@ -255,6 +255,8 @@ export class SaasService {
       paleta: paletaPorId(t.palette),
       logoKey: t.logoKey,
       logoUrl: t.logoKey ? await this.ligaDeLogo(t.logoKey) : null,
+      iconKey: t.iconKey,
+      iconUrl: t.iconKey ? await this.ligaDeLogo(t.iconKey) : null,
     };
   }
 
@@ -271,7 +273,11 @@ export class SaasService {
 
   async guardarBranding(
     tenantId: string,
-    dto: { paletaId?: string; logoKey?: string | null },
+    dto: {
+      paletaId?: string;
+      logoKey?: string | null;
+      iconKey?: string | null;
+    },
   ) {
     const t = await this.tenant(tenantId);
     if (dto.paletaId !== undefined) {
@@ -283,22 +289,37 @@ export class SaasService {
       t.palette = dto.paletaId;
     }
     if (dto.logoKey !== undefined) t.logoKey = dto.logoKey;
+    if (dto.iconKey !== undefined) t.iconKey = dto.iconKey;
     await this.tenantRepo.save(t);
     return this.branding(tenantId);
   }
 
-  /** Sube el logotipo del cliente y lo deja asignado. */
+  /** Sube el logotipo (horizontal) del cliente y lo deja asignado. */
   async subirLogo(tenantId: string, file: Express.Multer.File) {
+    const key = await this.subirImagenBranding(tenantId, file, 'logo');
+    return this.guardarBranding(tenantId, { logoKey: key });
+  }
+
+  /** Sube el isotipo (cuadrado) del cliente y lo deja asignado. */
+  async subirIcono(tenantId: string, file: Express.Multer.File) {
+    const key = await this.subirImagenBranding(tenantId, file, 'icon');
+    return this.guardarBranding(tenantId, { iconKey: key });
+  }
+
+  private async subirImagenBranding(
+    tenantId: string,
+    file: Express.Multer.File,
+    tipo: 'logo' | 'icon',
+  ): Promise<string> {
     if (!file) throw new BadRequestException('Archivo requerido');
     if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException('El logotipo debe ser una imagen');
+      throw new BadRequestException('El archivo debe ser una imagen');
     }
-    const key = await this.storage.upload(
+    return this.storage.upload(
       file.buffer,
-      `branding/${tenantId}/logo-${Date.now()}`,
+      `branding/${tenantId}/${tipo}-${Date.now()}`,
       file.mimetype,
     );
-    return this.guardarBranding(tenantId, { logoKey: key });
   }
 
   async ficha(tenantId: string) {

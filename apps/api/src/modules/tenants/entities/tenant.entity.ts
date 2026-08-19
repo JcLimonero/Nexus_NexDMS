@@ -109,6 +109,11 @@ export class Tenant {
   @Column({ name: 'logo_key', type: 'varchar', length: 500, nullable: true })
   logoKey: string | null;
 
+  /** Isotipo cuadrado, para favicon/monitores/ícono del PWA (el logo apaisado
+   * no cabe en esos espacios). */
+  @Column({ name: 'icon_key', type: 'varchar', length: 500, nullable: true })
+  iconKey: string | null;
+
   @Column({ name: 'palette', type: 'varchar', length: 40, default: 'nexus' })
   palette: string;
 

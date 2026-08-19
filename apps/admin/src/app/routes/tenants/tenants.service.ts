@@ -256,7 +256,7 @@ export class SaasService {
 
   guardarBranding(
     tenantId: string,
-    dto: { paletaId?: string; logoKey?: string | null },
+    dto: { paletaId?: string; logoKey?: string | null; iconKey?: string | null },
   ): Observable<Branding> {
     return this.http.put<Branding>(
       `/api/v1/saas/tenants/${tenantId}/branding`,
@@ -265,10 +265,22 @@ export class SaasService {
   }
 
   subirLogo(tenantId: string, file: File): Observable<Branding> {
+    return this.subirImagen(tenantId, file, "logo");
+  }
+
+  subirIcono(tenantId: string, file: File): Observable<Branding> {
+    return this.subirImagen(tenantId, file, "icon");
+  }
+
+  private subirImagen(
+    tenantId: string,
+    file: File,
+    tipo: "logo" | "icon",
+  ): Observable<Branding> {
     const form = new FormData();
     form.append("file", file);
     return this.http.post<Branding>(
-      `/api/v1/saas/tenants/${tenantId}/branding/logo`,
+      `/api/v1/saas/tenants/${tenantId}/branding/${tipo}`,
       form,
     );
   }
@@ -288,4 +300,6 @@ export interface Branding {
   paleta: PaletaMarca;
   logoKey: string | null;
   logoUrl: string | null;
+  iconKey: string | null;
+  iconUrl: string | null;
 }
