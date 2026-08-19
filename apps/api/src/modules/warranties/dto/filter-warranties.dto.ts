@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   WarrantyTypeEnum,
@@ -6,6 +6,11 @@ import {
 } from '../entities/warranty.entity';
 
 export class FilterWarrantiesDto {
+  /** Búsqueda de texto: cliente, teléfono o unidad (placa/serie). */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   clientId?: string;

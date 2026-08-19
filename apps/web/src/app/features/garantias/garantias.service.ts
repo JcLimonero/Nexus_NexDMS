@@ -37,6 +37,7 @@ export class GarantiasService {
     filters: WarrantyFilters = {}
   ): Observable<WarrantiesResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.clientId) params = params.set("clientId", filters.clientId);
     if (filters.status) params = params.set("status", filters.status);
     if (filters.type) params = params.set("type", filters.type);

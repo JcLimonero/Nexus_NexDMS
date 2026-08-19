@@ -18,6 +18,7 @@ export class CotizacionesService {
 
   getQuotations(filters: QuotationFilters = {}): Observable<QuotationResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.type) params = params.set("type", filters.type);
     if (filters.status) params = params.set("status", filters.status);
     if (filters.clientId) params = params.set("clientId", filters.clientId);

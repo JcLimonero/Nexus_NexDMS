@@ -83,6 +83,7 @@ export class AlmacenService {
     filters: WarehouseTransferFilters = {}
   ): Observable<WarehouseTransfersResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.originBranchId)
       params = params.set("originBranchId", filters.originBranchId);
     if (filters.destinationBranchId)
@@ -169,6 +170,7 @@ export class AlmacenService {
     filters: UnitReservationFilters = {}
   ): Observable<UnitReservation[]> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.status) params = params.set("status", filters.status);
     if (filters.catalogUnitId)
       params = params.set("catalogUnitId", filters.catalogUnitId);

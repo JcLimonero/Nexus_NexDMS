@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsInt,
   IsOptional,
+  IsString,
   IsUUID,
   Max,
   Min,
@@ -11,6 +12,11 @@ import { Transform } from 'class-transformer';
 import { PurchaseOrderStatusEnum } from '../entities/purchase-order.entity';
 
 export class FilterPurchaseOrdersDto {
+  /** Búsqueda de texto: folio de la orden o nombre del proveedor. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @Transform(({ value }: { value: unknown }) =>
     typeof value === 'string' && value.trim() ? value.trim() : undefined,

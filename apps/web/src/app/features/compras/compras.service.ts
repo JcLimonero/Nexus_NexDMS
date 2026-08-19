@@ -59,6 +59,7 @@ export class ComprasService {
     filters: PurchaseOrderFilters = {}
   ): Observable<PurchaseOrdersResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.supplierId)
       params = params.set("supplierId", filters.supplierId);
     if (filters.status) params = params.set("status", filters.status);

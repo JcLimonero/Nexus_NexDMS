@@ -1,10 +1,21 @@
-import { IsOptional, IsUUID, IsEnum, IsDateString } from 'class-validator';
+import {
+  IsOptional,
+  IsUUID,
+  IsEnum,
+  IsDateString,
+  IsString,
+} from 'class-validator';
 import {
   CfdiTypeEnum,
   CfdiStatusEnum,
 } from '../../cfdi-log/entities/cfdi-log.entity';
 
 export class FilterCfdiDto {
+  /** Búsqueda de texto: folio, serie o UUID fiscal. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   branchId?: string;

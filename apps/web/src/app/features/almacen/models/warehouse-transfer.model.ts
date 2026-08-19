@@ -42,6 +42,7 @@ export interface WarehouseTransfer {
 }
 
 export interface WarehouseTransferFilters {
+  search?: string;
   originBranchId?: string;
   destinationBranchId?: string;
   status?: WarehouseTransferStatus;

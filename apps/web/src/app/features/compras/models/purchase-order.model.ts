@@ -44,6 +44,7 @@ export interface PurchaseOrder {
 }
 
 export interface PurchaseOrderFilters {
+  search?: string;
   supplierId?: string;
   status?: PurchaseOrderStatus;
   branchId?: string;

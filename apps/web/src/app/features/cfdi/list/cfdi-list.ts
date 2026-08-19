@@ -34,6 +34,7 @@ export class CfdiList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   tipoFilter = signal<string>("");
   branchFilter = signal<string>("");
@@ -75,6 +76,7 @@ export class CfdiList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.cfdiService.getCfdis({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as CfdiStatus | undefined,
             tipo: this.tipoFilter() as CfdiType | undefined,
             branchId: this.branchFilter() || undefined,

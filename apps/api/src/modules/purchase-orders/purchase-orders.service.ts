@@ -141,10 +141,15 @@ export class PurchaseOrdersService {
       .createQueryBuilder('po')
       .leftJoinAndSelect('po.items', 'items')
       .leftJoinAndSelect('items.part', 'part')
+      .leftJoin(Supplier, 'supplier', 'supplier.id = po.supplier_id')
       .where('po.tenant_id = :tenantId', { tenantId: user.tenantId });
 
     this.applyScope(qb, user);
 
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere('(po.folio ILIKE :s OR supplier.name ILIKE :s)', { s });
+    }
     if (filters.supplierId) {
       qb.andWhere('po.supplier_id = :supplierId', {
         supplierId: filters.supplierId,

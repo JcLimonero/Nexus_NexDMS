@@ -20,6 +20,7 @@ export class CfdiService {
 
   getCfdis(filters: CfdiFilters = {}): Observable<CfdiResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.branchId) params = params.set("branchId", filters.branchId);
     if (filters.tipo) params = params.set("tipo", filters.tipo);
     if (filters.status) params = params.set("status", filters.status);

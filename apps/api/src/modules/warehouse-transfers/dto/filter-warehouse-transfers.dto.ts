@@ -1,8 +1,13 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { WarehouseTransferStatusEnum } from '../entities/warehouse-transfer.entity';
 
 export class FilterWarehouseTransfersDto {
+  /** Búsqueda de texto: folio o SKU/nombre de la refacción. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   originBranchId?: string;

@@ -26,6 +26,7 @@ export class ApartadosList implements OnInit {
   branches = signal<{ id: string; name: string }[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
 
   ngOnInit(): void {
@@ -40,6 +41,7 @@ export class ApartadosList implements OnInit {
     this.loading.set(true);
     this.almacenService
       .getUnitReservations({
+        search: this.searchFilter().trim() || undefined,
         status: this.statusFilter() as UnitReservationStatus | undefined,
       })
       .subscribe({
@@ -53,6 +55,11 @@ export class ApartadosList implements OnInit {
           this.error.set(err?.error?.message || "Error al cargar apartados");
         },
       });
+  }
+
+  onSearchChange(value: string): void {
+    this.searchFilter.set(value);
+    this.load();
   }
 
   onStatusFilterChange(value: string): void {

@@ -53,6 +53,7 @@ export class CotizacionesList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   typeFilter = signal<string>("");
   branchFilter = signal<string>("");
@@ -73,6 +74,7 @@ export class CotizacionesList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.cotizacionesService.getQuotations({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as QuotationStatus | undefined,
             type: this.esServicio()
               ? QuotationType.SERVICE

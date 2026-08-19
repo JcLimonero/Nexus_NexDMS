@@ -163,6 +163,15 @@ export class WarehouseTransfersService {
     if (filters.status) {
       qb.andWhere('wt.status = :status', { status: filters.status });
     }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(wt.folio ILIKE :s
+          OR part.sku ILIKE :s
+          OR part.name ILIKE :s)`,
+        { s },
+      );
+    }
 
     const [data, total] = await qb
       .orderBy('wt.createdAt', 'DESC')

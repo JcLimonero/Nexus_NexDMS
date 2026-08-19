@@ -684,6 +684,16 @@ export class CfdiService {
         referenceId: filters.referenceId,
       });
     }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(c.fiscal_folio ILIKE :s
+          OR c.series ILIKE :s
+          OR CONCAT(c.series, c.fiscal_folio) ILIKE :s
+          OR c.sat_uuid ILIKE :s)`,
+        { s },
+      );
+    }
 
     const [data, total] = await qb
       .orderBy('c.createdAt', 'DESC')

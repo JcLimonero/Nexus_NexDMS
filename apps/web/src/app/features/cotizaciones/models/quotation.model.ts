@@ -75,6 +75,7 @@ export interface Quotation {
 }
 
 export interface QuotationFilters {
+  search?: string;
   type?: QuotationType;
   status?: QuotationStatus;
   clientId?: string;

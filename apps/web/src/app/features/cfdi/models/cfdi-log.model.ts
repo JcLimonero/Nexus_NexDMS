@@ -38,6 +38,7 @@ export interface CfdiDetail extends CfdiLog {
 }
 
 export interface CfdiFilters {
+  search?: string;
   branchId?: string;
   tipo?: CfdiType;
   status?: CfdiStatus;

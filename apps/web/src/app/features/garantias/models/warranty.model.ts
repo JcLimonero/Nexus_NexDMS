@@ -49,6 +49,7 @@ export interface Warranty {
 }
 
 export interface WarrantyFilters {
+  search?: string;
   clientId?: string;
   status?: WarrantyStatus;
   type?: WarrantyType;
