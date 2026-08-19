@@ -73,16 +73,23 @@ export class BrandingService {
     this.branding.set(null);
   }
 
-  /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene. */
+  /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene.
+   * Sobrescribe TODOS los links de icono (hay un default NexDMS en el HTML)
+   * y les quita el type para que ninguno le gane por formato. */
   private pintarFavicon(iconUrl: string | null): void {
     if (!iconUrl) return;
-    let link = document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
-    if (!link) {
-      link = document.createElement("link");
+    const links = document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]');
+    if (links.length === 0) {
+      const link = document.createElement("link");
       link.rel = "icon";
+      link.href = iconUrl;
       document.head.appendChild(link);
+      return;
     }
-    link.href = iconUrl;
+    links.forEach((l) => {
+      l.removeAttribute("type");
+      l.href = iconUrl;
+    });
   }
 
   private aplicar(b: Branding): void {
