@@ -17,6 +17,18 @@
           </div>
         </div>
         <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por nombre…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="searchFilter.set($event)"
+              />
+            </div>
+          </div>
+
           @if (error()) {
             <div class="alert alert-danger" role="alert">{{ error() }}</div>
           }
@@ -35,7 +47,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (t of types(); track t.id) {
+                  @for (t of filteredTypes(); track t.id) {
                     <tr>
                       <td>{{ t.code }}</td>
                       <td>{{ t.label }}</td>
@@ -60,7 +72,11 @@
                   } @empty {
                     <tr>
                       <td colspan="3" class="text-center text-muted py-4">
-                        No hay tipos de combustión.
+                        @if (searchFilter().trim()) {
+                          No hay tipos que coincidan con la búsqueda.
+                        } @else {
+                          No hay tipos de combustión.
+                        }
                       </td>
                     </tr>
                   }

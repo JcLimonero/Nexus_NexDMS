@@ -14,6 +14,15 @@
         <div class="card-body">
           <div class="row g-2">
             <div class="col-md-4">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por nombre…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="searchFilter.set($event)"
+              />
+            </div>
+            <div class="col-md-4">
               <select
                 class="form-select"
                 [ngModel]="branchFilter()"
@@ -55,7 +64,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (l of listas(); track l.id) {
+                  @for (l of filteredListas(); track l.id) {
                     <tr>
                       <td>{{ l.name }}</td>
                       <td>{{ getTypeLabel(l.type) }}</td>

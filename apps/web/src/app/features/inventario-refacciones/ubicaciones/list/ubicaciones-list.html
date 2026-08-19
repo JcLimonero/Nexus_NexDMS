@@ -29,6 +29,16 @@
                 }
               </select>
             </div>
+            <div class="col-md-4">
+              <label class="form-label">Buscar</label>
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por nombre…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="searchFilter.set($event)"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -63,7 +73,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (loc of ubicaciones(); track loc.id) {
+                  @for (loc of ubicacionesFiltradas(); track loc.id) {
                     <tr>
                       <td>{{ loc.code }}</td>
                       <td>{{ loc.zone }}</td>

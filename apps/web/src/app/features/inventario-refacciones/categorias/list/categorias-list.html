@@ -14,6 +14,19 @@
             </a>
           </div>
         </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-4">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por nombre…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="onSearch($event)"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="card categorias-table-card">

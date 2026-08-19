@@ -2,6 +2,11 @@ import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FilterGlobalModelsDto {
+  /** Búsqueda de texto: marca, modelo o versión. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   brandId?: string;

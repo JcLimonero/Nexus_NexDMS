@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { Subject } from "rxjs";
 import { debounceTime, switchMap } from "rxjs/operators";
@@ -17,7 +18,7 @@ interface BranchItem {
 @Component({
   selector: "app-sucursales-list",
   standalone: true,
-  imports: [CommonModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
   templateUrl: "./sucursales-list.html",
   styleUrls: ["./sucursales-list.scss"],
 })
@@ -33,6 +34,7 @@ export class SucursalesList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
 
   private loadSubject = new Subject<void>();
 
@@ -43,7 +45,8 @@ export class SucursalesList implements OnInit {
         switchMap(() =>
           this.branchesService.getAll(
             this.meta()?.page ?? 1,
-            20
+            20,
+            this.searchFilter().trim() || undefined
           )
         )
       )
@@ -66,6 +69,11 @@ export class SucursalesList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.loadSubject.next();
+  }
+
+  onFilterChange(): void {
+    this.meta.update((m) => (m ? { ...m, page: 1 } : null));
+    this.load();
   }
 
   goToPage(page: number): void {

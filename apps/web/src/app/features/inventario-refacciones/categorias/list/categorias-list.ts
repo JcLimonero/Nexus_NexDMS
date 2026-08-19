@@ -24,6 +24,7 @@ export class CategoriasList implements OnInit {
   meta = signal<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
 
   private loadSubject = new Subject<void>();
 
@@ -33,6 +34,7 @@ export class CategoriasList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.inventarioService.getCategories({
+            search: this.searchFilter().trim() || undefined,
             page: this.meta()?.page ?? 1,
             limit: 20,
           }),
@@ -57,6 +59,13 @@ export class CategoriasList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.loadSubject.next();
+  }
+
+  onSearch(value: string): void {
+    this.searchFilter.set(value);
+    // Al cambiar la búsqueda regresamos a la primera página.
+    this.meta.update((prev) => (prev ? { ...prev, page: 1 } : null));
+    this.load();
   }
 
   goToPage(page: number): void {

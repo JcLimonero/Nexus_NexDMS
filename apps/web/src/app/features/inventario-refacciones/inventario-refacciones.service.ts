@@ -112,6 +112,7 @@ export class InventarioRefaccionesService {
   // Categorías
   getCategories(filters: PartCategoryFilters = {}): Observable<PartCategoriesResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.page) params = params.set("page", filters.page.toString());
     if (filters.limit) params = params.set("limit", filters.limit.toString());
     return this.http.get<PartCategoriesResponse>(CATEGORIES_URL, { params });

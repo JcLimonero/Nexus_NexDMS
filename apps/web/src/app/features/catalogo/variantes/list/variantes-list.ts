@@ -30,6 +30,7 @@ export class VariantesList implements OnInit {
   meta = signal<GlobalModelsResponse["meta"] | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   vehicleTypeFilter = signal<string>("");
 
   private searchSubject = new Subject<void>();
@@ -44,6 +45,7 @@ export class VariantesList implements OnInit {
         debounceTime(300),
         switchMap(() =>
           this.catalogoService.getAll({
+            search: this.searchFilter().trim() || undefined,
             vehicleTypeId: this.vehicleTypeFilter() || undefined,
             page: this.meta()?.page ?? 1,
             limit: 20,
@@ -69,6 +71,12 @@ export class VariantesList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.searchSubject.next();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchFilter.set(value);
+    this.meta.update((m) => (m ? { ...m, page: 1 } : null));
+    this.load();
   }
 
   onTypeFilterChange(value: string): void {

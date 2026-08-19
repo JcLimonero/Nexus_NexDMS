@@ -65,6 +65,7 @@ export interface CreateGlobalModelDto {
 }
 
 export interface FilterGlobalModels {
+  search?: string;
   brandId?: string;
   vehicleTypeId?: string;
   year?: number;

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
@@ -24,6 +24,14 @@ export class ListasPrecioList implements OnInit {
   loading = signal(true);
   error = signal<string | null>(null);
   branchFilter = signal<string>("");
+  searchFilter = signal<string>("");
+
+  filteredListas = computed(() => {
+    const term = this.searchFilter().trim().toLowerCase();
+    const listas = this.listas();
+    if (!term) return listas;
+    return listas.filter((l) => l.name.toLowerCase().includes(term));
+  });
 
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({

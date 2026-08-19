@@ -21,6 +21,18 @@
 
       <div class="card marcas-table-card">
         <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por nombre…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="searchFilter.set($event)"
+              />
+            </div>
+          </div>
+
           @if (error()) {
             <div class="alert alert-danger" role="alert">
               {{ error() }}
@@ -44,7 +56,7 @@
                   </tr>
                 </thead>
                 <tbody>
-                  @for (brand of brands(); track brand.id) {
+                  @for (brand of filteredBrands(); track brand.id) {
                     <tr>
                       <td>{{ brand.name }}</td>
                       <td>
@@ -79,7 +91,11 @@
                   } @empty {
                     <tr>
                       <td colspan="3" class="text-center text-muted py-4">
-                        No hay marcas. Agrega una para poder crear modelos.
+                        @if (searchFilter().trim()) {
+                          No hay marcas que coincidan con la búsqueda.
+                        } @else {
+                          No hay marcas. Agrega una para poder crear modelos.
+                        }
                       </td>
                     </tr>
                   }

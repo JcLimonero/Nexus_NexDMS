@@ -12,7 +12,16 @@
           </a>
         </div>
         <div class="card-body">
-          <div class="row">
+          <div class="row g-2">
+            <div class="col-md-4">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por nombre…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="onSearchChange($event)"
+              />
+            </div>
             <div class="col-md-4">
               <select
                 class="form-select"
