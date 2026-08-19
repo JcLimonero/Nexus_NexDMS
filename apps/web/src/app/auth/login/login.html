@@ -23,7 +23,36 @@
               <h6>Ingresa tu correo electrónico y contraseña</h6>
             }
           </div>
-          @if (!newUser) {
+          @if (suspension) {
+            <div class="suspension" role="alert">
+              <div class="suspension-icono" aria-hidden="true">🔒</div>
+              <h5 class="suspension-titulo">Cuenta suspendida</h5>
+              <p class="suspension-texto">{{ suspension.message }}</p>
+              <div class="suspension-contacto">
+                <div class="suspension-marca">{{ suspension.contacto.nombre }}</div>
+                @if (suspension.contacto.email) {
+                  <a class="suspension-linea" [href]="'mailto:' + suspension.contacto.email">
+                    ✉️ {{ suspension.contacto.email }}
+                  </a>
+                }
+                @if (suspension.contacto.telefono) {
+                  <a class="suspension-linea" [href]="'tel:' + suspension.contacto.telefono">
+                    📞 {{ suspension.contacto.telefono }}
+                  </a>
+                }
+                @if (suspension.contacto.whatsapp) {
+                  <a class="suspension-linea" [href]="whatsappLink(suspension.contacto.whatsapp)" target="_blank" rel="noopener">
+                    💬 WhatsApp: {{ suspension.contacto.whatsapp }}
+                  </a>
+                }
+              </div>
+              <button type="button" class="btn btn-outline-secondary btn-sm mt-3" (click)="suspension = null">
+                Volver a intentar
+              </button>
+            </div>
+          }
+
+          @if (!newUser && !suspension) {
             <form
               class="theme-form"
               [formGroup]="loginForm"

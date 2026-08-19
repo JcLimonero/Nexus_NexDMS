@@ -49,9 +49,14 @@ export class TenantsService {
     return this.tenantRepo.save(tenant);
   }
 
+  /**
+   * Alterna el acceso del cliente: suspender (isActive=false) le corta el
+   * acceso a todos sus usuarios, reactivar (true) lo devuelve. El admin lo usa
+   * como interruptor único.
+   */
   async suspend(user: UserPayload, id: string): Promise<Tenant> {
     const tenant = await this.findOne(user, id);
-    tenant.isActive = false;
+    tenant.isActive = !tenant.isActive;
     return this.tenantRepo.save(tenant);
   }
 

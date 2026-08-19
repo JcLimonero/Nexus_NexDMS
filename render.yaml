@@ -83,6 +83,16 @@ services:
         value: https://recepcion.nexusqsystem.com
       - key: PWA_APP_URL
         value: https://pwa.nexusqsystem.com
+      # Contacto de Nexus mostrado cuando un cliente suspendido intenta entrar.
+      # Teléfono/WhatsApp se capturan en el dashboard de Render (sync:false).
+      - key: NEXUS_SUPPORT_NAME
+        value: Nexus Q Tech
+      - key: NEXUS_SUPPORT_EMAIL
+        value: soporte@nexusqtech.com
+      - key: NEXUS_SUPPORT_PHONE
+        sync: false
+      - key: NEXUS_SUPPORT_WHATSAPP
+        sync: false
       # Almacenamiento Backblaze B2 (S3-compatible) para logos/archivos. Sin
       # esto, subir logotipo falla con "Could not load credentials". Copiar los
       # valores desde apps/api/.env.

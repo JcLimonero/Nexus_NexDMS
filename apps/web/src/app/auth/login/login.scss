@@ -195,3 +195,47 @@
   color: var(--text-secondary);
   text-align: center;
 }
+
+/* Aviso de cliente suspendido: reemplaza el formulario y muestra a quién
+   contactar en Nexus para reactivar la cuenta. */
+.suspension {
+  text-align: center;
+  padding: var(--space-16, 16px) var(--space-8, 8px) var(--space-8, 8px);
+}
+.suspension-icono {
+  font-size: 34px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.suspension-titulo {
+  margin: 0 0 6px;
+  font-weight: 700;
+}
+.suspension-texto {
+  color: var(--text-secondary, #5b6570);
+  font-size: var(--text-sm, 14px);
+  margin: 0 auto 14px;
+  max-width: 40ch;
+}
+.suspension-contacto {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--border, #d9dee3);
+  border-radius: 10px;
+  background: var(--bg, #f6f8fa);
+}
+.suspension-marca {
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.suspension-linea {
+  text-decoration: none;
+  color: var(--primary, #105078);
+  font-size: var(--text-sm, 14px);
+}
+.suspension-linea:hover {
+  text-decoration: underline;
+}

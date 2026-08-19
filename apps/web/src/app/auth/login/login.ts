@@ -57,6 +57,25 @@ export class Login implements OnInit {
   public error: string | null = null;
 
   /**
+   * Cliente (tenant) suspendido: en vez del error genérico se muestra un aviso
+   * con los datos de contacto de Nexus para reactivar la cuenta.
+   */
+  public suspension: {
+    message: string;
+    contacto: {
+      nombre: string;
+      email: string;
+      telefono: string;
+      whatsapp: string;
+    };
+  } | null = null;
+
+  /** Liga wa.me para el WhatsApp de Nexus (solo dígitos). */
+  public whatsappLink(numero: string): string {
+    return "https://wa.me/" + (numero || "").replace(/[^0-9]/g, "");
+  }
+
+  /**
    * Panel de demostración: credenciales y accesos a los otros portales.
    *
    * Solo aparece en compilaciones de desarrollo (`ng build` de producción
@@ -236,6 +255,7 @@ export class Login implements OnInit {
     if (this.loginForm.invalid || this.loading) return;
     this.loading = true;
     this.error = null;
+    this.suspension = null;
 
     this.auth
       .login({
@@ -254,6 +274,15 @@ export class Login implements OnInit {
         },
         error: (err) => {
           this.loading = false;
+          // Cliente suspendido: mostrar contacto de Nexus, no un error genérico.
+          if (err?.error?.code === "TENANT_SUSPENDED" && err.error.contacto) {
+            this.suspension = {
+              message: err.error.message,
+              contacto: err.error.contacto,
+            };
+            this.error = null;
+            return;
+          }
           this.error = this.mensajeDeError(err);
         },
       });
