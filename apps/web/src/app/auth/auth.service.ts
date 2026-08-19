@@ -175,6 +175,16 @@ export class AuthService {
     localStorage.setItem(STORAGE_USER, JSON.stringify(res.user));
   }
 
+  /**
+   * Limpia la sesión local y la marca sin llamar al backend. Se usa cuando la
+   * sesión ya venció (401 irrecuperable): no tiene caso pegarle a /logout con
+   * un token muerto, solo hay que dejar todo limpio antes de ir al login.
+   */
+  limpiarSesion(): void {
+    this.clearSession();
+    this.branding.limpiar();
+  }
+
   private clearSession(): void {
     localStorage.removeItem(STORAGE_ACCESS);
     localStorage.removeItem(STORAGE_REFRESH);
