@@ -342,6 +342,17 @@ export class SalesService {
 
     this.applyScope(qb, user);
 
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(s.ticket_number ILIKE :s
+          OR client.first_name ILIKE :s
+          OR client.last_name ILIKE :s
+          OR client.company_name ILIKE :s
+          OR client.phone ILIKE :s)`,
+        { s },
+      );
+    }
     if (filters.clientId) {
       qb.andWhere('s.client_id = :clientId', {
         clientId: filters.clientId,

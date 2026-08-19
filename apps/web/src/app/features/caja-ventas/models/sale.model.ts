@@ -66,6 +66,7 @@ export interface SalesResponse {
 }
 
 export interface SaleFilters {
+  search?: string;
   clientId?: string;
   status?: SaleStatus;
   cashSessionId?: string;

@@ -11,6 +11,7 @@ const UNIT_SALES_URL = "/api/v1/unit-sales";
 const UNIT_ACCESSORIES_URL = "/api/v1/unit-accessories";
 
 export interface UnitSalesFilters {
+  search?: string;
   clientId?: string;
   status?: string;
   branchId?: string;
@@ -26,6 +27,7 @@ export class VentasUnidadesService {
 
   getAll(filters: UnitSalesFilters = {}): Observable<UnitSale[]> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.clientId) params = params.set("clientId", filters.clientId);
     if (filters.status) params = params.set("status", filters.status);
     if (filters.branchId) params = params.set("branchId", filters.branchId);

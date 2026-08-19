@@ -31,6 +31,7 @@ export class VentasList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   branchFilter = signal<string>("");
 
@@ -47,6 +48,7 @@ export class VentasList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.cajaService.getSales({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as SaleStatus | undefined,
             branchId: this.branchFilter() || undefined,
             page: this.meta()?.page ?? 1,
@@ -73,6 +75,12 @@ export class VentasList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.loadSubject.next();
+  }
+
+  onSearchFilterChange(value: string): void {
+    this.searchFilter.set(value);
+    this.meta.update((m) => (m ? { ...m, page: 1 } : null));
+    this.load();
   }
 
   onStatusFilterChange(value: string): void {
