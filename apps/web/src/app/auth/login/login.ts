@@ -51,26 +51,6 @@ export class Login implements OnInit {
       : "/dashboard/default";
   }
 
-  /**
-   * A dónde iba el usuario antes de que el guard le pidiera la sesión.
-   *
-   * Sin decírselo, pulsar "Portal de recepción" desde esta misma pantalla
-   * devuelve aquí y parece que el enlace no hace nada: en realidad el destino
-   * quedó guardado y se abre en cuanto entra.
-   */
-  public get destinoPendiente(): string | null {
-    const url = this.route.snapshot.queryParamMap.get("returnUrl");
-    if (!url || !url.startsWith("/")) return null;
-    // Frase completa y no solo el nombre: "a" + "el" se contrae en "al", y
-    // componerlo en la plantilla obligaría a decidir el artículo ahí.
-    const nombres: Record<string, string> = {
-      "/recepcion": "al portal de recepción",
-      "/reception": "a la recepción de unidades",
-      "/portal": "al portal del cliente",
-    };
-    return nombres[url.split("?")[0]] ?? "a la página que abriste";
-  }
-
   public newUser = false;
   public loginForm: FormGroup;
   public loading = false;

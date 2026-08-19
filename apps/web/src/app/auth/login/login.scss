@@ -158,17 +158,6 @@
   color: var(--text-muted);
 }
 
-/* Explica por qué se pidió la sesión: sin esto, pulsar un enlace de portal
-   devuelve a esta pantalla y parece que no hizo nada. */
-.destino-pendiente {
-  margin: var(--space-8) 0 0;
-  padding: var(--space-8) var(--space-12);
-  border-radius: var(--radius-md);
-  background: color-mix(in srgb, var(--primary) 8%, transparent);
-  color: var(--primary);
-  font-size: var(--text-sm);
-}
-
 
 .portal-icono {
   flex: 1 1 auto;
