@@ -12,10 +12,36 @@
             <p class="text-muted">Cargando…</p>
           } @else if (perfil(); as p) {
             <div class="perfil-cabecera">
-              <div class="perfil-avatar">{{ iniciales() }}</div>
+              <div class="perfil-avatar">
+                @if (p.avatarUrl) {
+                  <img [src]="p.avatarUrl" alt="Foto de perfil" />
+                } @else {
+                  {{ iniciales() }}
+                }
+              </div>
               <div>
                 <h6>{{ nombre() }}</h6>
                 <p class="text-muted mb-0">{{ p.email }}</p>
+                <div class="perfil-avatar-acciones mt-1">
+                  <label class="btn btn-sm btn-outline-primary mb-0">
+                    {{ subiendoAvatar() ? "Subiendo…" : "Cambiar foto" }}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      hidden
+                      [disabled]="subiendoAvatar()"
+                      (change)="subirAvatar($event)"
+                    />
+                  </label>
+                  @if (p.avatarUrl) {
+                    <button type="button" class="btn btn-sm btn-outline-secondary" (click)="quitarAvatar()">
+                      Quitar
+                    </button>
+                  }
+                  <span class="text-muted small d-block mt-1">
+                    Imagen cuadrada, PNG o JPG. (SVG no, por el almacenamiento.)
+                  </span>
+                </div>
               </div>
             </div>
 

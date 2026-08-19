@@ -363,6 +363,14 @@ export class AuthService {
     // predeterminada hacía que el cambio pareciera no surtir efecto.
     const activa =
       branches.find((b) => b.branchId === user.branchId) ?? defaultBranch;
+    let avatarUrl: string | null = null;
+    if (dbUser.avatarKey) {
+      try {
+        avatarUrl = await this.storage.getSignedUrl(dbUser.avatarKey, 24 * 3600);
+      } catch {
+        /* sin almacenamiento se entra igual, solo sin foto */
+      }
+    }
     return {
       id: dbUser.id,
       tenantId: dbUser.tenantId,
@@ -371,6 +379,7 @@ export class AuthService {
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       email: dbUser.email,
+      avatarUrl,
       roles: this.usersService.getRoleNames(dbUser),
       scope: dbUser.scope,
       branches,
@@ -380,6 +389,27 @@ export class AuthService {
       // con los colores de fábrica en cada entrada.
       branding: await this.brandingDelTenant(dbUser.tenantId),
     };
+  }
+
+  /** Sube (cambia) la foto de perfil del usuario y devuelve su ficha. */
+  async subirAvatar(user: UserPayload, file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Archivo requerido');
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('La foto debe ser una imagen');
+    }
+    const key = await this.storage.upload(
+      file.buffer,
+      `avatars/${user.sub}/foto-${Date.now()}`,
+      file.mimetype,
+    );
+    await this.usersService.setAvatarKey(user.sub, user.tenantId, key);
+    return this.getMe(user);
+  }
+
+  /** Quita la foto de perfil (vuelve a las iniciales). */
+  async quitarAvatar(user: UserPayload) {
+    await this.usersService.setAvatarKey(user.sub, user.tenantId, null);
+    return this.getMe(user);
   }
 
   /**

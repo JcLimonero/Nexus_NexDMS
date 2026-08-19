@@ -512,7 +512,7 @@
               {{ subiendoLogo() ? "Subiendo…" : "Subir logotipo" }}
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                accept="image/png,image/jpeg,image/webp"
                 hidden
                 [disabled]="subiendoLogo()"
                 (change)="subirLogo($event)"
@@ -524,7 +524,7 @@
               </button>
             }
             <ul class="pista pista-logo">
-              <li><strong>Formato:</strong> PNG o SVG con fondo transparente.</li>
+              <li><strong>Formato:</strong> PNG con fondo transparente (SVG no funciona en el almacenamiento).</li>
               <li><strong>Forma:</strong> horizontal (apaisado), proporción ≈ 4:1.</li>
               <li><strong>Tamaño:</strong> 320×80 px o más (se muestra hasta 160×40 px).</li>
               <li><strong>Contraste:</strong> se muestra sobre un recuadro claro; usa tinta oscura o de color (evita texto blanco).</li>
@@ -546,7 +546,7 @@
               {{ subiendoIcono() ? "Subiendo…" : "Subir isotipo" }}
               <input
                 type="file"
-                accept="image/png,image/svg+xml,image/webp"
+                accept="image/png,image/webp"
                 hidden
                 [disabled]="subiendoIcono()"
                 (change)="subirIcono($event)"
@@ -559,7 +559,7 @@
             }
             <ul class="pista pista-logo">
               <li><strong>Forma:</strong> cuadrado (1:1).</li>
-              <li><strong>Tamaño:</strong> 512×512 px, PNG o SVG transparente.</li>
+              <li><strong>Tamaño:</strong> 512×512 px, PNG transparente.</li>
               <li><strong>Uso:</strong> favicon, monitores del taller e ícono del PWA.</li>
               <li><strong>Simple:</strong> solo el símbolo o las iniciales, sin texto largo.</li>
             </ul>

@@ -72,6 +72,11 @@ services:
         sync: false
       # Bases de las ligas de acceso por portal (superadmin las muestra por
       # cliente como <base>/<slug>). Sin esto, caen a *.localhost.
+      # Base de las ligas que se ENVÍAN al cliente final por WhatsApp/email
+      # (seguimiento /t/, encuesta /s/, cotización /c/). Sin esto caen a
+      # localhost:4200.
+      - key: APP_PUBLIC_URL
+        value: https://app.nexusqsystem.com
       - key: WEB_APP_URL
         value: https://app.nexusqsystem.com
       - key: RECEPCION_APP_URL

@@ -232,6 +232,15 @@ export class UsersService {
     return !!ub;
   }
 
+  /** Actualiza (o quita, con null) la foto de perfil del usuario. */
+  async setAvatarKey(
+    userId: string,
+    tenantId: string,
+    key: string | null,
+  ): Promise<void> {
+    await this.userRepo.update({ id: userId, tenantId }, { avatarKey: key });
+  }
+
   /**
    * Fija la sucursal por default del usuario. Se llama cuando cambia de
    * sucursal en cualquier módulo: la elección queda persistida para que el
