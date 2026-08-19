@@ -210,6 +210,11 @@ export class MonitorTaller implements OnInit, OnDestroy {
     };
   }
 
+  /** Cierra la sesión del monitor y vuelve al acceso (para cambiar de cuenta). */
+  salir(): void {
+    this.monitorAuth.salir();
+  }
+
   ngOnInit(): void {
     const deLaUrl = this.route.snapshot.queryParamMap.get("branch");
     if (deLaUrl) {

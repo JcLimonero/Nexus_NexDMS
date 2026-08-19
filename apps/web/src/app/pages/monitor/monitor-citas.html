@@ -47,6 +47,9 @@
         <span class="sin-conexion">Sin conexión</span>
       }
       <span>{{ actualizado() | date: "HH:mm:ss" }}</span>
+      <button type="button" class="salir-monitor" (click)="salir()" title="Cerrar sesión del monitor">
+        Salir
+      </button>
     </div>
   </header>
 

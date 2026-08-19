@@ -98,6 +98,24 @@
   font-weight: var(--font-semibold);
 }
 
+/* Salir del monitor: discreto pero a la mano para cambiar de cuenta. */
+.salir-monitor {
+  padding: 6px 14px;
+  border: 1px solid var(--border, #c5cfd8);
+  border-radius: var(--radius-md, 8px);
+  background: transparent;
+  color: inherit;
+  font-size: 14px;
+  font-weight: var(--font-medium, 500);
+  cursor: pointer;
+  opacity: 0.7;
+
+  &:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.06);
+  }
+}
+
 .monitor-vacio {
   margin: 80px 0;
   text-align: center;

@@ -211,6 +211,11 @@ export class MonitorCitas implements OnInit, OnDestroy {
     this.eje.apilar((this.datos()?.sinAsignar ?? []).map((c) => this.colocar(c))),
   );
 
+  /** Cierra la sesión del monitor y vuelve al acceso (para cambiar de cuenta). */
+  salir(): void {
+    this.monitorAuth.salir();
+  }
+
   ngOnInit(): void {
     const deLaUrl = this.route.snapshot.queryParamMap.get("branch");
     if (deLaUrl) {
