@@ -82,6 +82,8 @@
 .monitor-hora {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   margin-left: auto;
   gap: var(--space-12);
   font-size: 28px;
@@ -668,6 +670,7 @@
    por estado en cuatro columnas de color, pensada para leerse por días. */
 .vista-toggle {
   display: inline-flex;
+  flex-shrink: 0;
   border: 1px solid var(--border);
   border-radius: var(--control-radius);
   overflow: hidden;
@@ -680,6 +683,7 @@
     font-size: var(--text-base);
     height: var(--control-h);
     padding: 0 16px;
+    white-space: nowrap;
     cursor: pointer;
 
     & + button {
