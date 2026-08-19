@@ -26,15 +26,15 @@ BEGIN;
 CREATE TEMP TABLE ref AS
 SELECT
   t.id                                              AS tenant_id,
-  (SELECT id FROM branches WHERE slug = 'central')  AS central,
-  (SELECT id FROM branches ORDER BY is_primary DESC, name OFFSET 1 LIMIT 1) AS norte,
-  (SELECT id FROM users WHERE email = 'admin@demo.local')     AS admin,
-  (SELECT id FROM users WHERE email = 'recepcion@demo.local') AS asesor1,
-  (SELECT id FROM users WHERE email = 'asesor2@demo.local')   AS asesor2,
-  (SELECT id FROM users WHERE email = 'asesor3@demo.local')   AS asesor3,
-  (SELECT id FROM users WHERE email = 'mecanico1@demo.local') AS tecnico1,
-  (SELECT id FROM users WHERE email = 'mecanico2@demo.local') AS tecnico2,
-  (SELECT id FROM users WHERE email = 'mecanico3@demo.local') AS tecnico3,
+  (SELECT id FROM branches WHERE slug = 'central' AND tenant_id = t.id)  AS central,
+  (SELECT id FROM branches WHERE tenant_id = t.id ORDER BY is_primary DESC, name OFFSET 1 LIMIT 1) AS norte,
+  (SELECT id FROM users WHERE email = 'admin@demo.local'     AND tenant_id = t.id) AS admin,
+  (SELECT id FROM users WHERE email = 'recepcion@demo.local' AND tenant_id = t.id) AS asesor1,
+  (SELECT id FROM users WHERE email = 'asesor2@demo.local'   AND tenant_id = t.id) AS asesor2,
+  (SELECT id FROM users WHERE email = 'asesor3@demo.local'   AND tenant_id = t.id) AS asesor3,
+  (SELECT id FROM users WHERE email = 'mecanico1@demo.local' AND tenant_id = t.id) AS tecnico1,
+  (SELECT id FROM users WHERE email = 'mecanico2@demo.local' AND tenant_id = t.id) AS tecnico2,
+  (SELECT id FROM users WHERE email = 'mecanico3@demo.local' AND tenant_id = t.id) AS tecnico3,
   (now() AT TIME ZONE 'America/Mexico_City')::date  AS hoy
 FROM tenants t
 WHERE t.slug = 'demo';
@@ -455,18 +455,20 @@ VALUES ('finance', 1200), ('pld', 900), ('reports', 700), ('billing', 800);
 -- El importe se calcula del plan contratado más sus extras, no se escribe a
 -- mano: con una cifra fija el histórico contradecía al cobro mensual que la
 -- propia pantalla calcula, y salía cobrando una cosa y pagando otra.
-INSERT INTO saas_payments (tenant_id, period, amount, status, due_date, paid_at,
+INSERT INTO saas_payments (tenant_id, period, amount, currency, status, due_date, paid_at,
                            method, reference, concept)
 SELECT r.tenant_id,
        to_char((r.hoy - (n || ' months')::interval), 'YYYY-MM'),
-       (SELECT p.monthly_price FROM saas_plans p
-         JOIN tenants t ON t.saas_plan_id = p.id AND t.id = r.tenant_id)
+       -- Si el tenant no tiene plan enlazado, se usa una mensualidad base.
+       coalesce((SELECT p.monthly_price FROM saas_plans p
+                  JOIN tenants t ON t.saas_plan_id = p.id AND t.id = r.tenant_id), 2500)
        + coalesce((SELECT sum(mp.monthly_price)
                      FROM tenants t
                      CROSS JOIN LATERAL jsonb_array_elements_text(
                        coalesce(t.extra_modules, '[]'::jsonb)) AS m(clave)
                      JOIN saas_module_prices mp ON mp.module_key = m.clave
                     WHERE t.id = r.tenant_id), 0),
+       'MXN',
        CASE WHEN n = 0 THEN 'PENDIENTE' ELSE 'PAGADO' END,
        date_trunc('month', r.hoy - (n || ' months')::interval)::date + 4,
        CASE WHEN n > 0

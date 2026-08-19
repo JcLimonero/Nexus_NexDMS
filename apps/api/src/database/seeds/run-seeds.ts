@@ -235,6 +235,82 @@ async function runSeeds() {
     }
   }
 
+  // ── Equipo de trabajo y segunda sucursal (para la demo operativa) ──
+  // El seed operativo (demo-operativo.sql) referencia estos correos y la
+  // sucursal 'norte'. Se crean aquí, idempotente, para que ese SQL corra.
+  const demoTenant = await tenantRepo.findOne({ where: { slug: 'demo' } });
+  if (demoTenant) {
+    const central = await branchRepo.findOne({
+      where: { tenantId: demoTenant.id, slug: 'central' },
+    });
+    if (central) {
+      let norte = await branchRepo.findOne({
+        where: { tenantId: demoTenant.id, slug: 'norte' },
+      });
+      if (!norte) {
+        norte = await branchRepo.save(
+          branchRepo.create({
+            tenantId: demoTenant.id,
+            legalEntityId: central.legalEntityId,
+            name: 'Sucursal Norte',
+            slug: 'norte',
+            address: 'Av. Patria 456, Zapopan',
+            city: 'Guadalajara',
+            state: 'Jalisco',
+            counterPhone: '+523339876543',
+            email: 'norte@demo.local',
+            schedule: {},
+            timezone: 'America/Mexico_City',
+            taxRate: 0.16,
+            maxDiscountPct: 10,
+            quotationValidityDays: 15,
+            isPrimary: false,
+            isActive: true,
+          }),
+        );
+        await configRepo.save(configRepo.create({ branchId: norte.id }));
+        console.log('  - Sucursal Norte creada');
+      }
+
+      const equipo = [
+        { email: 'asesor2@demo.local', firstName: 'Laura', lastName: 'Torres', role: RoleEnum.RECEPTIONIST },
+        { email: 'asesor3@demo.local', firstName: 'Diego', lastName: 'Ramírez', role: RoleEnum.RECEPTIONIST },
+        { email: 'mecanico1@demo.local', firstName: 'Javier', lastName: 'Mendoza', role: RoleEnum.MECHANIC },
+        { email: 'mecanico2@demo.local', firstName: 'Carlos', lastName: 'Núñez', role: RoleEnum.MECHANIC },
+        { email: 'mecanico3@demo.local', firstName: 'Miguel', lastName: 'Herrera', role: RoleEnum.MECHANIC },
+      ];
+      const teamHash = await bcrypt.hash(DEMO_PASSWORD, BCRYPT_ROUNDS);
+      let creados = 0;
+      for (const m of equipo) {
+        const exists = await userRepo.findOne({
+          where: { email: m.email, tenantId: demoTenant.id },
+        });
+        if (exists) continue;
+        const u = await userRepo.save(
+          userRepo.create({
+            tenantId: demoTenant.id,
+            firstName: m.firstName,
+            lastName: m.lastName,
+            email: m.email,
+            passwordHash: teamHash,
+            scope: ScopeEnum.SUCURSAL,
+            isActive: true,
+          }),
+        );
+        await userRoleRepo.save(userRoleRepo.create({ userId: u.id, role: m.role }));
+        await userBranchRepo.save(
+          userBranchRepo.create({ userId: u.id, branchId: central.id, isDefault: true }),
+        );
+        creados++;
+      }
+      if (creados)
+        console.log(
+          `  - Equipo demo: ${creados} usuarios (asesor2/3 + mecanico1/2/3) @demo.local / ` +
+            DEMO_PASSWORD,
+        );
+    }
+  }
+
   await ds.destroy();
 }
 

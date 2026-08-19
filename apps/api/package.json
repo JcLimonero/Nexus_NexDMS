@@ -23,6 +23,7 @@
     "migration:revert": "typeorm migration:revert -d dist/config/database.config.js",
     "migration:generate": "typeorm migration:generate -d dist/config/database.config.js",
     "seed": "ts-node -r tsconfig-paths/register src/database/seeds/run-seeds.ts",
+    "seed:operativo": "ts-node -r tsconfig-paths/register src/database/seeds/run-operativo.ts",
     "seed:mechanic-checklist": "ts-node -r tsconfig-paths/register src/database/seeds/mechanic-checklist-items.seed.ts"
   },
   "dependencies": {
