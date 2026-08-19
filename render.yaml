@@ -42,7 +42,7 @@ services:
     # - se invocan nest y typeorm con 'node <entry>' para no depender del bit
     #   de ejecución; el chmod es respaldo por si nest lanza tsc.
     buildCommand: "npm install --include=dev --ignore-scripts && npm rebuild bcrypt && chmod +x node_modules/.bin/* 2>/dev/null; node node_modules/@nestjs/cli/bin/nest.js build"
-    startCommand: "node node_modules/typeorm/cli.js migration:run -d dist/config/database.config.js && npm run start:prod"
+    startCommand: "node node_modules/typeorm/cli.js migration:run -d dist/config/database.config.js -t each && npm run start:prod"
     healthCheckPath: /api/v1/health
     envVars:
       # Node 24 (default de Render) dispara bugs de postinstall nativo; se fija
