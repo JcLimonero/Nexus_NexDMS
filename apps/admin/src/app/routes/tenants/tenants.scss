@@ -141,6 +141,21 @@
     font-size: var(--text-caption);
     color: var(--text-muted);
   }
+
+  /* Guía de tamaño/forma del logotipo. */
+  .pista-logo {
+    margin: 0;
+    padding-left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.35;
+
+    strong {
+      color: var(--text-secondary);
+      font-weight: var(--font-medium);
+    }
+  }
 }
 
 .btn-archivo {
