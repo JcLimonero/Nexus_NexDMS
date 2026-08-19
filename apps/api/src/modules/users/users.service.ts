@@ -207,9 +207,11 @@ export class UsersService {
     branchId: string;
     legalEntityId: string;
   } | null> {
+    // La default marcada va primero; si ninguna está marcada, cae a la más
+    // antigua asignada (la "primera de la lista"), de forma determinista.
     const [ub] = await this.userBranchRepo.find({
       where: { userId },
-      order: { isDefault: 'DESC' },
+      order: { isDefault: 'DESC', createdAt: 'ASC' },
       take: 1,
     });
     if (!ub) return null;
@@ -228,6 +230,23 @@ export class UsersService {
       where: { userId, branchId },
     });
     return !!ub;
+  }
+
+  /**
+   * Fija la sucursal por default del usuario. Se llama cuando cambia de
+   * sucursal en cualquier módulo: la elección queda persistida para que el
+   * refresh del token y el siguiente login lo dejen justo donde estaba.
+   *
+   * Si el usuario no tiene asignada esa sucursal no hace nada (la validación
+   * de acceso vive en quien lo invoca).
+   */
+  async setDefaultBranch(userId: string, branchId: string): Promise<void> {
+    const target = await this.userBranchRepo.findOne({
+      where: { userId, branchId },
+    });
+    if (!target || target.isDefault) return;
+    await this.userBranchRepo.update({ userId }, { isDefault: false });
+    await this.userBranchRepo.update({ userId, branchId }, { isDefault: true });
   }
 
   async getUsersByRoleInBranch(

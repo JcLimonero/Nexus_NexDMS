@@ -295,6 +295,9 @@ export class AuthService {
     if (!selected) {
       throw new UnauthorizedException('Sucursal no encontrada');
     }
+    // La elección queda como su default para que el refresh y el próximo login
+    // lo dejen en la misma sucursal.
+    await this.usersService.setDefaultBranch(dbUser.id, selected.branchId);
     const roles = this.usersService.getRoleNames(dbUser);
     const payload: UserPayload = {
       sub: dbUser.id,
@@ -318,6 +321,9 @@ export class AuthService {
       user.sub,
       user.tenantId,
     );
+    // Cambiar de entidad legal aterriza en una de sus sucursales; esa queda
+    // como default para conservarla tras un refresh.
+    await this.usersService.setDefaultBranch(dbUser.id, selected.branchId);
     const roles = this.usersService.getRoleNames(dbUser);
     const payload: UserPayload = {
       sub: dbUser.id,
