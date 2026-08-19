@@ -70,3 +70,11 @@ services:
       #   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
       - key: ENCRYPTION_KEY
         sync: false
+      # Bases de las ligas de acceso por portal (superadmin las muestra por
+      # cliente como <base>/<slug>). Sin esto, caen a *.localhost.
+      - key: WEB_APP_URL
+        value: https://app.nexusqsystem.com
+      - key: RECEPCION_APP_URL
+        value: https://recepcion.nexusqsystem.com
+      - key: PWA_APP_URL
+        value: https://pwa.nexusqsystem.com
