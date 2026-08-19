@@ -6,6 +6,20 @@
  */
 
 /* ── Sidebar ───────────────────────────────────────────── */
+/* El template deja `.page-sidebar.open` con margin-left:-265px (fuera de
+   pantalla) SIN media query, y en escritorio el toggle para reabrirlo está
+   oculto (.d-lg-none, <992px). En ese rango el menú queda inalcanzable.
+   Se fuerza visible en escritorio y el contenido se recorre 260px. */
+@media (min-width: 992px) {
+  .page-wrapper .page-body-wrapper .page-sidebar.open {
+    margin-left: 0 !important;
+  }
+  .page-wrapper .page-body-wrapper .page-sidebar.open ~ .page-body,
+  .page-wrapper .page-body-wrapper .page-sidebar.open ~ footer {
+    margin-left: 260px !important;
+  }
+}
+
 .page-wrapper .page-body-wrapper .page-sidebar,
 .page-wrapper .page-body-wrapper .page-sidebar.dark-sidebar {
   width: var(--sidebar-width);
