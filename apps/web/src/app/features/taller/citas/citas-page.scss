@@ -1,0 +1,34 @@
+.day-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.matrix-label {
+  display: block;
+  margin-bottom: var(--space-8);
+}
+
+.selected-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+
+  app-feather-icons {
+    color: var(--success);
+    display: inline-flex;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.fw-500 {
+  font-weight: var(--font-medium);
+}

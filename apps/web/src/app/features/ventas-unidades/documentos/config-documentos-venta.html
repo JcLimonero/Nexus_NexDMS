@@ -1,0 +1,213 @@
+<div class="container-fluid">
+  <div class="card mb-4">
+    <div class="card-header">
+      <h5>Documentos de venta</h5>
+      <span>Qué se exige para vender, según el cliente, el tipo de venta y la categoría</span>
+    </div>
+    <!-- Reglas primero: es lo que se consulta y ajusta a diario; el catálogo
+         se toca solo al montar el concesionario. -->
+    <nav class="pestanas-doc">
+      <button
+        type="button"
+        [class.activa]="pestana() === 'reglas'"
+        (click)="pestana.set('reglas')"
+      >
+        Reglas
+      </button>
+      <button
+        type="button"
+        [class.activa]="pestana() === 'catalogo'"
+        (click)="pestana.set('catalogo')"
+      >
+        Catálogo de documentos
+      </button>
+    </nav>
+  </div>
+
+  @if (cargando()) {
+    <div class="card"><div class="card-body text-center py-5">
+      <span class="spinner-border"></span>
+    </div></div>
+  } @else if (pestana() === "catalogo") {
+    <!-- ── Catálogo de tipos ── -->
+    <div class="card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <h6 class="mb-0">Tipos de documento</h6>
+          <span class="sub">El ámbito decide de dónde se cumple: del cliente (reutilizable) o de la venta</span>
+        </div>
+        <button class="btn btn-primary btn-sm" (click)="nuevoTipo()">Nuevo tipo</button>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Documento</th>
+                <th>Clave</th>
+                <th>Ámbito</th>
+                <th>Caduca</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of tipos(); track t.id) {
+                <tr [class.text-muted]="!t.isActive">
+                  <td>{{ t.name }}</td>
+                  <td><code>{{ t.key }}</code></td>
+                  <td>{{ t.scope === "CLIENT" ? "Del cliente" : "De la venta" }}</td>
+                  <td>{{ t.hasExpiration ? "Sí" : "—" }}</td>
+                  <td>
+                    <span class="pastilla" [attr.data-activo]="t.isActive">
+                      {{ t.isActive ? "Activo" : "Inactivo" }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-light btn-sm" (click)="editarTipo(t)">Editar</button>
+                    <button class="btn btn-light btn-sm" (click)="eliminarTipo(t)">Quitar</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  } @else {
+    <!-- ── Matriz de reglas ── -->
+    <div class="card">
+      <div class="card-header">
+        <h6 class="mb-0">Reglas: qué se exige y cuándo</h6>
+        <span class="sub">Deja un eje en "Cualquiera" para que aplique a todos sus valores</span>
+      </div>
+      <div class="card-body">
+        <!-- Alta de una regla -->
+        <div class="alta-regla">
+          <label>
+            <span>Documento</span>
+            <select class="form-control" [(ngModel)]="formRegla.documentTypeId">
+              <option value="">Elige…</option>
+              @for (t of tiposActivos(); track t.id) {
+                <option [value]="t.id">{{ t.name }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Tipo de cliente</span>
+            <select class="form-control" [(ngModel)]="formRegla.clientType">
+              <option value="">Cualquiera</option>
+              @for (c of clientes; track c[0]) {
+                <option [value]="c[0]">{{ c[1] }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Tipo de venta</span>
+            <select class="form-control" [(ngModel)]="formRegla.financingType">
+              <option value="">Cualquiera</option>
+              @for (v of ventas; track v[0]) {
+                <option [value]="v[0]">{{ v[1] }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Categoría</span>
+            <select class="form-control" [(ngModel)]="formRegla.vehicleCategory">
+              <option value="">Cualquiera</option>
+              @for (c of categorias(); track c.code) {
+                <option [value]="c.code">{{ c.label }}</option>
+              }
+            </select>
+          </label>
+          <label class="check">
+            <input type="checkbox" [(ngModel)]="formRegla.isRequired" />
+            <span>Obligatorio</span>
+          </label>
+          <button class="btn btn-primary" (click)="agregarRegla()">Agregar</button>
+        </div>
+
+        <div class="table-responsive mt-3">
+          <table class="table table-sm table-hover align-middle">
+            <thead>
+              <tr>
+                <th>Documento</th>
+                <th>Cliente</th>
+                <th>Venta</th>
+                <th>Categoría</th>
+                <th>Exigencia</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (r of reglas(); track r.id) {
+                <tr>
+                  <td>{{ nombreTipo(r.documentTypeId) }}</td>
+                  <td>{{ etiquetaEje("cliente", r.clientType) }}</td>
+                  <td>{{ etiquetaEje("venta", r.financingType) }}</td>
+                  <td>{{ etiquetaEje("categoria", r.vehicleCategory) }}</td>
+                  <td>
+                    <span class="pastilla" [attr.data-obl]="r.isRequired">
+                      {{ r.isRequired ? "Obligatorio" : "Opcional" }}
+                    </span>
+                  </td>
+                  <td class="text-end">
+                    <button class="btn btn-light btn-sm" (click)="quitarRegla(r)">Quitar</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Alta/edición de un tipo -->
+@if (tipoAbierto()) {
+  <div class="fondo-modal" (click)="tipoAbierto.set(false)"></div>
+  <div class="panel-modal" role="dialog" aria-modal="true">
+    <header>
+      <h5>{{ formTipo.id ? "Editar tipo" : "Nuevo tipo de documento" }}</h5>
+      <button class="btn-cerrar" (click)="tipoAbierto.set(false)">×</button>
+    </header>
+    <div class="cuerpo">
+      <label>
+        <span>Nombre *</span>
+        <input class="form-control" [(ngModel)]="formTipo.name" placeholder="Comprobante de ingresos" />
+      </label>
+      <label>
+        <span>Clave *</span>
+        <input class="form-control" [(ngModel)]="formTipo.key" placeholder="INGRESOS" />
+        <small class="text-muted">Estable; en los del cliente liga con su expediente.</small>
+      </label>
+      <label>
+        <span>Ámbito</span>
+        <select class="form-control" [(ngModel)]="formTipo.scope">
+          <option value="SALE">De la venta (propio de la operación)</option>
+          <option value="CLIENT">Del cliente (reutilizable entre sus compras)</option>
+        </select>
+      </label>
+      <div class="fila">
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="formTipo.hasExpiration" />
+          <span>Tiene vencimiento</span>
+        </label>
+        <label class="check">
+          <input type="checkbox" [(ngModel)]="formTipo.isActive" />
+          <span>Activo</span>
+        </label>
+      </div>
+      <label>
+        <span>Orden</span>
+        <input class="form-control" type="number" [(ngModel)]="formTipo.sortOrder" />
+      </label>
+    </div>
+    <footer>
+      <button class="btn btn-light" (click)="tipoAbierto.set(false)">Cancelar</button>
+      <button class="btn btn-primary" (click)="guardarTipo()">Guardar</button>
+    </footer>
+  </div>
+}

@@ -8,11 +8,13 @@ import {
   CitaAgendadaEvent,
   CitaRecordatorioEvent,
   CfdiGeneradoEvent,
+  OsEntregadaEvent,
   OsEstatusChangedEvent,
   StockMinimoEvent,
   PagoCreditoVencidoEvent,
   VentaConfirmadaEvent,
   CotizacionEnviadaEvent,
+  CitaNoSePresentoEvent,
   MantenimientoSinRefaccionesEvent,
   ServicioProximoVencimientoEvent,
   ServicioHallazgoCotizacionEvent,
@@ -97,6 +99,55 @@ export class NotificationsListener {
         html: `<p>Su factura ha sido generada. Total: $${event.total}</p>`,
       });
     }
+  }
+
+  /** Cotización de la recepción: el cliente la autoriza desde el enlace. */
+  @OnEvent('recepcion.cotizacion_enviada')
+  async onRecepcionCotizacion(event: {
+    quotationId: string;
+    folio: string;
+    total: number;
+    clientToken: string;
+    tenantId: string;
+    branchId: string;
+    client?: { phone?: string };
+  }): Promise<void> {
+    if (!event.client?.phone) return;
+    const base = process.env.APP_PUBLIC_URL ?? 'http://localhost:4200';
+    await this.notificationsQueue.add('send', {
+      channel: NotificationChannelEnum.WHATSAPP,
+      templateKey: 'cotizacion_servicio',
+      referenceType: 'Quotation',
+      referenceId: event.quotationId,
+      recipient: event.client.phone,
+      tenantId: event.tenantId,
+      branchId: event.branchId,
+      templateParams: {
+        folio: event.folio,
+        total: event.total.toFixed(2),
+        url: `${base}/c/${event.clientToken}`,
+      },
+    });
+  }
+
+  @OnEvent('os.entregada')
+  async onOsEntregada(event: OsEntregadaEvent): Promise<void> {
+    if (!event.client?.phone) return;
+    const base = process.env.APP_PUBLIC_URL ?? 'http://localhost:4200';
+    await this.notificationsQueue.add('send', {
+      channel: NotificationChannelEnum.WHATSAPP,
+      templateKey: 'encuesta_servicio',
+      referenceType: 'ServiceOrder',
+      referenceId: event.serviceOrderId,
+      recipient: event.client.phone,
+      tenantId: event.tenantId,
+      branchId: event.branchId,
+      templateParams: {
+        folio: event.folio,
+        surveyUrl: `${base}/s/${event.surveyToken}`,
+        trackingUrl: `${base}/t/${event.trackingToken}`,
+      },
+    });
   }
 
   @OnEvent('os.estatus_changed')
@@ -194,6 +245,52 @@ export class NotificationsListener {
           html: `<p>Cita programada para ${event.scheduledAt.toISOString()}. Partes faltantes: ${partsList}</p>`,
         });
       }
+    }
+  }
+
+  /**
+   * El cliente no llegó: hay que llamarlo.
+   *
+   * Se avisa a su asesor —el seguimiento es de quien recibió la cita— y de
+   * paso al mostrador, porque si el asesor libró ese día nadie más se
+   * enteraría. Sin este aviso, la cita perdida solo existe como un cambio
+   * de estado que nadie mira.
+   */
+  @OnEvent('cita.no_se_presento')
+  async onCitaNoSePresento(event: CitaNoSePresentoEvent): Promise<void> {
+    const responsables = await this.usersService.getUsersByRoleInBranch(
+      event.branchId,
+      [RoleEnum.RECEPTIONIST, RoleEnum.CASHIER, RoleEnum.MANAGER],
+    );
+    // Se avisa a todos los de esos roles en la sucursal, no solo al asesor
+    // de la cita: si ese día libró, el aviso moriría con él.
+    const correos = new Set(
+      responsables.map((u) => u.email).filter(Boolean),
+    );
+
+    const hora = event.scheduledAt.toLocaleTimeString('es-MX', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+    const quien = event.client.name ?? 'El cliente';
+    const telefono = event.client.phone ?? 'sin teléfono registrado';
+
+    for (const email of correos) {
+      if (!email) continue;
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'cita_no_se_presento',
+        referenceType: 'Appointment',
+        referenceId: event.appointmentId,
+        recipient: email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: `No llegó a su cita: ${quien} (${hora})`,
+        html:
+          `<p><strong>${quien}</strong> no llegó a su cita de las ${hora} ` +
+          `(${event.serviceType}).</p>` +
+          `<p>Hay que contactarlo para reagendar: ${telefono}</p>`,
+      });
     }
   }
 

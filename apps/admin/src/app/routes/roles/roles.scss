@@ -1,0 +1,179 @@
+/**
+ * Catálogo de roles. El panel y la barra son comunes; aquí solo el maestro-
+ * detalle. Los colores salen de los tokens de marca, nunca a mano.
+ */
+
+.roles-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.lista-roles {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+
+  .meta {
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+    margin: 0 0 0.5rem;
+  }
+
+  .fila-rol {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--border-hover);
+    }
+
+    &.activa {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+    }
+
+    .nombre {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .conteos {
+      font-size: var(--text-caption);
+      color: var(--text-secondary);
+      font-variant-numeric: tabular-nums;
+    }
+  }
+}
+
+.detalle-rol {
+  .cabecera {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+
+    h2 {
+      margin: 0;
+    }
+
+    code {
+      color: var(--text-muted);
+      font-size: var(--text-caption);
+    }
+  }
+
+  h3 {
+    margin: 1.25rem 0 0.5rem;
+    font-size: 0.95rem;
+
+    .filtro-activo {
+      font-weight: 400;
+      color: var(--primary);
+    }
+
+    .total {
+      font-weight: 400;
+      color: var(--text-muted);
+    }
+  }
+
+  .vacio {
+    color: var(--text-muted);
+  }
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+
+  .chip {
+    padding: 0.3rem 0.7rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: var(--text-caption);
+
+    &:hover {
+      border-color: var(--border-hover);
+    }
+
+    &.activo {
+      border-color: var(--primary);
+      background: var(--primary);
+      color: var(--text-on-brand);
+    }
+  }
+}
+
+.tabla-ops {
+  max-height: 460px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-caption);
+  }
+
+  th {
+    position: sticky;
+    top: 0;
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+  }
+
+  code {
+    color: var(--text-primary);
+  }
+
+  .verbo {
+    font-weight: 600;
+    font-size: 0.72rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 4px;
+    background: var(--nexus-50);
+    color: var(--primary);
+
+    &[data-verbo="POST"] {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+    &[data-verbo="PATCH"],
+    &[data-verbo="PUT"] {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+    &[data-verbo="DELETE"] {
+      background: var(--danger-bg);
+      color: var(--danger);
+    }
+  }
+}
+
+@media (max-width: 720px) {
+  .roles-layout {
+    grid-template-columns: 1fr;
+  }
+}

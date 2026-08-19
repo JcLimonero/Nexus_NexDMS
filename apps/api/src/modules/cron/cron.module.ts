@@ -8,6 +8,7 @@ import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
 import { CatalogUnit } from '../catalog-units/entities/catalog-unit.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { AppointmentRemindersJob } from './jobs/appointment-reminders.job';
+import { AppointmentNoShowJob } from './jobs/appointment-no-show.job';
 import { StockMinimumJob } from './jobs/stock-minimum.job';
 import { PaymentOverdueJob } from './jobs/payment-overdue.job';
 import { ServiceDueRemindersJob } from './jobs/service-due-reminders.job';
@@ -30,6 +31,7 @@ import { ServiceDueNotification } from '../service-planning/entities/service-due
   ],
   providers: [
     AppointmentRemindersJob,
+    AppointmentNoShowJob,
     StockMinimumJob,
     PaymentOverdueJob,
     ServiceDueRemindersJob,

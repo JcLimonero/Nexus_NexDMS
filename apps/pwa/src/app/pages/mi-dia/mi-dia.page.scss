@@ -1,0 +1,214 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--bg);
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: linear-gradient(to bottom, var(--navy-600), var(--navy-800));
+  color: var(--card);
+}
+
+.who {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 9999px;
+  background: linear-gradient(to bottom right, var(--nexus-600), var(--nexus-700));
+  color: var(--card);
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.date {
+  font-size: var(--text-xs);
+  color: var(--text-on-dark);
+
+  /* Solo la inicial: capitalize mayúsculiza cada palabra ("12 De Agosto") */
+  &::first-letter { text-transform: uppercase; }
+}
+
+.icon-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--card);
+  border: none;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+/* Logotipo del cliente en la cabecera. */
+.topbar .logo-cliente {
+  height: 40px;
+  max-width: 130px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  padding: 3px 6px;
+}
+
+/* Salir visible, no solo el símbolo. */
+.btn-salir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  color: var(--card);
+  border: none;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-salir:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.content {
+  padding: 16px;
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+section {
+  margin-bottom: 24px;
+}
+
+h2 {
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.count {
+  background: var(--border);
+  color: var(--text-secondary);
+  border-radius: 9999px;
+  font-size: 12px;
+  padding: 1px 8px;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-time {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 56px;
+
+  .hour {
+    font-weight: 700;
+    font-size: 15px;
+    color: var(--navy-600);
+  }
+
+  .dur {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+}
+
+.card-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--navy-600);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &.muted {
+    color: var(--text-muted);
+    font-size: 12px;
+  }
+}
+
+.chip {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  white-space: nowrap;
+  background: var(--border);
+  color: var(--text-secondary);
+
+  &.SCHEDULED, &.PENDING_CONFIRMATION { background: var(--primary-soft); color: var(--primary); }
+  &.CONFIRMED { background: var(--success-bg); color: var(--success); }
+  &.IN_PROGRESS { background: var(--warning-bg); color: var(--warning); }
+  &.WAITING_PARTS { background: var(--danger-bg); color: var(--danger); }
+  &.READY, &.COMPLETED { background: var(--success-bg); color: var(--success); }
+}
+
+.arrow {
+  color: var(--text-muted);
+  font-size: 20px;
+}
+
+.empty {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  border: 1px dashed var(--border-hover);
+  border-radius: 12px;
+}
+
+.error {
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 13px;
+}

@@ -38,6 +38,11 @@ import { CfdiService } from '../cfdi/cfdi.service';
 import { UnitAccessoriesService } from '../unit-accessories/unit-accessories.service';
 import { UnitSaleAccessory } from '../unit-accessories/entities/unit-sale-accessory.entity';
 import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { hasModule } from '../modules/module-registry';
+import { UnitSalePaymentsService } from './unit-sale-payments.service';
+import { SaleDocumentsService } from '../sale-documents/sale-documents.service';
+import { SaleSurveysService } from '../sale-surveys/sale-surveys.service';
 
 @Injectable()
 export class UnitSalesService {
@@ -58,9 +63,14 @@ export class UnitSalesService {
     private readonly reservationRepo: Repository<UnitReservation>,
     @InjectRepository(UnitSaleExtra)
     private readonly saleExtraRepo: Repository<UnitSaleExtra>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly unitAccessoriesService: UnitAccessoriesService,
+    private readonly pagosService: UnitSalePaymentsService,
+    private readonly saleDocuments: SaleDocumentsService,
+    private readonly saleSurveysService: SaleSurveysService,
   ) {}
 
   private async generateFolio(
@@ -124,7 +134,8 @@ export class UnitSalesService {
   ): Promise<UnitSale[]> {
     const qb = this.saleRepo
       .createQueryBuilder('us')
-      .innerJoin('us.catalogUnit', 'cu')
+      .innerJoinAndSelect('us.catalogUnit', 'cu')
+      .leftJoinAndSelect('us.client', 'client')
       .where('us.tenant_id = :tenantId', { tenantId: user.tenantId });
 
     this.applyScope(qb, user);
@@ -160,7 +171,8 @@ export class UnitSalesService {
   async findOne(user: UserPayload, id: string): Promise<UnitSale> {
     const qb = this.saleRepo
       .createQueryBuilder('us')
-      .innerJoin('us.catalogUnit', 'cu')
+      .innerJoinAndSelect('us.catalogUnit', 'cu')
+      .leftJoinAndSelect('us.client', 'client')
       .where('us.id = :id', { id })
       .andWhere('us.tenant_id = :tenantId', { tenantId: user.tenantId });
 
@@ -310,6 +322,33 @@ export class UnitSalesService {
       }
     }
 
+    // ── No se marca como vendida sin sus documentos ──
+    // Cada pago registrado necesita su comprobante guardado; el dinero se
+    // apunta cuando entra, pero la venta no cierra hasta tener el recibo.
+    const sinComprobante = await this.pagosService.pagosSinComprobante(id);
+    if (sinComprobante > 0) {
+      throw new BadRequestException(
+        `Hay ${sinComprobante} pago(s) sin comprobante; adjúntalos antes de cerrar la venta`,
+      );
+    }
+
+    // Y el expediente documental completo, pero solo si el cliente contrató
+    // ese módulo: quien no lo tiene vende sin esa exigencia.
+    const tenant = await this.tenantRepo.findOne({
+      where: { id: user.tenantId },
+    });
+    if (
+      tenant &&
+      hasModule(tenant.plan, tenant.enabledModules ?? null, 'sale-documents')
+    ) {
+      const exp = await this.saleDocuments.expediente(user, id);
+      if (!exp.completo) {
+        throw new BadRequestException(
+          `Faltan documentos obligatorios: ${exp.faltan.join(', ')}`,
+        );
+      }
+    }
+
     return this.dataSource
       .transaction(async (em) => {
         sale.status = UnitSaleStatusEnum.COMPLETED;
@@ -339,6 +378,23 @@ export class UnitSalesService {
         } catch (e) {
           this.logger.warn('CFDI no generado', e);
         }
+        // Encuesta post-venta automática (best-effort): al cerrar la venta se
+        // genera con las preguntas configuradas para el área de ventas.
+        try {
+          const client = await this.clientRepo.findOne({
+            where: { id: updatedSale.clientId },
+          });
+          const nombre = client
+            ? client.companyName ||
+              `${client.firstName ?? ''} ${client.lastName ?? ''}`.trim()
+            : null;
+          await this.saleSurveysService.create(user, {
+            referenceLabel: updatedSale.folio,
+            clientName: nombre || undefined,
+          });
+        } catch (e) {
+          this.logger.warn('Encuesta de venta no generada', e);
+        }
         return updatedSale;
       });
   }
@@ -362,6 +418,33 @@ export class UnitSalesService {
     await this.saleRepo.save(sale);
 
     return sale;
+  }
+
+  /**
+   * Programa (o borra) la fecha de entrega.
+   *
+   * Al abrir la venta rara vez se sabe cuándo se entrega —depende de trámites,
+   * del pago, de que llegue la unidad—, así que se captura después. Se admite
+   * fecha nula para volver a dejarla sin definir.
+   */
+  async scheduleDelivery(
+    user: UserPayload,
+    id: string,
+    deliveryDate: string | null,
+  ): Promise<UnitSale> {
+    this.assertCanWrite(user);
+    const sale = await this.findOne(user, id);
+    if (sale.status === UnitSaleStatusEnum.CANCELLED) {
+      throw new BadRequestException(
+        'Una venta cancelada no tiene entrega que programar',
+      );
+    }
+    // Se guarda el texto 'YYYY-MM-DD' tal cual, sin `new Date()`: es una fecha
+    // sin hora, y envolverla la interpreta como medianoche UTC y la corre un
+    // día al escribirla en un contenedor en otro huso.
+    sale.deliveryDate = (deliveryDate || null) as unknown as Date | null;
+    await this.saleRepo.save(sale);
+    return this.findOne(user, id);
   }
 
   async createPaymentPlan(

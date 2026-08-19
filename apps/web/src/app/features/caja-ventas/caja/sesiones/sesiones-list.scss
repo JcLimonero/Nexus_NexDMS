@@ -1,0 +1,13 @@
+.sesiones-list {
+  .sesiones-header-card {
+    margin-bottom: 1rem;
+  }
+  .sesiones-table-card {
+    .table-action-btn {
+      color: var(--text-muted);
+      &:hover {
+        color: var(--primary);
+      }
+    }
+  }
+}

@@ -14,6 +14,7 @@ import {
 } from './entities/appointment.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Client } from '../clients/entities/client.entity';
+import { User } from '../users/entities/user.entity';
 import { CreateAppointmentDto } from './dto/create-appointment.dto';
 import { CreatePublicAppointmentDto } from './dto/public-appointment.dto';
 import { FilterAppointmentsDto } from './dto/filter-appointments.dto';
@@ -35,6 +36,8 @@ export class AppointmentsService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(Client)
     private readonly clientRepo: Repository<Client>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly branchesService: BranchesService,
     private readonly userAvailabilityService: UserAvailabilityService,
     private readonly serviceTypesService: ServiceTypesService,
@@ -128,6 +131,9 @@ export class AppointmentsService {
       clientId: dto.clientId ?? null,
       vehicleId: dto.vehicleId ?? null,
       mechanicId: dto.mechanicId ?? null,
+      advisorId:
+        dto.advisorId ??
+        (await this.asesorConMenosCarga(user.tenantId, dto.branchId, scheduledAt)),
       origin: AppointmentOriginEnum.INTERNAL,
       status: AppointmentStatusEnum.SCHEDULED,
       serviceType: dto.serviceType,
@@ -169,6 +175,128 @@ export class AppointmentsService {
     }
 
     return saved;
+  }
+
+  /**
+   * Asesores de servicio disponibles en una sucursal.
+   *
+   * Son quienes reciben unidades: el rol es lo que habilita la recepción, así
+   * que la lista sale de ahí y no de una configuración aparte que habría que
+   * mantener sincronizada.
+   */
+  async asesoresDeSucursal(
+    tenantId: string,
+    branchId: string,
+  ): Promise<{ id: string; nombre: string }[]> {
+    const filas = await this.userRepo
+      .createQueryBuilder('u')
+      .innerJoin('user_roles', 'ur', 'ur.user_id = u.id')
+      .innerJoin('user_branches', 'ub', 'ub.user_id = u.id')
+      .where('u.tenant_id = :tenantId', { tenantId })
+      .andWhere('u.is_active = true')
+      .andWhere('ur.role = :rol', { rol: 'RECEPTIONIST' })
+      .andWhere('ub.branch_id = :branchId', { branchId })
+      .select(['u.id AS id', 'u.first_name AS nombre', 'u.last_name AS apellido'])
+      .getRawMany<{ id: string; nombre: string; apellido: string }>();
+
+    return filas.map((f) => ({
+      id: f.id,
+      nombre: `${f.nombre ?? ''} ${f.apellido ?? ''}`.trim(),
+    }));
+  }
+
+  /**
+   * Citas que ya tiene cada asesor ese día, para repartir con criterio.
+   *
+   * Se marca además si puede tomar la cita a esa hora. No se filtra aquí:
+   * quien agenda a mano tiene que poder ver a todo el equipo y saber por qué
+   * uno aparece descartado —está de vacaciones, o ya salió— en vez de
+   * encontrarse una lista corta sin explicación.
+   */
+  async cargaDeAsesores(
+    tenantId: string,
+    branchId: string,
+    fecha: Date,
+  ): Promise<
+    {
+      id: string;
+      nombre: string;
+      citas: number;
+      disponible: boolean;
+      motivo?: string;
+      horario: string;
+    }[]
+  > {
+    const asesores = await this.asesoresDeSucursal(tenantId, branchId);
+    if (!asesores.length) return [];
+
+    const inicio = new Date(fecha);
+    inicio.setHours(0, 0, 0, 0);
+    const fin = new Date(fecha);
+    fin.setHours(23, 59, 59, 999);
+
+    const conteo = await this.appointmentRepo
+      .createQueryBuilder('a')
+      .select('a.advisor_id', 'advisorId')
+      .addSelect('COUNT(*)', 'total')
+      .where('a.branch_id = :branchId', { branchId })
+      .andWhere('a.advisor_id IS NOT NULL')
+      .andWhere('a.scheduled_at BETWEEN :inicio AND :fin', { inicio, fin })
+      // Una cita cancelada no ocupa a nadie; contarla desbalancearía el reparto.
+      .andWhere('a.status != :cancelada', { cancelada: AppointmentStatusEnum.CANCELLED })
+      .groupBy('a.advisor_id')
+      .getRawMany<{ advisorId: string; total: string }>();
+
+    const porId = new Map(conteo.map((c) => [c.advisorId, Number(c.total)]));
+    const disponibilidad = await this.userAvailabilityService.disponibilidadDelDia(
+      asesores.map((a) => a.id),
+      branchId,
+      fecha,
+      fecha,
+    );
+
+    return asesores.map((a) => {
+      const d = disponibilidad.get(a.id);
+      return {
+        ...a,
+        citas: porId.get(a.id) ?? 0,
+        disponible: d?.disponible ?? false,
+        motivo:
+          d?.motivo === 'ausente'
+            ? 'Ausente ese día'
+            : d?.motivo === 'fuera-de-horario'
+              ? 'Fuera de su horario'
+              : undefined,
+        horario: (d?.ventanas ?? [])
+          .map((v) => `${v.inicio}–${v.fin}`)
+          .join(', '),
+      };
+    });
+  }
+
+  /**
+   * A quién asignar cuando la cita no trae asesor.
+   *
+   * Reparte por carga del día, no por turno rotativo: lo segundo suena justo
+   * pero deja a alguien con seis recepciones seguidas si las cancelaciones no
+   * caen parejas. Con empate gana el de menor id, para que el resultado no
+   * dependa del orden en que la base devuelva las filas.
+   *
+   * Solo entra al reparto quien esté en horario a esa hora y no esté ausente:
+   * una cita asignada a quien no va a estar es peor que una sin asignar,
+   * porque nadie la revisa hasta que el cliente llega.
+   */
+  private async asesorConMenosCarga(
+    tenantId: string,
+    branchId: string,
+    fecha: Date,
+  ): Promise<string | null> {
+    const carga = await this.cargaDeAsesores(tenantId, branchId, fecha);
+    const candidatos = carga.filter((a) => a.disponible);
+    if (!candidatos.length) return null;
+    return candidatos.sort(
+      (a, b) => a.citas - b.citas || a.id.localeCompare(b.id),
+    )[0].id;
   }
 
   async createPublic(dto: CreatePublicAppointmentDto): Promise<Appointment> {
@@ -249,7 +377,9 @@ export class AppointmentsService {
     }
 
     const [data, total] = await qb
-      .orderBy('a.scheduled_at', 'ASC')
+      // Propiedad de la entidad (no columna SQL): con skip/take TypeORM
+      // resuelve el orderBy vía metadata y truena con nombres snake_case.
+      .orderBy('a.scheduledAt', 'ASC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -391,4 +521,62 @@ export class AppointmentsService {
     );
     return slots.map(({ start, end }) => ({ start, end }));
   }
+  /**
+   * La agenda del día como tablero: asesor por hora.
+   *
+   * Mismo tablero que el del taller, cambiando el recurso: allí son técnicos
+   * y trabajos, aquí asesores y citas. Se resuelve en el servidor por la
+   * misma razón —la pantalla no debe fiarse de su propio reloj— y devuelve
+   * también la franja del turno de cada asesor, para que se vea a qué hora
+   * deja de haber quien reciba.
+   */
+  async tableroDelDia(user: UserPayload, branchId: string, fecha: string) {
+    const dia = new Date(`${fecha}T12:00:00`);
+    const citas = await this.findCalendar(user, branchId, fecha, fecha);
+    const asesores = await this.asesoresDeSucursal(user.tenantId, branchId);
+    const turnos = await this.userAvailabilityService.disponibilidadDelDia(
+      asesores.map((a) => a.id),
+      branchId,
+      dia,
+    );
+
+    const bloque = (c: Appointment) => ({
+      id: c.id,
+      inicio: c.scheduledAt.toISOString(),
+      duracionMin: c.durationMin ?? 60,
+      cliente: c.clientName,
+      servicio: c.serviceType,
+      estado: c.status,
+      vehiculo: c.vehicle
+        ? `${c.vehicle.make} ${c.vehicle.model}`.trim()
+        : null,
+      asesorId: c.advisorId ?? null,
+    });
+
+    const bloques = citas.map(bloque);
+
+    return {
+      fecha,
+      // La hora del servidor: la pantalla dibuja la línea de "ahora" con
+      // ella y no con el reloj del equipo donde esté colgada.
+      ahora: new Date().toISOString(),
+      asesores: asesores.map((a) => {
+        const d = turnos.get(a.id);
+        const partes = a.nombre.split(" ").filter(Boolean);
+        return {
+          id: a.id,
+          nombre: a.nombre,
+          iniciales: `${partes[0]?.[0] ?? ""}${partes[1]?.[0] ?? ""}`.toUpperCase(),
+          disponible: d?.disponible ?? false,
+          motivo: d?.motivo ?? null,
+          ventanas: d?.ventanas ?? [],
+          bloques: bloques.filter((b) => b.asesorId === a.id),
+        };
+      }),
+      // Las citas sin asesor se ven aparte: son las que hay que repartir, y
+      // esconderlas sería esconder justo el trabajo pendiente.
+      sinAsignar: bloques.filter((b) => !b.asesorId),
+    };
+  }
+
 }

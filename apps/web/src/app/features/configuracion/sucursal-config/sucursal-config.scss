@@ -1,0 +1,22 @@
+.sucursal-config {
+  .config-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .config-section {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--theme-border, #dee2e6);
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+
+  .section-title {
+    margin-bottom: 1rem;
+    font-weight: 600;
+    color: var(--theme-body-color, #212529);
+  }
+}

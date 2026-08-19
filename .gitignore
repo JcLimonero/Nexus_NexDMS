@@ -44,3 +44,9 @@ Thumbs.db
 tmp/
 temp/
 *.tmp
+
+# Angular build cache
+.angular/
+
+# El .env de cada aplicación lleva credenciales y no se versiona.
+apps/*/.env

@@ -12,6 +12,12 @@ import { CfdiModule } from '../cfdi/cfdi.module';
 import { UnitAccessoriesModule } from '../unit-accessories/unit-accessories.module';
 import { UnitSaleAccessory } from '../unit-accessories/entities/unit-sale-accessory.entity';
 import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.entity';
+import { UnitSalePayment } from './entities/unit-sale-payment.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { UnitSalePaymentsService } from './unit-sale-payments.service';
+import { StorageModule } from '../../common/storage/storage.module';
+import { SaleDocumentsModule } from '../sale-documents/sale-documents.module';
+import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
 
 @Module({
   imports: [
@@ -24,12 +30,17 @@ import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.enti
       UnitReservation,
       UnitSaleAccessory,
       UnitSaleExtra,
+      UnitSalePayment,
+      Tenant,
     ]),
     CfdiModule,
     UnitAccessoriesModule,
+    StorageModule,
+    SaleDocumentsModule,
+    SaleSurveysModule,
   ],
   controllers: [UnitSalesController],
-  providers: [UnitSalesService],
+  providers: [UnitSalesService, UnitSalePaymentsService],
   exports: [UnitSalesService],
 })
 export class UnitSalesModule {}

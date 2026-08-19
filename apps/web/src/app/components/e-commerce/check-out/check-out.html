@@ -1,0 +1,319 @@
+<div class="container-fluid">
+  <div class="card checkout">
+    <div class="card-header">
+      <h5>Billing Details</h5>
+    </div>
+    <div class="card-body">
+      <div class="row">
+        <div class="col-lg-6 col-sm-12">
+          <form [formGroup]="checkoutForm" novalidate>
+            <div class="row">
+              <div class="form-group col-sm-6">
+                <div class="field-label">First Name</div>
+                <input
+                  type="text"
+                  name="firstName"
+                  formControlName="firstName"
+                  class="form-control"
+                  placeholder=""
+                  [class.border-danger]="red_border"
+                />
+                @if (
+                  checkoutForm.controls["firstName"].touched &&
+                  checkoutForm.controls["firstName"].errors?.["required"]
+                ) {
+                  <div class="text text-danger">First Name is required.</div>
+                }
+                @if (
+                  checkoutForm.controls["firstName"].touched &&
+                  checkoutForm.controls["firstName"].errors?.["pattern"]
+                ) {
+                  <div class="text text-danger">
+                    First Name must be an alphabets.
+                  </div>
+                }
+              </div>
+              <div class="form-group col-sm-6">
+                <div class="field-label">Last Name</div>
+                <input
+                  type="text"
+                  name="lastName"
+                  formControlName="lastName"
+                  class="form-control"
+                  placeholder=""
+                />
+                @if (
+                  checkoutForm.controls["lastName"].touched &&
+                  checkoutForm.controls["lastName"].errors?.["required"]
+                ) {
+                  <div class="text text-danger">Last Name is required.</div>
+                }
+                @if (
+                  checkoutForm.controls["lastName"].touched &&
+                  checkoutForm.controls["lastName"].errors?.["pattern"]
+                ) {
+                  <div class="text text-danger">
+                    Last Name must be an alphabets.
+                  </div>
+                }
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group col-sm-6">
+                <label for="inputEmail4">Phone</label>
+                <input
+                  class="form-control"
+                  type="number"
+                  formControlName="phone"
+                  class="form-control"
+                />
+                @if (
+                  checkoutForm.controls["phone"].touched &&
+                  checkoutForm.controls["phone"].errors?.["required"]
+                ) {
+                  <div class="text text-danger">Phone No is required.</div>
+                }
+                @if (
+                  checkoutForm.controls["phone"].touched &&
+                  checkoutForm.controls["phone"].errors?.["pattern"]
+                ) {
+                  <div class="text text-danger">
+                    Phone No is must be number.
+                  </div>
+                }
+              </div>
+              <div class="form-group col-sm-6">
+                <label for="inputPassword4">Email Address</label>
+                <input
+                  class="form-control"
+                  type="email"
+                  formControlName="email"
+                  class="form-control"
+                />
+                @if (
+                  checkoutForm.controls["email"].touched &&
+                  checkoutForm.controls["email"].errors?.["required"]
+                ) {
+                  <div class="text text-danger">Email is required</div>
+                }
+                @if (
+                  checkoutForm.controls["email"].touched &&
+                  checkoutForm.controls["email"].errors?.["email"]
+                ) {
+                  <div class="text text-danger">Invalid Email</div>
+                }
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="inputState">Country</label>
+              <select
+                name="country"
+                formControlName="country"
+                class="form-control"
+              >
+                <option value="" selected>Select Country</option>
+                <option value="India">India</option>
+                <option value="USA">USA</option>
+                <option value="Australia">Australia</option>
+              </select>
+              @if (
+                checkoutForm.controls["country"].touched &&
+                checkoutForm.controls["country"].errors?.["required"]
+              ) {
+                <div class="text text-danger">Country is required</div>
+              }
+            </div>
+            <div class="form-group">
+              <label for="inputAddress2">Address</label>
+              <input
+                class="form-control"
+                type="text"
+                formControlName="address"
+                class="form-control"
+              />
+              @if (
+                checkoutForm.controls["address"].touched &&
+                checkoutForm.controls["address"].errors?.["required"]
+              ) {
+                <div class="text text-danger">Address is required</div>
+              }
+              @if (
+                checkoutForm.controls["address"].touched &&
+                checkoutForm.controls["address"].errors?.["maxlength"]
+              ) {
+                <div class="text text-danger">Maximum 50 character</div>
+              }
+            </div>
+            <div class="form-group">
+              <label for="inputCity">Town/City</label>
+              <input
+                class="form-control"
+                id="inputCity"
+                type="text"
+                formControlName="town"
+                class="form-control"
+              />
+              @if (
+                checkoutForm.controls["town"].touched &&
+                checkoutForm.controls["town"].errors?.["required"]
+              ) {
+                <div class="text text-danger">City is required</div>
+              }
+            </div>
+            <div class="form-group">
+              <label for="inputAddress2">State/Country</label>
+              <input
+                class="form-control"
+                id="inputAddress2"
+                type="text"
+                formControlName="state"
+                class="form-control"
+              />
+              @if (
+                checkoutForm.controls["state"].touched &&
+                checkoutForm.controls["state"].errors?.["required"]
+              ) {
+                <div class="text text-danger">State is required</div>
+              }
+            </div>
+            <div class="form-group">
+              <label for="inputAddress2">Postal Code</label>
+              <input
+                class="form-control"
+                id="inputAddress2"
+                type="number"
+                formControlName="postalCode"
+                class="form-control"
+              />
+              @if (
+                checkoutForm.controls["postalCode"].touched &&
+                checkoutForm.controls["postalCode"].errors?.["required"]
+              ) {
+                <div class="text text-danger">PostalCode is required</div>
+              }
+            </div>
+            <div class="form-group">
+              <div class="form-check">
+                <input
+                  class="form-check-input"
+                  id="gridCheck"
+                  type="checkbox"
+                />
+                <label class="form-check-label" for="gridCheck"
+                  >Check me out</label
+                >
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="col-lg-6 col-sm-12">
+          <div class="checkout-details">
+            <div class="order-box">
+              <div class="title-box">
+                <div class="checkbox-title">
+                  <h4>Product</h4>
+                  <span>Total</span>
+                </div>
+              </div>
+              @if (checkOutItems.length) {
+                <ul class="qty">
+                  @for (item of checkOutItems; track item) {
+                    <li>
+                      {{ item.product.name }} × {{ item.quantity }}
+                      <span>
+                        {{
+                          (item.product.price ?? 0) * item.quantity
+                            | currency: productService.currency : "symbol"
+                        }}</span
+                      >
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <ul class="qty">
+                  <li class="empty-checkout">There are no products in cart</li>
+                </ul>
+              }
+              <ul class="sub-total">
+                <li>
+                  Subtotal
+                  <span class="count">{{
+                    getTotal()
+                      | async
+                      | currency: productService.currency : "symbol"
+                  }}</span>
+                </li>
+              </ul>
+              <ul class="total">
+                <li>
+                  Total
+                  <span class="count">{{
+                    getTotal()
+                      | async
+                      | currency: productService.currency : "symbol"
+                  }}</span>
+                </li>
+              </ul>
+              <div class="animate-chk">
+                <div class="row">
+                  <div class="col">
+                    <label class="d-block" for="edo-ani">
+                      <input
+                        class="radio_animated"
+                        id="edo-ani"
+                        type="radio"
+                        name="rdo-ani"
+                        checked=""
+                        data-original-title=""
+                        title=""
+                      />Check Payments
+                    </label>
+                    <label class="d-block" for="edo-ani1">
+                      <input
+                        class="radio_animated"
+                        id="edo-ani1"
+                        type="radio"
+                        name="rdo-ani"
+                        data-original-title=""
+                        title=""
+                      />Cash On Delivery
+                    </label>
+                    <label class="d-block" for="edo-ani2">
+                      <input
+                        class="radio_animated"
+                        id="edo-ani2"
+                        type="radio"
+                        name="rdo-ani"
+                        checked=""
+                        data-original-title=""
+                        title=""
+                      />PayPal
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <div class="text-end">
+                <button
+                  class="btn btn-primary"
+                  type="submit"
+                  [disabled]="!checkoutForm.valid"
+                  (click)="onSubmit()"
+                >
+                  Place Order
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="text-end m-t-20">
+            <button
+              class="btn btn-primary cart-btn-transform"
+              [routerLink]="['/ecommerce/products']"
+            >
+              continue shopping
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

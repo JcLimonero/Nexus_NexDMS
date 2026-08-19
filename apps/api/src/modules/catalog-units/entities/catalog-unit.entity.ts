@@ -16,6 +16,12 @@ import { UnitLocation } from '../../unit-locations/entities/unit-location.entity
 export enum CatalogUnitVehicleTypeEnum {
   MOTORCYCLE = 'MOTORCYCLE',
   CAR = 'CAR',
+  SUV = 'SUV',
+  MINIVAN = 'MINIVAN',
+  TRUCK = 'TRUCK',
+  VAN = 'VAN',
+  CARGO_VAN = 'CARGO_VAN',
+  BOX_TRUCK = 'BOX_TRUCK',
 }
 
 export enum CatalogUnitStatusEnum {
@@ -23,6 +29,13 @@ export enum CatalogUnitStatusEnum {
   RESERVED = 'RESERVED',
   SOLD = 'SOLD',
   WRITTEN_OFF = 'WRITTEN_OFF',
+  /** Seminueva: pendiente de completar expediente (datos vendedor + documentos) */
+  PENDING_EXPEDIENTE = 'PENDING_EXPEDIENTE',
+}
+
+export enum CatalogUnitConditionEnum {
+  NEW = 'NEW',
+  USED = 'USED',
 }
 
 @Entity('catalog_units')
@@ -41,8 +54,8 @@ export class CatalogUnit {
   @Column({ name: 'branch_id', type: 'uuid' })
   branchId: string;
 
-  @Column({ name: 'global_model_id', type: 'uuid', nullable: true })
-  globalModelId: string | null;
+  @Column({ name: 'global_model_id', type: 'uuid' })
+  globalModelId: string;
 
   @Column({
     name: 'vehicle_type',
@@ -65,6 +78,15 @@ export class CatalogUnit {
 
   @Column({ name: 'color', type: 'varchar', length: 100 })
   color: string;
+
+  @Column({ name: 'interior_color', type: 'varchar', length: 100, nullable: true })
+  interiorColor: string | null;
+
+  @Column({ name: 'exterior_color_id', type: 'uuid', nullable: true })
+  exteriorColorId: string | null;
+
+  @Column({ name: 'interior_color_id', type: 'uuid', nullable: true })
+  interiorColorId: string | null;
 
   @Column({ name: 'serial_number', type: 'varchar', length: 100 })
   serialNumber: string;
@@ -94,6 +116,14 @@ export class CatalogUnit {
 
   @Column({ name: 'status', type: 'enum', enum: CatalogUnitStatusEnum })
   status: CatalogUnitStatusEnum;
+
+  @Column({
+    name: 'condition_type',
+    type: 'enum',
+    enum: CatalogUnitConditionEnum,
+    default: CatalogUnitConditionEnum.NEW,
+  })
+  conditionType: CatalogUnitConditionEnum;
 
   @Column({ name: 'location_id', type: 'uuid', nullable: true })
   locationId: string | null;

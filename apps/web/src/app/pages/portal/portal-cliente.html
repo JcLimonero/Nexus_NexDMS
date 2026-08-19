@@ -1,0 +1,300 @@
+<div class="portal">
+  <!-- ═══ Acceso ═══ -->
+  @if (!srv.token()) {
+    <div class="portal-card acceso">
+      <div class="portal-brand">
+        <span class="brand-mark">N</span>
+        <span class="brand-name">NexDMS</span>
+      </div>
+
+      @if (paso() === "telefono") {
+        <h1>Consulta tu servicio</h1>
+        <p class="muted">
+          Escribe el teléfono que diste en el taller. Te mandamos un código por
+          WhatsApp para entrar; no necesitas contraseña.
+        </p>
+        <input
+          class="form-control field-full"
+          type="tel"
+          inputmode="numeric"
+          placeholder="Teléfono a 10 dígitos"
+          [(ngModel)]="telefono"
+          (keyup.enter)="pedirCodigo()"
+        />
+        @if (error()) {
+          <p class="error-box">{{ error() }}</p>
+        }
+        <button
+          type="button"
+          class="btn-principal"
+          [disabled]="enviando()"
+          (click)="pedirCodigo()"
+        >
+          {{ enviando() ? "Enviando…" : "Enviarme el código" }}
+        </button>
+      } @else {
+        <h1>Escribe tu código</h1>
+        <p class="muted">
+          Te llegó por WhatsApp al número terminado en
+          {{ telefono.slice(-4) }}. Vence en 10 minutos.
+        </p>
+        <input
+          class="form-control field-full codigo"
+          type="text"
+          inputmode="numeric"
+          maxlength="6"
+          placeholder="000000"
+          [(ngModel)]="codigo"
+          (keyup.enter)="entrar()"
+        />
+        @if (error()) {
+          <p class="error-box">{{ error() }}</p>
+        }
+        <button
+          type="button"
+          class="btn-principal"
+          [disabled]="enviando()"
+          (click)="entrar()"
+        >
+          {{ enviando() ? "Comprobando…" : "Entrar" }}
+        </button>
+        <button type="button" class="btn-texto" (click)="paso.set('telefono')">
+          Usar otro teléfono
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- ═══ Con sesión ═══ -->
+    <header class="portal-top">
+      <div class="portal-quien">
+        <span class="saludo">Hola</span>
+        <strong>{{ srv.nombre() }}</strong>
+      </div>
+      <button type="button" class="btn-texto" (click)="salir()">Salir</button>
+    </header>
+
+    <main class="portal-card">
+      @if (cargando()) {
+        <p class="muted center">Cargando…</p>
+      }
+
+      <!-- ── Inicio ── -->
+      @if (vista() === "inicio" && inicio(); as i) {
+        <h1>Tu servicio</h1>
+        <p class="muted">Esto es lo que tenemos de ti ahora mismo.</p>
+
+        <button type="button" class="acceso-fila" (click)="ir('vehiculos')">
+          <span class="af-texto">
+            <strong>Mis vehículos</strong>
+            <span class="muted small">
+              {{
+                i.trabajosEnCurso
+                  ? i.trabajosEnCurso + " en el taller"
+                  : "Consulta el estado de tus unidades"
+              }}
+            </span>
+          </span>
+          @if (i.trabajosEnCurso) {
+            <span class="globo">{{ i.trabajosEnCurso }}</span>
+          }
+        </button>
+
+        <button type="button" class="acceso-fila" (click)="ir('citas')">
+          <span class="af-texto">
+            <strong>Mis citas</strong>
+            <span class="muted small">{{ i.citas }} registradas</span>
+          </span>
+        </button>
+
+        <button type="button" class="acceso-fila" (click)="ir('documentos')">
+          <span class="af-texto">
+            <strong>Documentos y encuestas</strong>
+            <span class="muted small">
+              {{
+                i.firmasPendientes
+                  ? i.firmasPendientes + " pendiente(s) de firmar"
+                  : "Tus documentos del taller"
+              }}
+            </span>
+          </span>
+          @if (i.firmasPendientes || i.encuestasPendientes) {
+            <span class="globo">
+              {{ i.firmasPendientes + i.encuestasPendientes }}
+            </span>
+          }
+        </button>
+      }
+
+      <!-- ── Vehículos ── -->
+      @if (vista() === "vehiculos") {
+        <button type="button" class="btn-texto" (click)="ir('inicio')">
+          ‹ Volver
+        </button>
+        <h1>Mis vehículos</h1>
+        @if (vehiculos().length === 0 && !cargando()) {
+          <p class="muted">No tenemos unidades registradas a tu nombre.</p>
+        }
+        @for (v of vehiculos(); track v.id) {
+          <div class="unidad">
+            <div>
+              <strong>{{ vehiculoTexto(v) }}</strong>
+              <span class="muted small">{{ v.placa || "Sin placa" }}</span>
+            </div>
+            @if (v.enTaller && v.ordenActual) {
+              <button type="button" class="btn-chico" (click)="verOrden(v)">
+                Ver estado
+              </button>
+            } @else {
+              <span class="muted small">Sin servicio en curso</span>
+            }
+          </div>
+        }
+      }
+
+      <!-- ── Orden con etapas ── -->
+      @if (vista() === "orden" && orden(); as o) {
+        <button type="button" class="btn-texto" (click)="ir('vehiculos')">
+          ‹ Volver
+        </button>
+        <h1>¿Cómo está mi vehículo?</h1>
+        <p class="muted">
+          Orden {{ o.folio }}@if (o.sucursal) {<span> · {{ o.sucursal }}</span>}
+        </p>
+        @if (o.entregaPrevista) {
+          <p class="entrega">
+            Entrega prevista el
+            {{ o.entregaPrevista | date: "dd/MM/yyyy 'a las' HH:mm" }}
+          </p>
+        }
+
+        <ol class="etapas">
+          @for (e of o.etapas; track e.clave) {
+            <li
+              [class.alcanzada]="e.alcanzada"
+              [class.actual]="e.actual"
+              [attr.aria-current]="e.actual ? 'step' : null"
+            >
+              <span class="punto"></span>
+              <span class="nombre">{{ e.nombre }}</span>
+            </li>
+          }
+        </ol>
+
+        <div class="concepto">
+          <span class="c-desc">Motivo</span>
+          <span class="c-monto">{{ o.problema }}</span>
+        </div>
+
+        <!-- Chat con el asesor -->
+        <button type="button" class="btn-chico" (click)="alternarChat()">
+          {{ chatAbierto() ? "Ocultar mensajes" : "Escribir a mi asesor" }}
+          @if (mensajes().length) {
+            <span class="globo chico">{{ mensajes().length }}</span>
+          }
+        </button>
+
+        @if (chatAbierto()) {
+          <div class="hilo">
+            @if (mensajes().length === 0) {
+              <p class="muted small">Todavía no hay mensajes.</p>
+            }
+            @for (m of mensajes(); track m.id) {
+              <div class="mensaje" [class.propio]="m.sender === 'CLIENT'">
+                <p>{{ m.body }}</p>
+                <span class="muted small">
+                  {{ m.sender === "CLIENT" ? "Tú" : "Asesor" }} ·
+                  {{ m.createdAt | date: "dd/MM HH:mm" }}
+                </span>
+              </div>
+            }
+          </div>
+          <div class="chat-envio">
+            <input
+              class="form-control field-full"
+              placeholder="Escribe tu mensaje…"
+              [(ngModel)]="nuevoMensaje"
+              (keyup.enter)="enviarMensaje()"
+            />
+            <button
+              type="button"
+              class="btn-chico"
+              [disabled]="enviando() || !nuevoMensaje.trim()"
+              (click)="enviarMensaje()"
+            >
+              Enviar
+            </button>
+          </div>
+        }
+      }
+
+      <!-- ── Citas ── -->
+      @if (vista() === "citas") {
+        <button type="button" class="btn-texto" (click)="ir('inicio')">
+          ‹ Volver
+        </button>
+        <h1>Mis citas</h1>
+        @if (citas().length === 0) {
+          <p class="muted">No tienes citas registradas.</p>
+        }
+        @for (c of citas(); track c.id) {
+          <div class="unidad">
+            <div>
+              <strong>{{ c.scheduledAt | date: "dd/MM/yyyy HH:mm" }}</strong>
+              <span class="muted small">
+                {{ c.serviceType }}@if (c.placa) {<span> · {{ c.placa }}</span>}
+              </span>
+            </div>
+            <span class="muted small">{{ c.status }}</span>
+          </div>
+        }
+      }
+
+      <!-- ── Documentos y encuestas ── -->
+      @if (vista() === "documentos") {
+        <button type="button" class="btn-texto" (click)="ir('inicio')">
+          ‹ Volver
+        </button>
+        <h1>Mis documentos</h1>
+        @if (documentos().length === 0) {
+          <p class="muted">Todavía no hay documentos de tus servicios.</p>
+        }
+        @for (d of documentos(); track d.id) {
+          <div class="unidad">
+            <div>
+              <strong>{{ etiquetaDocumento(d.kind) }}</strong>
+              <span class="muted small">
+                {{ d.folio }} ·
+                {{
+                  d.firmada
+                    ? ("firmado " + (d.signedAt | date: "dd/MM/yyyy"))
+                    : "pendiente de firma"
+                }}
+              </span>
+            </div>
+            @if (!d.firmada && d.token) {
+              <a class="btn-chico" [href]="enlaceFirma(d)">Firmar</a>
+            }
+          </div>
+        }
+
+        <h1 class="mt">Mis encuestas</h1>
+        @if (encuestas().length === 0) {
+          <p class="muted">No tienes encuestas pendientes.</p>
+        }
+        @for (e of encuestas(); track e.id) {
+          <div class="unidad">
+            <div>
+              <strong>Encuesta de servicio</strong>
+              <span class="muted small">
+                {{ e.respondida ? "respondida" : "pendiente" }}
+              </span>
+            </div>
+            @if (!e.respondida) {
+              <a class="btn-chico" [href]="enlaceEncuesta(e)">Responder</a>
+            }
+          </div>
+        }
+      }
+    </main>
+  }
+</div>

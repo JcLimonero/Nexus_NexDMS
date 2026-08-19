@@ -1,0 +1,136 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/units-inventory" class="alert-link ms-2">Volver al listado</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (unidad(); as u) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">
+              Expediente de recompra — {{ getDisplayLabel(u) }}
+            </h5>
+            <div class="d-flex gap-2">
+              <a
+                class="btn btn-outline-secondary btn-sm"
+                [routerLink]="['/units-inventory', u.id]"
+              >
+                Volver al detalle
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            @if (returnEvent(); as ev) {
+              <p class="text-muted mb-4">
+                Recompra del {{ ev.date }}
+                @if (ev.clientName) {
+                  — {{ ev.clientName }}
+                }
+                @if (ev.buybackPrice) {
+                  · Precio recompra: {{ ev.buybackPrice | number:'1.2-2' }}
+                }
+              </p>
+            }
+
+            <app-document-upload
+              [disabled]="uploading()"
+              (upload)="onUpload($event)"
+            />
+
+            <hr class="my-4" />
+
+            <h6 class="mb-3">Documentos adjuntos</h6>
+            @if (documents().length === 0) {
+              <p class="text-muted mb-0">
+                No hay documentos adjuntos. Use el formulario anterior para subir documentos.
+              </p>
+            } @else {
+              <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                  <thead>
+                    <tr>
+                      <th>Tipo</th>
+                      <th>Nombre</th>
+                      <th>Tamaño</th>
+                      <th>Estado</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (doc of documents(); track doc.id) {
+                      <tr>
+                        <td>{{ getDocumentTypeLabel(doc) }}</td>
+                        <td>{{ doc.name }}</td>
+                        <td>{{ formatSize(doc.sizeBytes) }}</td>
+                        <td>
+                          <span
+                            class="badge"
+                            [class.bg-warning]="doc.status === 'PENDING'"
+                            [class.bg-success]="doc.status === 'APPROVED'"
+                            [class.bg-danger]="doc.status === 'REJECTED'"
+                          >
+                            {{ doc.status === 'PENDING' ? 'Pendiente' : doc.status === 'APPROVED' ? 'Aprobado' : 'Rechazado' }}
+                          </span>
+                          @if (doc.status === 'REJECTED' && doc.rejectionReason) {
+                            <br />
+                            <small class="text-muted" [title]="doc.rejectionReason">
+                              {{ doc.rejectionReason }}
+                            </small>
+                          }
+                        </td>
+                        <td class="text-end">
+                          <button
+                            type="button"
+                            class="btn btn-link btn-sm p-0 me-2"
+                            (click)="onDownload(doc)"
+                          >
+                            Descargar
+                          </button>
+                          @if (doc.status === 'PENDING') {
+                            <button
+                              type="button"
+                              class="btn btn-link btn-sm p-0 me-2 text-success"
+                              (click)="onApprove(doc)"
+                            >
+                              Aprobar
+                            </button>
+                            <button
+                              type="button"
+                              class="btn btn-link btn-sm p-0 me-2 text-warning"
+                              (click)="onReject(doc)"
+                            >
+                              Rechazar
+                            </button>
+                          }
+                          <button
+                            type="button"
+                            class="btn btn-link btn-sm p-0 text-danger"
+                            (click)="onDelete(doc)"
+                          >
+                            Eliminar
+                          </button>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

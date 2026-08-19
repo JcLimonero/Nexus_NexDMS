@@ -39,6 +39,17 @@ export class UnitAccessory {
   @Column({ name: 'description', type: 'text', nullable: true })
   description: string | null;
 
+  /**
+   * Monta en cualquier unidad. Se marca a propósito y no se deduce de "sin
+   * modelos": sin filas también puede significar que nadie las ha capturado.
+   */
+  @Column({ name: 'is_universal', type: 'boolean', default: false })
+  isUniversal: boolean;
+
+  /** Familia por la que se recorre el catálogo: tapetes, barras, cascos. */
+  @Column({ name: 'category', type: 'varchar', length: 100, nullable: true })
+  category: string | null;
+
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 

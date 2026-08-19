@@ -1,0 +1,71 @@
+<div class="container-fluid">
+  <div class="card leads-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Leads</h5>
+        <span>Pipeline de prospectos y oportunidades</span>
+      </div>
+      <button class="btn btn-primary" (click)="showForm.set(!showForm())">
+        {{ showForm() ? "Cerrar" : "+ Nuevo lead" }}
+      </button>
+    </div>
+  </div>
+
+  @if (showForm()) {
+    <div class="card mb-4">
+      <div class="card-body lead-form">
+        <input class="form-control" placeholder="Nombre *" [(ngModel)]="form.name" />
+        <input class="form-control" placeholder="Teléfono" [(ngModel)]="form.phone" />
+        <select class="form-control" [(ngModel)]="form.source">
+          <option value="PISO">Piso</option>
+          <option value="WHATSAPP">WhatsApp</option>
+          <option value="FACEBOOK">Facebook</option>
+          <option value="GOOGLE">Google</option>
+          <option value="REFERIDO">Referido</option>
+          <option value="OTRO">Otro</option>
+        </select>
+        <input class="form-control interest" placeholder="Interés (ej. CB500X 2026)" [(ngModel)]="form.interest" />
+        <button class="btn btn-primary" [disabled]="!form.name.trim()" (click)="save()">Guardar</button>
+      </div>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="card"><div class="card-body text-center py-4"><span class="spinner-border"></span></div></div>
+  } @else {
+    <div class="kanban">
+      @for (col of columns; track col.key) {
+        <div class="kanban-col" [class.won]="col.key === 'WON'" [class.lost]="col.key === 'LOST'">
+          <div class="col-head">
+            {{ col.label }}
+            <span class="col-count">{{ byStatus()[col.key].length || 0 }}</span>
+          </div>
+          @for (l of byStatus()[col.key]; track l.id) {
+            <div class="lead-card">
+              <div class="lead-name">{{ l.name }}</div>
+              @if (l.interest) { <div class="lead-interest">{{ l.interest }}</div> }
+              <div class="lead-meta">
+                <span class="src">{{ l.source }}</span>
+                @if (l.phone) { <span>{{ l.phone }}</span> }
+              </div>
+              <div class="lead-actions">
+                @for (s of nextStatuses(l); track s) {
+                  <button
+                    class="mini-btn"
+                    [class.danger]="s === 'LOST'"
+                    (click)="advance(l, s)"
+                  >
+                    {{ s === "LOST" ? "Perder" : "→ " + statusLabel(s) }}
+                  </button>
+                }
+                @if (l.status === "OPPORTUNITY" && !l.clientId) {
+                  <button class="mini-btn convert" (click)="convert(l)">Convertir</button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

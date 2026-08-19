@@ -33,7 +33,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const exceptionResponse =
       exception instanceof HttpException
         ? exception.getResponse()
-        : { message: 'Internal server error' };
+        : {
+            message:
+              exception instanceof Error
+                ? exception.message
+                : 'Internal server error',
+          };
 
     const message =
       typeof exceptionResponse === 'object' &&
@@ -51,6 +56,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
     if (process.env.NODE_ENV !== 'production' && exception instanceof Error) {
       body.stack = exception.stack;
+      body.errorName = exception.name;
     }
 
     this.logger.error(

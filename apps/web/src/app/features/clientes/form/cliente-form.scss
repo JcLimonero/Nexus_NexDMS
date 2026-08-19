@@ -1,0 +1,273 @@
+/**
+ * Formulario cliente — estilos unificados
+ * Referencia: grupo teléfono (altura, padding, bordes, tipografía)
+ * Todos los controles deben tener el mismo aspecto que el input de teléfono
+ */
+
+$input-height: 35px;
+$input-padding-x: 10px;
+$input-padding-y: 5px;
+$input-radius: 8px;
+$input-font-size: 14px;
+$chevron-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+
+.cliente-form {
+  /* Labels — espaciado consistente */
+  .form-label {
+    display: block;
+    margin-bottom: var(--space-8);
+    font-size: var(--text-label);
+    font-weight: var(--text-label-weight);
+    color: var(--text-primary);
+  }
+
+  /* Input number — sin spinners nativos para consistencia visual */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
+
+  /* Inputs (text, email, tel, number) — = input teléfono */
+  .form-control,
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="number"] {
+    width: 100%;
+    min-height: $input-height !important;
+    padding: $input-padding-y $input-padding-x !important;
+    font-size: $input-font-size;
+    font-weight: var(--text-input-weight);
+    color: var(--text-primary);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: $input-radius;
+    box-sizing: border-box;
+    line-height: 1.4;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  /* Select Tipo de cliente — = input teléfono */
+  .form-select:not(.phone-lada-select) {
+    width: 100%;
+    min-height: $input-height !important;
+    padding: $input-padding-y 3rem $input-padding-y $input-padding-x !important;
+    font-size: $input-font-size;
+    font-weight: var(--text-input-weight);
+    color: var(--text-primary);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: $input-radius;
+    box-sizing: border-box;
+    line-height: 1.4;
+    appearance: none;
+    background-image: $chevron-url;
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 16px 12px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  /* Textarea — mismo padding que teléfono, altura mayor */
+  textarea.form-control {
+    min-height: 96px;
+    padding: $input-padding-y $input-padding-x !important;
+    font-size: $input-font-size;
+    font-weight: var(--text-input-weight);
+    color: var(--text-primary);
+    background: var(--input-bg);
+    border: 1px solid var(--border);
+    border-radius: $input-radius;
+    box-sizing: border-box;
+    line-height: 1.4;
+    resize: vertical;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  /* Grupo teléfono — referencia visual, mismo estilo en ambos lados */
+  .phone-input-group {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    min-height: $input-height;
+
+    .phone-lada-select,
+    .form-control {
+      min-height: $input-height !important;
+      padding: $input-padding-y $input-padding-x !important;
+      font-size: $input-font-size;
+      font-weight: var(--text-input-weight);
+      color: var(--text-primary);
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      box-sizing: border-box;
+      line-height: 1.4;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .phone-lada-select {
+      flex: 0 0 130px;
+      min-width: 130px;
+      padding: $input-padding-y 3rem $input-padding-y $input-padding-x !important;
+      border-right: none;
+      border-radius: $input-radius 0 0 $input-radius !important;
+      appearance: none;
+      background-image: $chevron-url;
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      background-size: 16px 12px;
+    }
+
+    .form-control {
+      flex: 1;
+      min-width: 0;
+      border-radius: 0 $input-radius $input-radius 0 !important;
+    }
+
+    &:hover:not(:focus-within) {
+      .phone-lada-select,
+      .form-control {
+        border-color: var(--border-hover);
+      }
+    }
+
+    &:focus-within {
+      .phone-lada-select,
+      .form-control {
+        border-color: var(--primary);
+      }
+      .form-control {
+        box-shadow: var(--focus-ring);
+      }
+    }
+
+    .phone-lada-select:focus,
+    .form-control:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+      z-index: 1;
+    }
+  }
+
+  /* Estados focus unificados */
+  .form-control:focus,
+  .form-select:focus,
+  input:focus,
+  select:focus,
+  textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+  }
+
+  /* Placeholder */
+  .form-control::placeholder {
+    color: var(--text-muted);
+  }
+
+  /* Mensajes de error */
+  .text-danger.small {
+    margin-top: var(--space-4);
+    font-size: var(--text-xs);
+    color: var(--danger);
+  }
+
+  /* Espaciado entre filas del formulario */
+  .mb-3 {
+    margin-bottom: var(--space-24);
+  }
+
+  /* Botones de acción */
+  .d-flex.gap-2 {
+    margin-top: var(--space-24);
+    gap: var(--space-8);
+  }
+
+  /* ===== Optimización pantallas baja resolución (< 768px) ===== */
+  @media (max-width: 767px) {
+    .form-label {
+      margin-bottom: var(--space-4);
+      font-size: var(--text-xs);
+    }
+
+    .form-control,
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="number"],
+    .form-select:not(.phone-lada-select) {
+      min-height: 36px !important;
+      padding: 8px 10px !important;
+    }
+
+    .form-select:not(.phone-lada-select) {
+      padding: 8px 2.5rem 8px 10px !important;
+    }
+
+    textarea.form-control {
+      min-height: 72px;
+      padding: 8px 10px !important;
+    }
+
+    .phone-input-group {
+      min-height: 36px;
+
+      .phone-lada-select,
+      .form-control {
+        min-height: 36px !important;
+        padding: 8px 10px !important;
+      }
+      .phone-lada-select {
+        padding: 8px 2.5rem 8px 10px !important;
+        flex: 0 0 110px;
+        min-width: 110px;
+      }
+    }
+
+    .mb-3 {
+      margin-bottom: var(--space-12);
+    }
+
+    .d-flex.gap-2 {
+      margin-top: var(--space-16);
+      gap: var(--space-8);
+      flex-wrap: wrap;
+    }
+
+    .text-danger.small {
+      margin-top: 2px;
+    }
+  }
+}
+
+/* Container y columnas — menos gutter en móvil */
+@media (max-width: 767px) {
+  :host .container-fluid {
+    padding-left: var(--space-12);
+    padding-right: var(--space-12);
+  }
+  .cliente-form .row {
+    margin-left: -6px;
+    margin-right: -6px;
+
+    > [class*="col-"] {
+      padding-left: 6px;
+      padding-right: 6px;
+    }
+  }
+}
+
+/* Card — reducir padding en pantallas pequeñas */
+@media (max-width: 767px) {
+  :host .card-body {
+    padding: var(--space-16) !important;
+  }
+  :host .card-header {
+    padding: var(--space-12) var(--space-16) !important;
+  }
+}

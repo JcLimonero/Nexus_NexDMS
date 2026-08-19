@@ -1,0 +1,15 @@
+<h6 class="f-w-600">Brand</h6>
+<div class="checkbox-animated mt-0">
+  @for (filter of tagsFilters(); track filter) {
+    <label class="d-block" for="{{ filter.tag }}">
+      <input
+        class="checkbox_animated"
+        type="checkbox"
+        [value]="filter.tag"
+        (change)="checkedFilter($event)"
+        id="{{ filter.tag }}"
+      />
+      {{ filter?.tag }}
+    </label>
+  }
+</div>

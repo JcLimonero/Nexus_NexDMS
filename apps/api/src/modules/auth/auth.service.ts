@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -9,6 +15,11 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import type { UserPayload } from './strategies/jwt.strategy';
 import { UsersService } from '../users/users.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { StorageService } from '../../common/storage/storage.service';
+import { PALETA_POR_OMISION, paletaPorId } from '../tenants/branding.paletas';
 
 const REFRESH_KEY_PREFIX = 'refresh:';
 const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
@@ -22,6 +33,9 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
+    private readonly storage: StorageService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -112,11 +126,17 @@ export class AuthService {
       },
     );
 
-    await this.redis.setex(
-      `${REFRESH_KEY_PREFIX}${user.id}`,
-      REFRESH_TTL_SECONDS,
-      refreshToken,
-    );
+    try {
+      await this.redis.setex(
+        `${REFRESH_KEY_PREFIX}${user.id}`,
+        REFRESH_TTL_SECONDS,
+        refreshToken,
+      );
+    } catch {
+      throw new ServiceUnavailableException(
+        'Redis no disponible. Verifica que el contenedor nexDMS_redis esté corriendo.',
+      );
+    }
 
     return {
       accessToken,
@@ -129,6 +149,69 @@ export class AuthService {
         roles,
         scope: user.scope,
       },
+      // La marca viaja ya en el login para pintar el DMS de una vez, sin la
+      // llamada extra a /auth/me y el parpadeo que traería.
+      branding: await this.brandingDelTenant(user.tenantId),
+    };
+  }
+
+  /**
+   * "Entrar como" un cliente desde el portal de superadmin: emite una sesión de
+   * DMS para el administrador de ese cliente. No pide su contraseña —el
+   * superadmin ya tiene el control—, y solo lo puede invocar un SUPERADMIN
+   * (lo hace cumplir el guard del endpoint). Devuelve además la liga lista para
+   * abrir el DMS con la sesión puesta.
+   */
+  async impersonate(tenantId: string) {
+    const admin = await this.usersService.findTenantAdmin(tenantId);
+    if (!admin) {
+      throw new NotFoundException(
+        'El cliente no tiene usuarios para entrar',
+      );
+    }
+    const defaultBranch = await this.usersService.getDefaultBranchForUser(
+      admin.id,
+    );
+    if (!defaultBranch) {
+      throw new BadRequestException(
+        'El usuario del cliente no tiene sucursal asignada',
+      );
+    }
+    const roles = this.usersService.getRoleNames(admin);
+    const payload: UserPayload = {
+      sub: admin.id,
+      tenantId: admin.tenantId,
+      branchId: defaultBranch.branchId,
+      legalEntityId: defaultBranch.legalEntityId,
+      roles,
+      scope: admin.scope,
+    };
+    const accessToken = this.jwtService.sign(payload);
+    const refreshToken = this.jwtService.sign(
+      { sub: admin.id, tenantId: admin.tenantId },
+      { expiresIn: this.config.get('JWT_REFRESH_EXPIRES_IN', '7d') },
+    );
+    try {
+      await this.redis.setex(
+        `${REFRESH_KEY_PREFIX}${admin.id}`,
+        REFRESH_TTL_SECONDS,
+        refreshToken,
+      );
+    } catch {
+      // Sin refresh en Redis la sesión igual sirve para la demo; no se corta.
+    }
+
+    // El DMS vive en otro origen: se entrega la liga con los tokens en el
+    // fragmento (#), que no viaja al servidor ni queda en logs. La liga cuelga
+    // del slug del cliente para caer en su espacio (`/<slug>/…`).
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    const dmsUrl = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
+    const base = tenant?.slug ? `${dmsUrl}/${tenant.slug}` : dmsUrl;
+    return {
+      accessToken,
+      refreshToken,
+      dmsUrl,
+      url: `${base}/sso#at=${accessToken}&rt=${refreshToken}`,
     };
   }
 
@@ -212,6 +295,9 @@ export class AuthService {
     if (!selected) {
       throw new UnauthorizedException('Sucursal no encontrada');
     }
+    // La elección queda como su default para que el refresh y el próximo login
+    // lo dejen en la misma sucursal.
+    await this.usersService.setDefaultBranch(dbUser.id, selected.branchId);
     const roles = this.usersService.getRoleNames(dbUser);
     const payload: UserPayload = {
       sub: dbUser.id,
@@ -235,6 +321,9 @@ export class AuthService {
       user.sub,
       user.tenantId,
     );
+    // Cambiar de entidad legal aterriza en una de sus sucursales; esa queda
+    // como default para conservarla tras un refresh.
+    await this.usersService.setDefaultBranch(dbUser.id, selected.branchId);
     const roles = this.usersService.getRoleNames(dbUser);
     const payload: UserPayload = {
       sub: dbUser.id,
@@ -269,11 +358,16 @@ export class AuthService {
       },
       [] as Array<{ id: string; name: string }>,
     );
+    // La sucursal activa es la del token, no la de por defecto: al cambiar de
+    // contexto con `switch-branch` se emite un token nuevo, y devolver aquí la
+    // predeterminada hacía que el cambio pareciera no surtir efecto.
+    const activa =
+      branches.find((b) => b.branchId === user.branchId) ?? defaultBranch;
     return {
       id: dbUser.id,
       tenantId: dbUser.tenantId,
-      branchId: defaultBranch?.branchId ?? null,
-      legalEntityId: defaultBranch?.legalEntityId ?? null,
+      branchId: activa?.branchId ?? null,
+      legalEntityId: activa?.legalEntityId ?? null,
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       email: dbUser.email,
@@ -281,6 +375,64 @@ export class AuthService {
       scope: dbUser.scope,
       branches,
       legalEntities,
+      // La marca del cliente viaja con la sesión: el DMS la necesita antes de
+      // pintar la primera pantalla, y pedirla aparte dejaría ver un parpadeo
+      // con los colores de fábrica en cada entrada.
+      branding: await this.brandingDelTenant(dbUser.tenantId),
+    };
+  }
+
+  /**
+   * Marca pública de un cliente por su identificador (slug), para vestir la
+   * pantalla de acceso antes de iniciar sesión. Solo expone nombre, colores y
+   * logotipo —nada sensible—, así que no requiere sesión.
+   */
+  async brandingPublicoPorSlug(slug: string) {
+    const t = await this.tenantRepo.findOne({ where: { slug } });
+    if (!t) throw new NotFoundException('Cliente no encontrado');
+    // El id acompaña a la marca para acotar el acceso a este cliente.
+    return { id: t.id, ...(await this.brandingDelTenant(t.id)) };
+  }
+
+  /**
+   * Usuarios de demostración de un cliente (por slug), para el panel de
+   * credenciales de su acceso. Solo fuera de producción: en producción ese
+   * panel no existe. No devuelve contraseñas; todas las cuentas demo usan la
+   * misma (`demo123`), que la pantalla muestra aparte.
+   */
+  async demoUsers(slug: string) {
+    if (this.config.get('NODE_ENV') === 'production') return [];
+    const t = await this.tenantRepo.findOne({ where: { slug } });
+    if (!t) return [];
+    const users = await this.usersService.demoUsers(t.id);
+    return users.map((u) => ({
+      email: u.email,
+      nombre: `${u.firstName} ${u.lastName}`.trim(),
+      roles: this.usersService.getRoleNames(u),
+    }));
+  }
+
+  /** Paleta y logotipo del cliente, resueltos para pintar. */
+  private async brandingDelTenant(tenantId: string) {
+    const t = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    let logoUrl: string | null = null;
+    if (t?.logoKey) {
+      try {
+        // Un día de vigencia: la sesión dura menos, y así el logotipo no se
+        // cae a media jornada en el monitor del taller, que nadie recarga.
+        logoUrl = await this.storage.getSignedUrl(t.logoKey, 24 * 3600);
+      } catch {
+        /* sin almacenamiento se entra igual, solo que sin logotipo */
+      }
+    }
+    return {
+      // El nombre viaja con la marca para rotular la pestaña con el cliente,
+      // que es clave cuando el superadmin abre varios a la vez.
+      nombre: t?.name ?? null,
+      paletaId: t?.palette ?? PALETA_POR_OMISION.id,
+      paleta: paletaPorId(t?.palette),
+      currency: t?.currency ?? 'MXN',
+      logoUrl,
     };
   }
 }

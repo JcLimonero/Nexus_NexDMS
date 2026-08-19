@@ -1,0 +1,31 @@
+<div class="container-fluid">
+  <div class="page-header">
+    <div class="row">
+      <div class="col-lg-6">
+        <div class="page-header-left">
+          <h3>{{ title }}</h3>
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a [routerLink]="'/dashboard/default'">
+                <app-feather-icons [icon]="'home'" />
+              </a>
+            </li>
+            @if (breadcrumbs.parentBreadcrumb) {
+              <li class="breadcrumb-item">
+                {{ breadcrumbs.parentBreadcrumb }}
+              </li>
+            }
+            @if (breadcrumbs.childBreadcrumb) {
+              <li class="breadcrumb-item active">
+                {{ breadcrumbs.childBreadcrumb }}
+              </li>
+            }
+          </ol>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <app-bookmark />
+      </div>
+    </div>
+  </div>
+</div>

@@ -89,6 +89,20 @@ export class Client {
   })
   fixedDiscount: number;
 
+  /** Límite de crédito para entregar con adeudo (null = sin límite). */
+  @Column({
+    name: 'credit_limit',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  creditLimit: number | null;
+
+  /** Lista de precios asignada al cliente (null = precios estándar). */
+  @Column({ name: 'price_list_id', type: 'uuid', nullable: true })
+  priceListId: string | null;
+
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes: string | null;
 

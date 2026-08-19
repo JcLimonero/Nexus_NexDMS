@@ -76,7 +76,8 @@ export class UnitReservationsService {
   ): Promise<UnitReservation[]> {
     const qb = this.reservationRepo
       .createQueryBuilder('ur')
-      .innerJoin('ur.catalogUnit', 'cu')
+      .innerJoinAndSelect('ur.catalogUnit', 'cu')
+      .leftJoinAndSelect('ur.client', 'c')
       .where('ur.tenant_id = :tenantId', { tenantId: user.tenantId });
 
     this.applyScope(qb, user);
@@ -102,7 +103,8 @@ export class UnitReservationsService {
   async findOne(user: UserPayload, id: string): Promise<UnitReservation> {
     const qb = this.reservationRepo
       .createQueryBuilder('ur')
-      .innerJoin('ur.catalogUnit', 'cu')
+      .innerJoinAndSelect('ur.catalogUnit', 'cu')
+      .leftJoinAndSelect('ur.client', 'c')
       .where('ur.id = :id', { id })
       .andWhere('ur.tenant_id = :tenantId', { tenantId: user.tenantId });
 

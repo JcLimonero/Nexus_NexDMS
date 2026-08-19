@@ -23,6 +23,7 @@ import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 import { ReceivePurchaseOrderDto } from './dto/receive-purchase-order.dto';
 import { CancelPurchaseOrderDto } from './dto/cancel-purchase-order.dto';
 import { FilterPurchaseOrdersDto } from './dto/filter-purchase-orders.dto';
+import { ImportCfdiDto } from './dto/import-cfdi.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Purchase Orders')
@@ -39,6 +40,32 @@ export class PurchaseOrdersController {
     @Query() filters: FilterPurchaseOrdersDto,
   ) {
     return this.purchaseOrdersService.findAll(user, filters);
+  }
+
+  /** Top 3 de proveedores de una refacción (para comparar al comprar). */
+  @Get('parts/:partId/suppliers')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  topProveedores(
+    @CurrentUser() user: UserPayload,
+    @Param('partId', ParseUUIDPipe) partId: string,
+  ) {
+    return this.purchaseOrdersService.topProveedores(user, partId);
+  }
+
+  /** Registra la garantía que un proveedor da sobre una refacción. */
+  @Post('parts/:partId/supplier-warranty')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE')
+  setSupplierWarranty(
+    @CurrentUser() user: UserPayload,
+    @Param('partId', ParseUUIDPipe) partId: string,
+    @Body()
+    dto: {
+      supplierId: string;
+      warrantyMonths?: number | null;
+      warrantyNote?: string | null;
+    },
+  ) {
+    return this.purchaseOrdersService.setSupplierWarranty(user, partId, dto);
   }
 
   @Get(':id')
@@ -59,6 +86,17 @@ export class PurchaseOrdersController {
     @Body() dto: CreatePurchaseOrderDto,
   ) {
     return this.purchaseOrdersService.create(user, dto);
+  }
+
+  /** Importa una orden de compra en borrador desde el XML del CFDI. */
+  @Post('import-xml')
+  @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE')
+  importXml(@CurrentUser() user: UserPayload, @Body() dto: ImportCfdiDto) {
+    return this.purchaseOrdersService.importarCfdiXml(
+      user,
+      dto.branchId,
+      dto.xml,
+    );
   }
 
   @Patch(':id')

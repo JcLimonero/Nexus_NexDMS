@@ -35,6 +35,12 @@ export class PartCategoriesController {
     return this.partCategoriesService.findAll(user, filters);
   }
 
+  @Get(':id')
+  @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE', 'MANAGER', 'CASHIER', 'SELLER', 'MECHANIC')
+  findOne(@CurrentUser() user: UserPayload, @Param('id', ParseUUIDPipe) id: string) {
+    return this.partCategoriesService.findOne(user, id);
+  }
+
   @Post()
   @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE', 'MANAGER', 'CASHIER', 'SELLER')
   create(@CurrentUser() user: UserPayload, @Body() dto: CreatePartCategoryDto) {

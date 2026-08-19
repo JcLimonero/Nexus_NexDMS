@@ -20,6 +20,18 @@ export class CfdiGeneradoEvent {
   ) {}
 }
 
+export class OsEntregadaEvent {
+  constructor(
+    public readonly serviceOrderId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly folio: string,
+    public readonly surveyToken: string,
+    public readonly trackingToken: string,
+    public readonly client?: { email?: string; phone?: string },
+  ) {}
+}
+
 export class OsEstatusChangedEvent {
   constructor(
     public readonly serviceOrderId: string,
@@ -47,6 +59,24 @@ export class CitaRecordatorioEvent {
     public readonly branchId: string,
     public readonly tenantId: string,
     public readonly scheduledAt: Date,
+    public readonly client: { email?: string; phone?: string; name?: string },
+  ) {}
+}
+
+/**
+ * El cliente no llegó a su cita y ya se le dio por no presentado.
+ *
+ * Lleva al asesor asignado porque el seguimiento es suyo: quien recibió la
+ * cita es quien tiene el contexto para llamar.
+ */
+export class CitaNoSePresentoEvent {
+  constructor(
+    public readonly appointmentId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly scheduledAt: Date,
+    public readonly serviceType: string,
+    public readonly advisorId: string | null,
     public readonly client: { email?: string; phone?: string; name?: string },
   ) {}
 }

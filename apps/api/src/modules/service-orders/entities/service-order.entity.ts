@@ -100,6 +100,28 @@ export class ServiceOrder {
   @Column({ name: 'folio', type: 'varchar', length: 50 })
   folio: string;
 
+  /** Cotización generada en la recepción y que el cliente debe aceptar. */
+  @Column({ name: 'reception_quotation_id', type: 'uuid', nullable: true })
+  receptionQuotationId: string | null;
+
+  /** Token para el link público de seguimiento (sin auth). */
+  @Column({
+    name: 'tracking_token',
+    type: 'uuid',
+    default: () => 'uuid_generate_v4()',
+  })
+  trackingToken: string;
+
+  /** Unidad de cortesía prestada mientras la del cliente está en el taller. */
+  @Column({ name: 'substitute_unit_id', type: 'uuid', nullable: true })
+  substituteUnitId: string | null;
+
+  @Column({ name: 'substitute_delivered_at', type: 'timestamp', nullable: true })
+  substituteDeliveredAt: Date | null;
+
+  @Column({ name: 'substitute_returned_at', type: 'timestamp', nullable: true })
+  substituteReturnedAt: Date | null;
+
   @Column({ name: 'status', type: 'enum', enum: ServiceOrderStatusEnum })
   status: ServiceOrderStatusEnum;
 

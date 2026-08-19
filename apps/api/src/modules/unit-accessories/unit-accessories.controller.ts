@@ -43,8 +43,14 @@ export class UnitAccessoriesController {
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'EXECUTIVE')
-  findAll(@CurrentUser() user: UserPayload) {
-    return this.unitAccessoriesService.findAll(user);
+  findAll(
+    @CurrentUser() user: UserPayload,
+    @Query('incluirInactivos') incluirInactivos?: string,
+  ) {
+    return this.unitAccessoriesService.findAll(
+      user,
+      incluirInactivos === 'true',
+    );
   }
 
   @Get(':id')

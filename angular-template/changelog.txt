@@ -1,0 +1,44 @@
+====================
+----- 30/12/2025 ---
+====================
+- Update Angular Version 20 to 21
+
+====================
+----- 30/07/2025 ---
+====================
+
+Update: Angular Version 19 to 20
+
+====================
+----- 31/1/2025 ---
+====================
+
+Update : solve scss warning
+Update : Ngx-Silder plugin in angular 19
+
+====================
+----- 13/1/2025 ---
+====================
+
+Update:
+
+-- Template --
+-> Upgrade angular version 19
+-> add new leafletMap  plugin  
+
+-- stater-kit --
+-> Upgrade angular version 19
+
+-- documentation --
+-> add detail of updated angular version
+
+===================
+----- 3/1/24---------
+===================
+Update : updated with angular 18
+
+===================
+----- 3/1/24---------
+===================
+added : Ngx Editor added
+Remove : Ck Editor removed

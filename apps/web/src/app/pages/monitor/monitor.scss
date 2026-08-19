@@ -1,0 +1,799 @@
+/**
+ * Pantallas para colgar en el taller.
+ *
+ * Mismos colores que el resto del DMS: todo sale de los tokens de marca y no
+ * hay un solo color escrito a mano. Lo que sí cambia respecto a una pantalla
+ * de escritorio es la escala —todo va una o dos tallas por encima, porque
+ * esto se lee de pie y desde el otro lado de la nave— y que no hay nada que
+ * pulsar.
+ *
+ * El semáforo usa los colores semánticos del sistema (éxito, aviso, peligro)
+ * para que aquí signifiquen lo mismo que en cualquier otra pantalla.
+ */
+
+.monitor {
+  min-height: 100vh;
+  padding: var(--space-24) var(--space-32);
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.monitor-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-24);
+  flex-wrap: wrap;
+  padding-bottom: 20px;
+  margin-bottom: var(--space-24);
+  border-bottom: 1px solid var(--border);
+
+  h1 {
+    margin: 0;
+    font-size: 40px;
+    font-weight: var(--font-semibold);
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
+  }
+
+  p {
+    margin: 2px 0 0;
+    font-size: var(--text-xl);
+    color: var(--text-secondary);
+  }
+}
+
+/* Con cinco indicadores el reloj se caía de línea en pantallas estrechas;
+   los huecos se aprietan para que quepan en la misma fila. */
+.monitor-resumen {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-24);
+}
+
+.resumen-dato {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  strong {
+    font-size: 44px;
+    line-height: 1;
+    font-weight: var(--font-semibold);
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
+  }
+
+  &.alerta strong {
+    color: var(--warning);
+  }
+  &.critico strong {
+    color: var(--danger);
+  }
+}
+
+.monitor-hora {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+  gap: var(--space-12);
+  font-size: 28px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.sin-conexion {
+  padding: 4px var(--space-12);
+  border-radius: var(--radius-pill);
+  background: var(--danger);
+  color: var(--text-on-brand);
+  font-size: 15px;
+  font-weight: var(--font-semibold);
+}
+
+.monitor-vacio {
+  margin: 80px 0;
+  text-align: center;
+  font-size: 28px;
+  color: var(--text-secondary);
+}
+
+/* ══ Magneto plano ══════════════════════════════════════════
+   Una fila por técnico y la hora en el eje. El ancho de la columna de
+   recursos se declara una vez: la línea de "ahora" la necesita para
+   colocarse sobre la pista y no sobre los nombres. */
+.tablero {
+  --ancho-recurso: 220px;
+  --alto-carril: 64px;
+
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16) var(--space-24) 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.tablero-cabecera,
+.carril {
+  display: flex;
+  align-items: stretch;
+}
+
+.tablero-recurso {
+  flex: 0 0 var(--ancho-recurso);
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  padding: var(--space-8) var(--space-16) var(--space-8) 0;
+  font-size: 15px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+}
+
+.carril .tablero-recurso {
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.avatar {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 16px;
+  font-weight: var(--font-semibold);
+
+  &.vacio {
+    background: transparent;
+    border: 2px dashed var(--border-strong);
+    color: var(--text-muted);
+  }
+}
+
+.recurso-datos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  strong {
+    font-size: 19px;
+    font-weight: var(--font-medium);
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    font-size: 14px;
+    color: var(--text-muted);
+  }
+
+  /* La especialidad del mecánico, como etiqueta discreta bajo su nombre. */
+  small.especialidad {
+    color: var(--accent, #2563eb);
+    font-weight: var(--font-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 12px;
+  }
+}
+
+/* Fuera del turno el carril queda gris; la franja del turno lo abre en
+   blanco. Así se ve de un golpe hasta qué hora hay alguien. */
+.tablero-pista {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  background: var(--bg);
+  border-left: 1px solid var(--border);
+}
+
+.tablero-cabecera {
+  padding-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border);
+
+  .tablero-pista {
+    border-left: none;
+    background: transparent;
+  }
+}
+
+.marca-hora {
+  flex: 1 1 0;
+  min-width: 0;
+  font-size: 15px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+  /* Cada marca rotula el inicio de su columna, pegada a su línea. Centrarla
+     y desplazarla media caja las encabalgaba unas con otras. */
+  text-align: left;
+  padding-left: 6px;
+}
+
+.tablero-cuerpo {
+  position: relative;
+}
+
+.carril {
+  min-height: var(--alto-carril);
+  /* El carril crece si sus bloques se reparten en varias filas. */
+  height: auto;
+  border-bottom: 1px solid var(--border);
+
+  &:last-of-type {
+    border-bottom: none;
+  }
+
+  /* Quien no está se atenúa entero, no solo su franja. */
+  &.fuera-turno {
+    opacity: 0.55;
+  }
+
+  &.sin-tecnico .tablero-pista {
+    background: repeating-linear-gradient(
+      45deg,
+      var(--bg),
+      var(--bg) 8px,
+      var(--border) 8px,
+      var(--border) 9px
+    );
+  }
+}
+
+.franja-turno {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--card);
+}
+
+.linea-hora {
+  flex: 1 1 0;
+  border-right: 1px solid var(--border);
+}
+
+.bloque {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-muted);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  /* El alto es fijo y el ancho mínimo se calcula en el eje, no aquí: el
+     reparto en filas necesita ver el mismo ancho que se dibuja, y con un
+     mínimo puesto en CSS los bloques se pisaban sin que nadie lo supiera. */
+  height: 44px;
+
+  &[data-semaforo="en-tiempo"] {
+    border-left-color: var(--success);
+  }
+  &[data-semaforo="por-vencer"] {
+    border-left-color: var(--warning);
+  }
+  &[data-semaforo="excedido"] {
+    border-left-color: var(--danger);
+  }
+
+  /* Ya salió de esa fase: se atenúa para que no compita con lo que sigue
+     corriendo, que es lo que la pantalla tiene que hacer mirar. */
+  &.terminada {
+    opacity: 0.5;
+    box-shadow: none;
+
+    .bloque-relleno {
+      background: var(--bg);
+    }
+  }
+}
+
+/* Lo consumido del estimado, como relleno del propio bloque: el borde dice
+   el estado y el relleno dice cuánto se lleva, sin robar sitio al texto. */
+.bloque-relleno {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  background: var(--success-bg);
+
+  [data-semaforo="por-vencer"] & {
+    background: var(--warning-bg);
+  }
+  [data-semaforo="excedido"] & {
+    background: var(--danger-bg);
+  }
+}
+
+.bloque-texto {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding: 0 10px;
+
+  strong {
+    font-size: 16px;
+    font-weight: var(--font-medium);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    font-size: 13px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+/* La hora, cruzando todos los carriles. Se mueve sola cada cuarto de minuto
+   y su posición la manda el servidor, no el reloj de esta pantalla. */
+.linea-ahora {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--danger);
+  pointer-events: none;
+  transition: left 1s linear;
+}
+
+.linea-ahora-punta {
+  position: absolute;
+  top: -5px;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--danger);
+}
+
+/* ── Bandeja de lo que espera turno ── */
+.bandeja {
+  margin-top: var(--space-24);
+
+  h2 {
+    margin: 0 0 var(--space-12);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    text-transform: uppercase;
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
+  }
+}
+
+.bandeja-piezas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--space-12);
+}
+
+.pieza {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-12) 14px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--text-muted);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+
+  strong {
+    font-size: var(--text-lg);
+    font-weight: var(--font-medium);
+  }
+}
+
+.pieza-folio {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.pieza-datos {
+  font-size: 14px;
+  color: var(--text-secondary);
+
+  &.sin-plan {
+    color: var(--warning);
+  }
+}
+
+/* ── Bloques de cita ──
+   Mismo bloque que el del taller, pero el color no dice tiempo consumido
+   sino si la persona ya llegó: aquí no hay nada que cronometrar hasta que
+   la unidad entra. */
+.cita-bloque {
+  border-left-color: var(--primary);
+
+  &.llegada {
+    border-left-color: var(--success);
+    /* Ya llegó: deja de ser una espera y se atenúa para no competir con las
+       que faltan, que es lo que hay que vigilar. */
+    opacity: 0.6;
+  }
+
+  &.tarde {
+    border-left-color: var(--danger);
+    background: var(--danger-bg);
+  }
+
+  /* Se dio por perdida: no es una espera sino una llamada pendiente. Se
+     distingue de la que va tarde —esa todavía puede aparecer— con el borde
+     discontinuo y el nombre tachado. */
+  &.no-vino {
+    border-left-color: var(--danger);
+    border-style: dashed;
+    background: var(--danger-bg);
+
+    strong {
+      text-decoration: line-through;
+      text-decoration-thickness: 1px;
+    }
+
+    small {
+      color: var(--danger);
+    }
+  }
+
+  &.cancelada {
+    opacity: 0.45;
+
+    strong {
+      text-decoration: line-through;
+    }
+  }
+}
+
+/* ── Acceso de las pantallas ── */
+.monitor-acceso {
+  display: grid;
+  place-items: center;
+}
+
+.acceso-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  width: min(420px, calc(100vw - 48px));
+  padding: var(--space-32);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+
+  h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: var(--font-semibold);
+  }
+
+  p {
+    margin: -8px 0 0;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--text-secondary);
+  }
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 15px;
+    color: var(--text-secondary);
+  }
+
+  input {
+    height: var(--control-h-lg);
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--control-radius);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 17px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: var(--focus-ring);
+    }
+  }
+
+  button {
+    height: 48px;
+    border: none;
+    border-radius: var(--control-radius);
+    background: var(--primary);
+    color: var(--text-on-brand);
+    font-family: inherit;
+    font-size: 17px;
+    font-weight: var(--font-semibold);
+    cursor: pointer;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.acceso-error {
+  margin: 0 !important;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  color: var(--danger) !important;
+  font-size: 15px;
+}
+
+/* Panel de demostración del acceso; desaparece entero en producción. */
+.acceso-demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding-top: var(--space-16);
+  border-top: 1px dashed var(--border);
+}
+
+.acceso-demo-titulo {
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-muted);
+}
+
+.acceso-demo-cuenta {
+  display: flex !important;
+  flex-direction: column;
+  gap: 1px;
+  height: auto !important;
+  padding: 10px var(--space-12) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md);
+  background: var(--bg) !important;
+  color: inherit !important;
+  font-weight: var(--font-regular) !important;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--border-hover) !important;
+  }
+
+  &.sugerida {
+    border-color: var(--primary) !important;
+    background: var(--card) !important;
+  }
+}
+
+.cuenta-rol {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.cuenta-marca {
+  padding: 1px var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: var(--text-caption);
+  font-weight: var(--font-medium);
+}
+
+.cuenta-cred {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+.cuenta-detalle {
+  font-size: var(--text-caption);
+  color: var(--text-muted);
+}
+
+/* Lo único que se pulsa en un monitor: elegir taller. Discreto a propósito,
+   que no compita con los datos. */
+.selector-sucursal {
+  height: var(--control-h);
+  padding: 0 var(--control-px);
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  background: var(--card);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-base);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+  }
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+/* ── Vista por estado: el semáforo que pidió Ricardo ──────────────────
+   Dos lecturas del mismo tablero. La de tiempo es el magneto; esta agrupa
+   por estado en cuatro columnas de color, pensada para leerse por días. */
+.vista-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  overflow: hidden;
+
+  button {
+    border: none;
+    background: var(--card);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: var(--text-base);
+    height: var(--control-h);
+    padding: 0 16px;
+    cursor: pointer;
+
+    & + button {
+      border-left: 1px solid var(--border);
+    }
+    &:hover {
+      color: var(--text-primary);
+    }
+    &.activo {
+      background: var(--primary, #105078);
+      color: #fff;
+    }
+  }
+}
+
+.tablero-estado {
+  margin-top: var(--space-24);
+}
+
+.estado-columnas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+
+  @media (max-width: 1000px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.estado-col {
+  --c: var(--text-secondary);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--c);
+  border-radius: 12px;
+  padding: 16px;
+  min-height: 120px;
+
+  &[data-estado="rojo"] {
+    --c: var(--danger, #c0392b);
+  }
+  &[data-estado="amarillo"] {
+    --c: #c99a2e;
+  }
+  &[data-estado="naranja"] {
+    --c: #d97706;
+  }
+  &[data-estado="verde"] {
+    --c: var(--success, #157f52);
+  }
+}
+
+.estado-col-cab {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+
+  .estado-punto {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--c);
+    flex-shrink: 0;
+  }
+  h2 {
+    margin: 0;
+    flex: 1;
+    font-size: var(--text-lg, 18px);
+    font-weight: var(--font-semibold, 600);
+    color: var(--text-primary);
+  }
+  .estado-conteo {
+    font-size: var(--text-lg, 18px);
+    font-weight: var(--font-bold, 800);
+    color: var(--c);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.estado-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.estado-col-vacia {
+  color: var(--text-secondary);
+  text-align: center;
+  margin: 6px 0;
+  opacity: 0.6;
+}
+
+.estado-tarjeta {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--c);
+  border-radius: 8px;
+  padding: 12px;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: var(--text-base);
+    color: var(--text-primary);
+  }
+  .estado-datos {
+    font-size: var(--text-sm, 13px);
+    color: var(--text-secondary);
+  }
+  .estado-promesa {
+    margin-top: 8px;
+    font-size: var(--text-sm, 13px);
+    color: var(--text-secondary);
+    font-weight: var(--font-semibold, 600);
+  }
+}
+
+.estado-tarjeta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .estado-folio {
+    font-size: var(--text-sm, 13px);
+    font-weight: var(--font-bold, 800);
+    color: var(--c);
+  }
+  .estado-dias {
+    font-size: var(--text-sm, 13px);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+}

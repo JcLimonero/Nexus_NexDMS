@@ -1,0 +1,154 @@
+<div class="public-wrap">
+  <div class="public-card">
+    <div class="public-brand">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">NexDMS</span>
+    </div>
+
+    @if (loading()) {
+      <p class="muted center">Cargando presupuesto…</p>
+    } @else if (error()) {
+      <p class="error-box">{{ error() }}</p>
+    } @else if (resultado(); as r) {
+      <div class="thanks">
+        <div class="thanks-icon">✅</div>
+        <h1>¡Listo!</h1>
+        <p class="muted">
+          Autorizaste <strong>{{ r.aceptadas }}</strong>
+          {{ r.aceptadas === 1 ? "trabajo" : "trabajos" }}
+          @if (r.aceptadas > 0) {
+            por <strong>{{ money(r.total) }}</strong>
+          }.
+          El taller comenzará con lo aprobado.
+        </p>
+        <p class="muted small">
+          💡 Los trabajos que no aprobaste quedan guardados; el asesor podrá
+          recordártelos en tu próxima visita.
+        </p>
+      </div>
+    } @else if (data(); as d) {
+      <h1>Presupuesto {{ d.folio }}</h1>
+      <p class="muted">{{ vehiculoLabel() }}</p>
+
+      @if (d.respondida) {
+        <p class="status-banner">Este presupuesto ya fue respondido.</p>
+      } @else {
+        <p class="lead">
+          Revisa cada trabajo y aprueba los que quieras. <strong>Tú decides.</strong>
+        </p>
+
+        <div class="conceptos">
+          @for (c of d.conceptos; track c.id) {
+            <div
+              class="concepto-card"
+              [class.sel-si]="esDecision(c.id, 'ACCEPTED')"
+              [class.sel-no]="esDecision(c.id, 'REJECTED')"
+              [class.sel-duda]="esDecision(c.id, 'CALLBACK')"
+            >
+              @if (c.fotos.length) {
+                <div class="c-fotos">
+                  @for (f of c.fotos; track f) {
+                    <img [src]="f" alt="Foto del trabajo" />
+                  }
+                </div>
+              }
+
+              <div class="c-top">
+                <span class="c-urg urg-{{ c.urgencia }}">{{ URG[c.urgencia] }}</span>
+                <strong class="c-titulo">{{ c.descripcion }}</strong>
+                <span class="c-monto">{{ money(c.total) }}</span>
+              </div>
+
+              <div class="c-desglose">
+                @if (c.manoObra > 0) {
+                  <div class="dl"><span>Mano de obra</span><span>{{ money(c.manoObra) }}</span></div>
+                }
+                @for (r of c.refacciones; track $index) {
+                  <div class="dl">
+                    <span>{{ r.cantidad > 1 ? r.cantidad + ' × ' : '' }}{{ r.descripcion }}</span>
+                    <span>{{ money(r.subtotal) }}</span>
+                  </div>
+                }
+              </div>
+
+              @if (c.notaTecnico) {
+                <div class="c-nota">
+                  <span>🔧</span>
+                  <span><b>Nota del técnico:</b> {{ c.notaTecnico }}</span>
+                </div>
+              }
+
+              <div class="c-acciones">
+                <button
+                  type="button"
+                  class="c-no"
+                  [class.on]="esDecision(c.id, 'REJECTED')"
+                  (click)="decidir(c.id, 'REJECTED')"
+                >✕ No por ahora</button>
+                <button
+                  type="button"
+                  class="c-si"
+                  [class.on]="esDecision(c.id, 'ACCEPTED')"
+                  (click)="decidir(c.id, 'ACCEPTED')"
+                >✓ Aprobar</button>
+              </div>
+              <button
+                type="button"
+                class="c-duda"
+                [class.on]="esDecision(c.id, 'CALLBACK')"
+                (click)="decidir(c.id, 'CALLBACK')"
+              >🤔 Tengo dudas — que me llamen</button>
+            </div>
+          }
+        </div>
+
+        @if (d.conditions) {
+          <p class="muted small">{{ d.conditions }}</p>
+        }
+
+        <!-- Firma -->
+        <div class="firma-bloque">
+          <label>Firma para autorizar</label>
+          <div class="firma-lienzo">
+            <canvas
+              #firmaCanvas
+              (mousedown)="iniciarFirma($event)"
+              (mousemove)="moverFirma($event)"
+              (mouseup)="finFirma()"
+              (mouseleave)="finFirma()"
+              (touchstart)="iniciarFirma($event)"
+              (touchmove)="moverFirma($event)"
+              (touchend)="finFirma()"
+            ></canvas>
+            @if (!firmado()) {
+              <span class="firma-hint">Firma aquí con el dedo</span>
+            }
+          </div>
+          <button type="button" class="firma-limpiar" (click)="limpiarFirma()">
+            ↺ Borrar firma
+          </button>
+        </div>
+
+        <div class="totales-sticky">
+          <div class="ts-info">
+            <span>Autorizas</span>
+            <b>{{ aceptadas().length }} {{ aceptadas().length === 1 ? "trabajo" : "trabajos" }}</b>
+          </div>
+          <div class="ts-total">{{ money(totalAceptado()) }}</div>
+        </div>
+
+        <button
+          class="btn-send"
+          [disabled]="enviando() || !hayDecision()"
+          (click)="enviar()"
+        >
+          {{ enviando() ? "Enviando…" : "Autorizar y firmar" }}
+        </button>
+      }
+
+      @if (d.sucursal) {
+        <div class="branch-foot">{{ d.sucursal }}</div>
+      }
+    }
+  </div>
+</div>

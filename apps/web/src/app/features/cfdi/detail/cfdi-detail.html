@@ -1,0 +1,260 @@
+<div class="container-fluid cfdi-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5>Detalle CFDI</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="..">Volver</a>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+          } @else if (cfdi(); as c) {
+            <div class="row">
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 40%">Folio fiscal</th>
+                      <td>{{ c.series }}-{{ c.fiscalFolio }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">UUID SAT</th>
+                      <td class="small font-monospace">{{ c.satUuid }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ getTypeLabel(c.cfdiType) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Referencia</th>
+                      <td>{{ getReferenceTypeLabel(c.referenceType) }} ({{ c.referenceId | slice:0:8 }}...)</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Sucursal</th>
+                      <td>{{ getBranchName(c.branchId) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Fecha timbrado</th>
+                      <td>{{ c.stampedAt | date:'medium' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Total</th>
+                      <td class="fw-bold">${{ c.total | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-success]="c.status === 'VALID'"
+                          [class.bg-danger]="c.status === 'CANCELLED'">
+                          {{ getStatusLabel(c.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mt-3">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="openXml()"
+                [disabled]="!c.xmlUrl"
+              >
+                Descargar XML
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="openPdf()"
+                [disabled]="!c.pdfUrl"
+              >
+                Descargar PDF
+              </button>
+              @if (canResend()) {
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary"
+                  (click)="onResend()"
+                  [disabled]="resending()"
+                >
+                  @if (resending()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Reenviar al cliente
+                </button>
+              }
+            </div>
+
+            @if (canCancel()) {
+              <div class="card mt-4">
+                <div class="card-header">Cancelar CFDI</div>
+                <div class="card-body">
+                  <div class="row g-2">
+                    <div class="col-md-4">
+                      <label class="form-label">Motivo SAT</label>
+                      <select
+                        class="form-select"
+                        [ngModel]="cancelMotivo()"
+                        (ngModelChange)="cancelMotivo.set($event)"
+                      >
+                        @for (m of motivosCancelacion; track m.value) {
+                          <option [ngValue]="m.value">{{ m.label }}</option>
+                        }
+                      </select>
+                    </div>
+                    <div class="col-md-4">
+                      <label class="form-label">UUID sustitución (opcional)</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [ngModel]="cancelSustitucionId()"
+                        (ngModelChange)="cancelSustitucionId.set($event)"
+                        placeholder="Solo si aplica motivo 01"
+                      />
+                    </div>
+                    <div class="col-md-4 d-flex align-items-end">
+                      <button
+                        type="button"
+                        class="btn btn-danger"
+                        (click)="onCancel()"
+                        [disabled]="cancelling()"
+                      >
+                        @if (cancelling()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Cancelar ante SAT
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (canRegisterPago()) {
+              <div class="card mt-4">
+                <div class="card-header">Registrar complemento de pago</div>
+                <div class="card-body">
+                  <div class="row g-2">
+                    <div class="col-md-2">
+                      <label class="form-label">Monto</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [ngModel]="pagoAmount()"
+                        (ngModelChange)="pagoAmount.set(+$event)"
+                        min="0.01"
+                        step="0.01"
+                      />
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Fecha</label>
+                      <input
+                        type="date"
+                        class="form-control"
+                        [ngModel]="pagoDate()"
+                        (ngModelChange)="pagoDate.set($event)"
+                      />
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Método</label>
+                      <select
+                        class="form-select"
+                        [ngModel]="pagoMethod()"
+                        (ngModelChange)="pagoMethod.set($event)"
+                      >
+                        <option value="PUE">PUE</option>
+                        <option value="PPD">PPD</option>
+                      </select>
+                    </div>
+                    <div class="col-md-2">
+                      <label class="form-label">Referencia</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [ngModel]="pagoReference()"
+                        (ngModelChange)="pagoReference.set($event)"
+                        placeholder="Opcional"
+                      />
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                      <button
+                        type="button"
+                        class="btn btn-primary"
+                        (click)="onRegisterPago()"
+                        [disabled]="registeringPago()"
+                      >
+                        @if (registeringPago()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Registrar pago
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+            @if (canNotaCredito()) {
+              <div class="card mt-4">
+                <div class="card-header">Nota de crédito (egreso)</div>
+                <div class="card-body">
+                  <p class="text-muted small mb-3">
+                    Emite un CFDI de egreso ligado a esta factura, por una
+                    devolución, descuento o bonificación posterior.
+                  </p>
+                  <div class="row g-2">
+                    <div class="col-md-6">
+                      <label class="form-label">Motivo</label>
+                      <input
+                        type="text"
+                        class="form-control"
+                        [ngModel]="notaMotivo()"
+                        (ngModelChange)="notaMotivo.set($event)"
+                        placeholder="Devolución de mercancía, descuento…"
+                      />
+                    </div>
+                    <div class="col-md-3">
+                      <label class="form-label">Monto (IVA incl.)</label>
+                      <input
+                        type="number"
+                        class="form-control"
+                        [ngModel]="notaMonto()"
+                        (ngModelChange)="notaMonto.set($event === null || $event === '' ? null : +$event)"
+                        min="0.01"
+                        step="0.01"
+                        [placeholder]="'Total: ' + (cfdi()!.total | number: '1.2-2')"
+                      />
+                    </div>
+                    <div class="col-md-3 d-flex align-items-end">
+                      <button
+                        type="button"
+                        class="btn btn-warning"
+                        (click)="onNotaCredito()"
+                        [disabled]="generandoNota()"
+                      >
+                        @if (generandoNota()) {
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+                        }
+                        Generar nota de crédito
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

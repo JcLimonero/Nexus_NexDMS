@@ -65,6 +65,20 @@ export class Quotation {
   @Column({ name: 'type', type: 'enum', enum: QuotationTypeEnum })
   type: QuotationTypeEnum;
 
+  /** Token del enlace público con el que el cliente acepta o rechaza. */
+  @Column({
+    name: 'client_token',
+    type: 'uuid',
+    default: () => 'uuid_generate_v4()',
+  })
+  clientToken: string;
+
+  @Column({ name: 'client_responded_at', type: 'timestamp', nullable: true })
+  clientRespondedAt: Date | null;
+
+  @Column({ name: 'client_response_note', type: 'text', nullable: true })
+  clientResponseNote: string | null;
+
   @Column({ name: 'folio', type: 'varchar', length: 50 })
   folio: string;
 
@@ -107,8 +121,24 @@ export class Quotation {
   @Column({ name: 'validity_date', type: 'date', nullable: true })
   validityDate: Date | null;
 
+  /** En qué se convirtió: 'unit_sale' o 'service_order', y su id. */
+  @Column({
+    name: 'converted_to_type',
+    type: 'varchar',
+    length: 20,
+    nullable: true,
+  })
+  convertedToType: string | null;
+
+  @Column({ name: 'converted_to_id', type: 'uuid', nullable: true })
+  convertedToId: string | null;
+
   @Column({ name: 'pdf_key', type: 'varchar', length: 500, nullable: true })
   pdfKey: string | null;
+
+  /** Firma del cliente al autorizar, como imagen en almacenamiento privado. */
+  @Column({ name: 'signature_key', type: 'varchar', length: 500, nullable: true })
+  signatureKey: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

@@ -1,0 +1,331 @@
+<div class="main-header-left d-none d-lg-block">
+  <div class="logo-wrapper">
+    <a href="javascript:void(0)">
+      @if (logoUrl(); as url) {
+        <!-- Logotipo del cliente. Fondo claro detrás porque el suyo puede
+             venir en tinta oscura, y el sidebar es azul de marca. -->
+        <img class="logo-cliente" [src]="url" alt="Logotipo" loading="lazy" />
+      } @else {
+        <img src="assets/nexus_images/logo/logo_white.png" alt="NexDMS" loading="lazy" />
+      }
+    </a>
+  </div>
+</div>
+<div class="sidebar custom-scrollbar">
+  <ul class="sidebar-menu">
+    @for (menuItem of menuItems; track menuItem) {
+      <li [class.active]="menuItem.active">
+        <!-- Sub -->
+        @if (menuItem.type === "sub") {
+          <a
+            href="javascript:void(0)"
+            class="sidebar-header"
+            (click)="toggleNavActive(menuItem)"
+          >
+            <app-feather-icons [icon]="menuItem.icon" /><span
+              >{{ menuItem.title! | translate }}
+              @if (menuItem.badgeType) {
+                <span class="badge badge-{{ menuItem.badgeType }} me-3">{{
+                  menuItem.badgeValue
+                }}</span>
+              }
+            </span>
+            @if (menuItem.children) {
+              <i class="fa fa-angle-right pull-right"></i>
+            }
+          </a>
+        }
+        <!-- Link -->
+        @if (menuItem.type === "link" && menuItem.path) {
+          <a
+            [routerLink]="menuItem.path"
+            routerLinkActive="active"
+            class="sidebar-header"
+          >
+            <app-feather-icons [icon]="menuItem.icon" /><span
+              >{{ menuItem.title! | translate }}
+              @if (menuItem.badgeType) {
+                <span class="badge badge-{{ menuItem.badgeType }} me-3">{{
+                  menuItem.badgeValue
+                }}</span>
+              }
+            </span>
+            @if (menuItem.children) {
+              <i class="fa fa-angle-right pull-right"></i>
+            }
+          </a>
+        }
+        <!-- External Link -->
+        @if (menuItem.type === "extLink") {
+          <a
+            href="{{ !menuItem.type ? null : menuItem.path }}"
+            class="sidebar-header"
+          >
+            <app-feather-icons [icon]="menuItem.icon" /><span
+              >{{ menuItem.title! | translate }}
+              @if (menuItem.badgeType) {
+                <span class="badge badge-{{ menuItem.badgeType }} me-3">{{
+                  menuItem.badgeValue
+                }}</span>
+              }
+            </span>
+            @if (menuItem.children) {
+              <i class="fa fa-angle-right pull-right"></i>
+            }
+          </a>
+        }
+        <!-- External Tab Link -->
+        @if (menuItem.type === "extTabLink") {
+          <a
+            href="{{ !menuItem.type ? null : menuItem.path }}"
+            target="_blank"
+            class="sidebar-header"
+          >
+            <app-feather-icons [icon]="menuItem.icon" /><span
+              >{{ menuItem.title! | translate }}
+              @if (menuItem.badgeType) {
+                <span class="badge badge-{{ menuItem.badgeType }} me-3">{{
+                  menuItem.badgeValue
+                }}</span>
+              }
+            </span>
+            @if (menuItem.children) {
+              <i class="fa fa-angle-right pull-right"></i>
+            }
+          </a>
+        }
+        <!-- 2nd Level Menu -->
+        @if (menuItem.children) {
+          <ul
+            class="sidebar-submenu"
+            [class]="{
+              'menu-open': menuItem.active,
+              'menu-close': !menuItem.active,
+            }"
+          >
+            @for (childrenItem of menuItem.children; track childrenItem) {
+              <li [class.active]="childrenItem.active">
+                <!-- Sub -->
+                @if (childrenItem.type === "sub") {
+                  <a
+                    href="javascript:void(0)"
+                    (click)="toggleNavActive(childrenItem)"
+                  >
+                    <i class="fa fa-circle"></i>
+                    <span>
+                      {{ childrenItem.title! | translate }}
+                      @if (childrenItem.badgeType) {
+                        <span
+                          class="badge badge-{{
+                            childrenItem.badgeType
+                          }} pull-right"
+                          >{{ childrenItem.badgeValue }}</span
+                        >
+                      }
+                    </span>
+                    @if (childrenItem.children) {
+                      <i class="fa fa-angle-down pull-right"></i>
+                    }
+                  </a>
+                }
+                <!-- Link -->
+                @if (childrenItem.type === "link" && childrenItem.path) {
+                  <a
+                    [routerLink]="childrenItem.path"
+                    [queryParams]="childrenItem.queryParams || null"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: false }"
+                  >
+                    <i class="fa fa-circle"></i
+                    ><span
+                      >{{ childrenItem.title! | translate }}
+                      @if (childrenItem.badgeType) {
+                        <span
+                          class="badge badge-{{
+                            childrenItem.badgeType
+                          }} pull-right"
+                          >{{ childrenItem.badgeValue }}</span
+                        >
+                      }
+                    </span>
+                    @if (childrenItem.children) {
+                      <i class="fa fa-angle-down pull-right"></i>
+                    }
+                  </a>
+                }
+                <!-- External Link -->
+                @if (childrenItem.type === "extLink") {
+                  <a
+                    href="{{ !childrenItem.type ? null : childrenItem.path }}"
+                    routerLinkActive="active"
+                    [routerLinkActiveOptions]="{ exact: true }"
+                  >
+                    <i class="fa fa-circle"></i
+                    ><span
+                      >{{ childrenItem.title! | translate }}
+                      @if (childrenItem.badgeType) {
+                        <span
+                          class="badge badge-{{
+                            childrenItem.badgeType
+                          }} pull-right"
+                          >{{ childrenItem.badgeValue }}</span
+                        >
+                      }
+                    </span>
+                    @if (childrenItem.children) {
+                      <i class="fa fa-angle-down pull-right"></i>
+                    }
+                  </a>
+                }
+                <!-- External Tab Link -->
+                @if (childrenItem.type === "extTabLink") {
+                  <a
+                    href="{{ !childrenItem.type ? null : childrenItem.path }}"
+                    target="_blank"
+                  >
+                    <i class="fa fa-circle"></i
+                    ><span
+                      >{{ childrenItem.title! | translate }}
+                      @if (childrenItem.badgeType) {
+                        <span
+                          class="badge badge-{{
+                            childrenItem.badgeType
+                          }} pull-right"
+                          >{{ childrenItem.badgeValue }}</span
+                        >
+                      }
+                    </span>
+                    @if (childrenItem.children) {
+                      <i class="fa fa-angle-down pull-right"></i>
+                    }
+                  </a>
+                }
+                <!-- 3rd Level Menu -->
+                @if (childrenItem.children) {
+                  <ul class="sidebar-submenu">
+                    @for (
+                      childrenSubItem of childrenItem.children;
+                      track childrenSubItem
+                    ) {
+                      <li>
+                        <!-- Link -->
+                        @if (childrenSubItem.type === "link" && childrenSubItem.path) {
+                          <a
+                            [routerLink]="childrenSubItem.path"
+                            routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: false }"
+                          >
+                            <i class="fa fa-circle"></i
+                            ><span>
+                              {{ childrenSubItem.title! | translate }}
+                              @if (childrenSubItem.badgeType) {
+                                <span
+                                  class="badge badge-{{
+                                    childrenSubItem.badgeType
+                                  }} pull-right"
+                                  >{{ childrenSubItem.badgeValue }}</span
+                                >
+                              }
+                            </span>
+                          </a>
+                        }
+                        <!-- External Link -->
+                        @if (childrenSubItem.type === "extLink") {
+                          <a
+                            href="{{
+                              !childrenSubItem.type
+                                ? null
+                                : childrenSubItem.path
+                            }}"
+                            routerLinkActive="active"
+                            [routerLinkActiveOptions]="{ exact: true }"
+                          >
+                            <i class="fa fa-circle"></i
+                            ><span
+                              >{{ childrenSubItem.title! | translate }}
+                              @if (childrenSubItem.badgeType) {
+                                <span
+                                  class="badge badge-{{
+                                    childrenSubItem.badgeType
+                                  }} pull-right"
+                                  >{{ childrenSubItem.badgeValue }}</span
+                                >
+                              }
+                            </span>
+                          </a>
+                        }
+                        <!-- External Tab Link -->
+                        @if (childrenSubItem.type === "extTabLink") {
+                          <a
+                            href="{{
+                              !childrenSubItem.type
+                                ? null
+                                : childrenSubItem.path
+                            }}"
+                            target="_blank"
+                          >
+                            <i class="fa fa-circle"></i
+                            ><span
+                              >{{ childrenSubItem.title! | translate }}
+                              @if (childrenSubItem.badgeType) {
+                                <span
+                                  class="badge badge-{{
+                                    childrenSubItem.badgeType
+                                  }} pull-right"
+                                  >{{ childrenSubItem.badgeValue }}</span
+                                >
+                              }
+                            </span>
+                          </a>
+                        }
+                      </li>
+                    }
+                  </ul>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </li>
+    }
+  </ul>
+  <!-- Contexto de trabajo: fuera del menú del usuario, porque pulsarlo no
+       debe abrir el desplegable -->
+  <app-selector-contexto />
+  <div class="sidebar-user sidebar-user-bottom" ngbDropdown placement="top-start" container="body">
+    <div class="d-flex align-items-center gap-2 w-100" ngbDropdownToggle>
+      <div class="position-relative flex-shrink-0">
+        <img
+          class="img-40 rounded-circle"
+          [src]="url || defaultAvatarUrl"
+          [alt]="displayName"
+          loading="lazy"
+          (error)="$any($event.target).src = defaultAvatarUrl"
+        />
+      </div>
+      <div class="flex-grow-1 min-w-0 text-start">
+        <h6 class="mb-0 f-13 nombre-usuario">{{ displayName }}</h6>
+        <p class="mb-0 f-12 text-muted text-truncate">{{ roleLabel }}</p>
+      </div>
+      <i class="fa fa-chevron-up flex-shrink-0"></i>
+    </div>
+    <ul ngbDropdownMenu class="dropdown-menu dropdown-menu-end">
+      <li>
+        <a class="dropdown-item" routerLink="/perfil">
+          <app-feather-icons [icon]="'user'" /> Mi perfil
+        </a>
+      </li>
+      <li>
+        <a class="dropdown-item" routerLink="/settings">
+          <app-feather-icons [icon]="'settings'" /> Configuración
+        </a>
+      </li>
+      <li><hr class="dropdown-divider" /></li>
+      <li>
+        <a class="dropdown-item text-danger" href="javascript:void(0)" (click)="signOut(); $event.preventDefault()">
+          <app-feather-icons [icon]="'log-out'" /> Cerrar sesión
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>

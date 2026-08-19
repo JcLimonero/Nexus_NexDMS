@@ -51,6 +51,33 @@ export class CatalogUnitsController {
     );
   }
 
+  @Get(':id/history')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  getHistory(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.catalogUnitsService.getHistory(user, id);
+  }
+
+  @Get(':id/expediente-status')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  getExpedienteStatus(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.catalogUnitsService.getExpedienteStatus(user, id);
+  }
+
+  @Post(':id/complete-expediente')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER')
+  completeExpediente(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.catalogUnitsService.completeExpediente(user, id);
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
   findOne(

@@ -49,6 +49,16 @@ export class StockMovement {
   @Column({ name: 'stock_after', type: 'int' })
   stockAfter: number;
 
+  /** Costo unitario de la entrada (solo en compras), para rastrear el costeo. */
+  @Column({
+    name: 'unit_cost',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  unitCost: number | null;
+
   @Column({ name: 'reference_id', type: 'uuid', nullable: true })
   referenceId: string | null;
 

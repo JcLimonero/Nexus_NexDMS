@@ -1,15 +1,14 @@
-import { IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
-import { VehicleTypeEnum } from '../entities/global-model.entity';
 
 export class FilterGlobalModelsDto {
   @IsOptional()
-  @IsString()
-  brandName?: string;
+  @IsUUID()
+  brandId?: string;
 
   @IsOptional()
-  @IsEnum(VehicleTypeEnum)
-  vehicleType?: VehicleTypeEnum;
+  @IsUUID()
+  vehicleTypeId?: string;
 
   @IsOptional()
   @Type(() => Number)

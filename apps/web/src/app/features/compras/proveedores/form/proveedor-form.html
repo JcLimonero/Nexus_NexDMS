@@ -1,0 +1,85 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar proveedor" : "Nuevo proveedor" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/purchases/proveedores">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="proveedor-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" />
+                @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                  <div class="text-danger small mt-1">El nombre es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Contacto</label>
+                <input type="text" class="form-control" formControlName="contactName" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Teléfono</label>
+                <input type="tel" class="form-control" formControlName="phone" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Correo</label>
+                <input type="email" class="form-control" formControlName="email" />
+                @if (form.get('email')?.invalid && form.get('email')?.touched) {
+                  <div class="text-danger small mt-1">Email no válido</div>
+                }
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">RFC</label>
+                <input type="text" class="form-control" formControlName="rfc" maxlength="13" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Condiciones de pago</label>
+                <input type="text" class="form-control" formControlName="paymentTerms" />
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Días de crédito</label>
+                <input type="number" class="form-control" formControlName="creditDays" min="0" />
+              </div>
+              <div class="col-md-6 mb-3">
+                <div class="form-check mt-4">
+                  <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
+                  <label class="form-check-label" for="isActive">Activo</label>
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Dirección</label>
+                <input type="text" class="form-control" formControlName="address" />
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" formControlName="notes" rows="3"></textarea>
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? "Guardar cambios" : "Crear proveedor" }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/purchases/proveedores">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

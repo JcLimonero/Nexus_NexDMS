@@ -1,0 +1,58 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+  <div class="row">
+    <!-- Individual column searching (text inputs) Starts-->
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Individual column searching (text inputs)</h5>
+          <span>Search your product from here..</span>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive product-list-custom server-datatable">
+            <div class="table-responsive">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th scope="col">Image</th>
+                    <th scope="col">Name</th>
+                    <th scope="col">Desc</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Stock</th>
+                    <th scope="col">Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (product of products; track product) {
+                    <tr>
+                      <td>
+                        <img
+                          [src]="product.img"
+                          class="me-2 img-fluid"
+                          style="width: 20px" alt="" loading="lazy"
+                        />
+                      </td>
+                      <td>
+                        {{ product.name }}
+                      </td>
+                      <td>{{ product.desc }}</td>
+                      <td>{{ product.amount }}</td>
+                      <td>
+                        <div [ngClass]="product.stockClass">
+                          {{ product.stock }}
+                        </div>
+                      </td>
+                      <td>{{ product.date }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Individual column searching (text inputs) Ends-->
+  </div>
+</div>
+<!-- Container-fluid Ends-->

@@ -1,0 +1,198 @@
+<div class="container-fluid">
+  <!-- Header -->
+  <div class="card agenda-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Planificador de taller</h5>
+        <span>Carga de trabajo por técnico</span>
+      </div>
+      <span class="badge badge-secondary">{{ totalCitas() }} trabajos</span>
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <div class="card mb-4">
+    <div class="card-body day-controls">
+      <div class="d-flex gap-2 align-items-center">
+        <button class="btn btn-light btn-sm" (click)="shiftDate(-1)">
+          <app-feather-icons [icon]="'chevron-left'" />
+        </button>
+        <input
+          type="date"
+          class="form-control field-sm"
+          [ngModel]="date()"
+          (ngModelChange)="onDateChange($event)"
+        />
+        <button class="btn btn-light btn-sm" (click)="shiftDate(1)">
+          <app-feather-icons [icon]="'chevron-right'" />
+        </button>
+        <button class="btn btn-light btn-sm" (click)="today()">Hoy</button>
+      </div>
+      <select
+        class="form-control field-lg"
+        [ngModel]="branchId()"
+        (ngModelChange)="onBranchChange($event)"
+      >
+        @for (b of branches(); track b.id) {
+          <option [value]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="card">
+    @if (loading()) {
+      <div class="card-body text-center py-4">
+        <span class="spinner-border"></span>
+      </div>
+    } @else if (error()) {
+      <div class="card-body">
+        <div class="alert alert-danger">{{ error() }}</div>
+      </div>
+    } @else if (lanes().length === 0) {
+      <div class="card-body text-center py-4 text-muted">
+        No hay técnicos asignados a esta sucursal.
+      </div>
+    } @else {
+      <div class="timeline-scroll">
+        <div class="timeline">
+          <!-- Encabezado de horas -->
+          <div class="timeline-row timeline-head">
+            <div class="lane-info">Recurso</div>
+            <div class="lane-track">
+              @for (h of hours(); track h) {
+                <div class="hour-cell">{{ formatHour(h) }}</div>
+              }
+            </div>
+          </div>
+
+          <!-- Carriles -->
+          @for (lane of lanes(); track lane.mechanicId) {
+            <div class="timeline-row">
+              <div class="lane-info">
+                <div class="avatar">{{ lane.initials }}</div>
+                <div class="lane-meta">
+                  <div class="lane-name">{{ lane.mechanicName }}</div>
+                  <div class="lane-load">{{ loadLabel(lane) }}</div>
+                </div>
+              </div>
+              <div class="lane-track">
+                @for (h of hours(); track h) {
+                  <div class="hour-cell"></div>
+                }
+                @for (b of lane.blocks; track b.appointment.id) {
+                  <button
+                    type="button"
+                    class="job-block {{ b.statusClass }}"
+                    [style.left.%]="b.leftPct"
+                    [style.width.%]="b.widthPct"
+                    [title]="blockTooltip(b)"
+                    [attr.aria-label]="'Ver detalle de ' + b.label"
+                    (click)="abrirDetalle(b)"
+                  >
+                    <span class="job-label">{{ b.label }}</span>
+                    <span class="job-sublabel">{{ b.sublabel }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Leyenda -->
+      <div class="timeline-legend">
+        <span><i class="dot block-pending"></i> Por confirmar</span>
+        <span><i class="dot block-scheduled"></i> Agendada</span>
+        <span><i class="dot block-confirmed"></i> Confirmada</span>
+        <span><i class="dot block-completed"></i> Completada</span>
+        <span><i class="dot block-unassigned"></i> Sin asignar</span>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Detalle de la cita. Se arma con lo que ya trae el bloque: el planificador
+     carga las citas completas, así que abrirlo no cuesta otra petición. -->
+@if (detalle(); as d) {
+  <div class="detalle-fondo" (click)="cerrarDetalle()"></div>
+  <div
+    class="detalle"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="'Detalle de la cita ' + d.label"
+  >
+    <header class="detalle-top">
+      <div>
+        <span class="detalle-estado" [attr.data-tono]="estadoTono(d.appointment.status)">
+          {{ estadoTexto(d.appointment.status) }}
+        </span>
+        <h5>{{ d.label }}</h5>
+        <p class="detalle-sub">{{ d.appointment.serviceType }}</p>
+      </div>
+      <button
+        type="button"
+        class="detalle-cerrar"
+        aria-label="Cerrar"
+        (click)="cerrarDetalle()"
+      >
+        ×
+      </button>
+    </header>
+
+    <dl class="detalle-datos">
+      <div>
+        <dt>Horario</dt>
+        <dd>{{ rangoHorario(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Duración</dt>
+        <dd>{{ d.appointment.durationMin }} min</dd>
+      </div>
+      <div>
+        <dt>Cliente</dt>
+        <dd>{{ clienteTexto(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Teléfono</dt>
+        <dd>
+          @if (d.appointment.clientPhone) {
+            <a [href]="'tel:' + d.appointment.clientPhone">
+              {{ d.appointment.clientPhone }}
+            </a>
+          } @else {
+            —
+          }
+        </dd>
+      </div>
+      <div>
+        <dt>Unidad</dt>
+        <dd>{{ unidadTexto(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Técnico</dt>
+        <dd>{{ tecnicoTexto(d.appointment) }}</dd>
+      </div>
+      <div>
+        <dt>Origen</dt>
+        <dd>
+          {{ d.appointment.origin === "PUBLIC_PORTAL" ? "Portal del cliente" : "Mostrador" }}
+        </dd>
+      </div>
+    </dl>
+
+    @if (d.appointment.notes) {
+      <p class="detalle-notas">{{ d.appointment.notes }}</p>
+    }
+
+    <div class="detalle-acciones">
+      <button type="button" class="btn btn-secondary" (click)="cerrarDetalle()">
+        Cerrar
+      </button>
+      <a class="btn btn-primary" [routerLink]="['/workshop/recepcion']">
+        Ir a recepción
+      </a>
+    </div>
+  </div>
+}

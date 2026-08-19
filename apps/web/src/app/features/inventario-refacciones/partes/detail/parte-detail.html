@@ -1,0 +1,193 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/parts-inventory" class="alert-link ms-2">Volver al listado</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (parte(); as p) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">{{ p.name }}</h5>
+            <div class="d-flex gap-2">
+              <a class="btn btn-primary btn-sm" [routerLink]="['/parts-inventory', p.id, 'editar']">
+                Editar
+              </a>
+              <button class="btn btn-outline-danger btn-sm" (click)="deleteParte()">
+                Eliminar
+              </button>
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/parts-inventory">
+                Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">SKU</th>
+                      <td>{{ p.sku }}</td>
+                    </tr>
+                    @if (p.barcode) {
+                      <tr>
+                        <th class="text-muted">Código de barras</th>
+                        <td>{{ p.barcode }}</td>
+                      </tr>
+                    }
+                    <tr>
+                      <th class="text-muted">Tipo vehículo</th>
+                      <td>{{ getVehicleTypeLabel(p.vehicleType) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Unidad</th>
+                      <td>{{ p.unitOfMeasure }}</td>
+                    </tr>
+                    @if (p.description) {
+                      <tr>
+                        <th class="text-muted">Descripción</th>
+                        <td>{{ p.description }}</td>
+                      </tr>
+                    }
+                    @if (p.compatibleMakes) {
+                      <tr>
+                        <th class="text-muted">Marcas compatibles</th>
+                        <td>{{ p.compatibleMakes }}</td>
+                      </tr>
+                    }
+                    <tr>
+                      <th class="text-muted">Proveedor principal</th>
+                      <td>{{ proveedorNombre() ?? "—" }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Abasto</th>
+                      <td>
+                        @if (p.isOnDemand) {
+                          <span class="badge bg-warning text-dark">Bajo demanda</span>
+                        } @else {
+                          <span class="badge bg-light text-dark">En stock</span>
+                        }
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge" [class.bg-success]="p.isActive" [class.bg-secondary]="!p.isActive">
+                          {{ p.isActive ? "Activa" : "Inactiva" }}
+                        </span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Inventario</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Stock actual</th>
+                      <td>{{ p.stockQuantity }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Stock mínimo</th>
+                      <td>{{ p.minStock }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Stock máximo</th>
+                      <td>{{ p.maxStock ?? "—" }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <h6 class="text-muted mb-3 mt-4">Precios</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Costo compra</th>
+                      <td>{{ p.purchasePrice | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Precio público</th>
+                      <td>{{ p.publicPrice | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Precio mayoreo</th>
+                      <td>{{ p.wholesalePrice | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Precio negocio</th>
+                      <td>{{ p.businessPrice | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Descuento máx.</th>
+                      <td>{{ p.maxDiscountPct }}%</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="row mt-2">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Números de parte equivalentes</h6>
+                @if (equivalencias().length) {
+                  <table class="table table-sm">
+                    <thead>
+                      <tr><th>SKU</th><th>Marca</th><th>Nota</th></tr>
+                    </thead>
+                    <tbody>
+                      @for (eq of equivalencias(); track eq.id) {
+                        <tr>
+                          <td><strong>{{ eq.equivalentSku }}</strong></td>
+                          <td>{{ eq.brand || "—" }}</td>
+                          <td>{{ eq.note || "—" }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="text-muted">Sin equivalencias.</p>
+                }
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-3">Top proveedores</h6>
+                @if (topProveedores().length) {
+                  <table class="table table-sm">
+                    <thead>
+                      <tr><th>Proveedor</th><th>Últ. precio</th><th>Comprado</th><th>Garantía</th></tr>
+                    </thead>
+                    <tbody>
+                      @for (t of topProveedores(); track t.supplierId) {
+                        <tr>
+                          <td>{{ t.supplierName }}</td>
+                          <td>{{ t.lastPrice | number:'1.2-2' }}</td>
+                          <td>{{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}</td>
+                          <td>{{ t.warrantyMonths ? t.warrantyMonths + " m" : "—" }}</td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="text-muted">Aún sin compras registradas.</p>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

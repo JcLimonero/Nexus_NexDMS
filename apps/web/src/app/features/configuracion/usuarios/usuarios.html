@@ -1,0 +1,459 @@
+<div class="container-fluid usuarios">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2"
+        >
+          <div>
+            <h5>Usuarios y roles</h5>
+            <span class="text-muted">
+              Quién entra, con qué rol y en qué horario trabaja
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <select
+              class="form-select form-select-sm w-auto"
+              [(ngModel)]="branchId"
+              (ngModelChange)="alCambiarSucursal()"
+            >
+              @for (s of sucursales(); track s.id) {
+                <option [value]="s.id">{{ s.name }}</option>
+              }
+            </select>
+            <button type="button" class="btn btn-primary btn-sm" (click)="nuevo()">
+              Nuevo usuario
+            </button>
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/settings">
+              Volver
+            </a>
+          </div>
+        </div>
+
+        @if (aviso(); as a) {
+          <div class="card-body pb-0">
+            <div
+              class="alert mb-0"
+              [class.alert-success]="a.tono === 'ok'"
+              [class.alert-danger]="a.tono === 'error'"
+            >
+              {{ a.texto }}
+            </div>
+          </div>
+        }
+
+        <!-- Quién está hoy: es para lo que sirven los horarios -->
+        @if (enTurno().length) {
+          <div class="card-body pb-0">
+            <div class="turno-hoy">
+              <div class="turno-resumen">
+                <strong>{{ disponiblesHoy() }}</strong>
+                <span>de {{ enTurno().length }} en turno hoy</span>
+              </div>
+              <div class="turno-gente">
+                @for (p of enTurno(); track p.id) {
+                  <span
+                    class="badge-turno"
+                    [class.fuera]="!p.disponible"
+                    [title]="
+                      p.disponible
+                        ? p.ventanas[0].inicio + '–' + p.ventanas[0].fin
+                        : p.motivo === 'ausente'
+                          ? 'Ausente'
+                          : 'Hoy no trabaja'
+                    "
+                  >
+                    {{ p.nombre }}
+                    @if (p.disponible) {
+                      <small>{{ p.ventanas[0].inicio }}–{{ p.ventanas[0].fin }}</small>
+                    } @else {
+                      <small>{{ p.motivo === "ausente" ? "ausente" : "no trabaja" }}</small>
+                    }
+                  </span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <div class="card-body">
+          @if (cargando()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else if (!usuarios().length) {
+            <p class="text-muted mb-0">Todavía no hay usuarios dados de alta.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Roles</th>
+                    <th>Sucursales</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (u of usuarios(); track u.id) {
+                    <tr [class.inactivo]="!u.isActive">
+                      <td>
+                        <strong>{{ u.firstName }} {{ u.lastName }}</strong>
+                        @if (u.phone) {
+                          <div class="text-muted small">{{ u.phone }}</div>
+                        }
+                      </td>
+                      <td class="text-muted">{{ u.email }}</td>
+                      <td>
+                        @for (r of u.roles; track r) {
+                          <span class="badge bg-light text-dark me-1">
+                            {{ etiquetaRol(r) }}
+                          </span>
+                        }
+                      </td>
+                      <td class="text-muted small">
+                        @for (b of u.branchIds; track b; let last = $last) {
+                          {{ nombreSucursal(b) }}{{ last ? "" : ", " }}
+                        }
+                      </td>
+                      <td>
+                        @if (!u.isActive) {
+                          <span class="badge bg-secondary">Suspendido</span>
+                        } @else if (u.bloqueado) {
+                          <!-- Bloqueado por intentos fallidos: se ve, porque
+                               si no la persona no puede entrar y nadie sabe. -->
+                          <span class="badge bg-warning text-dark">Bloqueado</span>
+                        } @else {
+                          <span class="badge bg-success">Activo</span>
+                        }
+                      </td>
+                      <td class="text-end text-nowrap">
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-xs me-1"
+                          (click)="editar(u)"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-primary btn-xs me-1"
+                          (click)="abrirHorario(u)"
+                        >
+                          Horario
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-xs me-1"
+                          (click)="restablecer(u)"
+                        >
+                          Clave
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-xs"
+                          (click)="alternarActivo(u)"
+                        >
+                          {{ u.isActive ? "Suspender" : "Reactivar" }}
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alta y edición -->
+@if (formAbierto()) {
+  <div class="fondo-modal" (click)="cerrarForm()"></div>
+  <div class="panel-modal" role="dialog" aria-modal="true">
+    <div class="panel-top">
+      <h5>{{ editando() ? "Editar usuario" : "Nuevo usuario" }}</h5>
+      <button type="button" class="btn-close" (click)="cerrarForm()"></button>
+    </div>
+
+    <div class="panel-cuerpo">
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label class="form-label">Nombre</label>
+          <input class="form-control" [(ngModel)]="form.firstName" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Apellidos</label>
+          <input class="form-control" [(ngModel)]="form.lastName" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Correo</label>
+          <!-- El correo identifica la cuenta: cambiarlo en caliente rompería
+               su acceso, así que en edición solo se muestra. -->
+          <input
+            class="form-control"
+            type="email"
+            [(ngModel)]="form.email"
+            [disabled]="!!editando()"
+          />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Teléfono</label>
+          <input class="form-control" [(ngModel)]="form.phone" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Especialidad</label>
+          <input
+            class="form-control"
+            [(ngModel)]="form.specialty"
+            placeholder="Hojalatero, pintor, general…"
+          />
+          <div class="form-text">
+            Solo aplica a mecánicos; aparece en el tablero de taller.
+          </div>
+        </div>
+        @if (!editando()) {
+          <div class="col-md-6">
+            <label class="form-label">Contraseña</label>
+            <input
+              class="form-control"
+              type="password"
+              [(ngModel)]="form.password"
+              placeholder="Mínimo 8 caracteres"
+            />
+          </div>
+        }
+        <div class="col-md-6">
+          <label class="form-label">Alcance</label>
+          <select class="form-select" [(ngModel)]="form.scope">
+            <option value="SUCURSAL">Solo sus sucursales</option>
+            <option value="LEGAL_ENTITY">Toda su razón social</option>
+            <option value="GLOBAL">Todo el grupo</option>
+          </select>
+        </div>
+      </div>
+
+      <hr />
+
+      <h6>Roles</h6>
+      <p class="text-muted small">
+        El rol decide qué puede hacer. El de asesor de servicio además lo mete
+        en el reparto de citas de sus sucursales.
+      </p>
+      <div class="rejilla-roles">
+        @for (r of roles; track r.value) {
+          <label class="opcion" [class.marcada]="tieneRol(r.value)">
+            <input
+              type="checkbox"
+              [checked]="tieneRol(r.value)"
+              (change)="alternarRol(r.value)"
+            />
+            <span>
+              <strong>{{ r.label }}</strong>
+              <small>{{ r.detalle }}</small>
+            </span>
+          </label>
+        }
+      </div>
+
+      <hr />
+
+      <h6>Sucursales</h6>
+      <p class="text-muted small">
+        Dónde trabaja. El horario se define por sucursal.
+      </p>
+      <div class="rejilla-roles">
+        @for (s of sucursales(); track s.id) {
+          <label class="opcion" [class.marcada]="tieneSucursal(s.id)">
+            <input
+              type="checkbox"
+              [checked]="tieneSucursal(s.id)"
+              (change)="alternarSucursal(s.id)"
+            />
+            <span><strong>{{ s.name }}</strong></span>
+          </label>
+        }
+      </div>
+    </div>
+
+    <div class="panel-pie">
+      <button type="button" class="btn btn-outline-secondary" (click)="cerrarForm()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="guardando()"
+        (click)="guardar()"
+      >
+        {{ editando() ? "Guardar cambios" : "Dar de alta" }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Horario y ausencias -->
+@if (horarioDe(); as u) {
+  <div class="fondo-modal" (click)="cerrarHorario()"></div>
+  <div class="panel-modal" role="dialog" aria-modal="true">
+    <div class="panel-top">
+      <div>
+        <h5>Horario de {{ u.firstName }} {{ u.lastName }}</h5>
+        <span class="text-muted small">
+          En {{ nombreSucursal(branchId()) }} — no se le asignarán citas fuera
+          de estas horas
+        </span>
+      </div>
+      <button type="button" class="btn-close" (click)="cerrarHorario()"></button>
+    </div>
+
+    <div class="panel-cuerpo">
+      @if (agenda(); as a) {
+        @if (a.porOmision) {
+          <div class="alert alert-info py-2">
+            Sin horario propio: se le asume el turno de
+            {{ a.turnoPorOmision.inicio }} a {{ a.turnoPorOmision.fin }} todos
+            los días. Marca sus días para acotarlo.
+          </div>
+        }
+
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0">Semana</h6>
+          <button
+            type="button"
+            class="btn btn-link btn-sm p-0"
+            (click)="semanaEstandar()"
+          >
+            Poner lunes a viernes
+          </button>
+        </div>
+
+        <div class="semana">
+          @for (d of semana(); track d.valor) {
+            <div class="dia" [class.trabaja]="d.trabaja">
+              <label class="dia-nombre">
+                <input
+                  type="checkbox"
+                  [checked]="d.trabaja"
+                  (change)="alternarDia(d)"
+                />
+                <span>{{ d.nombre }}</span>
+              </label>
+              @if (d.trabaja) {
+                <div class="dia-horas">
+                  <input type="time" class="form-control" [(ngModel)]="d.inicio" />
+                  <span>a</span>
+                  <input type="time" class="form-control" [(ngModel)]="d.fin" />
+                </div>
+              } @else {
+                <span class="dia-descanso">Descansa</span>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="text-end mt-3">
+          <button
+            type="button"
+            class="btn btn-primary btn-sm"
+            [disabled]="guardando()"
+            (click)="guardarHorario()"
+          >
+            Guardar horario
+          </button>
+        </div>
+
+        <hr />
+
+        <h6>Ausencias</h6>
+        <p class="text-muted small">
+          Vacaciones o incapacidades. Durante esos días no entra al reparto,
+          aunque su horario diga que trabaja.
+        </p>
+
+        <div class="row g-2 align-items-end mb-3">
+          <div class="col-md-3">
+            <label class="form-label small">Desde</label>
+            <input
+              type="date"
+              class="form-control form-control-sm"
+              [(ngModel)]="ausenciaNueva.startDate"
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">Hasta</label>
+            <input
+              type="date"
+              class="form-control form-control-sm"
+              [(ngModel)]="ausenciaNueva.endDate"
+            />
+          </div>
+          <div class="col-md-3">
+            <label class="form-label small">Motivo</label>
+            <select class="form-select form-select-sm" [(ngModel)]="ausenciaNueva.type">
+              <option value="VACATION">Vacaciones</option>
+              <option value="SICK_LEAVE">Incapacidad</option>
+              <option value="OTHER">Otro</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <button
+              type="button"
+              class="btn btn-outline-primary btn-sm w-100"
+              [disabled]="guardando()"
+              (click)="agregarAusencia()"
+            >
+              Registrar
+            </button>
+          </div>
+        </div>
+
+        @if (!a.ausencias.length) {
+          <p class="text-muted small mb-0">Sin ausencias registradas.</p>
+        } @else {
+          <ul class="lista-ausencias">
+            @for (x of a.ausencias; track x.id) {
+              <li>
+                <span class="badge bg-light text-dark">
+                  {{ etiquetaAusencia(x.type) }}
+                </span>
+                <span>
+                  {{ x.startDate | date: "dd/MM/yyyy" }} —
+                  {{ x.endDate | date: "dd/MM/yyyy" }}
+                </span>
+                @if (x.notes) {
+                  <span class="text-muted small">{{ x.notes }}</span>
+                }
+                <button
+                  type="button"
+                  class="btn btn-link btn-sm text-danger p-0 ms-auto"
+                  (click)="quitarAusencia(x)"
+                >
+                  Quitar
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      } @else {
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="panel-pie">
+      <button type="button" class="btn btn-outline-secondary" (click)="cerrarHorario()">
+        Cerrar
+      </button>
+    </div>
+  </div>
+}

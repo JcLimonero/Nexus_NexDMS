@@ -1,0 +1,82 @@
+<div class="container-fluid">
+  <div class="card modulos-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Módulos</h5>
+        <span>
+          Plan <strong>{{ planLabel(plan()) }}</strong> ·
+          {{ activosCount() }} de {{ incluidos().length }} módulos activos
+        </span>
+      </div>
+      <div class="d-flex gap-2">
+        <button class="btn btn-light" (click)="activarTodos()">Activar todos</button>
+        <button class="btn btn-primary" [disabled]="saving()" (click)="save()">
+          {{ saving() ? "Guardando…" : "Guardar cambios" }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><div class="card-body text-center py-5"><span class="spinner-border"></span></div></div>
+  } @else {
+    <!-- Incluidos en el plan -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <h5>Incluidos en tu plan</h5>
+        <span>Apaga los que este cliente no vaya a usar</span>
+      </div>
+      <div class="card-body">
+        <div class="mod-grid">
+          @for (m of incluidos(); track m.key) {
+            <label
+              class="mod-card"
+              [class.on]="isOn(m)"
+              [class.core]="m.core"
+            >
+              <input
+                type="checkbox"
+                [checked]="isOn(m)"
+                [disabled]="m.core"
+                (change)="toggle(m)"
+              />
+              <div class="mod-body">
+                <div class="mod-name">
+                  {{ m.name }}
+                  @if (m.core) { <span class="tag">Requerido</span> }
+                  @if (m.hasDashboard) { <span class="tag dash">Dashboard</span> }
+                </div>
+                <div class="mod-desc">{{ m.description }}</div>
+              </div>
+            </label>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Fuera del plan -->
+    @if (bloqueados().length > 0) {
+      <div class="card">
+        <div class="card-header">
+          <h5>Disponibles en planes superiores</h5>
+          <span>Requieren ampliar la licencia</span>
+        </div>
+        <div class="card-body">
+          <div class="mod-grid">
+            @for (m of bloqueados(); track m.key) {
+              <div class="mod-card locked">
+                <div class="mod-body">
+                  <div class="mod-name">
+                    {{ m.name }}
+                    <span class="tag plan">{{ planLabel(m.minPlan) }}</span>
+                  </div>
+                  <div class="mod-desc">{{ m.description }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

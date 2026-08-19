@@ -1,0 +1,100 @@
+<div class="container-fluid">
+  <div class="card seminuevos-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Seminuevos</h5>
+        <span>Tomas y avalúos de compra a particular</span>
+      </div>
+      <button class="btn btn-primary" (click)="showForm.set(!showForm())">
+        {{ showForm() ? "Cerrar" : "+ Nueva toma" }}
+      </button>
+    </div>
+  </div>
+
+  @if (showForm()) {
+    <div class="card mb-4">
+      <div class="card-body intake-form">
+        <input class="form-control" placeholder="Vendedor *" [(ngModel)]="form.sellerName" />
+        <input class="form-control" placeholder="Teléfono" [(ngModel)]="form.sellerPhone" />
+        <input class="form-control" placeholder="Marca *" [(ngModel)]="form.brand" />
+        <input class="form-control" placeholder="Modelo *" [(ngModel)]="form.model" />
+        <input class="form-control" type="number" placeholder="Año" [(ngModel)]="form.year" />
+        <input class="form-control" placeholder="Placa" [(ngModel)]="form.plate" />
+        <input class="form-control" type="number" placeholder="Km" [(ngModel)]="form.km" />
+        <input class="form-control" type="number" placeholder="Precio pedido" [(ngModel)]="form.askingPrice" />
+        <button
+          class="btn btn-primary"
+          [disabled]="!form.sellerName || !form.brand || !form.model"
+          (click)="save()"
+        >
+          Guardar
+        </button>
+      </div>
+    </div>
+  }
+
+  <div class="card">
+    @if (loading()) {
+      <div class="card-body text-center py-4"><span class="spinner-border"></span></div>
+    } @else if (intakes().length === 0) {
+      <div class="card-body text-center py-4 text-muted">Sin tomas registradas.</div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Vehículo</th>
+              <th>Vendedor</th>
+              <th class="text-end">Pedido</th>
+              <th class="text-end">Avalúo</th>
+              <th class="text-end">Oferta</th>
+              <th>Estatus</th>
+              <th class="text-end">Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (i of intakes(); track i.id) {
+              <tr>
+                <td>
+                  <div class="fw-600">{{ i.brand }} {{ i.model }} {{ i.year || "" }}</div>
+                  <div class="sub">{{ i.plate || "sin placa" }} · {{ i.km ? (i.km + " km") : "—" }}</div>
+                </td>
+                <td>{{ i.sellerName }}<div class="sub">{{ i.sellerPhone || "" }}</div></td>
+                <td class="text-end">{{ money(i.askingPrice) }}</td>
+                <td class="text-end">{{ money(i.appraisedValue) }}</td>
+                <td class="text-end">{{ money(i.offeredValue) }}</td>
+                <td><span class="badge {{ statusClass(i.status) }}">{{ label(i.status) }}</span></td>
+                <td class="text-end">
+                  @if (editingValues() === i.id) {
+                    <div class="values-inline">
+                      <input class="form-control field-sm" type="number" placeholder="Avalúo" [(ngModel)]="values.appraisedValue" />
+                      <input class="form-control field-sm" type="number" placeholder="Oferta" [(ngModel)]="values.offeredValue" />
+                      <button class="btn btn-primary btn-sm" (click)="saveValues(i)">OK</button>
+                      <button class="btn btn-light btn-sm" (click)="editingValues.set(null)">✕</button>
+                    </div>
+                  } @else {
+                    <div class="actions-inline">
+                      @if (i.status !== "PURCHASED" && i.status !== "REJECTED") {
+                        <button class="btn btn-outline-secondary btn-sm" (click)="startValues(i)">Valores</button>
+                      }
+                      @for (s of next(i); track s) {
+                        <button
+                          class="btn btn-sm"
+                          [class.btn-outline-danger]="s === 'REJECTED'"
+                          [class.btn-outline-primary]="s !== 'REJECTED'"
+                          (click)="advance(i, s)"
+                        >
+                          {{ label(s) }}
+                        </button>
+                      }
+                    </div>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

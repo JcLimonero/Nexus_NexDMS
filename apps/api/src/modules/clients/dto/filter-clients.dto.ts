@@ -13,6 +13,9 @@ export class FilterClientsDto {
 
   @IsOptional()
   @IsEnum(ClientTypeEnum)
+  @Transform(({ value }: { value: unknown }) =>
+    value === '' || value === null || value === undefined ? undefined : value,
+  )
   clientType?: ClientTypeEnum;
 
   @IsOptional()
@@ -23,6 +26,6 @@ export class FilterClientsDto {
   @IsOptional()
   @Type(() => Number)
   @Min(1)
-  @Max(100)
+  @Max(1000)
   limit?: number;
 }

@@ -1,0 +1,22 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Tenant } from '../tenants/entities/tenant.entity';
+import { SaasController } from './saas.controller';
+import { SaasService } from './saas.service';
+import {
+  SaasModulePrice,
+  SaasPayment,
+  SaasPlan,
+} from './entities/saas.entities';
+import { StorageModule } from '../../common/storage/storage.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([SaasPlan, SaasModulePrice, SaasPayment, Tenant]),
+    StorageModule,
+  ],
+  controllers: [SaasController],
+  providers: [SaasService],
+  exports: [SaasService],
+})
+export class SaasModule {}

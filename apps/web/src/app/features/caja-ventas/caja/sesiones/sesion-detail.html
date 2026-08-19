@@ -1,0 +1,257 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/cash-register/sesiones" class="alert-link ms-2">Volver</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (sesion(); as s) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Sesión {{ s.id | slice:0:8 }}...</h5>
+            <div class="d-flex gap-2">
+              <button class="btn btn-outline-primary btn-sm" (click)="imprimirCorte()">
+                Imprimir corte
+              </button>
+              @if (abierta()) {
+                <button class="btn btn-primary btn-sm" (click)="abrirCierre()">
+                  Cerrar caja
+                </button>
+              }
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/cash-register/sesiones">Volver</a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Sucursal</th>
+                      <td>{{ s.branch?.name ?? s.branchId }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Usuario</th>
+                      <td>{{ getUserName(s) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-success]="s.status === 'OPEN'"
+                          [class.bg-secondary]="s.status === 'CLOSED'">
+                          {{ getStatusLabel(s.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Apertura</th>
+                      <td>{{ s.openedAt | date:'medium' }}</td>
+                    </tr>
+                    @if (s.closedAt) {
+                      <tr>
+                        <th class="text-muted">Cierre</th>
+                        <td>{{ s.closedAt | date:'medium' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Totales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Fondo inicial</th>
+                      <td class="text-end">{{ s.openingBalance | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Efectivo</th>
+                      <td class="text-end">{{ s.totalCash | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tarjeta</th>
+                      <td class="text-end">{{ s.totalCard | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Transferencia</th>
+                      <td class="text-end">{{ s.totalTransfer | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Total ventas</th>
+                      <td class="text-end fw-bold">{{ s.totalSales | number:'1.2-2' }}</td>
+                    </tr>
+                    @if (s.closingBalance !== null) {
+                      <tr>
+                        <th class="text-muted">Fondo final</th>
+                        <td class="text-end">{{ s.closingBalance | number:'1.2-2' }}</td>
+                      </tr>
+                      @if (s.difference !== null) {
+                        <tr>
+                          <th class="text-muted">Diferencia</th>
+                          <td class="text-end" [class.text-danger]="s.difference !== 0" [class.text-success]="s.difference === 0">
+                            {{ s.difference | number:'1.2-2' }}
+                          </td>
+                        </tr>
+                      }
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Arqueo del cierre, si se cerró con desglose -->
+            @if (s.denominations && s.countedCash !== null) {
+              <div class="row mb-4">
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-2">Arqueo</h6>
+                  <table class="table table-sm table-borderless mb-0">
+                    <tbody>
+                      @for (d of denominaciones; track d) {
+                        @if (s.denominations[d]) {
+                          <tr>
+                            <th class="text-muted">{{ d | money}} × {{ s.denominations[d] }}</th>
+                            <td class="text-end">{{ d * s.denominations[d] | number:'1.2-2' }}</td>
+                          </tr>
+                        }
+                      }
+                    </tbody>
+                  </table>
+                </div>
+                <div class="col-md-6">
+                  <h6 class="text-muted mb-2">Conciliación de efectivo</h6>
+                  <table class="table table-sm table-borderless mb-0">
+                    <tbody>
+                      <tr><th class="text-muted">Esperado</th><td class="text-end">{{ s.expectedCash | number:'1.2-2' }}</td></tr>
+                      <tr><th class="text-muted">Contado</th><td class="text-end">{{ s.countedCash | number:'1.2-2' }}</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            }
+
+            @if (s.closingNotes) {
+              <div class="mb-3">
+                <h6 class="text-muted">Notas de cierre</h6>
+                <p class="mb-0">{{ s.closingNotes }}</p>
+              </div>
+            }
+
+            <!-- Movimientos manuales de efectivo -->
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <h6 class="text-muted mb-0">Movimientos de efectivo</h6>
+              @if (abierta()) {
+                <button class="btn btn-outline-primary btn-sm" (click)="abrirMov()">
+                  Registrar movimiento
+                </button>
+              }
+            </div>
+            @if (movimientos().length === 0) {
+              <p class="text-muted small mb-0">Sin movimientos manuales.</p>
+            } @else {
+              <table class="table table-sm table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Hora</th>
+                    <th>Tipo</th>
+                    <th>Concepto</th>
+                    <th class="text-end">Monto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (m of movimientos(); track m.id) {
+                    <tr>
+                      <td>{{ m.createdAt | date:'shortTime' }}</td>
+                      <td>{{ etiquetaMov[m.kind] }}</td>
+                      <td>{{ m.concept }}{{ m.reference ? ' · ' + m.reference : '' }}</td>
+                      <td class="text-end" [class.text-success]="m.kind === 'DEPOSIT'" [class.text-danger]="m.kind !== 'DEPOSIT'">
+                        {{ m.kind === 'DEPOSIT' ? '+' : '−' }} {{ m.amount | number:'1.2-2' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Registrar movimiento -->
+@if (movAbierto()) {
+  <div class="modal-fondo" (click)="movAbierto.set(false)"></div>
+  <div class="modal-panel" role="dialog" aria-modal="true">
+    <header><h5>Registrar movimiento</h5></header>
+    <div class="modal-cuerpo">
+      <label>
+        <span>Tipo</span>
+        <select class="form-control" [(ngModel)]="movForm.kind">
+          <option value="DEPOSIT">Depósito (entra efectivo)</option>
+          <option value="WITHDRAWAL">Retiro (sale a caja fuerte/banco)</option>
+          <option value="EXPENSE">Gasto de caja chica</option>
+        </select>
+      </label>
+      <label>
+        <span>Monto *</span>
+        <input class="form-control" type="number" min="0" step="0.01" [(ngModel)]="movForm.amount" />
+      </label>
+      <label>
+        <span>Concepto *</span>
+        <input class="form-control" [(ngModel)]="movForm.concept" placeholder="Papelería, depósito bancario…" />
+      </label>
+      <label>
+        <span>Referencia</span>
+        <input class="form-control" [(ngModel)]="movForm.reference" />
+      </label>
+    </div>
+    <footer>
+      <button class="btn btn-light" (click)="movAbierto.set(false)">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="guardandoMov()" (click)="guardarMov()">
+        {{ guardandoMov() ? "Guardando…" : "Registrar" }}
+      </button>
+    </footer>
+  </div>
+}
+
+<!-- Cerrar caja con arqueo -->
+@if (cierreAbierto()) {
+  <div class="modal-fondo" (click)="cierreAbierto.set(false)"></div>
+  <div class="modal-panel ancho" role="dialog" aria-modal="true">
+    <header><h5>Cerrar caja — arqueo</h5></header>
+    <div class="modal-cuerpo">
+      <p class="pista">Cuenta el efectivo por denominación; el total se calcula solo.</p>
+      <div class="arqueo-grid">
+        @for (d of denominaciones; track d) {
+          <label class="arqueo-fila">
+            <span>{{ d | money}}</span>
+            <input type="number" min="0" class="form-control" [(ngModel)]="arqueo[d]" placeholder="0" />
+          </label>
+        }
+      </div>
+      <div class="arqueo-total">Total contado: <strong>{{ totalArqueo() | money}}</strong></div>
+      <label>
+        <span>Notas</span>
+        <input class="form-control" [(ngModel)]="notasCierre" />
+      </label>
+    </div>
+    <footer>
+      <button class="btn btn-light" (click)="cierreAbierto.set(false)">Cancelar</button>
+      <button class="btn btn-primary" [disabled]="cerrando()" (click)="cerrar()">
+        {{ cerrando() ? "Cerrando…" : "Cerrar caja" }}
+      </button>
+    </footer>
+  </div>
+}

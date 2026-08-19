@@ -64,11 +64,29 @@ export class ClientsService {
       .andWhere('c.deleted_at IS NULL');
 
     if (filters.search?.trim()) {
-      const term = `%${filters.search.trim()}%`;
-      qb.andWhere(
-        '(c.first_name ILIKE :term OR c.last_name ILIKE :term OR c.company_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
-        { term },
-      );
+      const raw = filters.search.trim();
+      const term = `%${raw}%`;
+      const digitsOnly = raw.replace(/\D/g, '');
+      const conditions = [
+        'c.first_name ILIKE :term',
+        'c.last_name ILIKE :term',
+        'c.company_name ILIKE :term',
+        "CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) ILIKE :term",
+        "CONCAT(COALESCE(c.last_name, ''), ' ', COALESCE(c.first_name, '')) ILIKE :term",
+        'c.phone ILIKE :term',
+        'COALESCE(c.phone_alt, \'\') ILIKE :term',
+        'c.email ILIKE :term',
+        'c.rfc ILIKE :term',
+      ];
+      const params: Record<string, string> = { term };
+      if (digitsOnly) {
+        conditions.push(
+          "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
+          "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+        );
+        params.termDigits = `%${digitsOnly}%`;
+      }
+      qb.andWhere(`(${conditions.join(' OR ')})`, params);
     }
     if (filters.clientType) {
       qb.andWhere('c.client_type = :clientType', {
@@ -76,12 +94,25 @@ export class ClientsService {
       });
     }
 
-    const [data, total] = await qb
+    const [clients, total] = await qb
       .orderBy('c.first_name', 'ASC')
       .addOrderBy('c.last_name', 'ASC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
+
+    const vehicleCounts = await this.getVehicleCountsForClients(
+      user.tenantId,
+      clients.map((c) => c.id),
+    );
+
+    const data = clients.map((client) => ({
+      ...client,
+      dataQuality: this.computeDataQuality(
+        client,
+        vehicleCounts[client.id] ?? 0,
+      ),
+    }));
 
     return {
       data,
@@ -94,26 +125,28 @@ export class ClientsService {
     };
   }
 
-  async findOne(user: UserPayload, id: string): Promise<Client> {
-    const client = await this.clientRepo.findOne({
-      where: { id, tenantId: user.tenantId },
-    });
-    if (!client) {
-      throw new NotFoundException(`Cliente ${id} no encontrado`);
-    }
-    return client;
+  private async getVehicleCountsForClients(
+    tenantId: string,
+    clientIds: string[],
+  ): Promise<Record<string, number>> {
+    if (clientIds.length === 0) return {};
+    const rows = await this.vehicleRepo
+      .createQueryBuilder('v')
+      .select('v.owner_id', 'ownerId')
+      .addSelect('COUNT(*)', 'count')
+      .where('v.owner_id IN (:...ids)', { ids: clientIds })
+      .andWhere('v.tenant_id = :tenantId', { tenantId })
+      .groupBy('v.owner_id')
+      .getRawMany<{ ownerId: string; count: string }>();
+    return Object.fromEntries(
+      rows.map((r) => [r.ownerId, parseInt(r.count, 10) || 0]),
+    );
   }
 
-  async getDataQualityScore(
-    user: UserPayload,
+  private computeDataQuality(
     client: Client,
-    vehicleCount?: number,
-  ): Promise<DataQualityScore> {
-    const count =
-      vehicleCount ??
-      (await this.vehicleRepo.count({
-        where: { ownerId: client.id, tenantId: user.tenantId },
-      }));
+    vehicleCount: number,
+  ): DataQualityScore {
     const missingFields: string[] = [];
     let score = 0;
 
@@ -151,7 +184,7 @@ export class ClientsService {
     } else {
       missingFields.push(CLIENT_QUALITY_FIELD_LABELS.taxPostalCode);
     }
-    if (count > 0) {
+    if (vehicleCount > 0) {
       score += CLIENT_QUALITY_WEIGHTS.hasVehicle;
     } else {
       missingFields.push(CLIENT_QUALITY_FIELD_LABELS.hasVehicle);
@@ -174,18 +207,60 @@ export class ClientsService {
     };
   }
 
-  async search(user: UserPayload, q: string, limit = 8): Promise<Client[]> {
+  async findOne(user: UserPayload, id: string): Promise<Client> {
+    const client = await this.clientRepo.findOne({
+      where: { id, tenantId: user.tenantId },
+    });
+    if (!client) {
+      throw new NotFoundException(`Cliente ${id} no encontrado`);
+    }
+    return client;
+  }
+
+  async getDataQualityScore(
+    user: UserPayload,
+    client: Client,
+    vehicleCount?: number,
+  ): Promise<DataQualityScore> {
+    const count =
+      vehicleCount ??
+      (await this.vehicleRepo.count({
+        where: { ownerId: client.id, tenantId: user.tenantId },
+      }));
+    return this.computeDataQuality(client, count);
+  }
+
+  async search(user: UserPayload, q: string, limit = 50): Promise<Client[]> {
     if (!q?.trim()) return [];
-    const term = `%${q.trim()}%`;
+    const raw = q.trim();
+    const term = `%${raw}%`;
+    const digitsOnly = raw.replace(/\D/g, '');
+    const conditions = [
+      'c.first_name ILIKE :term',
+      'c.last_name ILIKE :term',
+      'c.company_name ILIKE :term',
+      "CONCAT(COALESCE(c.first_name, ''), ' ', COALESCE(c.last_name, '')) ILIKE :term",
+      "CONCAT(COALESCE(c.last_name, ''), ' ', COALESCE(c.first_name, '')) ILIKE :term",
+      'c.phone ILIKE :term',
+      'COALESCE(c.phone_alt, \'\') ILIKE :term',
+      'c.email ILIKE :term',
+      'c.rfc ILIKE :term',
+    ];
+    const params: Record<string, string> = { term };
+    if (digitsOnly) {
+      conditions.push(
+        "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
+        "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+      );
+      params.termDigits = `%${digitsOnly}%`;
+    }
     return this.clientRepo
       .createQueryBuilder('c')
       .where('c.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('c.deleted_at IS NULL')
-      .andWhere(
-        '(c.first_name ILIKE :term OR c.last_name ILIKE :term OR c.company_name ILIKE :term OR c.phone ILIKE :term OR c.rfc ILIKE :term)',
-        { term },
-      )
+      .andWhere(`(${conditions.join(' OR ')})`, params)
       .orderBy('c.first_name', 'ASC')
+      .addOrderBy('c.last_name', 'ASC')
       .take(limit)
       .getMany();
   }

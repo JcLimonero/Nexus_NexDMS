@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { In, Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   CfdiLog,
@@ -13,11 +13,10 @@ import {
 } from '../cfdi-log/entities/cfdi-log.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { BranchConfig } from '../branches/entities/branch-config.entity';
-import { Sale } from '../sales/entities/sale.entity';
+import { Sale, SaleStatusEnum } from '../sales/entities/sale.entity';
 import { ServiceOrder } from '../service-orders/entities/service-order.entity';
 import { UnitSale } from '../unit-sales/entities/unit-sale.entity';
 import {
-  UnitSaleExtra,
   UnitSaleExtraStatusEnum,
   UnitSaleExtraTypeEnum,
 } from '../unit-sale-extras/entities/unit-sale-extra.entity';
@@ -37,6 +36,8 @@ import { ScopeEnum } from '../users/entities/user.entity';
 import { FilterCfdiDto } from './dto/filter-cfdi.dto';
 import { CancelCfdiDto } from './dto/cancel-cfdi.dto';
 import { RegisterPagoDto } from './dto/register-pago.dto';
+import { NotaCreditoDto } from './dto/nota-credito.dto';
+import { FacturaGlobalDto } from './dto/factura-global.dto';
 
 @Injectable()
 export class CfdiService {
@@ -107,7 +108,9 @@ export class CfdiService {
       : 'Público general';
     const taxId = client?.rfc ?? 'XAXX010101000';
     const taxSystem = client?.taxRegime ?? '616';
-    const zip = client?.taxPostalCode ?? branch.taxPostalCode ?? '00000';
+    // El respaldo del CP es el fiscal de la razón social de la sucursal.
+    const zip =
+      client?.taxPostalCode ?? branch.legalEntity?.taxPostalCode ?? '00000';
     const address = client?.address ?? branch.address;
     const city = client?.city ?? branch.city;
     const state = client?.state ?? branch.state;
@@ -362,6 +365,285 @@ export class CfdiService {
     return saved;
   }
 
+  /** Cliente ligado a la referencia (venta, OS o venta de unidad). */
+  private async clienteDeReferencia(
+    referenceType: string,
+    referenceId: string,
+  ): Promise<Client | null> {
+    if (referenceType === 'Sale') {
+      const sale = await this.saleRepo.findOne({
+        where: { id: referenceId },
+        relations: ['client'],
+      });
+      return sale?.client ?? null;
+    }
+    if (referenceType === 'ServiceOrder') {
+      const so = await this.soRepo.findOne({
+        where: { id: referenceId },
+        relations: ['owner'],
+      });
+      return so?.owner ?? null;
+    }
+    if (referenceType === 'UnitSale') {
+      const us = await this.unitSaleRepo.findOne({
+        where: { id: referenceId },
+        relations: ['client'],
+      });
+      return us?.client ?? null;
+    }
+    return null;
+  }
+
+  /**
+   * Nota de crédito (CFDI de egreso) que relaciona a un CFDI de ingreso ya
+   * timbrado. El monto se factura con IVA incluido; si no se indica, se acredita
+   * el total del original.
+   */
+  async generarNotaCredito(
+    user: UserPayload,
+    cfdiOriginalId: string,
+    dto: NotaCreditoDto,
+  ): Promise<CfdiLog> {
+    const original = await this.cfdiLogRepo.findOne({
+      where: { id: cfdiOriginalId, tenantId: user.tenantId },
+    });
+    if (!original) throw new NotFoundException('CFDI original no encontrado');
+    if (original.cfdiType !== CfdiTypeEnum.INCOME) {
+      throw new BadRequestException(
+        'Solo se puede acreditar un CFDI de ingreso',
+      );
+    }
+    if (original.status === CfdiStatusEnum.CANCELLED) {
+      throw new BadRequestException(
+        'No se puede acreditar un CFDI cancelado',
+      );
+    }
+
+    const monto = dto.monto ?? Number(original.total);
+    if (monto > Number(original.total)) {
+      throw new BadRequestException(
+        'El monto de la nota de crédito no puede superar el total del CFDI',
+      );
+    }
+
+    const branchEntity = await this.branchRepo.findOne({
+      where: { id: original.branchId },
+    });
+    if (!branchEntity) throw new NotFoundException('Sucursal no encontrada');
+
+    const clientEntity = await this.clienteDeReferencia(
+      original.referenceType,
+      original.referenceId,
+    );
+    const customer = this.buildCustomerFromClient(clientEntity, branchEntity);
+    const apiKey = await this.getApiKey(original.branchId);
+    const clientFacturapi = new CfdiFacturapiClient(apiKey);
+
+    const payload: FacturapiInvoicePayload = {
+      type: 'E',
+      customer,
+      items: [
+        {
+          product: {
+            description: `Nota de crédito - ${dto.motivo}`,
+            product_key: '84111506',
+            unit_key: 'E48',
+            unit_name: 'Servicio',
+            price: monto,
+            tax_included: true,
+          },
+          quantity: 1,
+        },
+      ],
+      use: 'G02',
+      payment_form: '01',
+      payment_method: 'PUE',
+      series: branchEntity.cfdiSerie ?? 'A',
+      related_documents: [
+        { relationship: '01', documents: [original.satUuid] },
+      ],
+    };
+
+    const invoice = await clientFacturapi.createInvoice(payload);
+    const uuid = (invoice as { uuid?: string }).uuid ?? invoice.id;
+
+    const xmlBuffer = await clientFacturapi.downloadXml(invoice.id);
+    const pdfBuffer = await clientFacturapi.downloadPdf(invoice.id);
+    const xmlKey = `documentos/${original.tenantId}/${original.branchId}/cfdi/${uuid}.xml`;
+    const pdfKey = `documentos/${original.tenantId}/${original.branchId}/cfdi/${uuid}.pdf`;
+    await this.storage.upload(xmlBuffer, xmlKey, 'application/xml');
+    await this.storage.upload(pdfBuffer, pdfKey, 'application/pdf');
+
+    const cfdiLog = this.cfdiLogRepo.create({
+      tenantId: original.tenantId,
+      branchId: original.branchId,
+      referenceId: original.referenceId,
+      referenceType: original.referenceType,
+      cfdiType: CfdiTypeEnum.EXPENSE,
+      satUuid: uuid,
+      facturaapiInvoiceId: invoice.id,
+      series: branchEntity.cfdiSerie ?? 'A',
+      fiscalFolio: `NC-${original.fiscalFolio}`,
+      xmlKey,
+      pdfKey,
+      total: monto,
+      status: CfdiStatusEnum.VALID,
+      stampedAt: new Date(),
+    });
+    const saved = await this.cfdiLogRepo.save(cfdiLog);
+
+    this.eventEmitter.emit(
+      'cfdi.generado',
+      new CfdiGeneradoEvent(
+        saved.id,
+        original.branchId,
+        original.tenantId,
+        monto,
+        clientEntity
+          ? { email: clientEntity.email ?? undefined, phone: clientEntity.phone }
+          : {},
+        xmlKey,
+        pdfKey,
+      ),
+    );
+
+    return saved;
+  }
+
+  /**
+   * Factura global: agrupa en un solo CFDI de ingreso los tickets de mostrador
+   * pagados del periodo que aún no se facturaron, a nombre de público en
+   * general. Marca cada venta incluida con el UUID resultante.
+   */
+  async generarGlobal(
+    user: UserPayload,
+    dto: FacturaGlobalDto,
+  ): Promise<{ cfdi: CfdiLog; incluidas: number; total: number }> {
+    const branchEntity = await this.branchRepo.findOne({
+      where: { id: dto.branchId },
+    });
+    if (!branchEntity) throw new NotFoundException('Sucursal no encontrada');
+
+    // Ventana del mes [inicio, siguiente mes).
+    const mes = String(dto.month).padStart(2, '0');
+    const desde = `${dto.year}-${mes}-01T00:00:00.000Z`;
+    const siguiente =
+      dto.month === 12
+        ? `${dto.year + 1}-01-01T00:00:00.000Z`
+        : `${dto.year}-${String(dto.month + 1).padStart(2, '0')}-01T00:00:00.000Z`;
+
+    const qb = this.saleRepo
+      .createQueryBuilder('s')
+      .leftJoinAndSelect('s.items', 'items')
+      .where('s.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('s.branch_id = :branchId', { branchId: dto.branchId })
+      .andWhere('s.status = :status', { status: SaleStatusEnum.PAID })
+      .andWhere('s.cfdi_uuid IS NULL')
+      .andWhere('s.created_at >= :desde', { desde })
+      .andWhere('s.created_at < :siguiente', { siguiente });
+
+    if (dto.saleIds?.length) {
+      qb.andWhere('s.id IN (:...ids)', { ids: dto.saleIds });
+    }
+
+    const ventas = await qb.orderBy('s.created_at', 'ASC').getMany();
+    if (ventas.length === 0) {
+      throw new BadRequestException(
+        'No hay ventas de mostrador sin facturar en el periodo seleccionado',
+      );
+    }
+
+    const total = ventas.reduce((sum, v) => sum + Number(v.total), 0);
+
+    const apiKey = await this.getApiKey(dto.branchId);
+    const clientFacturapi = new CfdiFacturapiClient(apiKey);
+
+    // Público en general: un concepto por ticket con el importe con IVA.
+    const zip = branchEntity.legalEntity?.taxPostalCode ?? '00000';
+    const customer: FacturapiCustomer = {
+      legal_name: 'PUBLICO EN GENERAL',
+      tax_id: 'XAXX010101000',
+      tax_system: '616',
+      address: { zip, country: 'MEX' },
+    };
+
+    const facturapiItems: FacturapiItem[] = ventas.map((v) => ({
+      product: {
+        description: `Venta mostrador ${v.ticketNumber}`,
+        product_key: '01010101',
+        unit_key: 'ACT',
+        unit_name: 'Actividad',
+        price: Number(v.total),
+        tax_included: true,
+      },
+      quantity: 1,
+    }));
+
+    const payload: FacturapiInvoicePayload = {
+      type: 'I',
+      customer,
+      items: facturapiItems,
+      use: 'S01',
+      payment_form: '01',
+      payment_method: 'PUE',
+      series: branchEntity.cfdiSerie ?? 'A',
+      global: {
+        periodicity: dto.periodicity ?? 'month',
+        months: mes,
+        year: dto.year,
+      },
+    };
+
+    const invoice = await clientFacturapi.createInvoice(payload);
+    const uuid = (invoice as { uuid?: string }).uuid ?? invoice.id;
+
+    const xmlBuffer = await clientFacturapi.downloadXml(invoice.id);
+    const pdfBuffer = await clientFacturapi.downloadPdf(invoice.id);
+    const xmlKey = `documentos/${user.tenantId}/${dto.branchId}/cfdi/${uuid}.xml`;
+    const pdfKey = `documentos/${user.tenantId}/${dto.branchId}/cfdi/${uuid}.pdf`;
+    await this.storage.upload(xmlBuffer, xmlKey, 'application/xml');
+    await this.storage.upload(pdfBuffer, pdfKey, 'application/pdf');
+
+    const cfdiLog = this.cfdiLogRepo.create({
+      tenantId: user.tenantId,
+      branchId: dto.branchId,
+      referenceId: dto.branchId,
+      referenceType: 'GlobalInvoice',
+      cfdiType: CfdiTypeEnum.INCOME,
+      satUuid: uuid,
+      facturaapiInvoiceId: invoice.id,
+      series: branchEntity.cfdiSerie ?? 'A',
+      fiscalFolio: `GLOBAL-${dto.year}${mes}`,
+      xmlKey,
+      pdfKey,
+      total,
+      status: CfdiStatusEnum.VALID,
+      stampedAt: new Date(),
+    });
+    const saved = await this.cfdiLogRepo.save(cfdiLog);
+
+    // Cada ticket queda ligado al UUID global para que no se vuelva a facturar.
+    await this.saleRepo.update(
+      { id: In(ventas.map((v) => v.id)) },
+      { cfdiUuid: uuid },
+    );
+
+    this.eventEmitter.emit(
+      'cfdi.generado',
+      new CfdiGeneradoEvent(
+        saved.id,
+        dto.branchId,
+        user.tenantId,
+        total,
+        {},
+        xmlKey,
+        pdfKey,
+      ),
+    );
+
+    return { cfdi: saved, incluidas: ventas.length, total };
+  }
+
   async findAll(
     user: UserPayload,
     filters: FilterCfdiDto,
@@ -404,7 +686,7 @@ export class CfdiService {
     }
 
     const [data, total] = await qb
-      .orderBy('c.created_at', 'DESC')
+      .orderBy('c.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

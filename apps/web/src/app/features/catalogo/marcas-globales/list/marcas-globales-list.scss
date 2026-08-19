@@ -1,0 +1,13 @@
+.marcas-globales-list {
+  .table-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
+  }
+  .table-action-btn {
+    color: var(--bs-secondary);
+    &:hover {
+      color: var(--bs-primary);
+    }
+  }
+}

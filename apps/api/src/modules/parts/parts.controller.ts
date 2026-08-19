@@ -91,4 +91,36 @@ export class PartsController {
     await this.partsService.softDelete(user, id);
     return { deleted: true };
   }
+
+  // ─── Equivalencias (números de parte alternos) ──────────────
+
+  @Get(':id/equivalences')
+  listEquivalences(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.partsService.listEquivalences(user, id);
+  }
+
+  @Post(':id/equivalences')
+  @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE', 'MANAGER', 'SELLER')
+  addEquivalence(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body()
+    dto: { equivalentSku: string; brand?: string | null; note?: string | null },
+  ) {
+    return this.partsService.addEquivalence(user, id, dto);
+  }
+
+  @Delete(':id/equivalences/:equivId')
+  @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE', 'MANAGER', 'SELLER')
+  async removeEquivalence(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('equivId', ParseUUIDPipe) equivId: string,
+  ) {
+    await this.partsService.removeEquivalence(user, id, equivId);
+    return { deleted: true };
+  }
 }

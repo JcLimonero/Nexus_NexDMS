@@ -1,0 +1,61 @@
+<div class="monitor monitor-acceso">
+  <form class="acceso-tarjeta" (ngSubmit)="entrar()">
+    <h1>{{ pantalla().nombre }}</h1>
+    <p>
+      @if (pantalla().rol) {
+        Entra con una cuenta de {{ pantalla().rol!.toLowerCase() }}.
+      }
+      La sesión se queda en esta pantalla y no afecta a la del sistema.
+    </p>
+
+    @if (error(); as e) {
+      <p class="acceso-error">{{ e }}</p>
+    }
+
+    <label>
+      <span>Correo</span>
+      <input type="email" name="email" [(ngModel)]="email" autocomplete="username" />
+    </label>
+
+    <label>
+      <span>Contraseña</span>
+      <input
+        type="password"
+        name="password"
+        [(ngModel)]="password"
+        autocomplete="current-password"
+      />
+    </label>
+
+    <button type="submit" [disabled]="entrando()">
+      {{ entrando() ? "Entrando…" : "Entrar" }}
+    </button>
+
+    <!-- Solo en desarrollo (ver demoMode) -->
+    @if (demoMode) {
+      <div class="acceso-demo">
+        <span class="acceso-demo-titulo">Cuentas de demostración</span>
+        @for (c of cuentasOrdenadas(); track c.email) {
+          <button
+            type="button"
+            class="acceso-demo-cuenta"
+            [class.sugerida]="esLaDeEstaPantalla(c)"
+            (click)="usarCuenta(c)"
+            [title]="'Usar la cuenta de ' + c.rol"
+          >
+            <span class="cuenta-rol">
+              {{ c.rol }}
+              @if (esLaDeEstaPantalla(c)) {
+                <!-- Se marca la que toca: se llega aquí desde una pantalla
+                     concreta y la otra cuenta no es la de esta. -->
+                <small class="cuenta-marca">para esta pantalla</small>
+              }
+            </span>
+            <span class="cuenta-cred">{{ c.email }} · {{ c.password }}</span>
+            <span class="cuenta-detalle">{{ c.para }}</span>
+          </button>
+        }
+      </div>
+    }
+  </form>
+</div>

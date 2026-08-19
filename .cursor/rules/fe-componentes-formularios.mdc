@@ -1,0 +1,44 @@
+---
+description: Estilos base para controles FE — usar cliente-form.scss como referencia
+globs: apps/web/**/*.scss, apps/web/**/*.html, apps/web/**/*.ts
+alwaysApply: false
+---
+
+# Componentes FE — Estilos de Controles
+
+**Referencia base:** `apps/web/src/app/features/clientes/form/cliente-form.scss`
+
+Al crear formularios o componentes con controles en el frontend, usar los mismos estilos que el formulario de edición de cliente. Copiar o adaptar los estilos de `cliente-form.scss`.
+
+## Variables base (copiar en cada formulario)
+
+```scss
+$input-height: 35px;
+$input-padding-x: 10px;
+$input-padding-y: 5px;
+$input-radius: 8px;
+$input-font-size: 14px;
+$chevron-url: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+```
+
+## Tokens a usar
+
+- Labels: `var(--text-label)`, `var(--text-label-weight)`, `var(--text-primary)`
+- Inputs: `var(--input-bg)`, `var(--border)`, `var(--border-hover)`, `var(--text-primary)`, `var(--text-input-weight)`, `var(--text-muted)` (placeholder)
+- Focus: `var(--primary)`, `var(--focus-ring)`
+- Errores: `var(--danger)`, `var(--text-xs)`
+- Espaciado: `var(--space-4)`, `var(--space-8)`, `var(--space-12)`, `var(--space-16)`, `var(--space-24)`
+
+## Controles — mismo aspecto que cliente-form
+
+- **Inputs** (text, email, tel, number): `min-height: 35px`, `padding: 5px 10px`, `border-radius: 8px`, `border: 1px solid var(--border)`, `transition` en focus
+- **Select**: igual que input + `appearance: none` + chevron SVG
+- **Textarea**: mismo padding, `min-height: 96px`, `resize: vertical`
+- **Number**: ocultar spinners nativos (`-webkit-appearance: none`, `-moz-appearance: textfield`)
+- **Labels**: `margin-bottom: var(--space-8)`, `font-size: var(--text-label)`
+- **Errores**: `margin-top: var(--space-4)`, `font-size: var(--text-xs)`, `color: var(--danger)`
+- **Responsive** (< 768px): `min-height: 36px`, `padding: 8px 10px`, reducir `mb-3` y espaciados
+
+## Estructura SCSS
+
+Envolver los estilos en una clase del formulario (ej. `.parte-form`, `.ubicacion-form`) para que coincidan con el selector del template. Ver `cliente-form.scss` completo como plantilla.

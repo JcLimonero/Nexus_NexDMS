@@ -1,0 +1,179 @@
+<div class="container-fluid partes-list">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card partes-header-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Partes / Refacciones</h5>
+            <span>Gestiona el inventario de refacciones</span>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <app-importador entidad="parts" (importado)="load()"></app-importador>
+            <a class="btn btn-primary" routerLink="/parts-inventory/nuevo">
+              <i class="icofont icofont-plus me-1"></i> Nueva parte
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-3">
+              <input
+                type="text"
+                class="form-control"
+                placeholder="Buscar por nombre, SKU..."
+                [ngModel]="searchTerm()"
+                (ngModelChange)="onSearchChange($event)"
+              />
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="categoryFilter()"
+                (ngModelChange)="onCategoryFilterChange($event)"
+              >
+                <option value="">Todas las categorías</option>
+                @for (c of categorias(); track c.id) {
+                  <option [ngValue]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="vehicleTypeFilter()"
+                (ngModelChange)="onVehicleTypeFilterChange($event)"
+              >
+                <option value="">Todos los tipos</option>
+                <option value="MOTORCYCLE">Moto</option>
+                <option value="CAR">Auto</option>
+                <option value="BOTH">Ambos</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="branchFilter()"
+                (ngModelChange)="onBranchFilterChange($event)"
+              >
+                <option value="">Todas las sucursales</option>
+                @for (b of branches(); track b.id) {
+                  <option [ngValue]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card partes-table-card">
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">
+              {{ error() }}
+            </div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Nombre</th>
+                    <th>Categoría</th>
+                    <th>Tipo vehículo</th>
+                    <th class="text-end">Stock</th>
+                    <th class="text-end">Precio público</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (parte of partes(); track parte.id) {
+                    <tr>
+                      <td>{{ parte.sku }}</td>
+                      <td>
+                        <a [routerLink]="['/parts-inventory', parte.id]">
+                          {{ parte.name }}
+                        </a>
+                      </td>
+                      <td>{{ getCategoryName(parte.categoryId ?? '') }}</td>
+                      <td>{{ getVehicleTypeLabel(parte.vehicleType) }}</td>
+                      <td class="text-end">{{ parte.stockQuantity }}</td>
+                      <td class="text-end">{{ parte.publicPrice | number:'1.2-2' }}</td>
+                      <td class="text-center">
+                        <span class="badge" [class.bg-success]="parte.isActive" [class.bg-secondary]="!parte.isActive">
+                          {{ parte.isActive ? "Activa" : "Inactiva" }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <div class="table-actions">
+                          <a
+                            class="table-action-btn"
+                            [routerLink]="['/parts-inventory', parte.id]"
+                            title="Ver"
+                          >
+                            <app-feather-icons [icon]="'eye'" />
+                          </a>
+                          <a
+                            class="table-action-btn"
+                            [routerLink]="['/parts-inventory', parte.id, 'editar']"
+                            title="Editar"
+                          >
+                            <app-feather-icons [icon]="'edit-2'" />
+                          </a>
+                          <button
+                            type="button"
+                            class="table-action-btn table-action-btn-danger"
+                            (click)="deleteParte(parte, $event)"
+                            title="Eliminar"
+                          >
+                            <app-feather-icons [icon]="'trash-2'" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="8" class="text-center text-muted py-4">
+                        No hay partes. <a routerLink="/parts-inventory/nuevo">Crear la primera</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if (meta(); as m) {
+              @if (m.totalPages > 1) {
+                <nav class="mt-3 d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">
+                    {{ m.total }} parte(s) · Página {{ m.page }} de {{ m.totalPages }}
+                  </span>
+                  <ul class="pagination mb-0">
+                    <li class="page-item" [class.disabled]="m.page <= 1">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page - 1)">
+                        Anterior
+                      </a>
+                    </li>
+                    <li class="page-item" [class.disabled]="m.page >= m.totalPages">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page + 1)">
+                        Siguiente
+                      </a>
+                    </li>
+                  </ul>
+                </nav>
+              }
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

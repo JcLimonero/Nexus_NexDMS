@@ -1,0 +1,11 @@
+// `@use` va antes que cualquier regla: Sass lo exige.
+@use "styles/tokens";
+@use "styles/panel";
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}

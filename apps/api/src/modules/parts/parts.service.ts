@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Part } from './entities/part.entity';
+import { PartEquivalence } from './entities/part-equivalence.entity';
 import { CreatePartDto } from './dto/create-part.dto';
 import { UpdatePartDto } from './dto/update-part.dto';
 import { FilterPartsDto, SearchScopeType } from './dto/filter-parts.dto';
@@ -25,6 +26,8 @@ export class PartsService {
     private readonly partCategoryRepo: Repository<PartCategory>,
     @InjectRepository(StockLocation)
     private readonly stockLocationRepo: Repository<StockLocation>,
+    @InjectRepository(PartEquivalence)
+    private readonly equivalenceRepo: Repository<PartEquivalence>,
     private readonly branchesService: BranchesService,
   ) {}
 
@@ -95,8 +98,13 @@ export class PartsService {
 
     if (filters.search?.trim()) {
       const term = `%${filters.search.trim()}%`;
+      // Además de nombre/SKU/código, empareja por número de parte equivalente.
       qb.andWhere(
-        '(p.name ILIKE :term OR p.sku ILIKE :term OR p.barcode ILIKE :term)',
+        `(p.name ILIKE :term OR p.sku ILIKE :term OR p.barcode ILIKE :term
+          OR EXISTS (
+            SELECT 1 FROM part_equivalences pe
+            WHERE pe.part_id = p.id AND pe.equivalent_sku ILIKE :term
+          ))`,
         { term },
       );
     }
@@ -288,5 +296,61 @@ export class PartsService {
 
     part.locationId = locationId ?? null;
     return this.partRepo.save(part);
+  }
+
+  // ─── Equivalencias (números de parte alternos) ──────────────
+
+  async listEquivalences(
+    user: UserPayload,
+    partId: string,
+  ): Promise<PartEquivalence[]> {
+    await this.findOne(user, partId); // valida acceso a la parte
+    return this.equivalenceRepo.find({
+      where: { partId },
+      order: { createdAt: 'ASC' },
+    });
+  }
+
+  async addEquivalence(
+    user: UserPayload,
+    partId: string,
+    dto: { equivalentSku: string; brand?: string | null; note?: string | null },
+  ): Promise<PartEquivalence> {
+    await this.findOne(user, partId);
+    const sku = dto.equivalentSku.trim();
+    if (!sku) {
+      throw new NotFoundException('El número de parte equivalente es requerido');
+    }
+    const existing = await this.equivalenceRepo.findOne({
+      where: { partId, equivalentSku: sku },
+    });
+    if (existing) {
+      existing.brand = dto.brand ?? existing.brand;
+      existing.note = dto.note ?? existing.note;
+      return this.equivalenceRepo.save(existing);
+    }
+    const eq = this.equivalenceRepo.create({
+      tenantId: user.tenantId,
+      partId,
+      equivalentSku: sku,
+      brand: dto.brand ?? null,
+      note: dto.note ?? null,
+    });
+    return this.equivalenceRepo.save(eq);
+  }
+
+  async removeEquivalence(
+    user: UserPayload,
+    partId: string,
+    equivId: string,
+  ): Promise<void> {
+    await this.findOne(user, partId);
+    const eq = await this.equivalenceRepo.findOne({
+      where: { id: equivId, partId },
+    });
+    if (!eq) {
+      throw new NotFoundException(`Equivalencia ${equivId} no encontrada`);
+    }
+    await this.equivalenceRepo.delete(equivId);
   }
 }

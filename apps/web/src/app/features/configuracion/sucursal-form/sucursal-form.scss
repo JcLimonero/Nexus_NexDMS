@@ -1,0 +1,63 @@
+.grupo {
+  margin: var(--space-24) 0 var(--space-12);
+  color: var(--text-secondary);
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+/* La separación la pone la rejilla, nunca el control. */
+.rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-16);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  .ancho {
+    grid-column: 1 / -1;
+  }
+
+  span {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+
+  .dia {
+    text-transform: capitalize;
+  }
+}
+
+/* Recuerda con qué RFC va a timbrar la sucursal elegida. */
+.fiscal {
+  margin: var(--space-12) 0 0;
+  padding: var(--space-8) var(--space-12);
+  background: var(--bg);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+}
+
+.opciones {
+  display: flex;
+  gap: var(--space-24);
+  margin-top: var(--space-16);
+}
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: var(--text-sm);
+}
+
+.acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-top: var(--space-24);
+}

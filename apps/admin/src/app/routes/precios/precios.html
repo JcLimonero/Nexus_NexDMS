@@ -1,0 +1,276 @@
+<div class="panel">
+  <app-barra
+    titulo="Planes y precios"
+    subtitulo="Los paquetes que se venden y lo que cuesta cada módulo aparte"
+  />
+
+  @if (aviso(); as a) {
+    <p class="aviso" [attr.data-tono]="a.tono">{{ a.texto }}</p>
+  }
+
+  @if (panorama(); as p) {
+    <section class="indicadores">
+      <div class="indicador">
+        <span class="etiqueta">Ingreso mensual</span>
+        <strong class="cifra">{{ p.ingresoMensual | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+        <span class="pie">{{ p.activos }} clientes activos</span>
+      </div>
+      <div class="indicador" [class.alerta]="p.adeudoTotal > 0">
+        <span class="etiqueta">Adeudo</span>
+        <strong class="cifra">{{ p.adeudoTotal | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+        <span class="pie">{{ p.clientesConAdeudo }} clientes con saldo vencido</span>
+      </div>
+      <div class="indicador">
+        <span class="etiqueta">Planes</span>
+        <strong class="cifra">{{ planes().length }}</strong>
+        <span class="pie">Paquetes a la venta</span>
+      </div>
+    </section>
+  }
+
+  <!-- Planes -->
+  <section class="tarjeta">
+    <div class="titulo-fila">
+      <h2>Planes</h2>
+      <button type="button" class="btn-principal" (click)="abrirAlta()">
+        Nuevo plan
+      </button>
+    </div>
+
+    @if (cargando()) {
+      <p class="vacio">Cargando…</p>
+    } @else {
+      <div class="planes">
+        @for (p of planes(); track p.id) {
+          <article class="plan-tarjeta" [class.retirado]="!p.isActive">
+            <header>
+              <span class="plan" [attr.data-plan]="p.tier">{{ p.key }}</span>
+              <label class="interruptor">
+                <input type="checkbox" [(ngModel)]="p.isActive" />
+                <span>{{ p.isActive ? "A la venta" : "Retirado" }}</span>
+              </label>
+            </header>
+
+            <label class="campo">
+              <span>Nombre comercial</span>
+              <input [(ngModel)]="p.name" />
+            </label>
+
+            <label class="campo">
+              <span>Nivel que otorga</span>
+              @if (p.isSystem) {
+                <!-- En los de origen el nivel es la clave misma: cambiarlo
+                     dejaría a sus clientes con un plan que ya no significa
+                     lo que decía. -->
+                <span class="fijo">
+                  {{ etiquetaNivel(p.tier) }} — plan base del sistema
+                </span>
+              } @else {
+                <select [(ngModel)]="p.tier">
+                  @for (n of niveles; track n.value) {
+                    <option [value]="n.value">{{ n.label }}</option>
+                  }
+                </select>
+              }
+            </label>
+
+            <label class="campo">
+              <span>Qué incluye</span>
+              <textarea rows="2" [(ngModel)]="p.description"></textarea>
+            </label>
+
+            <label class="campo">
+              <span>Precio mensual ({{ p.currency }})</span>
+              <input type="number" min="0" step="100" [(ngModel)]="p.monthlyPrice" />
+            </label>
+
+            <p class="incluye">
+              Entrega {{ cuantosIncluye(p) }} módulos
+              @if (!p.includedModules) {
+                <span class="nota">— todo lo de su nivel</span>
+              }
+            </p>
+
+            <div class="acciones-fila">
+              <button
+                type="button"
+                class="btn-principal"
+                [disabled]="guardando() === p.id"
+                (click)="guardarPlan(p)"
+              >
+                {{ guardando() === p.id ? "Guardando…" : "Guardar" }}
+              </button>
+              <button type="button" class="btn-secundario" (click)="abrirModulos(p)">
+                Módulos
+              </button>
+              @if (!p.isSystem) {
+                <button type="button" class="btn-secundario" (click)="eliminar(p)">
+                  Borrar
+                </button>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Precio por módulo -->
+  <section class="tarjeta">
+    <h2>Módulos contratados aparte</h2>
+    <p class="explica">
+      Precio del módulo cuando el cliente lo contrata sin cambiar de plan. Se
+      cobra además de su plan y se le activa al asignárselo en su ficha.
+    </p>
+
+    <table class="tabla">
+      <thead>
+        <tr>
+          <th>Módulo</th>
+          <th>Disponible desde</th>
+          <th class="num">Precio mensual</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (m of modulosVendibles(); track m.key) {
+          <tr>
+            <td>{{ m.name }}</td>
+            <td>
+              <span class="plan" [attr.data-plan]="m.minPlan">
+                {{ etiquetaNivel(m.minPlan) }}
+              </span>
+            </td>
+            <td class="num">
+              <input
+                class="precio"
+                type="number"
+                min="0"
+                step="100"
+                [(ngModel)]="m.monthlyPrice"
+              />
+            </td>
+            <td class="acciones">
+              <button
+                type="button"
+                class="btn-chico"
+                [disabled]="guardando() === m.key"
+                (click)="guardarModulo(m)"
+              >
+                {{ guardando() === m.key ? "…" : "Guardar" }}
+              </button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<!-- Alta de plan -->
+@if (nuevo(); as n) {
+  <div class="fondo" (click)="cerrarAlta()"></div>
+  <div class="dialogo" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>Nuevo plan</h2>
+        <p>Un paquete se arma sobre un nivel existente y recorta dentro de él</p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarAlta()">×</button>
+    </header>
+
+    <div class="rejilla">
+      <label class="campo">
+        <span>Nombre comercial</span>
+        <input [(ngModel)]="n.name" (input)="alEscribirNombre()" placeholder="Taller Plus" />
+      </label>
+      <label class="campo">
+        <span>Clave</span>
+        <input [(ngModel)]="n.key" maxlength="20" placeholder="TALLER_PLUS" />
+      </label>
+      <label class="campo">
+        <span>Nivel que otorga</span>
+        <select [(ngModel)]="n.tier">
+          @for (x of niveles; track x.value) {
+            <option [value]="x.value">{{ x.label }}</option>
+          }
+        </select>
+      </label>
+      <label class="campo">
+        <span>Precio mensual</span>
+        <input type="number" min="0" step="100" [(ngModel)]="n.monthlyPrice" />
+      </label>
+      <label class="campo ancho-total">
+        <span>Qué incluye</span>
+        <textarea rows="2" [(ngModel)]="n.description"></textarea>
+      </label>
+    </div>
+
+    <p class="explica">
+      El nivel es el tope: al guardarlo se eligen los módulos que entrega, de
+      entre los que ese nivel permite.
+    </p>
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarAlta()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando() === 'nuevo'"
+        (click)="crear()"
+      >
+        Crear plan
+      </button>
+    </footer>
+  </div>
+}
+
+<!-- Qué entrega el plan -->
+@if (modulosDe(); as p) {
+  <div class="fondo" (click)="cerrarModulos()"></div>
+  <div class="dialogo" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>Qué incluye {{ p.name }}</h2>
+        <p>Nivel {{ etiquetaNivel(p.tier) }} — marca lo que entrega el paquete</p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarModulos()">×</button>
+    </header>
+
+    <div class="modulos">
+      @for (m of modulosDelNivel(); track m.key) {
+        <label class="modulo" [class.nucleo]="m.core">
+          <input
+            type="checkbox"
+            [checked]="incluido(m)"
+            [disabled]="m.core"
+            (change)="alternar(m)"
+          />
+          <span class="modulo-texto">
+            <strong>{{ m.name }}</strong>
+            <span>{{ m.description }}</span>
+            @if (m.core) {
+              <span class="nota">Siempre incluido — el DMS no opera sin él</span>
+            }
+          </span>
+        </label>
+      }
+    </div>
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarModulos()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando() === p.id"
+        (click)="guardarModulos()"
+      >
+        Guardar contenido
+      </button>
+    </footer>
+  </div>
+}

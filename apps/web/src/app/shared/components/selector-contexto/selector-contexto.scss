@@ -1,0 +1,38 @@
+/**
+ * Vive en el pie del sidebar, sobre el bloque del usuario: es contexto de
+ * trabajo, no navegación, así que va cerca de "quién soy" y no entre los
+ * módulos.
+ */
+.contexto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-8) var(--space-16);
+}
+
+.contexto-etiqueta {
+  font-size: var(--text-xs);
+  color: var(--text-on-dark, rgb(255 255 255 / 60%));
+}
+
+.contexto-select {
+  width: 100%;
+  height: var(--control-h-sm);
+  padding: 0 var(--space-8);
+  border-radius: var(--control-radius);
+  border: 1px solid rgb(255 255 255 / 18%);
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+  font-size: var(--control-font);
+
+  &:disabled {
+    opacity: 0.6;
+  }
+
+  /* El menú desplegable lo pinta el sistema: sobre fondo claro necesita
+     texto oscuro o las opciones salen blancas sobre blanco. */
+  option {
+    color: var(--text-primary);
+    background: var(--card);
+  }
+}

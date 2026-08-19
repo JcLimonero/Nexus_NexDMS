@@ -30,6 +30,16 @@ export class CreateUnitAccessoryDto {
   @IsString()
   description?: string;
 
+  /** Monta en cualquier unidad; no necesita lista de modelos. */
+  @IsOptional()
+  @IsBoolean()
+  isUniversal?: boolean;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  category?: string;
+
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;

@@ -1,0 +1,157 @@
+<div class="container-fluid ordenes-servicio-list">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card ordenes-servicio-header-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Órdenes de servicio</h5>
+            <span>Gestión de órdenes de taller</span>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <app-exportar dataset="ordenes-servicio" />
+            <a class="btn btn-primary" routerLink="/workshop/service-orders/nueva">
+              <i class="icofont icofont-plus me-1"></i> Nueva orden
+            </a>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="statusFilter()"
+                (ngModelChange)="statusFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todos los estados</option>
+                <option value="RECEIVED">Recibida</option>
+                <option value="DIAGNOSIS">Diagnóstico</option>
+                <option value="IN_PROGRESS">En progreso</option>
+                <option value="WAITING_PARTS">Esperando refacciones</option>
+                <option value="READY">Lista para entregar</option>
+                <option value="DELIVERED">Entregada</option>
+                <option value="CANCELLED">Cancelada</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="branchFilter()"
+                (ngModelChange)="onBranchChange($event)"
+              >
+                <option value="">Todas las sucursales</option>
+                @for (b of branches(); track b.id) {
+                  <option [ngValue]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="mechanicFilter()"
+                (ngModelChange)="mechanicFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todos los técnicos</option>
+                @for (m of mechanics(); track m.id) {
+                  <option [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card ordenes-servicio-table-card">
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Folio</th>
+                    <th>Cliente</th>
+                    <th>Vehículo</th>
+                    <th>Sucursal</th>
+                    <th>Técnico</th>
+                    <th>Falla reportada</th>
+                    <th>Fecha</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (o of ordenes(); track o.id) {
+                    <tr>
+                      <td>
+                        <a [routerLink]="['/workshop/service-orders', o.id]">{{ o.folio }}</a>
+                      </td>
+                      <td>{{ getOwnerName(o) }}</td>
+                      <td>{{ getVehicleLabel(o) }}</td>
+                      <td>{{ getBranchName(o.branchId) }}</td>
+                      <td>{{ getMechanicLabel(o) }}</td>
+                      <td>{{ o.reportedFault | slice:0:40 }}{{ o.reportedFault.length > 40 ? '...' : '' }}</td>
+                      <td>{{ o.receivedAt | date:'short' }}</td>
+                      <td class="text-center">
+                        <span class="badge"
+                          [class.bg-secondary]="o.status === 'RECEIVED'"
+                          [class.bg-info]="o.status === 'DIAGNOSIS'"
+                          [class.bg-primary]="o.status === 'IN_PROGRESS'"
+                          [class.bg-warning]="o.status === 'WAITING_PARTS'"
+                          [class.bg-success]="o.status === 'READY' || o.status === 'DELIVERED'"
+                          [class.bg-danger]="o.status === 'CANCELLED'">
+                          {{ getStatusLabel(o.status) }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <a
+                          class="table-action-btn"
+                          [routerLink]="['/workshop/service-orders', o.id]"
+                          title="Ver"
+                        >
+                          <app-feather-icons [icon]="'eye'" />
+                        </a>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="text-center text-muted py-4">
+                        No hay órdenes de servicio. <a routerLink="/workshop/service-orders/nueva">Crear la primera</a>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if (meta(); as m) {
+              @if (m.totalPages > 1) {
+                <nav class="mt-3 d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">
+                    {{ m.total }} orden(es) · Página {{ m.page }} de {{ m.totalPages }}
+                  </span>
+                  <ul class="pagination mb-0">
+                    <li class="page-item" [class.disabled]="m.page <= 1">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page - 1)">Anterior</a>
+                    </li>
+                    <li class="page-item" [class.disabled]="m.page >= m.totalPages">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page + 1)">Siguiente</a>
+                    </li>
+                  </ul>
+                </nav>
+              }
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

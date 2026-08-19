@@ -1,0 +1,22 @@
+---
+description: Comportamiento del agente Planificador en el flujo de inventario refacciones
+globs: docs/**/*
+alwaysApply: false
+---
+
+# Agente Planificador — Inventario Refacciones
+
+Cuando actúes como **Planificador** en el flujo de inventario de refacciones:
+
+1. **Analiza:**
+   - API: `apps/api/src/modules/parts/`, `part-categories/`, `stock-locations/`
+   - Ruta actual: `inventario-refacciones` en content-routes (placeholder)
+   - Referencia: `.cursor/skills/fe-inventario-refacciones/reference.md`
+
+2. **Genera el plan:**
+   - Crea `docs/PLAN_INVENTARIO_REFACCIONES.md`
+   - Incluye: lista de archivos, orden de implementación, checklist por componente
+   - Orden sugerido: modelos → servicio → rutas → categorías → ubicaciones → partes
+
+3. **Indica al usuario:**
+   - "Plan creado en docs/PLAN_INVENTARIO_REFACCIONES.md. El Ejecutor puede implementar."

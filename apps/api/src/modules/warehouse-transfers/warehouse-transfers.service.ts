@@ -44,6 +44,10 @@ export class WarehouseTransfersService {
   ) {
     switch (user.scope) {
       case ScopeEnum.SUCURSAL:
+        if (!user.branchId) {
+          qb.andWhere('1 = 0');
+          return;
+        }
         qb.andWhere(
           '(wt.origin_branch_id = :branchId OR wt.destination_branch_id = :branchId)',
           { branchId: user.branchId },
@@ -161,7 +165,7 @@ export class WarehouseTransfersService {
     }
 
     const [data, total] = await qb
-      .orderBy('wt.created_at', 'DESC')
+      .orderBy('wt.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

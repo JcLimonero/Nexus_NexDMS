@@ -1,0 +1,70 @@
+<!-- Container-fluid starts-->
+<div class="container-fluid">
+  <div class="row dropzone-custom">
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Single File Upload</h5>
+        </div>
+        <div class="card-body single-file-dropzone">
+          <div class="dropzone single-file-dropzone">
+            <dropzone
+              [config]="config1"
+              (error)="onUploadError($event)"
+              (success)="onUploadSuccess($event)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Multi File Upload</h5>
+        </div>
+        <div class="card-body">
+          <div class="show-preview dropzone dropzone-bg">
+            <dropzone
+              [config]="config2"
+              (error)="onUploadError($event)"
+              (success)="onUploadSuccess($event)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Image Preview</h5>
+        </div>
+        <div class="card-body">
+          <div class="show-preview dropzone dropzone-bg">
+            <dropzone
+              [config]="imageConfig"
+              (error)="onUploadError($event)"
+              (success)="onUploadSuccess($event)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Default File Upload</h5>
+        </div>
+        <div class="card-body">
+          <div class="show-preview dropzone dropzone-bg">
+            <dropzone
+              [config]="config3"
+              (error)="onUploadError($event)"
+              (success)="onUploadSuccess($event)"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Container-fluid Ends-->

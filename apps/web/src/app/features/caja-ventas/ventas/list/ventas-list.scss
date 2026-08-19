@@ -1,0 +1,13 @@
+.ventas-list {
+  .ventas-header-card {
+    margin-bottom: 1rem;
+  }
+  .ventas-table-card {
+    .table-action-btn {
+      color: var(--text-muted);
+      &:hover {
+        color: var(--primary);
+      }
+    }
+  }
+}

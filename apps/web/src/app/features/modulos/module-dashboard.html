@@ -1,0 +1,69 @@
+<div class="container-fluid">
+  <div class="card modulo-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div class="d-flex align-items-center gap-3">
+        <div class="mod-icon">
+          <app-feather-icons [icon]="moduleIcon()" />
+        </div>
+        <div>
+          <h5>{{ data()?.name || "Módulo" }}</h5>
+          <span>Indicadores del módulo</span>
+        </div>
+      </div>
+      @if (moduleRoute(); as r) {
+        <a class="btn btn-primary" [routerLink]="r">Abrir módulo</a>
+      }
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><div class="card-body text-center py-5"><span class="spinner-border"></span></div></div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (data(); as d) {
+    @if (d.kpis.length === 0) {
+      <div class="card">
+        <div class="card-body text-center py-5 text-muted">
+          Este módulo aún no tiene indicadores configurados.
+        </div>
+      </div>
+    } @else {
+      <div class="kpi-grid mb-4">
+        @for (k of d.kpis; track k.label) {
+          @if (k.link) {
+            <a class="kpi-card" [routerLink]="k.link">
+              <div class="kpi-value" [class]="'tone-' + (k.tone || 'neutral')">{{ format(k) }}</div>
+              <div class="kpi-label">{{ k.label }}</div>
+              @if (k.hint) { <div class="kpi-hint">{{ k.hint }}</div> }
+            </a>
+          } @else {
+            <div class="kpi-card">
+              <div class="kpi-value" [class]="'tone-' + (k.tone || 'neutral')">{{ format(k) }}</div>
+              <div class="kpi-label">{{ k.label }}</div>
+              @if (k.hint) { <div class="kpi-hint">{{ k.hint }}</div> }
+            </div>
+          }
+        }
+      </div>
+
+      @if (d.breakdown; as bd) {
+        @if (bd.items.length > 0) {
+          <div class="card">
+            <div class="card-header"><h5>{{ bd.title }}</h5></div>
+            <div class="card-body">
+              @for (i of bd.items; track i.label) {
+                <div class="bar-row">
+                  <span class="bar-label">{{ i.label }}</span>
+                  <div class="bar-track">
+                    <div class="bar" [style.width.%]="(i.value / maxBreakdown()) * 100"></div>
+                  </div>
+                  <span class="bar-value">{{ i.value }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      }
+    }
+  }
+</div>

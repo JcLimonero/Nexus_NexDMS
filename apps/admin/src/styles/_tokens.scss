@@ -1,0 +1,217 @@
+/**
+ * COPIA de apps/web/src/styles/_tokens.scss — el original manda.
+ *
+ * El portal es otra aplicación y su contenedor solo monta `apps/admin`, así
+ * que no puede leer los estilos del DMS por ruta. Se copia entero y sin
+ * retocar: un subconjunto "de lo que hace falta" diverge sin que se note,
+ * mientras que una copia literal se compara con un diff.
+ *
+ * Si cambian los colores de marca, este archivo se vuelve a copiar tal cual.
+ */
+
+/**
+ * NexDMS Design System — Design Tokens
+ * Identidad Nexus Q Tech: azul acero #105078 (isotipo) + navy #203848 (tipografía).
+ * Los neutrales llevan un sesgo azulado para que lean como elegidos, no heredados.
+ *
+ * REGLA DE ORO: todo control (input, select, textarea, botón) comparte
+ * altura, radio, tipografía y anillo de foco. Ver "Controles" más abajo.
+ */
+
+:root {
+  /* ── Marca Nexus Q Tech ─────────────────────────── */
+  --nexus-50:  #F0F6FA;
+  --nexus-100: #DBEAF3;
+  --nexus-200: #B3D0E4;
+  --nexus-300: #7FAFD0;
+  --nexus-400: #4589B5;
+  --nexus-500: #1A6395;
+  --nexus-600: #105078;   /* ← azul de marca (isotipo + Q) */
+  --nexus-700: #0C4062;
+  --nexus-800: #09314B;
+  --nexus-900: #072536;
+
+  --navy-500: #2C4A5E;
+  --navy-600: #203848;    /* ← navy de marca (tipografía del logo) */
+  --navy-700: #1A2D3A;
+  --navy-800: #16262F;
+  --navy-900: #101C23;
+
+  /* ── Superficies ────────────────────────────────── */
+  --bg: #F5F7F9;
+  --bg-elevated: #FFFFFF;
+  --card: #FFFFFF;
+  --input-bg: #FFFFFF;
+
+  /* ── Bordes ─────────────────────────────────────── */
+  --border: #DDE3E9;
+  --border-hover: #C5CFD8;
+  --border-strong: #A9B7C3;
+
+  /* ── Texto ──────────────────────────────────────── */
+  --text-primary: #16262F;
+  --text-secondary: #5A6B78;
+  --text-muted: #8A98A4;
+  --text-on-brand: #FFFFFF;
+
+  /* ── Acción / estados ───────────────────────────── */
+  --primary: var(--nexus-600);
+  --primary-hover: var(--nexus-700);
+  --primary-soft: var(--nexus-50);
+  --accent: var(--nexus-600);
+
+  --success: #157F52;
+  --success-bg: #E3F4EC;
+  --warning: #9A5B12;
+  --warning-bg: #FBF0DE;
+  --danger: #B3261E;
+  --danger-bg: #FBE9E7;
+  --info: var(--nexus-600);
+  --info-bg: var(--nexus-50);
+
+  /* ── Sidebar (navy de marca) ────────────────────── */
+  --sidebar-bg-from: var(--navy-600);
+  --sidebar-bg-via: var(--navy-700);
+  --sidebar-bg-to: var(--navy-800);
+  --sidebar-text: #B9C6D0;
+  --sidebar-text-hover: #FFFFFF;
+  --sidebar-hover-bg: rgba(255, 255, 255, 0.07);
+  --sidebar-section: #7C8D9A;
+  --sidebar-border: rgba(255, 255, 255, 0.09);
+  --sidebar-active-from: var(--nexus-600);
+  --sidebar-active-to: var(--nexus-700);
+  --sidebar-active-glow: 0 6px 14px -4px rgba(16, 80, 120, 0.55);
+
+  /* ── Radios ─────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-pill: 9999px;
+
+  /* ── Espaciado ──────────────────────────────────── */
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-24: 24px;
+  --space-32: 32px;
+
+  /* ── Tipografía ─────────────────────────────────── */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', monospace;
+
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --text-xl: 20px;
+  --text-2xl: 24px;
+  --text-3xl: 28px;
+
+  --font-regular: 400;
+  --font-medium: 500;
+  --font-semibold: 600;
+  --font-bold: 700;
+
+  /* Semántica tipográfica por rol */
+  --text-page-title: var(--text-2xl);
+  --text-page-title-weight: var(--font-semibold);
+  --text-section-title: var(--text-base);
+  --text-section-title-weight: var(--font-semibold);
+  --text-label: var(--text-sm);
+  --text-label-weight: var(--font-medium);
+  --text-body: var(--text-sm);
+  --text-body-weight: var(--font-regular);
+  --text-caption: var(--text-xs);
+  --text-caption-weight: var(--font-regular);
+  --text-button: var(--text-sm);
+  --text-button-weight: var(--font-medium);
+  --text-input: var(--text-sm);
+  --text-input-weight: var(--font-regular);
+  /* Encabezados de tabla y etiquetas de sección */
+  --text-overline: var(--text-xs);
+  --text-overline-weight: var(--font-semibold);
+  --text-overline-tracking: 0.05em;
+
+  /* ══ CONTROLES — escala única ══════════════════════
+     input = select = textarea = button comparten estas
+     medidas. No declares alturas de control fuera de aquí. */
+  --control-h: 38px;
+  --control-h-sm: 32px;
+  --control-h-lg: 44px;
+  --control-px: 12px;
+  --control-px-sm: 10px;
+  --control-px-lg: 20px;
+  --control-radius: var(--radius-md);
+  --control-font: var(--text-sm);
+  --control-font-sm: var(--text-xs);
+  --control-border-w: 1px;
+  --control-gap: var(--space-8);
+
+  /* Anchos de campo homologados (evita px sueltos por página) */
+  --field-xs: 90px;
+  --field-sm: 130px;
+  --field-md: 190px;
+  --field-lg: 260px;
+  /* Las fechas necesitan medida propia: cada motor dibuja el valor a su
+     manera —Firefox separa con espacios, Chrome reserva sitio para su
+     selector— y con 130px el año se cortaba. 154px es lo que pide el motor
+     más ancho de los tres medidos. */
+  --field-date: 154px;
+
+  /* Alias heredados — apuntan a la escala única */
+  --input-height: var(--control-h);
+  --input-height-sm: var(--control-h-sm);
+  --input-padding-x: var(--control-px);
+  --input-padding-y: 0;
+  --btn-height: var(--control-h);
+  --btn-height-sm: var(--control-h-sm);
+  --btn-height-lg: var(--control-h-lg);
+
+  /* ── Sombras y foco ─────────────────────────────── */
+  --shadow-sm: 0 1px 2px rgba(22, 38, 47, 0.05);
+  --shadow-md: 0 2px 6px rgba(22, 38, 47, 0.07);
+  --shadow-lg: 0 10px 24px -8px rgba(22, 38, 47, 0.22);
+  --focus-ring: 0 0 0 3px rgba(16, 80, 120, 0.18);
+  --focus-ring-danger: 0 0 0 3px rgba(179, 38, 30, 0.18);
+
+  /* ── Layout ─────────────────────────────────────── */
+  --sidebar-width: 256px;
+  --sidebar-collapsed: 72px;
+  --header-height: 64px;
+}
+
+/* Dark mode — mismo azul de marca, aclarado para contraste sobre oscuro */
+[data-theme="dark"],
+.dark {
+  --bg: #0F171C;
+  --bg-elevated: #16222A;
+  --card: #16222A;
+  --input-bg: #16222A;
+
+  --border: #26353F;
+  --border-hover: #354854;
+  --border-strong: #4A5F6D;
+
+  --text-primary: #EAF0F4;
+  --text-secondary: #9FB0BC;
+  --text-muted: #71838F;
+
+  --primary: var(--nexus-400);
+  --primary-hover: var(--nexus-300);
+  --primary-soft: rgba(69, 137, 181, 0.14);
+  --accent: var(--nexus-400);
+
+  --success: #4ADE9B;
+  --success-bg: #10352A;
+  --warning: #E9B872;
+  --warning-bg: #3A2A12;
+  --danger: #F09088;
+  --danger-bg: #3A1815;
+  --info: var(--nexus-400);
+  --info-bg: rgba(69, 137, 181, 0.14);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45);
+  --focus-ring: 0 0 0 3px rgba(69, 137, 181, 0.32);
+}

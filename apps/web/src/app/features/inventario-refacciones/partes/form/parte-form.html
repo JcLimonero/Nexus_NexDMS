@@ -1,0 +1,271 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? "Editar parte" : "Nueva parte" }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/parts-inventory">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="parte-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId" [disabled]="isEdit()">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('branchId')?.invalid && form.get('branchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Categoría</label>
+                <select class="form-select" formControlName="categoryId">
+                  <option [ngValue]="null">Sin categoría</option>
+                  @for (c of categorias(); track c.id) {
+                    <option [ngValue]="c.id">{{ c.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Ubicación</label>
+                <select class="form-select" formControlName="locationId">
+                  <option [ngValue]="null">Sin ubicación</option>
+                  @for (u of ubicaciones(); track u.id) {
+                    <option [ngValue]="u.id">{{ u.code }} - {{ u.zone }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">SKU</label>
+                <input type="text" class="form-control" formControlName="sku" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Código de barras</label>
+                <input type="text" class="form-control" formControlName="barcode" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Unidad de medida</label>
+                <input type="text" class="form-control" formControlName="unitOfMeasure" placeholder="PZA" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-8 mb-3">
+                <label class="form-label">Nombre <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="name" />
+                @if (form.get('name')?.invalid && form.get('name')?.touched) {
+                  <div class="text-danger small mt-1">El nombre es obligatorio</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tipo vehículo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="vehicleType">
+                  @for (vt of vehicleTypes; track vt.value) {
+                    <option [ngValue]="vt.value">{{ vt.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Descripción</label>
+                <textarea class="form-control" formControlName="description" rows="2"></textarea>
+              </div>
+              <div class="col-12 mb-3">
+                <label class="form-label">Marcas compatibles</label>
+                <input type="text" class="form-control" formControlName="compatibleMakes" placeholder="Ej: Honda, Yamaha" />
+              </div>
+            </div>
+
+            <h6 class="mt-3 mb-2">Precios</h6>
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Costo compra</label>
+                <input type="number" class="form-control" formControlName="purchasePrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio público</label>
+                <input type="number" class="form-control" formControlName="publicPrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio mayoreo</label>
+                <input type="number" class="form-control" formControlName="wholesalePrice" min="0" step="0.01" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Precio negocio</label>
+                <input type="number" class="form-control" formControlName="businessPrice" min="0" step="0.01" />
+              </div>
+            </div>
+
+            <h6 class="mt-3 mb-2">Inventario</h6>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Descuento máx. (%)</label>
+                <input type="number" class="form-control" formControlName="maxDiscountPct" min="0" max="100" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Stock mínimo</label>
+                <input type="number" class="form-control" formControlName="minStock" min="0" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Stock máximo</label>
+                <input type="number" class="form-control" formControlName="maxStock" min="0" />
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Proveedor principal</label>
+                <select class="form-select" formControlName="preferredSupplierId">
+                  <option [ngValue]="null">Sin proveedor principal</option>
+                  @for (s of suppliers(); track s.id) {
+                    <option [ngValue]="s.id">{{ s.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-6 mb-3 d-flex align-items-end">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="isOnDemand" formControlName="isOnDemand" />
+                  <label class="form-check-label" for="isOnDemand">
+                    Bajo demanda (no se mantiene en stock; se pide al usarse)
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <div class="form-check">
+                  <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
+                  <label class="form-check-label" for="isActive">Activa</label>
+                </div>
+              </div>
+            </div>
+
+          </form>
+
+          @if (isEdit()) {
+            <hr class="my-4" />
+            <div class="row">
+              <div class="col-lg-7">
+                <h6>Números de parte equivalentes</h6>
+                <p class="text-muted small">
+                  Otros SKU que refieren a esta misma refacción; se usan al
+                  buscar y al importar facturas de compra.
+                </p>
+                <div class="row g-2 align-items-end mb-2">
+                  <div class="col-sm-4">
+                    <label class="form-label">SKU equivalente</label>
+                    <input class="form-control form-control-sm" [(ngModel)]="nuevaEquiv.equivalentSku" />
+                  </div>
+                  <div class="col-sm-3">
+                    <label class="form-label">Marca</label>
+                    <input class="form-control form-control-sm" [(ngModel)]="nuevaEquiv.brand" />
+                  </div>
+                  <div class="col-sm-3">
+                    <label class="form-label">Nota</label>
+                    <input class="form-control form-control-sm" [(ngModel)]="nuevaEquiv.note" />
+                  </div>
+                  <div class="col-sm-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary w-100" (click)="agregarEquivalencia()">
+                      Agregar
+                    </button>
+                  </div>
+                </div>
+                @if (equivalencias().length) {
+                  <table class="table table-sm align-middle">
+                    <thead>
+                      <tr><th>SKU</th><th>Marca</th><th>Nota</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                      @for (eq of equivalencias(); track eq.id) {
+                        <tr>
+                          <td><strong>{{ eq.equivalentSku }}</strong></td>
+                          <td>{{ eq.brand || "—" }}</td>
+                          <td>{{ eq.note || "—" }}</td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarEquivalencia(eq)">
+                              Quitar
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="text-muted">Sin equivalencias.</p>
+                }
+              </div>
+
+              <div class="col-lg-5">
+                <h6>Top proveedores y garantía</h6>
+                <p class="text-muted small">
+                  Últimos proveedores de esta refacción. Registra la garantía
+                  (meses) que cada uno te da por lo que le compras.
+                </p>
+                @if (topProveedores().length) {
+                  <table class="table table-sm align-middle">
+                    <thead>
+                      <tr>
+                        <th>Proveedor</th>
+                        <th>Últ. precio</th>
+                        <th style="width: 90px">Garantía</th>
+                        <th style="width: 70px"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (t of topProveedores(); track t.supplierId) {
+                        <tr>
+                          <td>
+                            {{ t.supplierName }}
+                            <div class="text-muted small">
+                              {{ t.lastPurchasedAt ? (t.lastPurchasedAt | date: "dd/MM/yy") : "—" }}
+                            </div>
+                          </td>
+                          <td>{{ t.lastPrice | money }}</td>
+                          <td>
+                            <div class="input-group input-group-sm">
+                              <input type="number" min="0" class="form-control" [(ngModel)]="t.warrantyMonths" />
+                              <span class="input-group-text">m</span>
+                            </div>
+                          </td>
+                          <td>
+                            <button type="button" class="btn btn-sm btn-outline-primary" (click)="guardarGarantia(t)">
+                              Guardar
+                            </button>
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                } @else {
+                  <p class="text-muted">Aún sin compras registradas.</p>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="d-flex gap-2 mt-4">
+            <button type="button" class="btn btn-primary" [disabled]="form.invalid || loading()" (click)="submit()">
+              @if (loading()) {
+                <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+              }
+              {{ isEdit() ? "Guardar cambios" : "Crear parte" }}
+            </button>
+            <a class="btn btn-outline-secondary" routerLink="/parts-inventory">Cancelar</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

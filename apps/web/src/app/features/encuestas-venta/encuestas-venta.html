@@ -1,0 +1,94 @@
+<div class="container-fluid">
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <div class="card h-100">
+        <div class="card-header">
+          <h5 class="mb-0">Encuestas de venta</h5>
+          <small class="text-muted">
+            Genera la encuesta post-venta y comparte el link con el cliente. Las
+            preguntas salen de Configuración › Encuestas (Ventas).
+          </small>
+        </div>
+        <div class="card-body">
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label">Sucursal</label>
+              <select class="form-select" [(ngModel)]="form.branchId">
+                @for (b of branches(); track b.id) {
+                  <option [value]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Referencia (venta)</label>
+              <input class="form-control" [(ngModel)]="form.referenceLabel" placeholder="Folio de venta" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Cliente</label>
+              <input class="form-control" [(ngModel)]="form.clientName" />
+            </div>
+          </div>
+          <button class="btn btn-primary mt-3" [disabled]="guardando()" (click)="generar()">
+            @if (guardando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            Generar encuesta y copiar link
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header"><h6 class="mb-0">Satisfacción</h6></div>
+        <div class="card-body text-center">
+          @if (resumen(); as r) {
+            <div class="display-5 mb-0">
+              {{ r.promedio !== null ? r.promedio : "—" }}
+              <small class="text-muted" style="font-size: 1rem">/ 5</small>
+            </div>
+            <p class="text-muted mb-0">{{ r.respondidas }} de {{ r.total }} respondidas</p>
+          } @else {
+            <p class="text-muted mb-0">Sin datos</p>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header"><h6 class="mb-0">Encuestas enviadas</h6></div>
+    <div class="card-body">
+      @if (cargando()) {
+        <div class="spinner-border" role="status"></div>
+      } @else if (!encuestas().length) {
+        <p class="text-muted mb-0">Aún no hay encuestas de venta.</p>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr><th>Referencia</th><th>Cliente</th><th>Estado</th><th>Puntaje</th><th>Enviada</th><th style="width: 150px">Link</th></tr>
+            </thead>
+            <tbody>
+              @for (s of encuestas(); track s.id) {
+                <tr>
+                  <td>{{ s.referenceLabel || "—" }}</td>
+                  <td>{{ s.clientName || "—" }}</td>
+                  <td>
+                    @if (s.answeredAt) {
+                      <span class="badge bg-success">Respondida</span>
+                    } @else {
+                      <span class="badge bg-light text-dark">Pendiente</span>
+                    }
+                  </td>
+                  <td>{{ s.score !== null ? s.score + " / 5" : "—" }}</td>
+                  <td>{{ s.sentAt ? (s.sentAt | date: "dd/MM/yy") : "—" }}</td>
+                  <td>
+                    <button class="btn btn-sm btn-outline-secondary" (click)="copiar(s.token)">Copiar link</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  </div>
+</div>

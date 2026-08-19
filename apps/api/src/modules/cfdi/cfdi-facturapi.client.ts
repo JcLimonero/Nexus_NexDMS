@@ -37,13 +37,31 @@ export interface FacturapiItem {
   discount?: number;
 }
 
+export interface FacturapiRelatedDocuments {
+  /** Relación SAT: '01' nota de crédito, '04' sustitución, etc. */
+  relationship: string;
+  documents: string[];
+}
+
+export interface FacturapiGlobal {
+  periodicity: string;
+  months: string;
+  year: number;
+}
+
 export interface FacturapiInvoicePayload {
-  customer: FacturapiCustomer;
+  customer: FacturapiCustomer | string;
   items: FacturapiItem[];
   use: string;
   payment_form: string;
   payment_method: string;
   series?: string;
+  /** 'I' ingreso (por defecto), 'E' egreso (nota de crédito). */
+  type?: 'I' | 'E';
+  /** Presente en una nota de crédito para ligar el CFDI de ingreso original. */
+  related_documents?: FacturapiRelatedDocuments[];
+  /** Presente en una factura global de público en general. */
+  global?: FacturapiGlobal;
 }
 
 export interface FacturapiInvoiceResponse {

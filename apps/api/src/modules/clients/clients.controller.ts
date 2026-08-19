@@ -21,6 +21,26 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { FilterClientsDto } from './dto/filter-clients.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
+// #region agent log
+let _dbgReqCount = 0;
+const _dbgLog = (msg: string, data: Record<string, unknown>) => {
+  fetch('http://127.0.0.1:7581/ingest/bcde24cd-a710-4919-a588-2e9c9447588e', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Debug-Session-Id': 'b8cd5e',
+    },
+    body: JSON.stringify({
+      sessionId: 'b8cd5e',
+      location: 'clients.controller.ts',
+      message: msg,
+      data,
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+};
+// #endregion
+
 @ApiTags('Clients')
 @ApiBearerAuth()
 @UseGuards(AuthGuard, RolesGuard)
@@ -29,11 +49,33 @@ export class ClientsController {
   constructor(private readonly clientsService: ClientsService) {}
 
   @Get()
-  findAll(
+  async findAll(
     @CurrentUser() user: UserPayload,
     @Query() filters: FilterClientsDto,
   ) {
-    return this.clientsService.findAll(user, filters);
+    // #region agent log
+    const reqSeq = ++_dbgReqCount;
+    _dbgLog('clients findAll request arrived', {
+      reqSeq,
+      page: filters.page,
+      limit: filters.limit,
+    });
+    // #endregion
+    try {
+      const result = await this.clientsService.findAll(user, filters);
+      // #region agent log
+      _dbgLog('clients findAll completed', {
+        reqSeq,
+        total: result.meta.total,
+      });
+      // #endregion
+      return result;
+    } catch (err) {
+      // #region agent log
+      _dbgLog('clients findAll error', { reqSeq, error: String(err) });
+      // #endregion
+      throw err;
+    }
   }
 
   @Get('search')

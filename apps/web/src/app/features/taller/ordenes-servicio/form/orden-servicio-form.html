@@ -1,0 +1,93 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Nueva orden de servicio</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/workshop/service-orders">Volver</a>
+        </div>
+        <div class="card-body">
+          <form class="orden-servicio-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <select class="form-select" formControlName="ownerId">
+                    <option value="">Seleccionar cliente</option>
+                    @for (c of clients(); track c.id) {
+                      <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
+                    }
+                  </select>
+                  <button type="button" class="btn btn-outline-primary" (click)="openNuevoCliente()" title="Nuevo cliente">
+                    <i class="icofont icofont-plus"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Vehículo / Unidad <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <select class="form-select" formControlName="vehicleId" [disabled]="vehiclesLoading()">
+                    <option value="">Seleccionar vehículo</option>
+                    @for (v of vehicles(); track v.id) {
+                      <option [ngValue]="v.id">{{ getVehicleLabel(v) }}</option>
+                    }
+                  </select>
+                  <button type="button" class="btn btn-outline-primary" (click)="openNuevaUnidad()" title="Nueva unidad (vehículo del cliente)">
+                    <i class="icofont icofont-plus"></i>
+                  </button>
+                </div>
+                @if (vehiclesLoading()) {
+                  <small class="text-muted">Cargando vehículos...</small>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Falla reportada <span class="text-danger">*</span></label>
+                <textarea class="form-control" formControlName="reportedFault" rows="3" placeholder="Describa la falla o síntoma"></textarea>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Kilometraje <span class="text-danger">*</span></label>
+                <input type="number" class="form-control" formControlName="kmIn" min="0" />
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Técnico asignado</label>
+                <select class="form-select" formControlName="mechanicId">
+                  <option value="">Sin asignar</option>
+                  @for (m of mechanics(); track m.id) {
+                    <option [ngValue]="m.id">{{ m.firstName }} {{ m.lastName }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Notas</label>
+              <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Crear orden
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/workshop/service-orders">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

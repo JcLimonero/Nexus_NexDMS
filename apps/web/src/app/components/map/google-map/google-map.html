@@ -1,0 +1,59 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>Map</h5>
+        </div>
+        <div class="card-body">
+          <div class="map-js-height">
+            <google-map width="100%" height="450px" [zoom]="zoom">
+              @for (marker of markers; track marker) {
+                <map-marker
+                  [position]="marker.position"
+                  [label]="marker.labels ?? ''"
+                />
+              }
+            </google-map>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-6">
+      <div class="card">
+        <div class="card-header">
+          <h5>MultiLanguage Map</h5>
+        </div>
+        <div class="card-body">
+          <div class="map-js-height">
+            <google-map height="500px" width="100%" [zoom]="zoom">
+              @for (marker of markers; track marker) {
+                <map-marker
+                  #markerElem
+                  [position]="marker.position"
+                  [label]="marker.labels!"
+                  [title]="marker.title!"
+                  [options]="marker.options!"
+                />
+              }
+            </google-map>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-xl-12">
+      <div class="card">
+        <div class="card-header">
+          <h5>Street View</h5>
+        </div>
+        <div class="card-body">
+          <div class="map-js-height">
+            <div class="my-google-map">
+              <google-map height="500px" width="100%" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

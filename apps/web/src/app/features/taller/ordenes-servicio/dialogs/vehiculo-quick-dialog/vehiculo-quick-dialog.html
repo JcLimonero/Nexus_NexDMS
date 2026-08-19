@@ -1,0 +1,89 @@
+<div class="modal-header">
+  <h5 class="modal-title">Nueva unidad (vehículo del cliente)</h5>
+  <button type="button" class="btn-close" aria-label="Cerrar" (click)="dismiss()"></button>
+</div>
+<div class="modal-body">
+  <p class="text-muted small mb-3">Registra un vehículo que pertenece al cliente seleccionado.</p>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    @if (error) {
+      <div class="alert alert-danger py-2">{{ error }}</div>
+    }
+    <div class="row">
+      <div class="col-6 mb-3">
+        <label class="form-label">Tipo <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="vehicleType">
+          @for (vt of vehicleTypes; track vt.value) {
+            <option [ngValue]="vt.value">{{ vt.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="col-6 mb-3">
+        <label class="form-label">Año <span class="text-danger">*</span></label>
+        <input type="number" class="form-control" formControlName="year" min="1900" max="2100" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-6 mb-3">
+        <label class="form-label">Marca <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="brandId" (change)="onBrandSelected(form.get('brandId')?.value)">
+          <option value="">Seleccionar marca</option>
+          @for (b of brands; track b.id) {
+            <option [ngValue]="b.id">{{ b.name }}</option>
+          }
+        </select>
+        <input type="hidden" formControlName="make" />
+      </div>
+      <div class="col-6 mb-3">
+        <label class="form-label">Modelo <span class="text-danger">*</span></label>
+        <select class="form-select" formControlName="modelId" (change)="onModelSelected(form.get('modelId')?.value)">
+          <option value="">Seleccionar modelo</option>
+          @for (m of vehicleModels; track m.id) {
+            <option [ngValue]="m.id">{{ m.name }}</option>
+          }
+        </select>
+        <input type="hidden" formControlName="model" />
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-4 mb-3">
+        <label class="form-label">Color</label>
+        @if (colorOther) {
+          <div class="input-group">
+            <input type="text" class="form-control" formControlName="color" placeholder="Escribir color" />
+            <button type="button" class="btn btn-outline-secondary" (click)="colorOther = false; form.patchValue({ colorSelect: '', color: '' })">Lista</button>
+          </div>
+        } @else {
+          <select class="form-select" formControlName="colorSelect">
+            <option value="">Seleccionar color</option>
+            @for (c of colors; track c) {
+              <option [ngValue]="c">{{ c }}</option>
+            }
+            <option value="__other__">Otro (escribir)</option>
+          </select>
+          <input type="hidden" formControlName="color" />
+        }
+      </div>
+      <div class="col-4 mb-3">
+        <label class="form-label">Placas</label>
+        <input type="text" class="form-control" formControlName="plate" />
+      </div>
+      <div class="col-4 mb-3">
+        <label class="form-label">Kilometraje</label>
+        <input type="number" class="form-control" formControlName="mileage" min="0" />
+      </div>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">VIN / Número de serie</label>
+      <input type="text" class="form-control" formControlName="vin" />
+    </div>
+  </form>
+</div>
+<div class="modal-footer">
+  <button type="button" class="btn btn-outline-secondary" (click)="dismiss()">Cancelar</button>
+  <button type="button" class="btn btn-primary" (click)="submit()" [disabled]="form.invalid || saving">
+    @if (saving) {
+      <span class="spinner-border spinner-border-sm me-1"></span>
+    }
+    Crear vehículo
+  </button>
+</div>

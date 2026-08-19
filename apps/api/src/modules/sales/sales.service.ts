@@ -362,7 +362,7 @@ export class SalesService {
     }
 
     const [data, total] = await qb
-      .orderBy('s.created_at', 'DESC')
+      .orderBy('s.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

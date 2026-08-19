@@ -1,0 +1,570 @@
+<div class="panel">
+  <app-barra
+    titulo="Clientes del SaaS"
+    subtitulo="Grupos que operan con NexDMS, su plan, sus módulos y sus cobros"
+  />
+
+  @if (aviso(); as a) {
+    <p class="aviso" [attr.data-tono]="a.tono">{{ a.texto }}</p>
+  }
+
+  @if (panorama(); as p) {
+    <section class="indicadores">
+      <div class="indicador">
+        <span class="etiqueta">Ingreso mensual</span>
+        <strong class="cifra">{{ p.ingresoMensual | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+        <span class="pie">{{ p.activos }} de {{ p.clientes }} clientes activos</span>
+      </div>
+      <div class="indicador" [class.alerta]="p.adeudoTotal > 0">
+        <span class="etiqueta">Adeudo</span>
+        <strong class="cifra">{{ p.adeudoTotal | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+        <span class="pie">{{ p.clientesConAdeudo }} clientes con saldo vencido</span>
+      </div>
+      <div class="indicador">
+        <span class="etiqueta">Suspendidos</span>
+        <strong class="cifra">{{ p.suspendidos }}</strong>
+        <span class="pie">Sin acceso al sistema</span>
+      </div>
+    </section>
+  }
+
+  <!-- Listado -->
+  <section class="tarjeta">
+    <div class="titulo-fila">
+      <h2>Clientes</h2>
+      <button type="button" class="btn-principal" (click)="nuevo()">
+        Nuevo cliente
+      </button>
+    </div>
+
+    @if (cargando()) {
+      <p class="vacio">Cargando…</p>
+    } @else if (tenants().length === 0) {
+      <p class="vacio">Todavía no hay clientes dados de alta.</p>
+    } @else {
+      <table class="tabla">
+        <thead>
+          <tr>
+            <th>Grupo</th>
+            <th>Identificador</th>
+            <th>Plan</th>
+            <th>Módulos</th>
+            <th>Estado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (t of tenants(); track t.id) {
+            <tr [class.suspendido]="!t.isActive">
+              <td>{{ t.name }}</td>
+              <td class="mono">{{ t.slug }}</td>
+              <td>
+                <span class="plan" [attr.data-plan]="t.plan" [title]="etiquetaPlan(t.plan)">
+                  {{ planDe(t) }}
+                </span>
+              </td>
+              <td class="num">{{ contarActivos(t) }}</td>
+              <td>
+                <span class="estado" [attr.data-activo]="t.isActive">
+                  {{ t.isActive ? "Activo" : "Suspendido" }}
+                </span>
+              </td>
+              <td class="acciones">
+                <button
+                  type="button"
+                  class="btn-chico entrar"
+                  (click)="entrar(t)"
+                  [disabled]="!t.isActive"
+                  title="Entrar al DMS de este cliente"
+                >
+                  Entrar
+                </button>
+                <button type="button" class="btn-chico" (click)="abrirFicha(t)">
+                  Ficha
+                </button>
+                <button type="button" class="btn-chico" (click)="editar(t)">
+                  Editar
+                </button>
+                <button type="button" class="btn-chico" (click)="abrirModulos(t)">
+                  Módulos
+                </button>
+                <button
+                  type="button"
+                  class="btn-chico"
+                  (click)="alternarSuspension(t)"
+                >
+                  {{ t.isActive ? "Suspender" : "Reactivar" }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </section>
+</div>
+
+<!-- Alta y edición del cliente -->
+@if (formAbierto()) {
+  <div class="fondo" (click)="cerrarForm()"></div>
+  <div class="dialogo" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>{{ editando() ? "Editar cliente" : "Nuevo cliente" }}</h2>
+        <p>
+          {{
+            editando()
+              ? "El plan define su nivel, su precio y los módulos que recibe"
+              : "Un grupo nuevo con el plan que contrata"
+          }}
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarForm()">×</button>
+    </header>
+
+    <div class="rejilla">
+        <label class="campo">
+          <span>Nombre del grupo</span>
+          <input [(ngModel)]="form.name" (input)="alEscribirNombre()" />
+        </label>
+        <label class="campo">
+          <span>Identificador</span>
+          <input [(ngModel)]="form.slug" />
+        </label>
+        <label class="campo ancho-total">
+          <span>Plan contratado</span>
+          <select [(ngModel)]="planId">
+            @for (p of planesALaVenta(); track p.id) {
+              <option [value]="p.id">
+                {{ p.name }} — {{ p.monthlyPrice | currency: "MXN" : "symbol-narrow" : "1.0-0" }} al mes
+              </option>
+            }
+          </select>
+      </label>
+    </div>
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarForm()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando()"
+        (click)="guardar()"
+      >
+        {{ editando() ? "Guardar" : "Dar de alta" }}
+      </button>
+    </footer>
+  </div>
+}
+
+<!-- Módulos del cliente -->
+@if (moduloDe(); as t) {
+  <div class="fondo" (click)="cerrarModulos()"></div>
+  <div class="dialogo" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>Módulos de {{ t.name }}</h2>
+        <p>
+          Plan {{ etiquetaPlan(t.plan) }} — marca lo que tiene contratado
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarModulos()">×</button>
+    </header>
+
+    <div class="modulos">
+      @for (m of modulosDelPlan(); track m.key) {
+        <label class="modulo" [class.nucleo]="m.core">
+          <input
+            type="checkbox"
+            [checked]="activo(m)"
+            [disabled]="m.core"
+            (change)="alternarModulo(m)"
+          />
+          <span class="modulo-texto">
+            <strong>{{ m.name }}</strong>
+            <span>{{ m.description }}</span>
+            @if (m.core) {
+              <span class="nota">Siempre activo — el DMS no opera sin él</span>
+            }
+          </span>
+        </label>
+      }
+    </div>
+
+    @if (modulosFueraDePlan().length) {
+      <h3 class="fuera-titulo">
+        Fuera del plan {{ etiquetaPlan(t.plan) }} — se contratan aparte
+      </h3>
+      <div class="modulos">
+        @for (m of modulosFueraDePlan(); track m.key) {
+          <label class="modulo extra">
+            <input
+              type="checkbox"
+              [checked]="activo(m)"
+              (change)="alternarModulo(m)"
+            />
+            <span class="modulo-texto">
+              <strong>{{ m.name }}</strong>
+              <span>{{ m.description }}</span>
+              <span class="precio-extra">
+                @if (precioDe(m.key)) {
+                  +{{ precioDe(m.key) | currency: "MXN" : "symbol-narrow" : "1.0-0" }} al mes
+                } @else {
+                  Sin precio definido en Planes y precios
+                }
+              </span>
+            </span>
+          </label>
+        }
+      </div>
+    }
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarModulos()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando()"
+        (click)="guardarModulos()"
+      >
+        Guardar módulos
+      </button>
+    </footer>
+  </div>
+}
+
+<!-- Ficha del cliente: quién es, qué paga y qué ha pagado -->
+@if (fichaDe(); as t) {
+  <div class="fondo" (click)="cerrarFicha()"></div>
+  <div class="dialogo ancho" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>{{ t.name }}</h2>
+        <p>
+          <span class="plan" [attr.data-plan]="t.plan">{{ etiquetaPlan(t.plan) }}</span>
+          <span class="mono">{{ t.slug }}</span>
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarFicha()">×</button>
+    </header>
+
+    @if (ficha(); as f) {
+      <!-- Ligas de acceso del cliente por portal, para copiar y compartir -->
+      <section class="liga-acceso">
+        <span class="etiqueta">Ligas de acceso</span>
+        @for (p of [
+          { rotulo: 'DMS', url: f.accessUrls.dms },
+          { rotulo: 'Recepción', url: f.accessUrls.recepcion },
+          { rotulo: 'Técnico', url: f.accessUrls.tecnico }
+        ]; track p.rotulo) {
+          <div class="liga-fila">
+            <span class="liga-rotulo">{{ p.rotulo }}</span>
+            <input type="text" class="mono" [value]="p.url" readonly />
+            <button type="button" class="btn-chico" (click)="copiar(p.url)">
+              {{ copiado() === p.url ? "¡Copiada!" : "Copiar" }}
+            </button>
+            <a class="btn-chico" [href]="p.url" target="_blank" rel="noopener">Abrir</a>
+          </div>
+        }
+        <p class="ayuda">
+          El cliente entra con su usuario; la pantalla ya sale con su marca.
+        </p>
+      </section>
+
+      <!-- Lo que paga y cómo va: el resumen antes del detalle -->
+      <section class="indicadores compactos">
+        <div class="indicador">
+          <span class="etiqueta">Cobro mensual</span>
+          <strong class="cifra">{{ f.cobro.total | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+          <span class="pie">
+            Plan {{ f.cobro.plan.precio | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+            @for (e of f.cobro.extras; track e.key) {
+              · {{ e.name }} +{{ e.precio | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+            }
+          </span>
+        </div>
+        <div class="indicador" [class.alerta]="f.resumen.adeudo > 0">
+          <span class="etiqueta">Adeudo</span>
+          <strong class="cifra">{{ f.resumen.adeudo | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+          <span class="pie">{{ f.resumen.vencidos }} periodos vencidos</span>
+        </div>
+        <div class="indicador">
+          <span class="etiqueta">Cobrado</span>
+          <strong class="cifra">{{ f.resumen.totalPagado | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+          <span class="pie">
+            {{ f.resumen.mesesPagados }} meses
+            @if (f.resumen.antiguedadMeses !== null) {
+              · {{ f.resumen.antiguedadMeses }} de antigüedad
+            }
+          </span>
+        </div>
+        <div class="indicador">
+          <span class="etiqueta">Módulos</span>
+          <strong class="cifra">{{ f.modulos.activos }}</strong>
+          <span class="pie">
+            {{ f.modulos.incluidosEnPlan }} permite el plan
+            @if (f.modulos.extras.length) {
+              · {{ f.modulos.extras.length }} contratados aparte
+            }
+          </span>
+        </div>
+      </section>
+
+      <nav class="pestanas">
+        <button
+          type="button"
+          [class.activa]="pestana() === 'datos'"
+          (click)="pestana.set('datos')"
+        >
+          Datos del cliente
+        </button>
+        <button
+          type="button"
+          [class.activa]="pestana() === 'pagos'"
+          (click)="pestana.set('pagos')"
+        >
+          Cobros ({{ f.pagos.length }})
+        </button>
+        <button
+          type="button"
+          [class.activa]="pestana() === 'marca'"
+          (click)="pestana.set('marca')"
+        >
+          Marca
+        </button>
+      </nav>
+
+      @if (pestana() === "datos") {
+        <div class="rejilla">
+          <label class="campo">
+            <span>Plan contratado</span>
+            <select [(ngModel)]="datos.saasPlanId">
+              <option value="">Sin plan asignado</option>
+              @for (p of planesComerciales(); track p.id) {
+                <option [value]="p.id">
+                  {{ p.name }} — {{ p.monthlyPrice | currency: "MXN" : "symbol-narrow" : "1.0-0" }}
+                  @if (!p.isActive) {
+                    (retirado)
+                  }
+                </option>
+              }
+            </select>
+          </label>
+          <label class="campo">
+            <span>Contacto</span>
+            <input [(ngModel)]="datos.contactName" placeholder="Nombre de quien decide" />
+          </label>
+          <label class="campo">
+            <span>Correo del contacto</span>
+            <input type="email" [(ngModel)]="datos.contactEmail" />
+          </label>
+          <label class="campo">
+            <span>Teléfono</span>
+            <input [(ngModel)]="datos.contactPhone" />
+          </label>
+          <label class="campo">
+            <span>RFC</span>
+            <input [(ngModel)]="datos.rfc" maxlength="13" />
+          </label>
+          <label class="campo">
+            <span>Correo de facturación</span>
+            <input type="email" [(ngModel)]="datos.billingEmail" />
+          </label>
+          <label class="campo">
+            <span>Alta de la suscripción</span>
+            <input type="date" [(ngModel)]="datos.subscriptionStart" />
+          </label>
+          <label class="campo">
+            <span>Día de cobro</span>
+            <input type="number" min="1" max="28" [(ngModel)]="datos.billingDay" />
+          </label>
+          <label class="campo ancho-total">
+            <span>Domicilio</span>
+            <input [(ngModel)]="datos.address" />
+          </label>
+          <label class="campo ancho-total">
+            <span>Notas</span>
+            <textarea rows="3" [(ngModel)]="datos.notes"></textarea>
+          </label>
+        </div>
+
+        <footer class="dialogo-pie">
+          <button type="button" class="btn-secundario" (click)="cerrarFicha()">
+            Cerrar
+          </button>
+          <button
+            type="button"
+            class="btn-principal"
+            [disabled]="guardando()"
+            (click)="guardarDatos()"
+          >
+            Guardar datos
+          </button>
+        </footer>
+      } @else if (pestana() === "pagos") {
+        <!-- Registrar el cobro del mes, propuesto con lo que le toca pagar -->
+        <div class="rejilla cobro">
+          <label class="campo">
+            <span>Periodo</span>
+            <input [(ngModel)]="pago.period" placeholder="2026-08" />
+          </label>
+          <label class="campo">
+            <span>Importe</span>
+            <input type="number" min="0" step="100" [(ngModel)]="pago.amount" />
+          </label>
+          <label class="campo">
+            <span>Estado</span>
+            <select [(ngModel)]="pago.status">
+              <option value="PAGADO">Pagado</option>
+              <option value="PENDIENTE">Pendiente</option>
+              <option value="VENCIDO">Vencido</option>
+              <option value="CANCELADO">Cancelado</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Vence</span>
+            <input type="date" [(ngModel)]="pago.dueDate" />
+          </label>
+          <label class="campo">
+            <span>Forma de pago</span>
+            <input [(ngModel)]="pago.method" placeholder="TRANSFERENCIA" />
+          </label>
+          <label class="campo">
+            <span>Referencia</span>
+            <input [(ngModel)]="pago.reference" />
+          </label>
+          <div class="campo acciones-fila">
+            <button
+              type="button"
+              class="btn-principal"
+              [disabled]="guardando()"
+              (click)="registrarPago()"
+            >
+              Registrar cobro
+            </button>
+          </div>
+        </div>
+
+        @if (f.pagos.length === 0) {
+          <p class="vacio">Todavía no se le ha registrado ningún cobro.</p>
+        } @else {
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Periodo</th>
+                <th class="num">Importe</th>
+                <th>Estado</th>
+                <th>Pagado</th>
+                <th>Forma</th>
+                <th>Referencia</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of f.pagos; track p.id) {
+                <tr>
+                  <td class="mono">{{ p.period }}</td>
+                  <td class="num">{{ p.amount | currency: "MXN" : "symbol-narrow" : "1.0-2" }}</td>
+                  <td>
+                    <span
+                      class="cobro-estado"
+                      [attr.data-estado]="p.vencido ? 'VENCIDO' : p.status"
+                    >
+                      {{ p.vencido ? "Vencido" : (p.status | titlecase) }}
+                    </span>
+                  </td>
+                  <td>{{ p.paidAt ? (p.paidAt | date: "dd/MM/yyyy") : "—" }}</td>
+                  <td>{{ p.method || "—" }}</td>
+                  <td class="mono">{{ p.reference || "—" }}</td>
+                  <td class="acciones">
+                    <button type="button" class="btn-chico" (click)="eliminarPago(p)">
+                      Borrar
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      } @else {
+        <!-- ── Marca del cliente ── -->
+        <p class="marca-intro">
+          El logotipo y los colores se aplican en todo su NexDMS y en lo que
+          imprime: el DMS, el portal del mostrador, los monitores del taller y
+          las órdenes de servicio.
+        </p>
+
+        <h4 class="marca-titulo">Logotipo</h4>
+        <div class="logo-fila">
+          <div class="logo-vista" [class.vacio]="!branding()?.logoUrl">
+            @if (branding()?.logoUrl; as url) {
+              <img [src]="url" alt="Logotipo del cliente" />
+            } @else {
+              <span>Sin logotipo</span>
+            }
+          </div>
+          <div class="logo-acciones">
+            <label class="btn-archivo">
+              {{ subiendoLogo() ? "Subiendo…" : "Subir logotipo" }}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                hidden
+                [disabled]="subiendoLogo()"
+                (change)="subirLogo($event)"
+              />
+            </label>
+            @if (branding()?.logoUrl) {
+              <button type="button" class="btn-secundario" (click)="quitarLogo()">
+                Quitar
+              </button>
+            }
+            <span class="pista">PNG, JPG, SVG o WebP. Fondo transparente, de preferencia.</span>
+          </div>
+        </div>
+
+        <h4 class="marca-titulo">Paleta de colores</h4>
+        <div class="paletas">
+          @for (p of paletas(); track p.id) {
+            <!-- Cada paleta se muestra con sus propios colores: se elige por
+                 cómo se ve, no por su nombre. -->
+            <button
+              type="button"
+              class="paleta"
+              [class.elegida]="paletaElegida() === p.id"
+              (click)="paletaElegida.set(p.id)"
+            >
+              <span class="muestras">
+                <span class="tono" [style.background]="p.primary"></span>
+                <span class="tono" [style.background]="p.primaryHover"></span>
+                <span class="tono" [style.background]="p.tinta"></span>
+                <span class="tono borde" [style.background]="p.primarySoft"></span>
+              </span>
+              <span class="paleta-nombre">{{ p.nombre }}</span>
+              @if (paletaElegida() === p.id) {
+                <span class="marca-check">✓</span>
+              }
+            </button>
+          }
+        </div>
+
+        <footer class="acciones">
+          <button
+            type="button"
+            class="btn-principal"
+            [disabled]="guardando() || paletaElegida() === branding()?.paletaId"
+            (click)="guardarPaleta()"
+          >
+            {{ guardando() ? "Guardando…" : "Aplicar paleta" }}
+          </button>
+        </footer>
+      }
+    } @else {
+      <p class="vacio">Cargando ficha…</p>
+    }
+  </div>
+}

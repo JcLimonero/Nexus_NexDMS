@@ -1,0 +1,134 @@
+<div class="container-fluid venta-unidad-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Venta {{ sale()?.folio }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/sales">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else if (sale(); as s) {
+            <!-- La ficha en pestañas: los datos y el expediente son cosas
+                 distintas y cada una crece; verlas juntas ensucia la lectura. -->
+            <ul class="nav nav-tabs mb-4">
+              <li class="nav-item">
+                <button
+                  type="button"
+                  class="nav-link"
+                  [class.active]="pestana() === 'datos'"
+                  (click)="pestana.set('datos')"
+                >
+                  Datos
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  type="button"
+                  class="nav-link"
+                  [class.active]="pestana() === 'pagos'"
+                  (click)="pestana.set('pagos')"
+                >
+                  Pagos
+                </button>
+              </li>
+              <li class="nav-item">
+                <button
+                  type="button"
+                  class="nav-link"
+                  [class.active]="pestana() === 'documentos'"
+                  (click)="pestana.set('documentos')"
+                >
+                  Documentos
+                </button>
+              </li>
+            </ul>
+
+            @if (pestana() === "datos") {
+              <div class="row">
+                <div class="col-md-6">
+                  <dl class="row">
+                    <dt class="col-sm-4">Folio</dt>
+                    <dd class="col-sm-8">{{ s.folio }}</dd>
+
+                    <dt class="col-sm-4">Unidad</dt>
+                    <dd class="col-sm-8">{{ getUnitLabel(s) }}</dd>
+
+                    <dt class="col-sm-4">Cliente</dt>
+                    <dd class="col-sm-8">{{ getClientLabel(s) }}</dd>
+
+                    <dt class="col-sm-4">Precio lista</dt>
+                    <dd class="col-sm-8">${{ s.listPrice | number:'1.2-2' }}</dd>
+
+                    <dt class="col-sm-4">Precio final</dt>
+                    <dd class="col-sm-8">${{ s.finalPrice | number:'1.2-2' }}</dd>
+
+                    <dt class="col-sm-4">Enganche</dt>
+                    <dd class="col-sm-8">${{ s.downPayment | number:'1.2-2' }}</dd>
+
+                    <dt class="col-sm-4">Estatus</dt>
+                    <dd class="col-sm-8">{{ getStatusLabel(s.status) }}</dd>
+
+                    <dt class="col-sm-4">Fecha entrega</dt>
+                    <dd class="col-sm-8">
+                      @if (editandoEntrega()) {
+                        <span class="d-inline-flex align-items-center gap-2 flex-wrap">
+                          <input type="date" class="form-control form-control-sm" style="width: 170px"
+                            [(ngModel)]="fechaEntrega" />
+                          <button class="btn btn-primary btn-sm" [disabled]="guardandoEntrega()"
+                            (click)="guardarEntrega()">
+                            {{ guardandoEntrega() ? "Guardando…" : "Guardar" }}
+                          </button>
+                          <button class="btn btn-light btn-sm" (click)="editandoEntrega.set(false)">
+                            Cancelar
+                          </button>
+                        </span>
+                      } @else {
+                        {{ s.deliveryDate ? (s.deliveryDate | date: "dd/MM/yyyy") : "Sin programar" }}
+                        @if (s.status === UnitSaleStatus.IN_PROGRESS) {
+                          <button class="btn btn-link btn-sm p-0 ms-2" (click)="abrirEntrega(s.deliveryDate)">
+                            {{ s.deliveryDate ? "Cambiar" : "Programar" }}
+                          </button>
+                        }
+                      }
+                    </dd>
+                    @if (s.notes) {
+                      <dt class="col-sm-4">Notas</dt>
+                      <dd class="col-sm-8">{{ s.notes }}</dd>
+                    }
+                  </dl>
+                </div>
+              </div>
+            } @else if (pestana() === "pagos") {
+              <!-- Pagos de la venta: apartado, enganche, parciales, cada uno
+                   con su comprobante. Solo se editan en una venta en proceso. -->
+              <app-pagos-venta
+                [unitSaleId]="s.id"
+                [editable]="s.status === UnitSaleStatus.IN_PROGRESS"
+              />
+            } @else {
+              <!-- Expediente: qué exige esta venta según a quién, cómo y qué
+                   se vende, y cuánto falta para poder cerrarla. -->
+              <app-expediente-venta
+                [unitSaleId]="s.id"
+                [clientId]="s.clientId"
+                [puedeRevisar]="puedeRevisar"
+              />
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

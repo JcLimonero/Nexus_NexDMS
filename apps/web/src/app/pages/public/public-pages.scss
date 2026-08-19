@@ -1,0 +1,617 @@
+/**
+ * Páginas públicas (tracking + encuesta) — mobile-first, sin layout interno.
+ * Usan los tokens globales del design system: misma marca que la app.
+ */
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: linear-gradient(to bottom, var(--navy-600), var(--navy-800));
+}
+
+.public-wrap {
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--space-24) var(--space-16);
+}
+
+.public-card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-24);
+  box-shadow: var(--shadow-lg);
+}
+
+.public-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+
+  .brand-mark {
+    width: 30px;
+    height: 30px;
+    border-radius: var(--radius-md);
+    background: linear-gradient(to bottom right, var(--nexus-500), var(--nexus-700));
+    color: var(--text-on-brand);
+    font-weight: var(--font-bold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-base);
+  }
+
+  .brand-name {
+    font-weight: var(--font-bold);
+    color: var(--text-primary);
+  }
+}
+
+h1 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--text-xl);
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+h2 {
+  margin: var(--space-24) 0 var(--space-8);
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-secondary);
+}
+
+.muted {
+  color: var(--text-secondary);
+  font-size: var(--text-sm);
+  margin: 0 0 var(--space-12);
+}
+
+.center { text-align: center; }
+
+.error-box {
+  padding: var(--space-12);
+  border-radius: var(--radius-md);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+/* ── Timeline (tracking) ── */
+.timeline-steps {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--space-24) 0 var(--space-8);
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  position: relative;
+
+  &:not(:first-child)::before {
+    content: "";
+    position: absolute;
+    top: 11px;
+    right: 50%;
+    width: 100%;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+  }
+
+  &.done:not(:first-child)::before {
+    background: var(--success);
+  }
+
+  .dot {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--radius-pill);
+    background: var(--border);
+    color: var(--text-on-brand);
+    font-size: var(--text-xs);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+  }
+
+  &.done .dot { background: var(--success); }
+
+  &.current .dot {
+    background: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-soft);
+  }
+
+  .step-label {
+    font-size: 10px;
+    text-align: center;
+    color: var(--text-secondary);
+    max-width: 70px;
+  }
+
+  &.current .step-label {
+    color: var(--text-primary);
+    font-weight: var(--font-semibold);
+  }
+}
+
+.status-banner {
+  margin: var(--space-16) 0;
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  b { color: var(--primary); }
+}
+
+.update-item {
+  padding: var(--space-8) 0;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+
+  .update-date {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+}
+
+.branch-foot {
+  margin-top: var(--space-16);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  a { color: var(--primary); text-decoration: none; }
+}
+
+/* ── Encuesta ── */
+.stars {
+  display: flex;
+  gap: var(--space-8);
+  justify-content: center;
+  margin: var(--space-16) 0;
+}
+
+.star {
+  font-size: 38px;
+  line-height: 1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--border);
+  transition: transform 0.1s, color 0.1s;
+
+  &.on { color: #E8A33D; }
+  &:hover { transform: scale(1.15); }
+
+  &:focus-visible {
+    outline: none;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.comment-label {
+  display: block;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+/* textarea y .btn-send heredan el contrato de controles del design system */
+.btn-send {
+  width: 100%;
+  margin-top: var(--space-16);
+  height: var(--control-h-lg);
+  font-size: var(--text-base);
+  font-weight: var(--font-semibold);
+  color: var(--text-on-brand);
+  background: var(--primary);
+  border: none;
+  border-radius: var(--control-radius);
+  cursor: pointer;
+
+  &:hover:not(:disabled) { background: var(--primary-hover); }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.thanks {
+  text-align: center;
+  padding: var(--space-12) 0;
+
+  .thanks-icon { font-size: 44px; margin-bottom: var(--space-8); }
+}
+
+/* ── Cotización pública ── */
+.conceptos {
+  display: grid;
+  gap: var(--space-8);
+  margin-bottom: var(--space-16);
+}
+
+.concepto {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  padding: var(--space-8) 0;
+  border-bottom: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.c-desc { color: var(--text-primary); }
+
+.c-cant {
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+.c-monto {
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.totales {
+  display: grid;
+  gap: var(--space-4);
+  margin-bottom: var(--space-16);
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .total {
+    padding-top: var(--space-8);
+    border-top: 1px solid var(--border);
+    font-size: var(--text-base);
+    font-weight: var(--font-semibold);
+    color: var(--text-primary);
+  }
+}
+
+.btn-reject {
+  width: 100%;
+  margin-top: var(--space-8);
+  height: var(--control-h);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--control-radius);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+}
+
+/* ── Firma remota ──────────────────────────────────────────
+   El cliente firma con el dedo en un teléfono, así que el recuadro debe ser
+   generoso y no puede competir con el desplazamiento de la página. */
+.firma-pad {
+  display: block;
+  width: 100%;
+  height: 180px;
+  margin: var(--space-8) 0 var(--space-12);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.firma-acciones {
+  display: flex;
+  gap: var(--space-8);
+  margin-top: var(--space-12);
+
+  button {
+    flex: 1;
+  }
+}
+
+/* ── Asesor que atiende la unidad ──────────────────
+   El cliente pregunta por una persona, no por un conmutador: el nombre va
+   primero y el contacto debajo, tocable desde el teléfono. */
+.asesor {
+  margin-top: 20px;
+  padding: 14px 16px;
+  border: 1px solid var(--border, #e2e8f0);
+  border-radius: 10px;
+  background: var(--bg, #f8fafc);
+}
+
+.asesor-rotulo {
+  display: block;
+  font-size: 12px;
+  color: var(--text-secondary, #64748b);
+}
+
+.asesor strong {
+  display: block;
+  margin-top: 2px;
+  font-size: 16px;
+}
+
+.asesor-contacto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 14px;
+}
+
+.asesor-contacto .via {
+  color: var(--text-muted, #94a3b8);
+  font-size: 12px;
+}
+
+/* ── Presupuesto: autorización por línea (R1) ── */
+.lead {
+  color: var(--text-secondary, #45586a);
+  font-size: 15px;
+  margin: 8px 0 16px;
+}
+.lead strong {
+  color: var(--text-primary, #16262f);
+}
+
+.conceptos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.concepto-card {
+  border: 1px solid var(--border, #e4e9ee);
+  border-radius: 14px;
+  overflow: hidden;
+  transition: box-shadow 0.15s, border-color 0.15s, opacity 0.15s;
+}
+.concepto-card.sel-si {
+  border-color: #9ccbb2;
+  box-shadow: 0 0 0 2px rgba(21, 127, 82, 0.16);
+}
+.concepto-card.sel-no {
+  opacity: 0.62;
+}
+.concepto-card.sel-duda {
+  border-color: #e0b877;
+  box-shadow: 0 0 0 2px rgba(154, 98, 18, 0.14);
+}
+
+.c-fotos {
+  display: flex;
+  gap: 6px;
+  padding: 10px 10px 0;
+}
+.c-fotos img {
+  flex: 1;
+  min-width: 0;
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.c-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+.c-urg {
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.urg-URGENTE {
+  color: #c0392b;
+  background: #fbe9e7;
+}
+.urg-RECOMENDADO {
+  color: #9a6212;
+  background: #f8efda;
+}
+.urg-OPCIONAL {
+  color: #4a5c6a;
+  background: #eef1f4;
+}
+.c-titulo {
+  flex: 1;
+  font-size: 15.5px;
+  color: var(--text-primary, #16262f);
+}
+.c-monto {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--navy-600, #203848);
+  white-space: nowrap;
+}
+.c-cant {
+  display: block;
+  padding: 4px 14px 0;
+  font-size: 12.5px;
+  color: var(--text-muted, #7c8d9a);
+}
+
+.c-nota {
+  display: flex;
+  gap: 8px;
+  margin: 10px 14px 0;
+  padding: 8px 11px;
+  background: var(--surface-2, #f5f7f9);
+  border-radius: 9px;
+  font-size: 12.5px;
+  color: var(--text-secondary, #45586a);
+}
+.c-nota b {
+  color: var(--navy-600, #203848);
+}
+
+.c-acciones {
+  display: flex;
+  gap: 8px;
+  padding: 12px 14px 0;
+}
+.c-acciones button {
+  flex: 1;
+  height: 42px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border, #e4e9ee);
+  background: var(--card, #fff);
+  color: var(--text-secondary, #45586a);
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.c-acciones .c-si.on {
+  background: #157f52;
+  border-color: #157f52;
+  color: #fff;
+}
+.c-acciones .c-no.on {
+  background: #55606a;
+  border-color: #55606a;
+  color: #fff;
+}
+.c-duda {
+  width: calc(100% - 28px);
+  margin: 8px 14px 14px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px dashed var(--border, #e4e9ee);
+  background: var(--card, #fff);
+  color: var(--text-muted, #7c8d9a);
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.c-duda.on {
+  background: #f8efda;
+  border-color: #e0b877;
+  color: #9a6212;
+}
+
+.firma-bloque {
+  margin-top: 20px;
+}
+.firma-bloque > label {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary, #16262f);
+  margin-bottom: 8px;
+}
+.firma-lienzo {
+  position: relative;
+  height: 170px;
+  background: var(--surface-2, #f7f9fb);
+  border: 1.5px dashed #c3d0da;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.firma-lienzo canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: crosshair;
+}
+.firma-hint {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  text-align: center;
+  color: #aab6bf;
+  font-size: 14px;
+  pointer-events: none;
+}
+.firma-limpiar {
+  display: block;
+  margin: 8px auto 0;
+  background: none;
+  border: none;
+  color: var(--nexus-600, #105078);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.totales-sticky {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 18px;
+  padding: 12px 14px;
+  background: var(--surface-2, #f5f7f9);
+  border-radius: 12px;
+}
+.ts-info {
+  display: flex;
+  flex-direction: column;
+  font-size: 12.5px;
+  color: var(--text-muted, #7c8d9a);
+}
+.ts-info b {
+  font-size: 15px;
+  color: var(--text-primary, #16262f);
+}
+.ts-total {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--navy-600, #203848);
+}
+
+/* Desglose de un trabajo: mano de obra + refacciones */
+.c-desglose {
+  margin: 8px 14px 0;
+  padding-top: 8px;
+  border-top: 1px dashed var(--border, #e4e9ee);
+}
+.c-desglose .dl {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-secondary, #45586a);
+  padding: 2px 0;
+}
+.c-desglose .dl span:last-child {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

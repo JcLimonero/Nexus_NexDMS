@@ -1,0 +1,97 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Nueva transferencia</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/almacen/transferencias">
+            Volver
+          </a>
+        </div>
+        <div class="card-body">
+          <form class="transferencia-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal origen <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="originBranchId">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('originBranchId')?.invalid && form.get('originBranchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal origen es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal destino <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="destinationBranchId">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+                @if (form.get('destinationBranchId')?.invalid && form.get('destinationBranchId')?.touched) {
+                  <div class="text-danger small mt-1">La sucursal destino es obligatoria</div>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="type">
+                  @for (t of types; track t.value) {
+                    <option [ngValue]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-12 mb-3">
+                <label class="form-label">Notas</label>
+                <textarea class="form-control" formControlName="notes" rows="2"></textarea>
+              </div>
+            </div>
+
+            <h6 class="mt-4 mb-2">Líneas de la transferencia</h6>
+            <div formArrayName="lines">
+              @for (line of lines.controls; track $index; let i = $index) {
+                <div class="row align-items-end mb-2" [formGroupName]="i">
+                  <div class="col-md-6">
+                    <label class="form-label small">Parte</label>
+                    <select class="form-select form-select-sm" formControlName="partId">
+                      <option value="">Seleccionar parte</option>
+                      @for (p of parts(); track p.id) {
+                        <option [ngValue]="p.id">{{ getPartLabel(p) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <label class="form-label small">Cantidad</label>
+                    <input type="number" class="form-control form-control-sm" formControlName="quantity" min="1" />
+                  </div>
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger btn-sm" (click)="removeLine(i)" [disabled]="lines.length <= 1">
+                      <i class="icofont icofont-trash"></i>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addLine()">
+              <i class="icofont icofont-plus me-1"></i> Agregar línea
+            </button>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Crear transferencia
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/almacen/transferencias">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

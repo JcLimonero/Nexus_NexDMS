@@ -1,0 +1,161 @@
+<div class="container-fluid comision-period-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5>Período de comisiones</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/reports/comisiones">Volver</a>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+          } @else if (period(); as p) {
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 35%">Sucursal</th>
+                      <td>{{ getBranchName(p.branchId) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Fecha período</th>
+                      <td>{{ p.periodDate | date:'mediumDate' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ getTypeLabel(p.type) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-warning]="p.status === 'OPEN'"
+                          [class.bg-info]="p.status === 'UNDER_REVIEW'"
+                          [class.bg-success]="p.status === 'APPROVED'"
+                          [class.bg-secondary]="p.status === 'PAID'">
+                          {{ getStatusLabel(p.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    @if (p.approver) {
+                      <tr>
+                        <th class="text-muted">Aprobado por</th>
+                        <td>{{ p.approver.firstName }} {{ p.approver.lastName }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2 mb-3">
+              @if (canSubmitForReview()) {
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="onSubmitForReview()"
+                  [disabled]="submitting()"
+                >
+                  @if (submitting()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Enviar a revisión
+                </button>
+              }
+              @if (canApprove()) {
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  (click)="onApprove()"
+                  [disabled]="approving()"
+                >
+                  @if (approving()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Aprobar
+                </button>
+              }
+              @if (canMarkAsPaid()) {
+                <button
+                  type="button"
+                  class="btn btn-secondary btn-sm"
+                  (click)="onMarkAsPaid()"
+                  [disabled]="markingPaid()"
+                >
+                  @if (markingPaid()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Marcar como pagado
+                </button>
+              }
+            </div>
+
+            @if (p.details && p.details.length > 0) {
+              <h6 class="mb-2">Comisiones por área</h6>
+              <div class="table-responsive mb-3">
+                <table class="table table-sm w-auto">
+                  <thead>
+                    <tr><th>Área</th><th class="text-center">Comisiones</th><th class="text-end">Monto</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (a of totalesPorArea(); track a.area) {
+                      <tr>
+                        <td>{{ a.area }}</td>
+                        <td class="text-center">{{ a.count }}</td>
+                        <td class="text-end">{{ a.total | number:'1.2-2' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+
+              <h6 class="mb-2">Detalle de comisiones</h6>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Usuario</th>
+                      <th>Concepto</th>
+                      <th>Área</th>
+                      <th class="text-end">Base</th>
+                      <th class="text-end">Monto</th>
+                      <th class="text-center">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (d of p.details; track d.id) {
+                      <tr>
+                        <td>{{ getUserName(d) }}</td>
+                        <td>{{ d.concept }}</td>
+                        <td>{{ areaLabel(d.referenceType) }}</td>
+                        <td class="text-end">{{ d.baseAmount | number:'1.2-2' }}</td>
+                        <td class="text-end">{{ d.amount | number:'1.2-2' }}</td>
+                        <td class="text-center">
+                          <span class="badge"
+                            [class.bg-warning]="d.status === 'PENDING'"
+                            [class.bg-success]="d.status === 'APPROVED'"
+                            [class.bg-danger]="d.status === 'REJECTED'">
+                            {{ d.status }}
+                          </span>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="text-muted">No hay detalles de comisión en este período.</p>
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

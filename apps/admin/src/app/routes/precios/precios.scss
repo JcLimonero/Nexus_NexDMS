@@ -1,0 +1,65 @@
+/**
+ * Lo propio de planes y precios. El panel, la tabla, los diálogos, la lista de
+ * módulos y los formularios en rejilla están en `styles/_panel.scss`. Aquí no
+ * hay colores a mano: todo sale de los tokens de marca.
+ */
+
+.planes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: var(--space-16);
+}
+
+.plan-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+  padding: var(--space-16);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-8);
+  }
+
+  /* El retirado sigue ahí porque hay clientes en él; solo no se ofrece. */
+  &.retirado {
+    background: var(--bg);
+    border-style: dashed;
+  }
+}
+
+.interruptor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+
+  input {
+    height: auto;
+  }
+}
+
+/* Lo que no se puede cambiar se muestra como texto, no como campo apagado. */
+.fijo {
+  padding: var(--space-8) 0;
+  font-size: var(--text-body);
+  color: var(--text-primary);
+}
+
+.incluye {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+.precio {
+  width: var(--field-sm);
+  height: var(--control-h-sm);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

@@ -1,0 +1,245 @@
+/**
+ * NexDMS — Skin Nexus Q Tech
+ * Aplica la identidad de marca sobre la estructura del template:
+ * sidebar navy (#203848), ítem activo en azul de marca (#105078),
+ * topbar clara y contenido sobre superficie azulada.
+ */
+
+/* ── Sidebar ───────────────────────────────────────────── */
+.page-wrapper .page-body-wrapper .page-sidebar,
+.page-wrapper .page-body-wrapper .page-sidebar.dark-sidebar {
+  width: var(--sidebar-width);
+  /* Color plano (sin degradado) para el fondo del menú. */
+  background: var(--sidebar-bg-via) !important;
+  box-shadow: var(--shadow-lg);
+}
+
+.page-sidebar .main-header-left,
+.page-main-header .main-header-left {
+  background: transparent !important;
+}
+
+.page-wrapper .page-main-header .logo-wrapper,
+.page-sidebar .logo-wrapper {
+  padding: var(--space-16);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
+.page-wrapper .page-body-wrapper .page-sidebar .sidebar-menu {
+  padding: var(--space-12);
+
+  > li {
+    margin: 0 0 2px 0;
+
+    > a.sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-12);
+      /* Mismo alto que un control: el menú alinea con el resto de la UI */
+      min-height: var(--control-h);
+      padding: 0 var(--space-12);
+      border-radius: var(--radius-md);
+      font-size: var(--text-sm);
+      font-weight: var(--font-regular);
+      letter-spacing: 0;
+      color: var(--sidebar-text);
+      transition: background 0.15s, color 0.15s;
+
+      svg {
+        width: 18px;
+        height: 18px;
+        stroke-width: 2;
+        flex-shrink: 0;
+      }
+
+      &:hover {
+        background: var(--sidebar-hover-bg);
+        color: var(--sidebar-text-hover);
+      }
+
+      &.active {
+        background: linear-gradient(
+          to right,
+          var(--sidebar-active-from),
+          var(--sidebar-active-to)
+        );
+        color: var(--text-on-brand);
+        font-weight: var(--font-medium);
+        box-shadow: var(--sidebar-active-glow);
+      }
+
+      &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
+      }
+    }
+
+    &.active > a.sidebar-header:not(.active) {
+      color: var(--sidebar-text-hover);
+    }
+  }
+
+  li .sidebar-submenu li a {
+    color: var(--sidebar-text);
+    font-size: var(--text-xs);
+    padding-top: 6px;
+    padding-bottom: 6px;
+
+    &:hover,
+    &.active {
+      color: var(--sidebar-text-hover);
+    }
+
+    &.active {
+      font-weight: var(--font-medium);
+    }
+  }
+}
+
+.page-body-wrapper .page-sidebar .sidebar.custom-scrollbar .sidebar-user-bottom {
+  border-top: 1px solid var(--sidebar-border);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+/* ── Topbar ────────────────────────────────────────────── */
+.page-wrapper .page-main-header {
+  height: var(--header-height);
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+
+  .main-header-right {
+    padding: 0 var(--space-24);
+    background: var(--card);
+    box-shadow: none;
+  }
+}
+
+/* Iconos del topbar: caja cuadrada del tamaño de un control sm */
+.page-main-header .nav-right li,
+.page-main-header .nav-right > ul > li {
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+
+  &:hover { background: var(--bg); }
+}
+
+/* ── Contenido ─────────────────────────────────────────── */
+.page-wrapper .page-body-wrapper .page-body {
+  background: var(--bg);
+}
+
+.page-body .page-header h2,
+.page-body .page-header h3 {
+  font-size: var(--text-page-title);
+  font-weight: var(--text-page-title-weight);
+  color: var(--text-primary);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Notificación ──────────────────────────────────────── */
+.notification-dot,
+.page-main-header .dot {
+  width: 8px;
+  height: 8px;
+  background: var(--danger);
+  border-radius: var(--radius-pill);
+}
+
+/* ══ Reafirmación del contrato ═════════════════════════════
+   `assets/css/color-N.css` es una hoja precompilada del template
+   que se inyecta en runtime DESPUÉS de styles.css. Estas reglas
+   recuperan el contrato del design system frente a ella; es el
+   único lugar del proyecto donde !important está justificado. */
+
+.card .card-header h5,
+.card .card-header h6 {
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+  font-size: var(--text-section-title) !important;
+  font-weight: var(--text-section-title-weight) !important;
+  color: var(--text-primary) !important;
+}
+
+.card[class*="-header-card"] .card-header h5 {
+  font-size: var(--text-page-title) !important;
+  font-weight: var(--text-page-title-weight) !important;
+}
+
+.card .card-header > span,
+.card .card-header div > span {
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  font-size: var(--text-caption) !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Controles: altura, radio y tipografía únicas pese al template */
+.form-control,
+.form-select,
+.form-control-plaintext,
+.page-main-header .search-form .form-group input.form-control-plaintext,
+select,
+textarea,
+input[type="text"],
+input[type="email"],
+input[type="search"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="date"],
+input[type="month"],
+input[type="time"] {
+  border-radius: var(--control-radius) !important;
+  font-size: var(--control-font) !important;
+  /* El template trae `select.form-select { margin: 6px 6px 0 0 }`, con más
+     especificidad que el contrato: bajaba los selects 6px respecto de los
+     inputs vecinos. La separación la define el layout, no el control. */
+  margin: 0 !important;
+}
+
+textarea,
+textarea.form-control {
+  height: auto !important;
+}
+
+.btn {
+  border-radius: var(--control-radius) !important;
+  font-size: var(--text-button) !important;
+  text-transform: none !important;
+  letter-spacing: 0 !important;
+}
+
+.btn-sm, .btn-xs { font-size: var(--control-font-sm) !important; }
+.btn-lg { font-size: var(--text-base) !important; }
+
+/* Menú: respeta el texto tal como se escribió ("Caja y ventas",
+   no "Caja Y Ventas" que produce el capitalize del template) */
+.page-sidebar .sidebar-menu li a span,
+.page-sidebar .sidebar-menu li a,
+.sidebar-user-bottom p {
+  text-transform: none !important;
+}
+
+/* Nombre del usuario en el pie del menú: la razón social puede ser larga, así
+   que se permite en dos renglones con letra chica en vez de cortarse. */
+.sidebar-user-bottom .nombre-usuario {
+  white-space: normal !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden !important;
+  font-size: 13px !important;
+  line-height: 1.2 !important;
+  word-break: break-word;
+}
+
+/* Encabezados de tabla: una sola voz tipográfica */
+.table th {
+  font-size: var(--text-overline) !important;
+  font-weight: var(--text-overline-weight) !important;
+  letter-spacing: var(--text-overline-tracking) !important;
+  color: var(--text-secondary) !important;
+}

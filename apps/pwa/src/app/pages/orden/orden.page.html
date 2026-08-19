@@ -1,0 +1,241 @@
+<header class="topbar">
+  <a routerLink="/" class="back">‹</a>
+  <div class="title">
+    <div class="folio">{{ orden()?.folio || "Orden de servicio" }}</div>
+    <div class="sub">{{ vehicleLabel() }}</div>
+  </div>
+  @if (orden(); as o) {
+    <span class="chip {{ o.status }}">{{ statusLabel(o.status) }}</span>
+  }
+</header>
+
+<main class="content">
+  @if (loading()) {
+    <div class="empty">Cargando orden…</div>
+  } @else if (error()) {
+    <div class="error">{{ error() }}</div>
+  } @else if (orden(); as o) {
+    <!-- Dónde estoy fichado: puede ser en otra orden, y conviene verlo -->
+    @if (fichaje(); as f) {
+      <section class="card fichaje-banner" [class.running]="f.fichado">
+        @if (f.fichado) {
+          <div>
+            <div class="timer-label">Fichado en {{ f.folio }}</div>
+            <div class="timer-value">{{ f.operacion }}</div>
+            <div class="timer-sub">Llevas {{ hm(f.minutos || 0) }}</div>
+          </div>
+        } @else {
+          <div>
+            <div class="timer-label">Sin fichar</div>
+            <div class="timer-sub">
+              Entra a una operación para empezar a contar tu tiempo
+            </div>
+          </div>
+        }
+      </section>
+    }
+
+    <!-- Operaciones: el tiempo se lleva contra cada una, no contra la orden -->
+    <section class="card">
+      <h3>Trabajos de esta orden</h3>
+      @if (operaciones().length === 0) {
+        <p class="vacio">
+          El asesor todavía no ha desglosado las operaciones de esta orden.
+        </p>
+      }
+      @for (op of operaciones(); track op.id) {
+        <article class="operacion" [class.activa]="op.running">
+          <header>
+            <div>
+              @if (op.code) {
+                <span class="op-code">{{ op.code }}</span>
+              }
+              <span class="op-desc">{{ op.description }}</span>
+            </div>
+            <span class="op-estado" [attr.data-estado]="op.status">
+              {{
+                op.status === "DONE"
+                  ? "Terminada"
+                  : op.status === "IN_PROGRESS"
+                    ? "En curso"
+                    : "Pendiente"
+              }}
+            </span>
+          </header>
+
+          <div class="op-tiempos">
+            <div>
+              <span class="k">Tuyo</span>
+              <strong>{{ hm(op.ownMinutes) }}</strong>
+            </div>
+            <div>
+              <span class="k">Otros operarios</span>
+              <strong>{{ hm(op.othersMinutes) }}</strong>
+            </div>
+            @if (op.standardMinutes) {
+              <div>
+                <span class="k">Baremo</span>
+                <strong>{{ hm(op.standardMinutes) }}</strong>
+              </div>
+            }
+          </div>
+
+          @if (desvio(op); as d) {
+            <p class="op-desvio" [attr.data-tono]="d.tono">{{ d.texto }}</p>
+          }
+
+          @if (op.status !== "DONE") {
+            <div class="op-acciones">
+              @if (op.running) {
+                <button class="btn-sec" [disabled]="busy()" (click)="pausar(op)">
+                  ⏸ Pausar
+                </button>
+              } @else {
+                <button class="btn-pri" [disabled]="busy()" (click)="fichar(op)">
+                  ▶ Fichar aquí
+                </button>
+              }
+              <button class="btn-sec" [disabled]="busy()" (click)="terminar(op)">
+                ✓ Terminar
+              </button>
+            </div>
+          }
+        </article>
+      }
+    </section>
+
+    <!-- Datos -->
+    <section class="card info">
+      <div class="row">
+        <span class="k">Cliente</span>
+        <span class="v">{{ clientLabel() || "—" }}</span>
+      </div>
+      <div class="row">
+        <span class="k">Problema</span>
+        <span class="v">{{ o.reportedFault || "—" }}</span>
+      </div>
+      @if (o.parts && o.parts.length > 0) {
+        <div class="row">
+          <span class="k">Refacciones</span>
+          <span class="v">
+            @for (p of o.parts; track p.id) {
+              <div>{{ p.quantity }}× {{ p.part?.name || p.part?.sku || "Refacción" }}</div>
+            }
+          </span>
+        </div>
+      }
+    </section>
+
+    <!-- Cambiar estatus -->
+    @if (nextStatuses().length > 0) {
+      <section class="card">
+        <h3>Avanzar estatus</h3>
+        <div class="status-btns">
+          @for (s of nextStatuses(); track s.value) {
+            <button
+              class="status-btn"
+              [disabled]="busy()"
+              (click)="changeStatus(s.value)"
+            >
+              {{ s.label }}
+            </button>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- Reportar hallazgo -->
+    <section class="card">
+      <h3>Reportar trabajo adicional</h3>
+      <p class="hint">
+        Lo que encuentres se convierte en cotización y se le manda al cliente
+        para que lo autorice. Sin foto o video no sale: es lo que sostiene el
+        cobro.
+      </p>
+      <div class="input-row">
+        <input
+          type="text"
+          placeholder="Ej. Balatas al 20%, se recomienda cambio"
+          [(ngModel)]="nuevoHallazgo"
+        />
+        @if (dictado.soportado()) {
+          <button
+            type="button"
+            class="btn-dictar"
+            [class.escuchando]="dictado.escuchando()"
+            [attr.aria-label]="dictado.escuchando() ? 'Dejar de dictar' : 'Dictar el hallazgo'"
+            (click)="dictarHallazgo()"
+          >
+            {{ dictado.escuchando() ? "● Grabando" : "🎤 Dictar" }}
+          </button>
+        }
+      </div>
+      @if (dictado.error(); as e) {
+        <p class="hint">{{ e }}</p>
+      }
+
+      <div class="input-row">
+        <label class="campo">
+          <span>Qué tan urgente</span>
+          <select [(ngModel)]="hallazgoCriticidad">
+            @for (c of criticidades; track c.value) {
+              <option [value]="c.value">{{ c.label }}</option>
+            }
+          </select>
+        </label>
+        <label class="campo">
+          <span>Tiempo estimado (min)</span>
+          <input type="number" min="0" step="15" [(ngModel)]="hallazgoMinutos" />
+        </label>
+      </div>
+
+      <div class="input-row">
+        <label class="file-btn">
+          📷 {{ hallazgoFile ? hallazgoFile.name : "Foto o video" }}
+          <input
+            type="file"
+            accept="image/*,video/mp4"
+            capture="environment"
+            hidden
+            (change)="onHallazgoFile($event)"
+          />
+        </label>
+        <button
+          [disabled]="busy() || !nuevoHallazgo.trim() || !hallazgoFile"
+          (click)="addHallazgo()"
+        >
+          Enviar
+        </button>
+      </div>
+    </section>
+
+    <!-- Avances -->
+    <section class="card">
+      <h3>Avances</h3>
+      <div class="input-row">
+        <input
+          type="text"
+          placeholder="Registrar avance…"
+          [(ngModel)]="nuevaNota"
+          (keyup.enter)="addNota()"
+        />
+        <button [disabled]="busy() || !nuevaNota.trim()" (click)="addNota()">
+          Agregar
+        </button>
+      </div>
+      @if (updates().length === 0) {
+        <div class="empty small">Sin avances registrados.</div>
+      }
+      @for (u of updates(); track u.id) {
+        <div class="update">
+          <div class="update-text">{{ updateText(u) }}</div>
+          <div class="update-date">{{ dateLabel(u.createdAt) }}</div>
+        </div>
+      }
+    </section>
+  }
+
+  @if (toast()) {
+    <div class="toast">{{ toast() }}</div>
+  }
+</main>

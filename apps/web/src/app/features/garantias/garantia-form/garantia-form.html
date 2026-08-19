@@ -1,0 +1,118 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>Nueva garantía</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/warranties">Volver</a>
+        </div>
+        <div class="card-body">
+          <form class="garantia-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Cliente <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="clientId">
+                  <option value="">Seleccionar cliente</option>
+                  @for (c of clients(); track c.id) {
+                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Vehículo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="vehicleId" [disabled]="vehiclesLoading()">
+                  <option value="">Seleccionar vehículo</option>
+                  @for (v of vehicles(); track v.id) {
+                    <option [ngValue]="v.id">{{ getVehicleLabel(v) }}</option>
+                  }
+                </select>
+                @if (vehiclesLoading()) {
+                  <small class="text-muted">Cargando vehículos...</small>
+                }
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId">
+                  <option value="">Seleccionar sucursal</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="type">
+                  @for (t of typeOptions; track t.value) {
+                    <option [ngValue]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Origen <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="originType">
+                  @for (o of originOptions; track o.value) {
+                    <option [ngValue]="o.value">{{ o.label }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-6 mb-3">
+                @if (form.get('originType')?.value === 'unitSale') {
+                  <label class="form-label">Venta de unidad <span class="text-danger">*</span></label>
+                  <select class="form-select" formControlName="unitSaleId" [disabled]="unitSalesLoading()">
+                    <option value="">Seleccionar venta</option>
+                    @for (u of unitSales(); track u.id) {
+                      <option [ngValue]="u.id">{{ getUnitSaleLabel(u) }}</option>
+                    }
+                  </select>
+                  @if (unitSalesLoading()) {
+                    <small class="text-muted">Cargando ventas...</small>
+                  }
+                } @else {
+                  <label class="form-label">Orden de servicio <span class="text-danger">*</span></label>
+                  <select class="form-select" formControlName="serviceOrderId" [disabled]="serviceOrdersLoading()">
+                    <option value="">Seleccionar orden</option>
+                    @for (s of serviceOrders(); track s.id) {
+                      <option [ngValue]="s.id">{{ getServiceOrderLabel(s) }}</option>
+                    }
+                  </select>
+                  @if (serviceOrdersLoading()) {
+                    <small class="text-muted">Cargando órdenes...</small>
+                  }
+                }
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Descripción <span class="text-danger">*</span></label>
+              <textarea class="form-control" formControlName="description" rows="3" placeholder="Describa el motivo de la garantía"></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Fecha inicio <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="startDate" />
+              </div>
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Fecha fin <span class="text-danger">*</span></label>
+                <input type="date" class="form-control" formControlName="endDate" />
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                Crear garantía
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/warranties">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

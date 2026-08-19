@@ -1,6 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { SkipThrottle } from '@nestjs/throttler';
 import {
   HealthCheck,
   HealthCheckService,
@@ -10,6 +11,7 @@ import Redis from 'ioredis';
 
 @ApiTags('Health')
 @Controller('health')
+@SkipThrottle({ short: true, medium: true, long: true })
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,

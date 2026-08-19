@@ -1,0 +1,557 @@
+<div class="container-fluid">
+  @if (!recepcion()) {
+    <!-- ── Agenda del día ── -->
+    <div class="card recepcion-header-card mb-4">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <div>
+          <h5>Recepción de unidades</h5>
+          <span>Citas del día listas para recibir</span>
+        </div>
+        <div class="d-flex gap-2 align-items-center">
+          <button class="btn btn-light btn-sm" (click)="shiftDate(-1)">
+            <app-feather-icons [icon]="'chevron-left'" />
+          </button>
+          <input
+            type="date"
+            class="form-control field-sm"
+            [ngModel]="date()"
+            (ngModelChange)="date.set($event); load()"
+          />
+          <button class="btn btn-light btn-sm" (click)="shiftDate(1)">
+            <app-feather-icons [icon]="'chevron-right'" />
+          </button>
+          <select
+            class="form-control field-lg"
+            [ngModel]="branchId()"
+            (ngModelChange)="branchId.set($event); load()"
+          >
+            @for (b of branches(); track b.id) {
+              <option [value]="b.id">{{ b.name }}</option>
+            }
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alta de unidad: citas del bot que llegan sin vehículo -->
+    @if (citaSinUnidad(); as c) {
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Datos de la unidad</h5>
+          <span>
+            {{ c.clientName }} · {{ c.serviceType }} — la cita se agendó por
+            WhatsApp, captura la unidad que llegó al taller
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label>Tipo de unidad *</label>
+              <select class="form-control" [(ngModel)]="unidad.vehicleType">
+                @for (t of tiposUnidad; track t.value) {
+                  <option [value]="t.value">{{ t.label }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Marca *</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.make" placeholder="Ej. Italika" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Modelo *</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.model" placeholder="Ej. FT150" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Año</label>
+              <input type="number" class="form-control" [(ngModel)]="unidad.year" min="1950" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Placa</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.plate" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Color</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.color" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Kilometraje</label>
+              <input type="number" class="form-control" [(ngModel)]="unidad.mileage" min="0" />
+            </div>
+            <div class="col-md-3 mb-3">
+              <label>Número de serie</label>
+              <input type="text" class="form-control" [(ngModel)]="unidad.vin" />
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" [disabled]="guardando()" (click)="altaUnidadYRecibir()">
+              {{ guardando() ? "Guardando…" : "Dar de alta y recibir" }}
+            </button>
+            <button class="btn btn-light" (click)="cancelarAltaUnidad()">Cancelar</button>
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="card">
+      @if (loading()) {
+        <div class="card-body text-center py-5"><span class="spinner-border"></span></div>
+      } @else if (citas().length === 0) {
+        <div class="card-body text-center py-5 text-muted">
+          No hay citas para este día.
+        </div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Hora</th>
+                <th>Cliente</th>
+                <th>Unidad</th>
+                <th>Servicio</th>
+                <th>Técnico</th>
+                <th class="text-end">Recepción</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (c of citas(); track c.id) {
+                <tr>
+                  <td class="fw-600">{{ hora(c.scheduledAt) }}</td>
+                  <td>
+                    {{ c.clientName }}
+                    <div class="sub">{{ c.clientPhone }}</div>
+                  </td>
+                  <td>
+                    @if (c.vehicle) {
+                      {{ c.vehicle.label }}
+                      <div class="sub">{{ c.vehicle.plate || "sin placa" }}</div>
+                    } @else {
+                      <span class="text-muted">Sin unidad</span>
+                    }
+                  </td>
+                  <td>{{ c.serviceType }}</td>
+                  <td>{{ c.mechanicName || "—" }}</td>
+                  <td class="text-end">
+                    @if (c.recibida) {
+                      <button
+                        class="btn btn-outline-primary btn-sm"
+                        (click)="abrirRecepcion(c.serviceOrderId!)"
+                      >
+                        Continuar {{ c.serviceOrderFolio }}
+                      </button>
+                    } @else {
+                      <button class="btn btn-primary btn-sm" (click)="recibir(c)">
+                        {{ c.vehicle ? "Recibir unidad" : "Capturar unidad" }}
+                      </button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- ── Recepción en curso ── -->
+    @if (recepcion(); as r) {
+      <div class="card recepcion-header-card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5>Recibiendo {{ r.serviceOrder.folio }}</h5>
+            <span>{{ r.serviceOrder.reportedFault }}</span>
+          </div>
+          <div class="d-flex gap-2 align-items-center flex-wrap">
+            <!-- La liga del cliente se entrega aquí, con la unidad recién
+                 recibida y el cliente todavía en el mostrador: es cuando le
+                 importa ver cómo llegó y cuando tiene el teléfono en la mano. -->
+            @if (ligaCliente()) {
+              <div class="liga-cliente">
+                <span class="liga-rotulo">Liga del cliente</span>
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  (click)="enviarLigaPorWhatsApp()"
+                >
+                  Enviar por WhatsApp
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-light btn-sm"
+                  (click)="copiarLigaCliente()"
+                >
+                  Copiar
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-light btn-sm"
+                  (click)="abrirLigaCliente()"
+                >
+                  Abrir
+                </button>
+              </div>
+            }
+            <button class="btn btn-outline-secondary" (click)="cerrarRecepcion()">
+              Volver a la agenda
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paso 1: estado de la unidad -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>1. Estado de la unidad</h5>
+          <span>Cómo llega la unidad al taller</span>
+        </div>
+        <div class="card-body">
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label>Kilometraje</label>
+              <input type="number" class="form-control" [(ngModel)]="checklist.kmIn" min="0" />
+            </div>
+            <div class="col-md-3">
+              <label>Combustible: {{ checklist.fuelLevel }}%</label>
+              <input type="range" class="fuel" [(ngModel)]="checklist.fuelLevel" min="0" max="100" step="5" />
+            </div>
+            <div class="col-md-6">
+              <label>Inventario recibido</label>
+              <div class="inventario">
+                <label class="inline-label"><input type="checkbox" [(ngModel)]="checklist.hasTools" /> Herramienta</label>
+                <label class="inline-label"><input type="checkbox" [(ngModel)]="checklist.hasDocuments" /> Documentos</label>
+                <label class="inline-label"><input type="checkbox" [(ngModel)]="checklist.hasSpareTire" /> Llanta de refacción</label>
+                <label class="inline-label"><input type="checkbox" [(ngModel)]="checklist.hasMats" /> Tapetes</label>
+              </div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label>Observaciones</label>
+              <input type="text" class="form-control" [(ngModel)]="checklist.observations" placeholder="Lo que reporta el cliente" />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label>Daños visibles</label>
+              <input type="text" class="form-control" [(ngModel)]="checklist.damageDescription" placeholder="Descripción general de daños" />
+            </div>
+          </div>
+          <button class="btn btn-primary" [disabled]="guardando()" (click)="guardarChecklist()">
+            {{ guardando() ? "Guardando…" : "Guardar estado" }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Paso 2: evidencia fotográfica -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>2. Evidencia de la unidad</h5>
+          <span>
+            @if (pendientes().length) {
+              Faltan: {{ pendientes().join(", ") }}
+            } @else {
+              Evidencia completa
+            }
+          </span>
+        </div>
+        <div class="card-body">
+          @if (!r.checklist) {
+            <p class="text-muted mb-0">Guarda primero el estado de la unidad.</p>
+          } @else {
+            <div class="spec-grid">
+              @for (s of r.specs; track s.code) {
+                <div class="spec" [class.tomada]="s.tomada">
+                  <div class="spec-head">
+                    {{ s.name }}
+                    @if (s.required) { <span class="req">obligatoria</span> }
+                  </div>
+                  <div class="spec-hint">{{ s.hint }}</div>
+                  @if (fotoDe(s.code); as f) {
+                    <div class="spec-ok">
+                      <app-feather-icons [icon]="'check-circle'" /> Capturada
+                      @if (f.marks.length) {
+                        <span class="marks-count">{{ f.marks.length }} marca(s)</span>
+                      }
+                    </div>
+                    <button class="btn btn-outline-primary btn-sm" (click)="abrirMarcado(f)">
+                      Marcar daños
+                    </button>
+                  } @else {
+                    <label class="capture-btn">
+                      📷 Capturar
+                      <input type="file" accept="image/*,video/*" capture="environment" hidden (change)="onArchivo($event, s.code)" />
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Marcado sobre la foto -->
+      @if (fotoActiva(); as f) {
+        <div class="card mb-4">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <div>
+              <h5>Daños · {{ nombreSpec(f.specCode) }}</h5>
+              <span>
+                @if (marcando()) {
+                  @if (herramienta() === "CIRCLE") {
+                    Arrastra sobre la zona dañada para encerrarla
+                  } @else {
+                    Toca la imagen donde está el detalle
+                  }
+                } @else {
+                  {{ f.marks.length }} marca(s) registradas · solo lectura
+                }
+              </span>
+            </div>
+            <div class="marcado-acciones">
+              <!-- Ver es el modo de entrada: se abre esta ficha muchas más
+                   veces para consultar los daños que para agregar uno, y un
+                   toque de más sobre la foto no debe inventar un daño. -->
+              <div class="segmentado">
+                <button
+                  type="button"
+                  [class.activo]="!marcando()"
+                  (click)="verMarcas()"
+                >
+                  Ver
+                </button>
+                <button
+                  type="button"
+                  [class.activo]="marcando()"
+                  [disabled]="f.mediaType === 'VIDEO'"
+                  [title]="f.mediaType === 'VIDEO' ? 'Sobre un video no se marca' : ''"
+                  (click)="modo.set('marcar')"
+                >
+                  Marcar
+                </button>
+              </div>
+              @if (marcando()) {
+                <div class="segmentado">
+                  <button
+                    type="button"
+                    [class.activo]="herramienta() === 'POINT'"
+                    (click)="cambiarHerramienta('POINT')"
+                  >
+                    Punto
+                  </button>
+                  <button
+                    type="button"
+                    [class.activo]="herramienta() === 'CIRCLE'"
+                    (click)="cambiarHerramienta('CIRCLE')"
+                  >
+                    Área
+                  </button>
+                </div>
+              }
+              <button class="btn btn-light btn-sm" (click)="cerrarMarcado()">Cerrar</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- El detalle de la marca va fuera del recuadro: el recuadro
+                 recorta para que un área pegada al borde no se salga de la
+                 foto, y ese mismo recorte cortaría el globo de una marca
+                 alta. El marco mide lo mismo, así que los porcentajes valen. -->
+            <div class="foto-marco">
+            <div
+              class="foto-wrap"
+              [class.con-media]="!!f.url"
+              [class.marcando]="marcando()"
+              (pointerdown)="onPointerDown($event)"
+              (pointermove)="onPointerMove($event)"
+              (pointerup)="onPointerUp()"
+              (pointercancel)="onPointerUp()"
+            >
+              @if (f.url && f.mediaType === "VIDEO") {
+                <video class="foto-media" [src]="f.url" controls playsinline></video>
+              } @else if (f.url) {
+                <img class="foto-media" [src]="f.url" [alt]="f.specCode" />
+              } @else {
+                <div class="foto-placeholder">
+                  <app-feather-icons [icon]="'image'" />
+                  <span>No se pudo cargar la imagen</span>
+                </div>
+              }
+
+              @for (m of f.marks; track m.id; let i = $index) {
+                <span
+                  class="marca"
+                  [class.area]="m.shape === 'CIRCLE'"
+                  [class.resaltada]="marcaResaltada() === m.id"
+                  [attr.data-tipo]="m.type"
+                  [style.left.%]="m.x * 100"
+                  [style.top.%]="m.y * 100"
+                  [style.width.%]="m.shape === 'CIRCLE' ? m.radius! * 200 : null"
+                  [title]="etiquetaMarca(m.type) + (m.note ? ': ' + m.note : '')"
+                  (pointerenter)="marcaResaltada.set(m.id)"
+                  (pointerleave)="marcaResaltada.set(null)"
+                  (click)="alternarDetalle(m, $event)"
+                >
+                  <b class="marca-num">{{ i + 1 }}</b>
+                </span>
+
+              }
+
+              @if (marcaPendiente(); as p) {
+                <span
+                  class="marca pendiente"
+                  [class.area]="p.shape === 'CIRCLE'"
+                  [attr.data-tipo]="marcaTipo"
+                  [style.left.%]="p.x * 100"
+                  [style.top.%]="p.y * 100"
+                  [style.width.%]="p.shape === 'CIRCLE' ? p.radius! * 200 : null"
+                >
+                  <b class="marca-num">{{ f.marks.length + 1 }}</b>
+                </span>
+              }
+            </div>
+
+            <!-- Detalle de la marca tocada: hay que saber qué es sin bajar la
+                 vista a la lista y volver a subirla contando números. -->
+            @for (m of f.marks; track m.id; let i = $index) {
+              @if (detalleAbierto() === m.id) {
+                <span
+                  class="globo-marca"
+                  [style.left.%]="m.x * 100"
+                  [style.top.%]="m.y * 100"
+                >
+                  <b>{{ i + 1 }}. {{ etiquetaMarca(m.type) }}</b>
+                  {{ m.note || "Sin nota" }}
+                </span>
+              }
+            }
+            </div>
+
+            @if (marcaPendiente(); as p) {
+              <div class="control-row mt-3">
+                <select class="form-control field-md" [(ngModel)]="marcaTipo">
+                  @for (t of markTypes; track t.value) {
+                    <option [value]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+                <input type="text" class="form-control" [(ngModel)]="marcaNota" placeholder="Nota (opcional)" />
+                @if (p.shape === "CIRCLE") {
+                  <span class="pista-area">Área · radio {{ (p.radius! * 100).toFixed(0) }}%</span>
+                }
+                <button class="btn btn-primary" [disabled]="guardando()" (click)="confirmarMarca()">
+                  Agregar marca
+                </button>
+                <button class="btn btn-light" (click)="marcaPendiente.set(null)">Cancelar</button>
+              </div>
+            }
+
+            @if (f.marks.length) {
+              <div class="marks-list mt-3">
+                @for (m of f.marks; track m.id; let i = $index) {
+                  <div
+                    class="mark-item"
+                    [class.resaltada]="marcaResaltada() === m.id"
+                    (mouseenter)="marcaResaltada.set(m.id)"
+                    (mouseleave)="marcaResaltada.set(null)"
+                  >
+                    <!-- El número es lo que liga la fila con el marcador de la
+                         foto: el color solo no basta cuando hay dos rayones. -->
+                    <span class="marca-num en-lista" [attr.data-tipo]="m.type">{{ i + 1 }}</span>
+                    <span class="tipo-marca" [attr.data-tipo]="m.type">
+                      {{ etiquetaMarca(m.type) }}
+                    </span>
+                    <span class="forma-marca">
+                      {{ m.shape === "CIRCLE" ? "Área" : "Punto" }}
+                    </span>
+                    <span class="nota-marca">{{ m.note || "Sin nota" }}</span>
+                    @if (marcando()) {
+                      <button class="table-action-btn table-action-btn-danger" (click)="quitarMarca(m.id)">
+                        <app-feather-icons [icon]="'trash-2'" />
+                      </button>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Paso 3: servicios y presupuesto -->
+      <div class="card">
+        <div class="card-header">
+          <h5>3. Servicios a realizar</h5>
+          <span>Genera el presupuesto que el cliente debe autorizar</span>
+        </div>
+        <div class="card-body">
+          @if (!listaParaCotizar()) {
+            <p class="text-muted">
+              Completa el estado de la unidad y las fotos obligatorias antes de cotizar.
+            </p>
+          }
+
+          @if (servicios().length) {
+            <label>Servicios predefinidos</label>
+            <div class="servicios mb-3">
+              @for (s of servicios(); track s.id) {
+                <button class="chip-btn" (click)="agregarServicio(s)">+ {{ s.name }}</button>
+              }
+            </div>
+          }
+
+          <!-- Kits: entran con su mano de obra y sus refacciones de una vez,
+               y muestran si hay existencias antes de prometer la entrega -->
+          @if (kits().length) {
+            <label>Kits de servicio</label>
+            <div class="kits mb-3">
+              @for (k of kits(); track k.id) {
+                <button
+                  type="button"
+                  class="kit-card"
+                  [attr.data-stock]="k.stock"
+                  [title]="stockTexto(k)"
+                  (click)="agregarKit(k)"
+                >
+                  <span class="kit-top">
+                    <span class="kit-nombre">{{ k.name }}</span>
+                    <span class="kit-semaforo" [attr.data-stock]="k.stock"></span>
+                  </span>
+                  <span class="kit-meta">
+                    {{ money(k.total) }} · {{ k.laborMinutes }} min
+                  </span>
+                  <span class="kit-stock">{{ stockTexto(k) }}</span>
+                </button>
+              }
+            </div>
+          }
+
+          <label>Conceptos del presupuesto</label>
+          @for (l of lineas(); track $index) {
+            <div class="control-row mb-2">
+              <input type="text" class="form-control" [(ngModel)]="l.description" placeholder="Descripción del servicio" />
+              <input type="number" class="form-control field-xs text-end" [(ngModel)]="l.quantity" min="1" />
+              <input type="number" class="form-control field-sm text-end" [(ngModel)]="l.unitPrice" min="0" step="0.01" />
+              <button class="btn btn-outline-danger btn-icon" (click)="quitarLinea($index)">
+                <app-feather-icons [icon]="'trash-2'" />
+              </button>
+            </div>
+          }
+          <button class="btn btn-outline-primary btn-sm mb-3" (click)="agregarExtra()">
+            + Servicio extra
+          </button>
+
+          <div class="mb-3">
+            <label>Condiciones</label>
+            <input type="text" class="form-control" [(ngModel)]="condiciones" placeholder="Condiciones del presupuesto (opcional)" />
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center">
+            <div class="total">Total estimado: <strong>{{ money(totalCotizacion()) }}</strong> <span class="sub">+ IVA</span></div>
+            <button
+              class="btn btn-primary"
+              [disabled]="!listaParaCotizar() || lineas().length === 0 || guardando()"
+              (click)="enviarCotizacion()"
+            >
+              {{ guardando() ? "Enviando…" : "Enviar presupuesto al cliente" }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+</div>

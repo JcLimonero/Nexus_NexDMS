@@ -6,12 +6,16 @@ import {
   Param,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { UnitSalesService } from './unit-sales.service';
+import { UnitSalePaymentsService } from './unit-sale-payments.service';
+import type { RegistrarPagoDto } from './unit-sale-payments.service';
 import { CreateUnitSaleDto } from './dto/create-unit-sale.dto';
 import { CreatePaymentPlanDto } from './dto/create-payment-plan.dto';
 import { FilterUnitSalesDto } from './dto/filter-unit-sales.dto';
@@ -31,7 +35,10 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('unit-sales')
 export class UnitSalesController {
-  constructor(private readonly unitSalesService: UnitSalesService) {}
+  constructor(
+    private readonly unitSalesService: UnitSalesService,
+    private readonly pagos: UnitSalePaymentsService,
+  ) {}
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')
@@ -149,5 +156,65 @@ export class UnitSalesController {
         paymentReference: dto.paymentReference,
       },
     );
+  }
+  /** Programa la fecha de entrega, que al crear la venta no se conoce. */
+  @Post(':id/delivery-date')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER')
+  scheduleDelivery(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { deliveryDate: string | null },
+  ) {
+    return this.unitSalesService.scheduleDelivery(user, id, dto.deliveryDate);
+  }
+
+  // ─── Pagos de la venta ───────────────────────────
+
+  @Get(':id/payments')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  listPayments(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.pagos.listar(user, id);
+  }
+
+  @Post(':id/payments')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  registerPayment(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RegistrarPagoDto,
+  ) {
+    return this.pagos.registrar(user, id, dto);
+  }
+
+  @Post('payments/:paymentId/receipt')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  @UseInterceptors(FileInterceptor('file'))
+  uploadReceipt(
+    @CurrentUser() user: UserPayload,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.pagos.subirComprobante(user, paymentId, file);
+  }
+
+  @Get('payments/:paymentId/receipt-url')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  receiptUrl(
+    @CurrentUser() user: UserPayload,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+  ) {
+    return this.pagos.ligaComprobante(user, paymentId);
+  }
+
+  @Delete('payments/:paymentId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'CASHIER')
+  deletePayment(
+    @CurrentUser() user: UserPayload,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+  ) {
+    return this.pagos.eliminar(user, paymentId);
   }
 }

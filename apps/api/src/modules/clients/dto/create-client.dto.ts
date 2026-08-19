@@ -5,6 +5,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUUID,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -86,6 +87,16 @@ export class CreateClientDto {
   @IsNumber()
   @Min(0)
   fixedDiscount?: number;
+
+  /** Límite de crédito para entregar con adeudo (null/omitido = sin límite). */
+  @IsOptional()
+  @IsNumber()
+  creditLimit?: number | null;
+
+  /** Lista de precios asignada al cliente (null = precios estándar). */
+  @IsOptional()
+  @IsUUID()
+  priceListId?: string | null;
 
   @IsOptional()
   @IsString()

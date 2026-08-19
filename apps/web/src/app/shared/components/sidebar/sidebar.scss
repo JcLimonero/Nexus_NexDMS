@@ -1,0 +1,93 @@
+/* Sidebar: menú arriba, usuario abajo */
+.page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
+  display: flex !important;
+  flex-direction: column;
+  height: calc(100vh - 80px) !important;
+  overflow: hidden !important; /* solo el menú hace scroll, no el sidebar completo */
+
+  .sidebar-menu {
+    flex: 1;
+    min-height: 0; /* necesario para que flex shrink funcione con overflow */
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  .sidebar-user-bottom {
+    flex-shrink: 0;
+    padding: 12px 15px;
+    cursor: pointer;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(0, 0, 0, 0.1);
+
+    .d-flex {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .flex-grow-1 {
+      flex: 1;
+      min-width: 0;
+    }
+
+    // El nombre puede ser largo (razón social incluida): se permite en dos
+    // renglones con letra chica en vez de cortarse en uno.
+    .nombre-usuario {
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .text-start {
+      text-align: left;
+    }
+
+    .text-truncate {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    h6 {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .text-muted,
+    p {
+      color: #fff !important;
+      text-transform: capitalize;
+    }
+
+    .fa-chevron-up {
+      font-size: 10px;
+      color: #fff;
+    }
+  }
+}
+
+/* Dropdown del usuario en sidebar: iconos alineados */
+.sidebar-user-bottom .dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sidebar-user-bottom .dropdown-item app-feather-icons {
+  flex-shrink: 0;
+}
+
+/* Logotipo del cliente: el suyo puede venir sobre transparente y en tinta
+   oscura, y el encabezado del sidebar es azul de marca. La cama clara lo deja
+   legible sea cual sea. */
+.logo-cliente {
+  max-height: 40px;
+  max-width: 160px;
+  object-fit: contain;
+  padding: 4px 8px;
+  background: #fff;
+  border-radius: 6px;
+}

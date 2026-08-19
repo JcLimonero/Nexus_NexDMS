@@ -1,0 +1,181 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5>{{ isEdit() ? 'Editar presupuesto' : 'Nuevo presupuesto' }}</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/quotes">Volver</a>
+        </div>
+        <div class="card-body">
+          <form class="cotizacion-form" [formGroup]="form" (ngSubmit)="submit()">
+            <div class="row">
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Sucursal <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="branchId">
+                  <option value="">Seleccionar</option>
+                  @for (b of branches(); track b.id) {
+                    <option [ngValue]="b.id">{{ b.name }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Tipo <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="type">
+                  @for (t of typeOptions; track t.value) {
+                    <option [ngValue]="t.value">{{ t.label }}</option>
+                  }
+                </select>
+              </div>
+              @if (form.get('type')?.value !== 'UNIT') {
+                <div class="col-md-2 mb-3">
+                  <label class="form-label">Lista precios <span class="text-danger">*</span></label>
+                  <select class="form-select" formControlName="priceList">
+                    @for (pl of priceListOptions; track pl.value) {
+                      <option [ngValue]="pl.value">{{ pl.label }}</option>
+                    }
+                  </select>
+                </div>
+              }
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Cliente</label>
+                <select class="form-select" formControlName="clientId">
+                  <option value="">Sin cliente</option>
+                  @for (c of clients(); track c.id) {
+                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Desc. %</label>
+                <input type="number" class="form-control" formControlName="discountPct" min="0" max="100" step="0.01" />
+              </div>
+              <div class="col-md-2 mb-3">
+                <label class="form-label">Vigencia</label>
+                <input type="date" class="form-control" formControlName="validityDate" />
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Condiciones</label>
+              <textarea class="form-control" formControlName="conditions" rows="2"></textarea>
+            </div>
+
+            <h6 class="mt-4 mb-2">Ítems</h6>
+            <div formArrayName="items">
+              @for (item of items.controls; track $index; let i = $index) {
+                @if (i === 0) {
+                  <div class="row items-head">
+                    <div class="col-md-3">Parte</div>
+                    <div class="col-md-3">Unidad</div>
+                    <div class="col-md-2">Descripción</div>
+                    <div class="col-md-1 text-end">Cant.</div>
+                    <div class="col-md-1 text-end">Precio</div>
+                    <div class="col-md-1 text-end">Desc.</div>
+                    <div class="col-md-1"></div>
+                  </div>
+                }
+                <div class="row align-items-center mb-2" [formGroupName]="i">
+                  <div class="col-md-3">
+                    <select
+                      class="form-select"
+                      formControlName="partId"
+                      aria-label="Parte"
+                      (change)="onPartSelect(i)"
+                    >
+                      <option value="">Parte (opcional)</option>
+                      @for (p of parts(); track p.id) {
+                        <option [ngValue]="p.id">{{ getPartLabel(p) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-3">
+                    <select
+                      class="form-select"
+                      formControlName="catalogUnitId"
+                      aria-label="Unidad"
+                      (change)="onUnitSelect(i)"
+                    >
+                      <option value="">Unidad (opcional)</option>
+                      @for (u of units(); track u.id) {
+                        <option [ngValue]="u.id">{{ getUnitLabel(u) }}</option>
+                      }
+                    </select>
+                  </div>
+                  <div class="col-md-2">
+                    <input type="text" class="form-control" formControlName="description" aria-label="Descripción" placeholder="Descripción manual" />
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" class="form-control text-end" formControlName="quantity" aria-label="Cantidad" min="1" />
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" class="form-control text-end" formControlName="unitPrice" aria-label="Precio unitario" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-1">
+                    <input type="number" class="form-control text-end" formControlName="discount" aria-label="Descuento" min="0" step="0.01" />
+                  </div>
+                  <div class="col-md-1">
+                    <button type="button" class="btn btn-outline-danger btn-icon" title="Quitar ítem" (click)="removeItem(i)" [disabled]="items.length <= 1">
+                      <i class="icofont icofont-trash"></i>
+                    </button>
+                  </div>
+
+                  <!-- Urgencia + nota del técnico + fotos, lo que el cliente verá -->
+                  <div class="col-12 mt-2 mb-1">
+                    <div class="row g-2 align-items-center">
+                      <div class="col-md-2">
+                        <select class="form-select form-select-sm" formControlName="urgency" aria-label="Urgencia">
+                          @for (u of urgencyOptions; track u.value) {
+                            <option [ngValue]="u.value">{{ u.label }}</option>
+                          }
+                        </select>
+                      </div>
+                      <div class="col-md-6">
+                        <input type="text" class="form-control form-control-sm" formControlName="technicianNote" placeholder="Nota del técnico para el cliente…" />
+                      </div>
+                      <div class="col-md-4 d-flex align-items-center gap-2 flex-wrap">
+                        <label class="btn btn-outline-secondary btn-sm mb-0" [class.disabled]="subiendoFoto() === i">
+                          <i class="icofont icofont-camera me-1"></i>
+                          {{ subiendoFoto() === i ? 'Subiendo…' : 'Foto' }}
+                          <input type="file" accept="image/*" hidden (change)="subirFoto(i, $event)" />
+                        </label>
+                        @for (f of fotosDe(i); track f.id) {
+                          <img [src]="f.url" alt="Foto" style="height:34px;width:46px;object-fit:cover;border-radius:6px;border:1px solid var(--border,#dde3e9);" />
+                        }
+                        @if (!isEdit() && !fotosDe(i).length) {
+                          <small class="text-muted">Guarda para subir fotos</small>
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+            <button type="button" class="btn btn-outline-primary btn-sm mb-3" (click)="addItem()">
+              <i class="icofont icofont-plus me-1"></i> Agregar ítem
+            </button>
+
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <p class="mb-0">
+                  <strong>Subtotal:</strong> {{ getTotalCalculado().subtotal | number:'1.2-2' }} |
+                  <strong>IVA:</strong> {{ getTotalCalculado().tax | number:'1.2-2' }} |
+                  <strong>Total:</strong> {{ getTotalCalculado().total | number:'1.2-2' }}
+                </p>
+              </div>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || loading()">
+                @if (loading()) {
+                  <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                }
+                {{ isEdit() ? 'Guardar' : 'Crear presupuesto' }}
+              </button>
+              <a class="btn btn-outline-secondary" routerLink="/quotes">Cancelar</a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

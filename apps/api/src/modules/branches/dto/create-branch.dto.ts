@@ -1,11 +1,13 @@
 import {
   IsBoolean,
   IsEmail,
+  IsInt,
   IsNumber,
   IsObject,
   IsOptional,
   IsString,
   IsUUID,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -22,21 +24,9 @@ export class CreateBranchDto {
   @MaxLength(100)
   slug: string;
 
-  @IsString()
-  @MaxLength(13)
-  rfc: string;
 
-  @IsString()
-  @MaxLength(300)
-  legalName: string;
 
-  @IsString()
-  @MaxLength(10)
-  taxRegime: string;
 
-  @IsString()
-  @MaxLength(10)
-  taxPostalCode: string;
 
   @IsString()
   @MaxLength(500)
@@ -76,15 +66,21 @@ export class CreateBranchDto {
   @IsObject()
   schedule: Record<string, string>;
 
+  /**
+   * Minutos que se espera a un cliente antes de dar la cita por perdida.
+   * `0` apaga la regla en esta sucursal.
+   */
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(240)
+  noShowToleranceMin?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(500)
   logoKey?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  facturaapiOrgId?: string;
 
   @IsOptional()
   @IsString()

@@ -16,7 +16,11 @@ import { ServiceOrderPart } from './entities/service-order-part.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { ServiceOrderUpdate } from './entities/service-order-update.entity';
 import { ServiceOrderFinding } from './entities/service-order-finding.entity';
-import { ServiceOrderFindingMediaTypeEnum } from './entities/service-order-finding.entity';
+import {
+  FindingCriticalityEnum,
+  FindingStatusEnum,
+  ServiceOrderFindingMediaTypeEnum,
+} from './entities/service-order-finding.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Part } from '../parts/entities/part.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
@@ -37,10 +41,18 @@ import { DeliverServiceOrderDto } from './dto/deliver-service-order.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { CfdiService } from '../cfdi/cfdi.service';
+import { FinanceService } from '../finance/finance.service';
+import { SurveysService } from '../surveys/surveys.service';
+import { SurveyAreaEnum } from '../surveys/entities/survey-config.entity';
 import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { Client } from '../clients/entities/client.entity';
-import { ServicioHallazgoCotizacionEvent } from '../../events/domain-events';
+import {
+  OsEntregadaEvent,
+  ServicioHallazgoCotizacionEvent,
+} from '../../events/domain-events';
+import { ServiceSurvey } from './entities/service-survey.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 
 const STATUS_TRANSITIONS: Record<
   ServiceOrderStatusEnum,
@@ -103,11 +115,17 @@ export class ServiceOrdersService {
     private readonly findingRepo: Repository<ServiceOrderFinding>,
     @InjectRepository(Client)
     private readonly clientRepo: Repository<Client>,
+    @InjectRepository(ServiceSurvey)
+    private readonly surveyRepo: Repository<ServiceSurvey>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly branchesService: BranchesService,
     private readonly storageService: StorageService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly financeService: FinanceService,
+    private readonly surveysService: SurveysService,
   ) {}
 
   private applyScope(
@@ -283,7 +301,7 @@ export class ServiceOrdersService {
     }
 
     const [data, total] = await qb
-      .orderBy('so.created_at', 'DESC')
+      .orderBy('so.createdAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();
@@ -362,8 +380,15 @@ export class ServiceOrdersService {
       throw new ForbiddenException('Sin permisos para cambiar estatus');
     }
 
-    const transitions = STATUS_TRANSITIONS[so.status]?.[dto.status];
-    if (transitions === undefined) {
+    // Flujo configurable por tenant (service_flow); fallback al default
+    const tenant = await this.tenantRepo.findOne({
+      where: { id: so.tenantId },
+    });
+    const customFlow = tenant?.serviceFlow ?? null;
+    const allowedTargets = customFlow
+      ? (customFlow[so.status] ?? [])
+      : Object.keys(STATUS_TRANSITIONS[so.status] ?? {});
+    if (!allowedTargets.includes(dto.status)) {
       throw new BadRequestException(
         `Transición no permitida de ${so.status} a ${dto.status}`,
       );
@@ -394,7 +419,7 @@ export class ServiceOrdersService {
       so.status === ServiceOrderStatusEnum.CANCELLED
     ) {
       throw new BadRequestException(
-        'No se puede asignar mecánico a una OS entregada o cancelada',
+        'No se puede asignar técnico a una OS entregada o cancelada',
       );
     }
     await this.soRepo.update(id, { mechanicId });
@@ -727,6 +752,10 @@ export class ServiceOrdersService {
       userId: user.sub,
       description: dto.description,
       requiresQuotation: dto.requiresQuotation ?? true,
+      criticality: dto.criticality ?? FindingCriticalityEnum.MEDIA,
+      estimatedMinutes: dto.estimatedMinutes ?? 0,
+      estimatedAmount: dto.estimatedAmount ?? 0,
+      status: FindingStatusEnum.PENDIENTE,
       mediaType,
       mediaKey: key,
     });
@@ -882,13 +911,84 @@ export class ServiceOrdersService {
     if (laborCost < 0) {
       throw new BadRequestException('Debe registrar costo de mano de obra');
     }
+    // Se cobra al entregar (forma de pago) o sale con adeudo (cuenta por cobrar).
+    if (!dto.conAdeudo && !dto.paymentMethod) {
+      throw new BadRequestException(
+        'Indica la forma de pago, o marca "entregar con adeudo"',
+      );
+    }
+
+    // Reglas configurables de "salir con adeudo" (R6): tope de días de la fecha
+    // promesa y límite de crédito del cliente. Se validan antes de entregar.
+    if (dto.conAdeudo) {
+      const tenant = await this.tenantRepo.findOne({
+        where: { id: so.tenantId },
+      });
+      const cfg = tenant?.creditConfig ?? null;
+      const cap = cfg?.promiseDaysCap ?? 0;
+      if (cap > 0 && dto.fechaPromesaPago) {
+        const dias = Math.ceil(
+          (new Date(dto.fechaPromesaPago).getTime() - Date.now()) / 86_400_000,
+        );
+        if (dias > cap) {
+          throw new BadRequestException(
+            `La fecha promesa no puede exceder ${cap} días.`,
+          );
+        }
+      }
+      if (cfg?.creditCheckEnabled) {
+        const client = await this.clientRepo.findOne({
+          where: { id: so.ownerId },
+        });
+        const limite =
+          client?.creditLimit != null ? Number(client.creditLimit) : null;
+        if (limite != null) {
+          const filas = await this.dataSource.query<{ s: string }[]>(
+            `SELECT COALESCE(SUM(total - paid_amount), 0) AS s
+             FROM receivables
+             WHERE tenant_id = $1 AND client_id = $2 AND status IN ('OPEN', 'PARTIAL')`,
+            [so.tenantId, so.ownerId],
+          );
+          const usado = Number(filas[0]?.s ?? 0);
+          const total = Number(so.total) || 0;
+          if (usado + total > limite) {
+            throw new BadRequestException(
+              `Excede el límite de crédito del cliente ($${limite}). Adeudo actual: $${usado}.`,
+            );
+          }
+        }
+      }
+    }
+
     const deliveredAt = new Date();
     await this.soRepo.update(id, {
       status: ServiceOrderStatusEnum.DELIVERED,
-      paymentMethod: dto.paymentMethod,
+      paymentMethod: dto.paymentMethod ?? null,
       cfdiUuid: dto.cfdiUuid ?? null,
       deliveredAt,
     });
+
+    // Salir con adeudo: la unidad sale sin pagar y el saldo queda como cuenta
+    // por cobrar del cliente, con su fecha promesa de pago. Es el "vale de
+    // salida": el auto sale amparado y el adeudo queda registrado en cartera.
+    if (dto.conAdeudo) {
+      const total = Number(so.total) || 0;
+      if (total > 0) {
+        try {
+          await this.financeService.create(user, 'receivable', {
+            branchId: so.branchId,
+            clientId: so.ownerId,
+            referenceType: 'ServiceOrder',
+            referenceId: so.id,
+            concept: `Servicio ${so.folio}`,
+            total,
+            dueDate: dto.fechaPromesaPago,
+          });
+        } catch (e) {
+          this.logger.warn('Cuenta por cobrar no creada al entregar', e);
+        }
+      }
+    }
     const vehicle = await this.customerVehicleRepo.findOne({
       where: { id: so.vehicleId },
     });
@@ -904,7 +1004,160 @@ export class ServiceOrdersService {
     } catch (e) {
       this.logger.warn('CFDI no generado', e);
     }
+
+    // Encuesta post-entrega: una por orden, se envía por WhatsApp vía evento
+    try {
+      let survey = await this.surveyRepo.findOne({
+        where: { serviceOrderId: id },
+      });
+      if (!survey) {
+        const cfg = await this.surveysService.getConfig(
+          so.tenantId,
+          SurveyAreaEnum.SERVICE,
+        );
+        survey = await this.surveyRepo.save(
+          this.surveyRepo.create({
+            tenantId: so.tenantId,
+            serviceOrderId: id,
+            questions: cfg.questions,
+            intro: cfg.intro,
+            thanks: cfg.thanks,
+          }),
+        );
+      }
+      const client = await this.clientRepo.findOne({
+        where: { id: so.ownerId },
+      });
+      this.eventEmitter.emit(
+        'os.entregada',
+        new OsEntregadaEvent(
+          id,
+          so.branchId,
+          so.tenantId,
+          so.folio,
+          survey.token,
+          so.trackingToken,
+          { email: client?.email ?? undefined, phone: client?.phone ?? undefined },
+        ),
+      );
+    } catch (e) {
+      this.logger.warn('Encuesta post-entrega no creada', e);
+    }
+
     return this.findOne(user, id);
+  }
+
+  /** Resultados de las encuestas de servicio: general y por pregunta. */
+  async resumenEncuestas(user: UserPayload) {
+    const surveys = await this.surveyRepo.find({
+      where: { tenantId: user.tenantId },
+    });
+    const respondidas = surveys.filter((s) => s.answeredAt);
+    const promedioGeneral =
+      respondidas.length > 0
+        ? Math.round(
+            (respondidas.reduce((a, s) => a + (Number(s.score) || 0), 0) /
+              respondidas.length) *
+              10,
+          ) / 10
+        : null;
+
+    // Promedio por pregunta de puntaje (agrupado por id/label del snapshot).
+    const acc = new Map<
+      string,
+      { label: string; suma: number; conteo: number }
+    >();
+    for (const s of respondidas) {
+      for (const q of s.questions ?? []) {
+        if (q.type !== 'RATING') continue;
+        const val = Number(s.answers?.[q.id]);
+        if (!Number.isFinite(val) || val <= 0) continue;
+        const cur = acc.get(q.id) ?? { label: q.label, suma: 0, conteo: 0 };
+        cur.suma += val;
+        cur.conteo += 1;
+        acc.set(q.id, cur);
+      }
+    }
+    const preguntas = [...acc.entries()].map(([id, v]) => ({
+      id,
+      label: v.label,
+      promedio: Math.round((v.suma / v.conteo) * 10) / 10,
+      respuestas: v.conteo,
+    }));
+
+    return {
+      total: surveys.length,
+      respondidas: respondidas.length,
+      promedioGeneral,
+      preguntas,
+    };
+  }
+
+  /** Lista de encuestas de servicio respondidas, con cliente y vehículo. */
+  async listaEncuestas(user: UserPayload) {
+    return this.surveyRepo
+      .createQueryBuilder('s')
+      .innerJoin(ServiceOrder, 'so', 'so.id = s.service_order_id')
+      .leftJoin('clients', 'c', 'c.id = so.owner_id')
+      .leftJoin('customer_vehicles', 'v', 'v.id = so.vehicle_id')
+      .select([
+        's.id AS "id"',
+        'so.folio AS "folio"',
+        's.score AS "score"',
+        's.answered_at AS "answeredAt"',
+        `COALESCE(c.company_name, NULLIF(TRIM(COALESCE(c.first_name,'') || ' ' || COALESCE(c.last_name,'')), '')) AS "clientName"`,
+        `NULLIF(TRIM(COALESCE(v.make,'') || ' ' || COALESCE(v.model,'')), '') AS "vehicle"`,
+        'v.plate AS "plate"',
+      ])
+      .where('s.tenant_id = :t', { t: user.tenantId })
+      .andWhere('s.answered_at IS NOT NULL')
+      .orderBy('s.answered_at', 'DESC')
+      .getRawMany();
+  }
+
+  /** Ficha de una encuesta: cliente, vehículo, servicio realizado y respuestas. */
+  async fichaEncuesta(user: UserPayload, surveyId: string) {
+    const survey = await this.surveyRepo.findOne({
+      where: { id: surveyId, tenantId: user.tenantId },
+    });
+    if (!survey) throw new NotFoundException('Encuesta no encontrada');
+    const so = await this.findOne(user, survey.serviceOrderId);
+
+    const ops = await this.dataSource.query<{ description: string }[]>(
+      `SELECT description FROM service_order_operations
+       WHERE service_order_id = $1 ORDER BY created_at ASC`,
+      [so.id],
+    );
+
+    const clientName = so.owner
+      ? so.owner.companyName ||
+        `${so.owner.firstName ?? ''} ${so.owner.lastName ?? ''}`.trim()
+      : null;
+
+    const respuestas = (survey.questions ?? []).map((q) => ({
+      label: q.label,
+      type: q.type,
+      value: survey.answers?.[q.id] ?? null,
+    }));
+
+    return {
+      folio: so.folio,
+      deliveredAt: so.deliveredAt,
+      total: so.total,
+      cliente: { nombre: clientName, telefono: so.owner?.phone ?? null },
+      vehiculo: so.vehicle
+        ? `${so.vehicle.make ?? ''} ${so.vehicle.model ?? ''} ${so.vehicle.year ?? ''}`.trim()
+        : null,
+      placa: so.vehicle?.plate ?? null,
+      trabajos: ops.map((o) => o.description),
+      refacciones: (so.parts ?? [])
+        .map((p) => p.part?.name ?? null)
+        .filter((n): n is string => !!n),
+      score: survey.score,
+      comment: survey.comment,
+      respondidaEn: survey.answeredAt,
+      respuestas,
+    };
   }
 
   async cancel(user: UserPayload, id: string): Promise<ServiceOrder> {

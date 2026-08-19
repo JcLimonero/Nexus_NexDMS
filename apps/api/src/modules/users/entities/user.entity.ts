@@ -17,6 +17,11 @@ export enum RoleEnum {
   WAREHOUSE = 'WAREHOUSE',
   CASHIER = 'CASHIER',
   MECHANIC = 'MECHANIC',
+  /**
+   * Recibe unidades en la rampa: cita → estado → fotos → cotización. Su
+   * portal es la recepción, no el DMS completo.
+   */
+  RECEPTIONIST = 'RECEPTIONIST',
   SELLER = 'SELLER',
   EXECUTIVE = 'EXECUTIVE',
   LEGAL_ENTITY_MANAGER = 'LEGAL_ENTITY_MANAGER',
@@ -80,6 +85,10 @@ export class User {
 
   @Column({ name: 'phone', type: 'varchar', length: 20, nullable: true })
   phone: string | null;
+
+  /** Especialidad del mecánico (hojalatero, pintor, general…). */
+  @Column({ name: 'specialty', type: 'varchar', length: 100, nullable: true })
+  specialty: string | null;
 
   @Column({ name: 'avatar_key', type: 'varchar', length: 500, nullable: true })
   avatarKey: string | null;

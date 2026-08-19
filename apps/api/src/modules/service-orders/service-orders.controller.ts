@@ -11,11 +11,14 @@ import {
   UseInterceptors,
   UploadedFile,
   NotFoundException,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ServiceOrdersService } from './service-orders.service';
+import { OrdenPdfService } from './orden-pdf.service';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { FilterServiceOrdersDto } from './dto/filter-service-orders.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
@@ -45,6 +48,7 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 export class ServiceOrdersController {
   constructor(
     private readonly serviceOrdersService: ServiceOrdersService,
+    private readonly ordenPdf: OrdenPdfService,
     private readonly mechanicChecklistService: MechanicChecklistService,
   ) {}
 
@@ -55,6 +59,61 @@ export class ServiceOrdersController {
     @Query() filters: FilterServiceOrdersDto,
   ) {
     return this.serviceOrdersService.findAll(user, filters);
+  }
+
+  /** Resultados de las encuestas de servicio (general y por pregunta). */
+  @Get('surveys/resumen')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'AUDITOR')
+  resumenEncuestas(@CurrentUser() user: UserPayload) {
+    return this.serviceOrdersService.resumenEncuestas(user);
+  }
+
+  /** Encuestas de servicio respondidas (lista con cliente/vehículo). */
+  @Get('surveys/list')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'AUDITOR')
+  listaEncuestas(@CurrentUser() user: UserPayload) {
+    return this.serviceOrdersService.listaEncuestas(user);
+  }
+
+  /** Ficha de una encuesta respondida. */
+  @Get('surveys/:surveyId/ficha')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'AUDITOR')
+  fichaEncuesta(
+    @CurrentUser() user: UserPayload,
+    @Param('surveyId', ParseUUIDPipe) surveyId: string,
+  ) {
+    return this.serviceOrdersService.fichaEncuesta(user, surveyId);
+  }
+
+  /**
+   * La orden en papel: es lo que el cliente firma al dejar la unidad y con lo
+   * que se discute a la entrega. Va como PDF y no como pantalla imprimible
+   * porque tiene que salir igual desde el DMS, desde la tableta y desde un
+   * correo, y porque quien lo firma no debería poder cambiarlo antes.
+   */
+  @Get(':id/pdf')
+  @Roles(
+    'SUPERADMIN',
+    'ADMIN',
+    'MANAGER',
+    'CASHIER',
+    'RECEPTIONIST',
+    'MECHANIC',
+  )
+  async pdf(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.ordenPdf.generar(user.tenantId, id);
+    res.set({
+      'Content-Type': 'application/pdf',
+      // `inline` y no `attachment`: casi siempre se quiere revisar en pantalla
+      // antes de mandarlo a la impresora del mostrador.
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
   }
 
   @Get(':id')

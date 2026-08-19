@@ -1,0 +1,103 @@
+.mod-icon {
+  width: var(--control-h-lg);
+  height: var(--control-h-lg);
+  border-radius: var(--radius-md);
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg { width: 20px; height: 20px; }
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: var(--space-16);
+}
+
+.kpi-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-16) var(--space-24);
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+a.kpi-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+
+a.kpi-card:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.kpi-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  color: var(--text-primary);
+
+  /* El tono lo decide la API: el color comunica estado, no decora */
+  &.tone-good { color: var(--success); }
+  &.tone-warn { color: var(--warning); }
+  &.tone-bad { color: var(--danger); }
+}
+
+.kpi-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-top: var(--space-4);
+}
+
+.kpi-hint {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Distribución del módulo */
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+  margin-bottom: var(--space-12);
+
+  &:last-child { margin-bottom: 0; }
+}
+
+.bar-label {
+  flex: 0 0 var(--field-md);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.bar-track {
+  flex: 1;
+  height: 10px;
+  background: var(--bg);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+
+.bar {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(to right, var(--nexus-500), var(--nexus-700));
+  min-width: 6px;
+}
+
+.bar-value {
+  flex: 0 0 32px;
+  text-align: right;
+  font-weight: var(--font-semibold);
+  font-variant-numeric: tabular-nums;
+}

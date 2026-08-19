@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  InternalServerErrorException,
   Param,
   Patch,
   Post,
@@ -21,30 +22,67 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @ApiTags('Global Models')
-@ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
 @Controller('global-models')
 export class GlobalModelsController {
   constructor(private readonly globalModelsService: GlobalModelsService) {}
 
   @Get()
-  @Roles(
-    'SUPERADMIN',
-    'ADMIN',
-    'MANAGER',
-    'WAREHOUSE',
-    'CASHIER',
-    'MECHANIC',
-    'SELLER',
-  )
-  findAll(
-    @CurrentUser() user: UserPayload,
-    @Query() filters: FilterGlobalModelsDto,
+  async findAll(@Query() filters: FilterGlobalModelsDto) {
+    try {
+      return await this.globalModelsService.findAll(null as never, filters);
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Error al listar modelos globales',
+      );
+    }
+  }
+
+  @Get('brands')
+  async getBrands(@Query('vehicleTypeCode') vehicleTypeCode: string) {
+    try {
+      return await this.globalModelsService.getBrands(
+        vehicleTypeCode || 'CAR',
+      );
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Error al listar marcas',
+      );
+    }
+  }
+
+  @Get('models')
+  async getModels(
+    @Query('vehicleTypeCode') vehicleTypeCode: string,
+    @Query('brandName') brandName: string,
   ) {
-    return this.globalModelsService.findAll(user, filters);
+    try {
+      return await this.globalModelsService.getModels(
+        vehicleTypeCode || 'CAR',
+        brandName || '',
+      );
+    } catch (err) {
+      throw new InternalServerErrorException(
+        err instanceof Error ? err.message : 'Error al listar modelos',
+      );
+    }
+  }
+
+  @Get('similar')
+  findSimilarSuggestions(
+    @Query('brandId') brandId: string,
+    @Query('model') model: string,
+    @Query('version') version?: string,
+  ) {
+    return this.globalModelsService.findSimilarSuggestions(
+      brandId || '',
+      model || '',
+      version,
+    );
   }
 
   @Get(':id')
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
   @Roles(
     'SUPERADMIN',
     'ADMIN',
@@ -62,13 +100,17 @@ export class GlobalModelsController {
   }
 
   @Post()
-  @Roles('SUPERADMIN')
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
   create(@CurrentUser() user: UserPayload, @Body() dto: CreateGlobalModelDto) {
     return this.globalModelsService.create(user, dto);
   }
 
   @Patch(':id')
-  @Roles('SUPERADMIN')
+  @UseGuards(AuthGuard, RolesGuard)
+  @ApiBearerAuth()
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
   update(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

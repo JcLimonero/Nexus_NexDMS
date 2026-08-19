@@ -1,0 +1,174 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div>
+            <h5>{{ esEdicion() ? "Editar sucursal" : "Nueva sucursal" }}</h5>
+            <span>Los datos fiscales se toman de la razón social</span>
+          </div>
+          <a class="btn btn-secondary" routerLink="/settings/sucursales">Volver</a>
+        </div>
+
+        <div class="card-body">
+          @if (cargando()) {
+            <p class="text-muted">Cargando…</p>
+          } @else {
+            <h6 class="grupo">Identidad</h6>
+            <div class="rejilla">
+              <label>
+                <span>Razón social *</span>
+                <select class="form-control" [(ngModel)]="form.legalEntityId">
+                  <option value="">Selecciona…</option>
+                  @for (r of razones(); track r.id) {
+                    <option [value]="r.id">{{ r.name }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                <span>Nombre *</span>
+                <input
+                  class="form-control"
+                  [(ngModel)]="form.name"
+                  (input)="alEscribirNombre()"
+                />
+              </label>
+              <label>
+                <span>Identificador *</span>
+                <input class="form-control" [(ngModel)]="form.slug" />
+              </label>
+            </div>
+
+            @if (razonElegida(); as r) {
+              <p class="fiscal">
+                Facturará con
+                <strong>{{ r.rfc || "RFC sin capturar" }}</strong>
+                @if (r.taxRegime) { · régimen {{ r.taxRegime }} }
+                @if (r.taxPostalCode) { · CP {{ r.taxPostalCode }} }
+              </p>
+            }
+
+            <h6 class="grupo">Domicilio y contacto</h6>
+            <div class="rejilla">
+              <label class="ancho">
+                <span>Dirección *</span>
+                <input class="form-control" [(ngModel)]="form.address" />
+              </label>
+              <label>
+                <span>Ciudad *</span>
+                <input class="form-control" [(ngModel)]="form.city" />
+              </label>
+              <label>
+                <span>Estado *</span>
+                <input class="form-control" [(ngModel)]="form.state" />
+              </label>
+              <label>
+                <span>Mostrador *</span>
+                <input class="form-control" [(ngModel)]="form.counterPhone" />
+              </label>
+              <label>
+                <span>Refacciones</span>
+                <input class="form-control" [(ngModel)]="form.partsPhone" />
+              </label>
+              <label>
+                <span>Citas</span>
+                <input class="form-control" [(ngModel)]="form.appointmentsPhone" />
+              </label>
+              <label>
+                <span>Posventa</span>
+                <input class="form-control" [(ngModel)]="form.aftersalesPhone" />
+              </label>
+              <label>
+                <span>Correo *</span>
+                <input class="form-control" type="email" [(ngModel)]="form.email" />
+              </label>
+            </div>
+
+            <h6 class="grupo">Horario</h6>
+            <div class="rejilla">
+              @for (d of dias; track d) {
+                <label>
+                  <span class="dia">{{ d }}</span>
+                  <input
+                    class="form-control"
+                    placeholder="9:00 - 18:00"
+                    [(ngModel)]="horario[d]"
+                  />
+                </label>
+              }
+            </div>
+
+            <h6 class="grupo">Reglas comerciales</h6>
+            <div class="rejilla">
+              <label>
+                <span>IVA</span>
+                <input
+                  class="form-control"
+                  type="number"
+                  step="0.01"
+                  [(ngModel)]="form.taxRate"
+                />
+              </label>
+              <label>
+                <span>Descuento máximo %</span>
+                <input class="form-control" type="number" [(ngModel)]="form.maxDiscountPct" />
+              </label>
+              <label>
+                <span>Vigencia de presupuesto (días)</span>
+                <input
+                  class="form-control"
+                  type="number"
+                  [(ngModel)]="form.quotationValidityDays"
+                />
+              </label>
+              <label>
+                <span>Serie CFDI</span>
+                <input class="form-control" [(ngModel)]="form.cfdiSerie" />
+              </label>
+              <label>
+                <span>Tolerancia de cita (min)</span>
+                <input
+                  class="form-control"
+                  type="number"
+                  min="0"
+                  max="240"
+                  [(ngModel)]="form.noShowToleranceMin"
+                />
+                <!-- Se explica porque el número solo no dice qué provoca:
+                     pasado ese margen la cita se cierra sola y se avisa. -->
+                <small class="text-muted">
+                  Pasado este margen, la cita a la que nadie llegó se marca
+                  como no presentada y se avisa para contactar al cliente.
+                  Con 0 no se cierra sola.
+                </small>
+              </label>
+            </div>
+
+            <div class="opciones">
+              <label class="check">
+                <input type="checkbox" [(ngModel)]="form.isPrimary" />
+                Sucursal principal
+              </label>
+              <label class="check">
+                <input type="checkbox" [(ngModel)]="form.isActive" />
+                Activa
+              </label>
+            </div>
+
+            <div class="acciones">
+              <a class="btn btn-secondary" routerLink="/settings/sucursales">Cancelar</a>
+              <button
+                type="button"
+                class="btn btn-primary"
+                [disabled]="guardando()"
+                (click)="guardar()"
+              >
+                {{ guardando() ? "Guardando…" : "Guardar sucursal" }}
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

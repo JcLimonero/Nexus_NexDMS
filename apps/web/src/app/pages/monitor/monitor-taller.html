@@ -1,0 +1,246 @@
+<div class="monitor">
+  <header class="monitor-top">
+    <div>
+      <h1>Taller</h1>
+      <p>{{ nombreSucursal() }}</p>
+    </div>
+
+    <div class="monitor-resumen">
+      <div class="resumen-dato">
+        <strong>{{ enPiso() }}</strong>
+        <span>en piso</span>
+      </div>
+      <div class="resumen-dato">
+        <strong>{{ enEspera().length }}</strong>
+        <span>esperan turno</span>
+      </div>
+      <div class="resumen-dato" [class.critico]="excedidas() > 0">
+        <strong>{{ excedidas() }}</strong>
+        <span>excedidas</span>
+      </div>
+    </div>
+
+    <div class="monitor-hora">
+      <!-- Dos lecturas del mismo tablero: el magneto por hora y las columnas
+           por estado (rojo/amarillo/naranja/verde). -->
+      <div class="vista-toggle" role="group" aria-label="Vista del tablero">
+        <button
+          type="button"
+          [class.activo]="vista() === 'tiempo'"
+          (click)="cambiarVista('tiempo')"
+        >Por tiempo</button>
+        <button
+          type="button"
+          [class.activo]="vista() === 'estado'"
+          (click)="cambiarVista('estado')"
+        >Por estado</button>
+      </div>
+      @if (sucursales().length > 1) {
+        <!-- Lo único que se pulsa en la pantalla: cambiar de taller sin
+             tener que ir a escribir la dirección. -->
+        <select
+          class="selector-sucursal"
+          [value]="sucursal()"
+          (change)="cambiarSucursal($any($event.target).value)"
+          aria-label="Sucursal"
+        >
+          @for (s of sucursales(); track s.id) {
+            <option [value]="s.id">{{ s.name }}</option>
+          }
+        </select>
+      }
+      @if (sinConexion()) {
+        <span class="sin-conexion">Sin conexión</span>
+      }
+      <span>{{ actualizado() | date: "HH:mm" }}</span>
+    </div>
+  </header>
+
+  @if (vista() === "tiempo") {
+  <!-- Magneto plano: una fila por técnico, la hora en el eje -->
+  <div class="tablero">
+    <div class="tablero-cabecera">
+      <div class="tablero-recurso">Técnico</div>
+      <div class="tablero-pista">
+        @for (h of horas; track h) {
+          <span class="marca-hora">{{ eje.etiqueta(h) }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="tablero-cuerpo">
+      @if (!carriles().length) {
+        <p class="monitor-vacio">No hay técnicos asignados a esta sucursal.</p>
+      }
+
+      @for (c of carriles(); track c.id) {
+        <div
+          class="carril"
+          [class.fuera-turno]="!c.disponible"
+          [style.min-height.px]="16 + c.filas * 52"
+        >
+          <div class="tablero-recurso">
+            <span class="avatar">{{ c.iniciales }}</span>
+            <span class="recurso-datos">
+              <strong>{{ c.nombre }}</strong>
+              @if (c.especialidad) {
+                <small class="especialidad">{{ c.especialidad }}</small>
+              }
+              @if (!c.disponible) {
+                <small>{{ c.motivo === "ausente" ? "Ausente" : "Fuera de turno" }}</small>
+              }
+            </span>
+          </div>
+
+          <div class="tablero-pista">
+            <!-- Las franjas del turno se pintan primero: lo que queda fuera
+                 se ve apagado, que es como se sabe quién no está. -->
+            @for (f of c.franjas; track $index) {
+              <div
+                class="franja-turno"
+                [style.left.%]="f.izquierda"
+                [style.width.%]="f.ancho"
+              ></div>
+            }
+            @for (h of horas; track h) {
+              <div class="linea-hora"></div>
+            }
+
+            @for (b of c.bloques; track b.faseId) {
+              <div
+                class="bloque"
+                [class.terminada]="!b.enCurso"
+                [attr.data-semaforo]="b.enCurso ? b.semaforo : null"
+                [style.left.%]="b.izquierda"
+                [style.width.%]="b.ancho"
+                [style.top.px]="8 + b.nivel * 28"
+                [title]="
+                  b.folio + ' · ' + b.vehiculo + ' · ' + b.fase +
+                  ' · ' + b.transcurridoMin + ' de ' + b.estimadoMin + ' min'
+                "
+              >
+                <span class="bloque-relleno" [style.width.%]="b.consumido"></span>
+                <span class="bloque-texto">
+                  <strong>{{ b.vehiculo }}</strong>
+                  <small>{{ b.fase }}</small>
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      @if (sinAsignar().length) {
+        <div class="carril sin-tecnico">
+          <div class="tablero-recurso">
+            <span class="avatar vacio">?</span>
+            <span class="recurso-datos">
+              <strong>Sin asignar</strong>
+              <small>Trabajo en curso sin técnico</small>
+            </span>
+          </div>
+          <div class="tablero-pista">
+            @for (h of horas; track h) {
+              <div class="linea-hora"></div>
+            }
+            @for (b of sinAsignar(); track b.faseId) {
+              <div
+                class="bloque"
+                [class.terminada]="!b.enCurso"
+                [attr.data-semaforo]="b.enCurso ? b.semaforo : null"
+                [style.left.%]="b.izquierda"
+                [style.width.%]="b.ancho"
+                [style.top.px]="8 + b.nivel * 28"
+                [title]="b.folio + ' · ' + b.vehiculo + ' · ' + b.fase"
+              >
+                <span class="bloque-relleno" [style.width.%]="b.consumido"></span>
+                <span class="bloque-texto">
+                  <strong>{{ b.vehiculo }}</strong>
+                  <small>{{ b.fase }}</small>
+                </span>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- La línea de la hora cruza todos los carriles -->
+      @if (lineaAhora(); as x) {
+        <div class="linea-ahora" [style.left]="'calc(var(--ancho-recurso) + (100% - var(--ancho-recurso)) * ' + x / 100 + ')'">
+          <span class="linea-ahora-punta"></span>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Bandeja: lo que todavía no tiene hora, como los imanes al margen -->
+  @if (enEspera().length) {
+    <section class="bandeja">
+      <h2>Esperan turno</h2>
+      <div class="bandeja-piezas">
+        @for (o of enEspera(); track o.ordenId) {
+          <article class="pieza">
+            <span class="pieza-folio">{{ o.folio }}</span>
+            <strong>{{ o.vehiculo }}</strong>
+            <span class="pieza-datos">
+              {{ o.placa || "sin placa" }} · {{ etiquetaEstadoOrden(o.estado) }}
+            </span>
+            @if (o.fases) {
+              <span class="pieza-datos">
+                {{ o.fases }} fases · {{ duracion(o.estimadoMin) }}
+              </span>
+            } @else {
+              <span class="pieza-datos sin-plan">Sin paquete de servicio</span>
+            }
+          </article>
+        }
+      </div>
+    </section>
+  }
+  }
+
+  @if (vista() === "estado") {
+    <!-- Semáforo por estado: una columna por color, para leer por días -->
+    <div class="tablero-estado">
+      @if (!unidades().length) {
+        <p class="monitor-vacio">No hay unidades en el taller ahora mismo.</p>
+      } @else {
+        <div class="estado-columnas">
+          @for (col of columnas(); track col.clave) {
+            <section class="estado-col" [attr.data-estado]="col.clave">
+              <header class="estado-col-cab">
+                <span class="estado-punto"></span>
+                <h2>{{ col.titulo }}</h2>
+                <span class="estado-conteo">{{ col.unidades.length }}</span>
+              </header>
+              <div class="estado-lista">
+                @for (u of col.unidades; track u.ordenId) {
+                  <article class="estado-tarjeta">
+                    <div class="estado-tarjeta-top">
+                      <span class="estado-folio">{{ u.folio }}</span>
+                      <span class="estado-dias">{{ etiquetaDias(u.recibidaEn) }}</span>
+                    </div>
+                    <strong>{{ u.vehiculo }}</strong>
+                    <span class="estado-datos">{{ u.placa || "sin placa" }}</span>
+                    @if (u.faseActual) {
+                      <span class="estado-datos">{{ u.faseActual }}</span>
+                    }
+                    @if (u.responsable) {
+                      <span class="estado-datos">👤 {{ u.responsable }}</span>
+                    }
+                    <span class="estado-promesa">
+                      Promesa:
+                      {{ u.promisedAt ? (u.promisedAt | date: "d MMM, HH:mm") : "sin fecha" }}
+                    </span>
+                  </article>
+                } @empty {
+                  <p class="estado-col-vacia">—</p>
+                }
+              </div>
+            </section>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>

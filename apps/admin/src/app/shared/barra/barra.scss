@@ -1,0 +1,184 @@
+/* Cabecera del portal de administración: marca Nexus, navegación y sesión. */
+
+.app-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-24);
+  height: 60px;
+  padding: 0 var(--space-24);
+  margin: calc(var(--space-24) * -1) calc(var(--space-24) * -1) var(--space-24);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+/* ── Marca ── */
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.marca-mark {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, var(--nexus-500), var(--nexus-700));
+  color: #fff;
+  font-weight: var(--font-bold);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px -3px rgba(16, 80, 120, 0.5);
+}
+
+.marca-txt {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+.marca-nombre {
+  font-weight: var(--font-bold);
+  color: var(--navy-600);
+  font-size: var(--text-base);
+  letter-spacing: -0.01em;
+}
+.marca-tag {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* ── Navegación en píldoras ── */
+.nav {
+  display: flex;
+  gap: 2px;
+  margin-right: auto;
+
+  a {
+    padding: 7px var(--space-12);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    color: var(--text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: background 0.12s, color 0.12s;
+  }
+
+  a:hover {
+    background: var(--bg);
+    color: var(--text-primary);
+  }
+
+  /* La pantalla actual se marca con el azul de la marca. */
+  a.activo {
+    background: var(--primary-soft);
+    color: var(--primary);
+    font-weight: var(--font-semibold);
+  }
+}
+
+/* ── Usuario y sesión ── */
+.usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  flex-shrink: 0;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-8);
+  padding: 4px 10px 4px 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  background: var(--card);
+  max-width: 220px;
+
+  .avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--nexus-500), var(--nexus-700));
+    color: #fff;
+    font-weight: var(--font-semibold);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .email {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.btn-salir {
+  height: 34px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+    background: var(--danger-bg);
+  }
+}
+
+/* ── Encabezado de página ── */
+.page-head {
+  margin-bottom: var(--space-24);
+  padding-bottom: var(--space-16);
+  border-bottom: 1px solid var(--border);
+
+  h1 {
+    margin: 0;
+    font-size: var(--text-3xl);
+    font-weight: var(--font-bold);
+    color: var(--navy-600);
+    letter-spacing: -0.02em;
+  }
+  p {
+    margin: 6px 0 0;
+    font-size: var(--text-base);
+    color: var(--text-secondary);
+    max-width: 70ch;
+  }
+}
+
+@media (max-width: 720px) {
+  .app-bar {
+    height: auto;
+    flex-wrap: wrap;
+    gap: var(--space-12);
+    padding: var(--space-12) var(--space-16);
+  }
+  .nav {
+    order: 3;
+    width: 100%;
+    overflow-x: auto;
+  }
+  .chip .email {
+    display: none;
+  }
+}

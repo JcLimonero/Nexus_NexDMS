@@ -1,0 +1,75 @@
+<div class="public-wrap">
+  <div class="public-card">
+    <div class="public-brand">
+      <span class="brand-mark">N</span>
+      <span class="brand-name">NexDMS</span>
+    </div>
+
+    @if (cargando()) {
+      <p class="muted center">Cargando el documento…</p>
+    } @else if (firmado()) {
+      <div class="thanks">
+        <div class="thanks-icon">✅</div>
+        <h1>Firma registrada</h1>
+        <p class="muted">
+          Gracias. Tu firma quedó guardada junto con la orden de servicio; el
+          taller ya puede continuar.
+        </p>
+      </div>
+    } @else if (!doc()) {
+      <p class="error-box">{{ error() }}</p>
+    } @else if (doc(); as d) {
+      <h1>{{ d.label }}</h1>
+      <p class="muted small">
+        Orden {{ d.folio }}@if (d.sucursal) {<span> · {{ d.sucursal }}</span>}
+      </p>
+
+      @if (vehiculoTexto()) {
+        <div class="concepto">
+          <span class="c-desc">Unidad</span>
+          <span class="c-monto">{{ vehiculoTexto() }}</span>
+        </div>
+      }
+      @if (d.reportedFault) {
+        <div class="concepto">
+          <span class="c-desc">Motivo de ingreso</span>
+          <span class="c-monto">{{ d.reportedFault }}</span>
+        </div>
+      }
+
+      <p class="comment-label">Traza tu firma dentro del recuadro</p>
+      <canvas
+        #pad
+        class="firma-pad"
+        (pointerdown)="down($event)"
+        (pointermove)="move($event)"
+        (pointerup)="up()"
+        (pointerleave)="up()"
+      ></canvas>
+
+      <input
+        class="form-control field-full"
+        placeholder="Tu nombre"
+        [(ngModel)]="nombre"
+      />
+
+      @if (error()) {
+        <p class="error-box">{{ error() }}</p>
+      }
+
+      <div class="firma-acciones">
+        <button type="button" class="btn-reject" (click)="limpiar()">
+          Limpiar
+        </button>
+        <button
+          type="button"
+          class="btn-send"
+          [disabled]="enviando()"
+          (click)="firmar()"
+        >
+          {{ enviando() ? "Enviando…" : "Firmar documento" }}
+        </button>
+      </div>
+    }
+  </div>
+</div>

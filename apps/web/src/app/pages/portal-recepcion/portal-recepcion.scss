@@ -1,0 +1,101 @@
+/**
+ * Portal de recepción — pensado para iPad.
+ *
+ * Quien recibe está de pie, con guantes a veces y con el cliente enfrente:
+ * los objetivos táctiles se agrandan a 48px, la tipografía sube y desaparece
+ * todo lo que no sea recibir la unidad.
+ */
+.portal-recepcion {
+  min-height: 100vh;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+}
+
+.pr-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+  padding: var(--space-12) var(--space-24);
+  background: var(--navy-600, #203848);
+  color: #fff;
+  /* Se queda fija: en tablet se recorre mucho hacia abajo con las fotos. */
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.pr-marca {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+
+  img {
+    height: 28px;
+  }
+
+  span {
+    font-weight: var(--font-semibold);
+    letter-spacing: 0.02em;
+  }
+}
+
+.pr-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--space-12);
+}
+
+.pr-usuario {
+  font-size: var(--text-sm);
+  opacity: 0.85;
+}
+
+.pr-btn {
+  min-height: 44px;
+  padding: 0 var(--space-16);
+  border: 1px solid rgb(255 255 255 / 25%);
+  border-radius: var(--radius-md);
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+  font-size: var(--text-sm);
+  cursor: pointer;
+}
+
+.pr-cuerpo {
+  flex: 1;
+  padding: var(--space-16) 0;
+}
+
+/* ── Ajustes para el dedo ──
+   Van con ::ng-deep porque la recepción es un componente hijo con su propia
+   encapsulación: sin esto los estilos no la alcanzan. Quedan acotados a
+   `.portal-recepcion`, así que la misma pantalla en el escritorio del asesor
+   conserva la densidad del back office. */
+.portal-recepcion ::ng-deep {
+  button,
+  .btn,
+  .chip-btn,
+  .capture-btn,
+  select,
+  input:not([type="checkbox"]):not([type="radio"]) {
+    min-height: 48px;
+  }
+
+  .capture-btn,
+  .chip-btn {
+    font-size: var(--text-base, 1rem);
+    padding: var(--space-12) var(--space-16);
+  }
+
+  /* Las fotos guiadas en rejilla amplia: en iPad caben tres por fila. */
+  .fotos,
+  .specs {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  }
+
+  table {
+    font-size: var(--text-base, 1rem);
+  }
+}

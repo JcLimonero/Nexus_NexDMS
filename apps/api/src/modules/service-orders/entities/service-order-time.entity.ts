@@ -20,6 +20,14 @@ export class ServiceOrderTime {
   @Column({ name: 'mechanic_id', type: 'uuid' })
   mechanicId: string;
 
+  /**
+   * Operación contra la que se ficha. Nullable por los registros anteriores
+   * a que existieran las operaciones, que quedaron colgando de la orden
+   * completa; los nuevos siempre traen operación.
+   */
+  @Column({ name: 'operation_id', type: 'uuid', nullable: true })
+  operationId: string | null;
+
   @Column({ name: 'started_at', type: 'timestamp' })
   startedAt: Date;
 

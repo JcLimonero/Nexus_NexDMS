@@ -31,6 +31,98 @@ export class TenantsController {
     return this.tenantsService.findAll(user);
   }
 
+  /** Módulos activos del tenant del usuario logueado (para armar el menú). */
+  @Get('me/modules')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getMyModules(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getEnabledModules(user.tenantId);
+  }
+
+  /** Actualiza los módulos activos del tenant del usuario (ADMIN). */
+  @Patch('me/modules')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyModules(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { enabledModules: string[] | null },
+  ) {
+    return this.tenantsService.setEnabledModules(
+      user.tenantId,
+      body.enabledModules,
+    );
+  }
+
+  /**
+   * Módulos de CUALQUIER tenant, desde el portal de administración.
+   *
+   * Va aparte de `me/modules` porque el destinatario es distinto: aquí el
+   * superadmin ajusta la licencia de un cliente del SaaS, no la suya.
+   */
+  @Get(':id/modules')
+  @Roles('SUPERADMIN')
+  getTenantModules(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.getEnabledModules(id);
+  }
+
+  @Patch(':id/modules')
+  @Roles('SUPERADMIN')
+  updateTenantModules(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { enabledModules: string[] | null },
+  ) {
+    return this.tenantsService.setEnabledModules(id, body.enabledModules);
+  }
+
+  /** Flujo de estatus de taller del tenant (configurable). */
+  @Get('me/service-flow')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  getMyServiceFlow(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getServiceFlow(user.tenantId);
+  }
+
+  @Patch('me/service-flow')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyServiceFlow(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { serviceFlow: Record<string, string[]> | null },
+  ) {
+    return this.tenantsService.setServiceFlow(user.tenantId, body.serviceFlow);
+  }
+
+  /** Reglas de "salir con adeudo" (R6) del tenant. */
+  @Get('me/credit-config')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  getMyCreditConfig(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getCreditConfig(user.tenantId);
+  }
+
+  @Patch('me/credit-config')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyCreditConfig(
+    @CurrentUser() user: UserPayload,
+    @Body()
+    body: {
+      creditConfig: { promiseDaysCap?: number; creditCheckEnabled?: boolean } | null;
+    },
+  ) {
+    return this.tenantsService.setCreditConfig(user.tenantId, body.creditConfig);
+  }
+
+  /** Divisa del tenant (ISO 4217). */
+  @Get('me/currency')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  getMyCurrency(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getCurrency(user.tenantId);
+  }
+
+  @Patch('me/currency')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyCurrency(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { currency: string },
+  ) {
+    return this.tenantsService.setCurrency(user.tenantId, body.currency);
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(

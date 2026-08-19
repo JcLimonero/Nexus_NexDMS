@@ -1,0 +1,21 @@
+.proveedores-list {
+  .proveedores-header-card {
+    margin-bottom: 1rem;
+  }
+  .proveedores-table-card {
+    .table-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: flex-end;
+    }
+    .table-action-btn {
+      color: var(--text-muted);
+      &:hover {
+        color: var(--primary);
+      }
+      &.text-danger:hover {
+        color: var(--danger);
+      }
+    }
+  }
+}

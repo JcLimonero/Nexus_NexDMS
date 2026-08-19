@@ -1,0 +1,116 @@
+/* NexDMS Design System — Global styles */
+
+/* Design tokens (CSS variables) */
+@import "styles/tokens";
+
+/* App + theme (Bootstrap grid/utilities only, no components) */
+@import "../public/assets/scss/app.scss";
+
+/* Componentes del design system */
+@import "styles/design-system";
+@import "styles/layout";
+
+/* Controles homologados — después de los componentes para ganar la cascada */
+@import "styles/controls";
+
+/* Skin Nexus Q Tech — identidad de marca sobre la estructura del template */
+@import "styles/nexus-theme";
+
+/* Daños marcados sobre una foto: se pintan en cuatro pantallas y tienen que
+   verse iguales en todas, así que la paleta y el marcador viven aquí. */
+@import "styles/danos";
+
+/* Sidebar: usuario fijo en la parte inferior */
+.page-wrapper .page-body-wrapper .page-sidebar .sidebar.custom-scrollbar {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+
+  .sidebar-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .sidebar-user-bottom {
+    flex-shrink: 0;
+  }
+}
+
+/* Logo de empresa */
+.page-sidebar .logo-wrapper img,
+.page-main-header .logo-wrapper img {
+  max-width: 100%;
+  max-height: 45px;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+}
+
+/* Body base */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+/* Footer siempre visible — fijo al fondo del viewport, ocupa todo el espacio disponible */
+.page-wrapper .page-body-wrapper footer.footer {
+  position: fixed !important;
+  bottom: 0 !important;
+  left: var(--sidebar-width); /* mismo ancho que el sidebar */
+  right: 0 !important;
+  width: auto !important; /* left + right definen el ancho */
+  min-width: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  margin-left: 0 !important; /* anular margen del tema */
+}
+
+.page-wrapper .page-body-wrapper footer.footer .container-fluid {
+  width: 100% !important;
+  max-width: none !important;
+  flex: 1;
+}
+
+.page-wrapper .page-body-wrapper footer.footer .row {
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.page-wrapper .page-body-wrapper footer.footer .footer-copyright p {
+  white-space: nowrap;
+}
+
+.page-wrapper .page-body-wrapper .page-body {
+  padding-bottom: 70px !important;
+}
+
+/* Sidebar colapsado: footer a ancho completo */
+.page-wrapper .page-body-wrapper .page-sidebar.open ~ footer.footer {
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+}
+
+/* Search header: evitar solapamiento icono + placeholder */
+.page-main-header .search-form .form-group input.form-control-plaintext {
+  padding-left: 52px !important;
+}
+
+/* Compact/sidebar-icon: el tema ya ajusta márgenes */
+.page-wrapper.compact-page .page-body-wrapper footer.footer {
+  left: 75px;
+  right: 0 !important;
+  width: auto !important;
+}
+
+.page-wrapper.compact-page .page-body-wrapper .page-sidebar.open ~ footer.footer {
+  left: 0 !important;
+  right: 0 !important;
+  width: auto !important;
+}

@@ -21,6 +21,11 @@ export class CreateAppointmentDto {
   @IsUUID()
   mechanicId?: string;
 
+  /** Asesor que recibirá. Si no viene, se reparte por carga del día. */
+  @IsOptional()
+  @IsUUID()
+  advisorId?: string;
+
   @IsUUID()
   branchId: string;
 

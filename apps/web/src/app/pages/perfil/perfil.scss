@@ -1,0 +1,100 @@
+.perfil-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--space-16);
+  margin-bottom: var(--space-24);
+
+  h6 {
+    margin: 0;
+  }
+}
+
+.perfil-avatar {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-pill);
+  background: var(--nexus-600, var(--primary));
+  color: #fff;
+  font-weight: var(--font-semibold);
+}
+
+.perfil-datos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-16);
+  margin: 0 0 var(--space-8);
+
+  dt {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    font-weight: var(--font-normal);
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+/* Los tres campos en fila; la separación la pone el grid, no los controles. */
+.perfil-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-16);
+
+  label {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+  }
+
+  span {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+  }
+}
+
+/* Resumen de la suscripción: las cuatro cifras que importan de un vistazo. */
+.suscripcion-resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-16);
+}
+
+.suscripcion-resumen .dato {
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-16);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+
+  strong {
+    font-size: var(--text-2xl);
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    font-size: var(--text-caption);
+    text-transform: uppercase;
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-secondary);
+  }
+
+  small {
+    margin-top: var(--space-4);
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+  }
+
+  /* Lo que hay que atender se distingue por forma, no solo por color. */
+  &.alerta {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+
+    strong {
+      color: var(--danger);
+    }
+  }
+}

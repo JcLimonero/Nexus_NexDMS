@@ -37,7 +37,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Get()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   findAll(
     @CurrentUser() user: UserPayload,
     @Query() filters: FilterAppointmentsDto,
@@ -48,7 +48,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Get('calendar')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   findCalendar(
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId: string,
@@ -65,8 +65,29 @@ export class AppointmentsController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
+  /**
+   * Las citas del día para la pantalla de recepción.
+   *
+   * Endpoint propio y no el calendario general porque lleva su propia
+   * restricción: la agenda del día la mira el asesor de servicio, y el
+   * técnico tiene la suya en el tablero del taller. Colgar la regla del
+   * calendario general habría limitado también a quien lo usa para otra
+   * cosa.
+   */
+  @ApiBearerAuth()
+  @UseGuards(AuthGuard, RolesGuard)
+  @Get('monitor')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
+  monitor(
+    @CurrentUser() user: UserPayload,
+    @Query('branchId') branchId: string,
+    @Query('date') date: string,
+  ) {
+    return this.appointmentsService.tableroDelDia(user, branchId, date);
+  }
+
   @Get('availability')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   getAvailability(
     @Query('branchId') branchId: string,
     @Query('date') date: string,
@@ -85,8 +106,31 @@ export class AppointmentsController {
 
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
+  /**
+   * Asesores de la sucursal con su carga del día.
+   *
+   * Alimenta el combo de asignación al agendar y deja ver el reparto: quien
+   * agenda puede respetar el balanceo o forzar un asesor concreto sabiendo
+   * cómo va cada uno.
+   */
+  @Get('advisors')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
+  advisors(
+    @CurrentUser() user: UserPayload,
+    @Query('branchId') branchId: string,
+    @Query('date') date?: string,
+  ) {
+    // Sin fecha se entiende hoy: es el caso normal al recibir en el mostrador.
+    const fecha = date ? new Date(`${date}T12:00:00`) : new Date();
+    return this.appointmentsService.cargaDeAsesores(
+      user.tenantId,
+      branchId,
+      fecha,
+    );
+  }
+
   @Get(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   findOne(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -105,7 +149,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Patch(':id')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   update(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
@@ -140,7 +184,7 @@ export class AppointmentsController {
   @ApiBearerAuth()
   @UseGuards(AuthGuard, RolesGuard)
   @Post(':id/complete')
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'RECEPTIONIST')
   complete(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,

@@ -1,0 +1,20 @@
+{
+  "name": "NexDMS",
+  "short_name": "NexDMS",
+  "icons": [
+    {
+      "src": "assets/nexus_images/favicons/favicon_128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/nexus_images/favicons/favicon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#4466f2",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/"
+}

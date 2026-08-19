@@ -60,85 +60,174 @@ async function runSeeds() {
 
   let tenant = await tenantRepo.findOne({ where: { slug: 'demo' } });
   if (tenant) {
-    console.log('Tenant demo ya existe. Saltando seeds.');
-    await ds.destroy();
-    return;
+    console.log(
+      'Tenant demo ya existe. Creando solo usuario de pruebas si no existe.',
+    );
+  } else {
+    tenant = tenantRepo.create({
+      name: 'Demo',
+      slug: 'demo',
+      plan: TenantPlanEnum.PRO,
+      isActive: true,
+    });
+    tenant = await tenantRepo.save(tenant);
+
+    const legalEntity = legalEntityRepo.create({
+      tenantId: tenant.id,
+      name: 'Demo',
+      type: LegalEntityTypeEnum.BOTH,
+      isActive: true,
+      // Los datos fiscales son de la razón social, no de la sucursal
+      rfc: 'DEM123456ABC',
+      taxRegime: '601',
+      taxPostalCode: '01000',
+    });
+    const savedLegalEntity = await legalEntityRepo.save(legalEntity);
+
+    const branch = branchRepo.create({
+      tenantId: tenant.id,
+      legalEntityId: savedLegalEntity.id,
+      name: 'Sucursal Central',
+      slug: 'central',
+      address: 'Av. Demo 123, Col. Centro',
+      city: 'Ciudad de México',
+      state: 'CDMX',
+      counterPhone: '+525512345678',
+      email: 'contacto@demo.local',
+      schedule: {},
+      timezone: 'America/Mexico_City',
+      taxRate: 0.16,
+      maxDiscountPct: 10,
+      quotationValidityDays: 15,
+      isPrimary: true,
+      isActive: true,
+    });
+    const savedBranch = await branchRepo.save(branch);
+
+    await configRepo.save(configRepo.create({ branchId: savedBranch.id }));
+
+    const passwordHash = await bcrypt.hash(DEMO_PASSWORD, BCRYPT_ROUNDS);
+    const admin = userRepo.create({
+      tenantId: tenant.id,
+      firstName: 'Admin',
+      lastName: 'Demo',
+      email: 'admin@demo.local',
+      passwordHash,
+      scope: ScopeEnum.GLOBAL,
+      isActive: true,
+    });
+    const savedAdmin = await userRepo.save(admin);
+
+    await userRoleRepo.save(
+      userRoleRepo.create({
+        userId: savedAdmin.id,
+        role: RoleEnum.ADMIN,
+      }),
+    );
+
+    await userBranchRepo.save(
+      userBranchRepo.create({
+        userId: savedAdmin.id,
+        branchId: savedBranch.id,
+        isDefault: true,
+      }),
+    );
+
+    console.log('Seeds completados:');
+    console.log('  - Tenant: demo');
+    console.log('  - Legal Entity: Demo');
+    console.log('  - Branch: Sucursal Central');
+    console.log('  - Usuario: admin@demo.local / ' + DEMO_PASSWORD);
   }
 
-  tenant = tenantRepo.create({
-    name: 'Demo',
-    slug: 'demo',
-    plan: TenantPlanEnum.PRO,
-    isActive: true,
+  // Usuario de recepción: opera solo el módulo de recepción de unidades.
+  const RECEP_EMAIL = 'recepcion@demo.local';
+  const RECEP_PASSWORD = 'demo1234';
+  const existingRecep = await userRepo.findOne({
+    where: { email: RECEP_EMAIL, tenantId: tenant.id },
   });
-  tenant = await tenantRepo.save(tenant);
+  if (!existingRecep) {
+    const recepBranch = await branchRepo.findOne({
+      where: { tenantId: tenant.id },
+    });
+    if (recepBranch) {
+      const recepUser = userRepo.create({
+        tenantId: tenant.id,
+        firstName: 'Andrés',
+        lastName: 'Recepción',
+        email: RECEP_EMAIL,
+        passwordHash: await bcrypt.hash(RECEP_PASSWORD, BCRYPT_ROUNDS),
+        // Alcance de sucursal: recibe en su rampa, no en todo el grupo.
+        scope: ScopeEnum.SUCURSAL,
+        isActive: true,
+      });
+      const savedRecep = await userRepo.save(recepUser);
+      await userRoleRepo.save(
+        userRoleRepo.create({
+          userId: savedRecep.id,
+          role: RoleEnum.RECEPTIONIST,
+        }),
+      );
+      await userBranchRepo.save(
+        userBranchRepo.create({
+          userId: savedRecep.id,
+          branchId: recepBranch.id,
+          isDefault: true,
+        }),
+      );
+      console.log(
+        '  - Usuario recepción: ' + RECEP_EMAIL + ' / ' + RECEP_PASSWORD,
+      );
+    }
+  }
 
-  const legalEntity = legalEntityRepo.create({
-    tenantId: tenant.id,
-    name: 'Demo',
-    type: LegalEntityTypeEnum.BOTH,
-    isActive: true,
+  // Usuario de pruebas con máximo acceso (SUPERADMIN)
+  const NEXUS_EMAIL = 'admin@nexusqtech.com';
+  const NEXUS_PASSWORD = '00@Limonero';
+  const existingNexus = await userRepo.findOne({
+    where: { email: NEXUS_EMAIL, tenantId: tenant.id },
   });
-  const savedLegalEntity = await legalEntityRepo.save(legalEntity);
-
-  const branch = branchRepo.create({
-    tenantId: tenant.id,
-    legalEntityId: savedLegalEntity.id,
-    name: 'Sucursal Central',
-    slug: 'central',
-    rfc: 'DEM123456ABC',
-    legalName: 'Demo Sucursal Central S.A. de C.V.',
-    taxRegime: '601',
-    taxPostalCode: '01000',
-    address: 'Av. Demo 123, Col. Centro',
-    city: 'Ciudad de México',
-    state: 'CDMX',
-    counterPhone: '+525512345678',
-    email: 'contacto@demo.local',
-    schedule: {},
-    timezone: 'America/Mexico_City',
-    taxRate: 0.16,
-    maxDiscountPct: 10,
-    quotationValidityDays: 15,
-    isPrimary: true,
-    isActive: true,
-  });
-  const savedBranch = await branchRepo.save(branch);
-
-  await configRepo.save(configRepo.create({ branchId: savedBranch.id }));
-
-  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, BCRYPT_ROUNDS);
-  const admin = userRepo.create({
-    tenantId: tenant.id,
-    firstName: 'Admin',
-    lastName: 'Demo',
-    email: 'admin@demo.local',
-    passwordHash,
-    scope: ScopeEnum.GLOBAL,
-    isActive: true,
-  });
-  const savedAdmin = await userRepo.save(admin);
-
-  await userRoleRepo.save(
-    userRoleRepo.create({
-      userId: savedAdmin.id,
-      role: RoleEnum.ADMIN,
-    }),
-  );
-
-  await userBranchRepo.save(
-    userBranchRepo.create({
-      userId: savedAdmin.id,
-      branchId: savedBranch.id,
-      isDefault: true,
-    }),
-  );
-
-  console.log('Seeds completados:');
-  console.log('  - Tenant: demo');
-  console.log('  - Legal Entity: Demo');
-  console.log('  - Branch: Sucursal Central');
-  console.log('  - Usuario: admin@demo.local / ' + DEMO_PASSWORD);
+  if (!existingNexus && tenant) {
+    const nexusBranch = await branchRepo.findOne({
+      where: { tenantId: tenant.id },
+    });
+    if (nexusBranch) {
+      const nexusPasswordHash = await bcrypt.hash(
+        NEXUS_PASSWORD,
+        BCRYPT_ROUNDS,
+      );
+      const nexusUser = userRepo.create({
+        tenantId: tenant.id,
+        firstName: 'Admin',
+        lastName: 'NexusQTech',
+        email: NEXUS_EMAIL,
+        passwordHash: nexusPasswordHash,
+        scope: ScopeEnum.GLOBAL,
+        isActive: true,
+      });
+      const savedNexus = await userRepo.save(nexusUser);
+      await userRoleRepo.save(
+        userRoleRepo.create({
+          userId: savedNexus.id,
+          role: RoleEnum.SUPERADMIN,
+        }),
+      );
+      await userBranchRepo.save(
+        userBranchRepo.create({
+          userId: savedNexus.id,
+          branchId: nexusBranch.id,
+          isDefault: true,
+        }),
+      );
+      console.log(
+        '  - Usuario pruebas: ' +
+          NEXUS_EMAIL +
+          ' / ' +
+          NEXUS_PASSWORD +
+          ' (SUPERADMIN)',
+      );
+    }
+  }
 
   await ds.destroy();
 }

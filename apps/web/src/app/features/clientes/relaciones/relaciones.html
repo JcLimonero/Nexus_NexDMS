@@ -1,0 +1,355 @@
+<div class="container-fluid relaciones">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Clientes, vehículos y servicios</h5>
+            <span class="text-muted">
+              Quién tiene qué unidad, quién la tuvo antes y qué se le ha hecho
+            </span>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/clients">
+            Ir a clientes
+          </a>
+        </div>
+
+        @if (aviso(); as a) {
+          <div class="card-body pb-0">
+            <div
+              class="alert mb-0"
+              [class.alert-success]="a.tono === 'ok'"
+              [class.alert-danger]="a.tono === 'error'"
+            >
+              {{ a.texto }}
+            </div>
+          </div>
+        }
+
+        <div class="card-body">
+          <!-- Buscador: la pantalla empieza por el cliente -->
+          @if (!cliente()) {
+            <div class="buscador">
+              <label class="form-label">Busca al cliente</label>
+              <input
+                class="form-control"
+                [(ngModel)]="busqueda"
+                (input)="buscar()"
+                placeholder="Nombre, empresa, teléfono o RFC"
+              />
+
+              @if (buscando()) {
+                <p class="text-muted small mt-2 mb-0">Buscando…</p>
+              } @else if (resultados().length) {
+                <ul class="resultados">
+                  @for (c of resultados(); track c.id) {
+                    <li>
+                      <button type="button" (click)="elegirCliente(c)">
+                        <strong>{{ nombre(c) }}</strong>
+                        <span>{{ c.phone }}{{ c.rfc ? " · " + c.rfc : "" }}</span>
+                      </button>
+                    </li>
+                  }
+                </ul>
+              } @else if (busqueda.length >= 2) {
+                <p class="text-muted small mt-2 mb-0">Ningún cliente coincide.</p>
+              }
+            </div>
+          } @else {
+            <div class="elegido">
+              <div>
+                <span class="text-muted small">Cliente</span>
+                <h6 class="mb-0">{{ nombre(cliente()!) }}</h6>
+              </div>
+              <button type="button" class="btn btn-link btn-sm" (click)="limpiar()">
+                Cambiar
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (cliente()) {
+    <div class="row g-3">
+      <!-- Columna 1: sus vehículos -->
+      <div class="col-lg-4">
+        <div class="card h-100">
+          <div class="card-header">
+            <h6 class="mb-0">Sus vehículos</h6>
+            <span class="text-muted small">
+              Los que tiene y los que tuvo
+            </span>
+          </div>
+          <div class="card-body">
+            @if (cargando()) {
+              <p class="text-muted mb-0">Cargando…</p>
+            } @else if (!vehiculos().length) {
+              <p class="text-muted mb-0">
+                No tiene vehículos registrados.
+              </p>
+            } @else {
+              <ul class="lista-vehiculos">
+                @for (v of vehiculos(); track v.vehicleId) {
+                  <li>
+                    <button
+                      type="button"
+                      [class.activo]="ficha()?.vehiculo?.id === v.vehicleId"
+                      [class.pasado]="!v.actual"
+                      (click)="abrirVehiculo(v.vehicleId)"
+                    >
+                      <span class="veh-nombre">
+                        <strong>{{ v.descripcion }}</strong>
+                        @if (!v.actual) {
+                          <!-- El que ya no es suyo se marca: su historial
+                               sigue siendo parte de la relación con él. -->
+                          <span class="badge bg-secondary">ya no es suyo</span>
+                        }
+                      </span>
+                      <span class="veh-datos">
+                        {{ v.placa || "sin placa" }} ·
+                        {{ v.servicios }}
+                        {{ v.servicios === 1 ? "servicio" : "servicios" }}
+                      </span>
+                      <span class="veh-fechas">
+                        Desde {{ v.desde | date: "MMM yyyy" }}
+                        @if (v.hasta) {
+                          hasta {{ v.hasta | date: "MMM yyyy" }}
+                        }
+                      </span>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Columna 2: la ficha del vehículo -->
+      <div class="col-lg-8">
+        @if (!ficha()) {
+          <div class="card h-100">
+            <div class="card-body d-flex align-items-center justify-content-center">
+              <p class="text-muted mb-0">
+                Elige un vehículo para ver su historial.
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-start flex-wrap gap-2">
+              <div>
+                <h6 class="mb-0">{{ ficha()!.vehiculo.descripcion }}</h6>
+                <span class="text-muted small">
+                  {{ ficha()!.vehiculo.placa || "sin placa" }}
+                  @if (ficha()!.vehiculo.vin) {
+                    · VIN {{ ficha()!.vehiculo.vin }}
+                  }
+                  · {{ ficha()!.vehiculo.km | number }} km
+                </span>
+              </div>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                (click)="abrirTraspaso()"
+              >
+                Traspasar a otro cliente
+              </button>
+            </div>
+
+            <div class="card-body">
+              <div class="resumen">
+                <div class="resumen-dato">
+                  <strong>{{ ficha()!.resumen.servicios }}</strong>
+                  <span>servicios</span>
+                </div>
+                <div class="resumen-dato">
+                  <strong>{{ ficha()!.resumen.duenos }}</strong>
+                  <span>{{ ficha()!.resumen.duenos === 1 ? "dueño" : "dueños" }}</span>
+                </div>
+                <div class="resumen-dato">
+                  <strong>
+                    {{ ficha()!.resumen.gastoTotal | money}}
+                  </strong>
+                  <span>facturado</span>
+                </div>
+                <div class="resumen-dato">
+                  <strong>
+                    {{
+                      ficha()!.resumen.ultimoServicio
+                        ? (ficha()!.resumen.ultimoServicio | date: "dd/MM/yy")
+                        : "—"
+                    }}
+                  </strong>
+                  <span>último servicio</span>
+                </div>
+              </div>
+
+              <h6 class="titulo-seccion">Dueños</h6>
+              <ul class="cadena">
+                @for (d of ficha()!.duenos; track d.id) {
+                  <li [class.actual]="d.actual">
+                    <span class="cadena-punto"></span>
+                    <span class="cadena-texto">
+                      <button
+                        type="button"
+                        class="btn btn-link p-0 align-baseline"
+                        (click)="irACliente(d.clientId)"
+                      >
+                        {{ d.cliente }}
+                      </button>
+                      <span class="text-muted small">
+                        {{ d.desde | date: "dd/MM/yyyy" }} —
+                        {{ d.hasta ? (d.hasta | date: "dd/MM/yyyy") : "hoy" }}
+                      </span>
+                      @if (d.notas) {
+                        <span class="text-muted small">{{ d.notas }}</span>
+                      }
+                    </span>
+                  </li>
+                }
+              </ul>
+
+              <h6 class="titulo-seccion">Servicios</h6>
+              @if (!ficha()!.servicios.length) {
+                <p class="text-muted mb-0">
+                  Todavía no se le ha hecho ningún servicio.
+                </p>
+              } @else {
+                <div class="table-responsive">
+                  <table class="table table-sm table-hover align-middle tabla-servicios">
+                    <thead>
+                      <tr>
+                        <th>Folio</th>
+                        <th>Fecha</th>
+                        <th>Cliente de entonces</th>
+                        <th>Estado</th>
+                        <th class="text-end">Km</th>
+                        <th class="text-end">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      @for (s of ficha()!.servicios; track s.id) {
+                        <tr [class.anterior]="s.deDuenoAnterior">
+                          <td>
+                            <a [routerLink]="['/workshop/service-orders', s.id]">
+                              {{ s.folio }}
+                            </a>
+                            <!-- Cómo llegó la unidad ESA vez: pertenece a su
+                                 servicio, no a un bloque aparte que repita la
+                                 tabla renglón por renglón. -->
+                            <button
+                              type="button"
+                              class="ver-recepcion"
+                              (click)="alternarServicio(s.id)"
+                            >
+                              {{ servicioAbierto() === s.id ? "Ocultar" : "Cómo llegó" }}
+                            </button>
+                          </td>
+                          <td>{{ s.fecha | date: "dd/MM/yyyy" }}</td>
+                          <td>
+                            {{ s.cliente }}
+                            @if (s.deDuenoAnterior) {
+                              <!-- Marca clave al recibir una unidad de
+                                   segunda mano: esto no lo hizo quien la
+                                   trae hoy. -->
+                              <span class="badge bg-light text-dark">
+                                dueño anterior
+                              </span>
+                            }
+                          </td>
+                          <td>{{ etiquetaEstado(s.estado) }}</td>
+                          <td class="text-end">{{ s.kmEntrada | number }}</td>
+                          <td class="text-end">
+                            {{ s.total | money}}
+                          </td>
+                        </tr>
+
+                        @if (servicioAbierto() === s.id) {
+                          <tr class="fila-evidencia">
+                            <td colspan="6">
+                              <app-evidencia-recepcion
+                                [serviceOrderId]="s.id"
+                                [conCabecera]="false"
+                                mensajeVacio="Esta orden se abrió sin pasar por la recepción guiada, así que no tiene fotos ni daños marcados."
+                              />
+                            </td>
+                          </tr>
+                        }
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>
+
+<!-- Traspaso -->
+@if (traspasoAbierto()) {
+  <div class="fondo-modal" (click)="traspasoAbierto.set(false)"></div>
+  <div class="panel-modal" role="dialog" aria-modal="true">
+    <div class="panel-top">
+      <div>
+        <h5>Traspasar vehículo</h5>
+        <span class="text-muted small">
+          {{ ficha()?.vehiculo?.descripcion }} — los servicios anteriores se
+          quedan con el dueño que los pagó
+        </span>
+      </div>
+      <button type="button" class="btn-close" (click)="traspasoAbierto.set(false)"></button>
+    </div>
+
+    <div class="panel-cuerpo">
+      <label class="form-label">Nuevo dueño</label>
+      <input
+        class="form-control"
+        [(ngModel)]="busquedaNuevo"
+        (input)="buscarNuevoDueno()"
+        placeholder="Busca al cliente que lo recibe"
+      />
+      @if (candidatos().length) {
+        <ul class="resultados">
+          @for (c of candidatos(); track c.id) {
+            <li>
+              <button type="button" (click)="elegirNuevoDueno(c)">
+                <strong>{{ nombre(c) }}</strong>
+                <span>{{ c.phone }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="row g-3 mt-1">
+        <div class="col-md-6">
+          <label class="form-label">Fecha del traspaso</label>
+          <input type="date" class="form-control" [(ngModel)]="traspaso.fecha" />
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Notas</label>
+          <input class="form-control" [(ngModel)]="traspaso.notas" />
+        </div>
+      </div>
+    </div>
+
+    <div class="panel-pie">
+      <button
+        type="button"
+        class="btn btn-outline-secondary"
+        (click)="traspasoAbierto.set(false)"
+      >
+        Cancelar
+      </button>
+      <button type="button" class="btn btn-primary" (click)="confirmarTraspaso()">
+        Traspasar
+      </button>
+    </div>
+  </div>
+}

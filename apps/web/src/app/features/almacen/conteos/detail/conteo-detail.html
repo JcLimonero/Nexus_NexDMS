@@ -1,0 +1,112 @@
+<div class="container-fluid conteo-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      @if (loading()) {
+        <div class="text-center py-5"><span class="spinner-border"></span></div>
+      } @else if (error()) {
+        <div class="alert alert-danger">{{ error() }}</div>
+      } @else if (conteo(); as c) {
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h5 class="mb-1">
+                Conteo {{ c.folio }}
+                <span
+                  class="badge ms-2"
+                  [class.bg-primary]="c.status === 'OPEN'"
+                  [class.bg-success]="c.status === 'APPLIED'"
+                  [class.bg-secondary]="c.status === 'CANCELLED'"
+                >{{ getStatusLabel(c.status) }}</span>
+              </h5>
+              @if (c.notes) {
+                <span class="text-muted">{{ c.notes }}</span>
+              }
+            </div>
+            <div class="d-flex gap-2">
+              <a class="btn btn-outline-secondary" routerLink="/warehouse/conteos">Volver</a>
+              @if (abierto()) {
+                <button type="button" class="btn btn-outline-danger" (click)="cancelar()">
+                  Cancelar
+                </button>
+                <button type="button" class="btn btn-outline-primary" (click)="guardar()" [disabled]="guardando()">
+                  @if (guardando()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Guardar
+                </button>
+                <button type="button" class="btn btn-success" (click)="aplicar()" [disabled]="aplicando()">
+                  @if (aplicando()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Aplicar
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="card-body">
+            @if (abierto()) {
+              <div class="alert alert-info py-2">
+                Captura lo contado en cada parte. Guarda para conservar el avance;
+                aplica para generar los ajustes. Renglones con diferencia (guardados):
+                <strong>{{ conDiferencia() }}</strong>.
+              </div>
+            }
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Parte</th>
+                    <th class="text-end">Sistema</th>
+                    <th class="text-end" style="width: 140px">Contado</th>
+                    <th class="text-end">Diferencia</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (l of c.lines; track l.id) {
+                    <tr>
+                      <td><code>{{ l.sku }}</code></td>
+                      <td>{{ l.name }}</td>
+                      <td class="text-end">{{ l.systemQty }}</td>
+                      <td class="text-end">
+                        @if (abierto()) {
+                          <input
+                            type="number"
+                            class="form-control form-control-sm text-end"
+                            [(ngModel)]="capturado[l.id]"
+                            min="0"
+                            step="1"
+                          />
+                        } @else {
+                          {{ l.countedQty ?? "—" }}
+                        }
+                      </td>
+                      <td class="text-end">
+                        @if (abierto()) {
+                          @if (diferenciaViva(l.id, l.systemQty); as d) {
+                            <span [class.text-danger]="d < 0" [class.text-success]="d > 0">
+                              {{ d > 0 ? "+" : "" }}{{ d }}
+                            </span>
+                          } @else {
+                            <span class="text-muted">—</span>
+                          }
+                        } @else if (l.difference !== null && l.difference !== 0) {
+                          <span [class.text-danger]="l.difference < 0" [class.text-success]="l.difference > 0">
+                            {{ l.difference > 0 ? "+" : "" }}{{ l.difference }}
+                          </span>
+                        } @else {
+                          <span class="text-muted">0</span>
+                        }
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

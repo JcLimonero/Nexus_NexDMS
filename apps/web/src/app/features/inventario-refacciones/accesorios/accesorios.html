@@ -1,0 +1,281 @@
+<div class="container-fluid accesorios">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Accesorios</h5>
+            <span class="text-muted">
+              Lo que se vende con la unidad: barras, tapetes, cascos
+            </span>
+          </div>
+          <div class="d-flex align-items-center gap-2 flex-wrap">
+            <app-importador entidad="unit-accessories" (importado)="cargar()"></app-importador>
+            <button type="button" class="btn btn-primary btn-sm" (click)="nuevo()">
+              Nuevo accesorio
+            </button>
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/parts-inventory">
+              Refacciones
+            </a>
+          </div>
+        </div>
+
+        @if (aviso(); as a) {
+          <div class="card-body pb-0">
+            <div
+              class="alert mb-0"
+              [class.alert-success]="a.tono === 'ok'"
+              [class.alert-danger]="a.tono === 'error'"
+            >
+              {{ a.texto }}
+            </div>
+          </div>
+        }
+
+        <div class="card-body">
+          <div class="filtros">
+            <input
+              class="form-control"
+              [(ngModel)]="busqueda"
+              placeholder="Buscar por nombre, SKU o familia"
+            />
+            <div class="btn-group btn-group-sm" role="group">
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="filtro() === 'todos'"
+                [class.btn-outline-secondary]="filtro() !== 'todos'"
+                (click)="filtro.set('todos')"
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="filtro() === 'universales'"
+                [class.btn-outline-secondary]="filtro() !== 'universales'"
+                (click)="filtro.set('universales')"
+              >
+                Universales
+              </button>
+              <button
+                type="button"
+                class="btn"
+                [class.btn-primary]="filtro() === 'por-modelo'"
+                [class.btn-outline-secondary]="filtro() !== 'por-modelo'"
+                (click)="filtro.set('por-modelo')"
+              >
+                Por modelo
+              </button>
+            </div>
+          </div>
+
+          @if (cargando()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else if (!accesorios().length) {
+            <p class="text-muted mb-0">
+              Todavía no hay accesorios dados de alta.
+            </p>
+          } @else if (!visibles().length) {
+            <p class="text-muted mb-0">Ninguno coincide con el filtro.</p>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Accesorio</th>
+                    <th>SKU</th>
+                    <th>Familia</th>
+                    <th>Monta en</th>
+                    <th class="text-end">Precio</th>
+                    <th>Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (a of visibles(); track a.id) {
+                    <tr [class.inactivo]="!a.isActive">
+                      <td>
+                        <strong>{{ a.name }}</strong>
+                        @if (a.description) {
+                          <div class="text-muted small">{{ a.description }}</div>
+                        }
+                      </td>
+                      <td class="mono text-muted">{{ a.sku || "—" }}</td>
+                      <td>
+                        @if (a.category) {
+                          <span class="badge bg-light text-dark">{{ a.category }}</span>
+                        } @else {
+                          <span class="text-muted">—</span>
+                        }
+                      </td>
+                      <td>
+                        @if (a.isUniversal) {
+                          <span class="badge bg-info-subtle text-info-emphasis">
+                            Cualquier unidad
+                          </span>
+                        } @else if (sinAplicacion(a)) {
+                          <!-- Ni universal ni con modelos: no lo va a ofrecer
+                               nadie al vender. Se avisa. -->
+                          <span class="badge bg-warning text-dark">
+                            {{ aplicaA(a) }}
+                          </span>
+                        } @else {
+                          <span class="text-muted">{{ aplicaA(a) }}</span>
+                        }
+                      </td>
+                      <td class="text-end">
+                        {{ a.price | money}}
+                      </td>
+                      <td>
+                        @if (a.isActive) {
+                          <span class="badge bg-success">Activo</span>
+                        } @else {
+                          <span class="badge bg-secondary">De baja</span>
+                        }
+                      </td>
+                      <td class="text-end text-nowrap">
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-xs me-1"
+                          (click)="editar(a)"
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          class="btn btn-outline-secondary btn-xs"
+                          (click)="alternarActivo(a)"
+                        >
+                          {{ a.isActive ? "Dar de baja" : "Activar" }}
+                        </button>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Alta y edición -->
+@if (abierto()) {
+  <div class="fondo-modal" (click)="cerrar()"></div>
+  <div class="panel-modal" role="dialog" aria-modal="true">
+    <div class="panel-top">
+      <h5>{{ editando() ? "Editar accesorio" : "Nuevo accesorio" }}</h5>
+      <button type="button" class="btn-close" (click)="cerrar()"></button>
+    </div>
+
+    <div class="panel-cuerpo">
+      <div class="row g-3">
+        <div class="col-md-8">
+          <label class="form-label">Nombre</label>
+          <input
+            class="form-control"
+            [(ngModel)]="form.name"
+            placeholder="Barras porta equipaje"
+          />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">SKU</label>
+          <input class="form-control" [(ngModel)]="form.sku" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Precio</label>
+          <input type="number" min="0" step="50" class="form-control" [(ngModel)]="form.price" />
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Familia</label>
+          <input
+            class="form-control"
+            [(ngModel)]="form.category"
+            list="familias"
+            placeholder="Barras, tapetes, cascos…"
+          />
+          <!-- Se ofrecen las que ya existen para que no se inventen tres
+               nombres distintos de lo mismo. -->
+          <datalist id="familias">
+            @for (c of categorias(); track c) {
+              <option [value]="c"></option>
+            }
+          </datalist>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Clave SAT</label>
+          <input class="form-control" [(ngModel)]="form.satProductKey" />
+        </div>
+        <div class="col-12">
+          <label class="form-label">Descripción</label>
+          <input class="form-control" [(ngModel)]="form.description" />
+        </div>
+      </div>
+
+      <hr />
+
+      <h6>¿En qué unidades monta?</h6>
+      <label class="universal">
+        <input type="checkbox" [(ngModel)]="form.isUniversal" />
+        <span>
+          <strong>Monta en cualquier unidad</strong>
+          <small>
+            Se ofrecerá con todas las unidades, sin lista de modelos
+          </small>
+        </span>
+      </label>
+
+      @if (!form.isUniversal) {
+        <div class="modelos">
+          <input
+            class="form-control mb-2"
+            [(ngModel)]="busquedaModelo"
+            placeholder="Busca marca, modelo o año"
+          />
+          @if (form.globalModelIds.length) {
+            <p class="text-muted small mb-2">
+              {{ form.globalModelIds.length }}
+              {{ form.globalModelIds.length === 1 ? "modelo elegido" : "modelos elegidos" }}
+            </p>
+          }
+          <div class="lista-modelos">
+            @for (m of modelosFiltrados(); track m.id) {
+              <label class="modelo" [class.marcado]="tieneModelo(m.id)">
+                <input
+                  type="checkbox"
+                  [checked]="tieneModelo(m.id)"
+                  (change)="alternarModelo(m.id)"
+                />
+                <span>{{ nombreModelo(m) }}</span>
+              </label>
+            }
+            @if (!modelosFiltrados().length) {
+              <p class="text-muted small mb-0">Ningún modelo coincide.</p>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="panel-pie">
+      <button type="button" class="btn btn-outline-secondary" (click)="cerrar()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn btn-primary"
+        [disabled]="guardando()"
+        (click)="guardar()"
+      >
+        {{ editando() ? "Guardar cambios" : "Dar de alta" }}
+      </button>
+    </div>
+  </div>
+}

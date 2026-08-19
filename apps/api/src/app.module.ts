@@ -8,20 +8,41 @@ import { AuthModule } from './modules/auth/auth.module';
 import { LegalEntitiesModule } from './modules/legal-entities/legal-entities.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
+import { ClientTypesModule } from './modules/client-types/client-types.module';
 import { ContactsModule } from './modules/contacts/contacts.module';
 import { CustomerVehiclesModule } from './modules/customer-vehicles/customer-vehicles.module';
 import { PartCategoriesModule } from './modules/part-categories/part-categories.module';
 import { PartsModule } from './modules/parts/parts.module';
 import { PurchaseOrdersModule } from './modules/purchase-orders/purchase-orders.module';
+import { PurchaseRequisitionsModule } from './modules/purchase-requisitions/purchase-requisitions.module';
+import { PartReturnsModule } from './modules/part-returns/part-returns.module';
+import { DeliveriesModule } from './modules/deliveries/deliveries.module';
+import { SalesAppointmentsModule } from './modules/sales-appointments/sales-appointments.module';
+import { SurveysModule } from './modules/surveys/surveys.module';
+import { SaleSurveysModule } from './modules/sale-surveys/sale-surveys.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { StockLocationsModule } from './modules/stock-locations/stock-locations.module';
 import { StockMovementsModule } from './modules/stock-movements/stock-movements.module';
+import { StockCountsModule } from './modules/stock-counts/stock-counts.module';
+import { RoleMapModule } from './modules/role-map/role-map.module';
+import { ImportsModule } from './modules/imports/imports.module';
+import { CustomRolesModule } from './modules/custom-roles/custom-roles.module';
 import { TenantsModule } from './modules/tenants/tenants.module';
+import { SaasModule } from './modules/saas/saas.module';
+import { VehicleHistoryModule } from './modules/vehicle-history/vehicle-history.module';
+import { ServicePhasesModule } from './modules/service-phases/service-phases.module';
 import { CashRegisterModule } from './modules/cash-register/cash-register.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { WarehouseTransfersModule } from './modules/warehouse-transfers/warehouse-transfers.module';
 import { UsersModule } from './modules/users/users.module';
 import { GlobalModelsModule } from './modules/global-models/global-models.module';
+import { GlobalBrandsModule } from './modules/global-brands/global-brands.module';
+import { VehicleTypesModule } from './modules/vehicle-types/vehicle-types.module';
+import { VehicleCategoriesModule } from './modules/vehicle-categories/vehicle-categories.module';
+import { VehicleModelsModule } from './modules/vehicle-models/vehicle-models.module';
+import { VehicleVersionsModule } from './modules/vehicle-versions/vehicle-versions.module';
+import { VehicleColorsModule } from './modules/vehicle-colors/vehicle-colors.module';
+import { CombustionTypesModule } from './modules/combustion-types/combustion-types.module';
 import { UnitLocationsModule } from './modules/unit-locations/unit-locations.module';
 import { CatalogUnitsModule } from './modules/catalog-units/catalog-units.module';
 import { UnitReservationsModule } from './modules/unit-reservations/unit-reservations.module';
@@ -29,6 +50,11 @@ import { UnitSalesModule } from './modules/unit-sales/unit-sales.module';
 import { QuotationsModule } from './modules/quotations/quotations.module';
 import { AppointmentsModule } from './modules/appointments/appointments.module';
 import { ServiceOrdersModule } from './modules/service-orders/service-orders.module';
+import { SaleDocumentsModule } from './modules/sale-documents/sale-documents.module';
+import { ServiceKitsModule } from './modules/service-kits/service-kits.module';
+import { SignaturesModule } from './modules/signatures/signatures.module';
+import { ClientPortalModule } from './modules/client-portal/client-portal.module';
+import { ExportModule } from './modules/export/export.module';
 import { WarrantiesModule } from './modules/warranties/warranties.module';
 import { CommissionsModule } from './modules/commissions/commissions.module';
 import { BranchPrintersModule } from './modules/branch-printers/branch-printers.module';
@@ -45,7 +71,8 @@ import { RedisModule } from './common/redis/redis.module';
 import { StorageModule } from './common/storage/storage.module';
 import { QueuesModule } from './queues/queues.module';
 import { EventsModule } from './events/events.module';
-import { seconds, ThrottlerModule } from '@nestjs/throttler';
+import { ThrottlerModule } from '@nestjs/throttler';
+import { LIMITES_GENERALES } from './common/throttler/limites';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuditInterceptor } from './common/audit/audit.interceptor';
@@ -62,6 +89,16 @@ import { BranchRampsModule } from './modules/branch-ramps/branch-ramps.module';
 import { ServicePlanningModule } from './modules/service-planning/service-planning.module';
 import { UnitAccessoriesModule } from './modules/unit-accessories/unit-accessories.module';
 import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extras.module';
+import { UnitReturnsModule } from './modules/unit-returns/unit-returns.module';
+import { UnitReturnDocumentsModule } from './modules/unit-return-documents/unit-return-documents.module';
+import { PublicPortalModule } from './modules/public-portal/public-portal.module';
+import { FinanceModule } from './modules/finance/finance.module';
+import { LeadsModule } from './modules/leads/leads.module';
+import { UsedUnitsModule } from './modules/used-units/used-units.module';
+import { PldModule } from './modules/pld/pld.module';
+import { ModulesModule } from './modules/modules/modules.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
 
 @Module({
   imports: [
@@ -80,11 +117,7 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
       imports: [],
       inject: ['REDIS_CLIENT'],
       useFactory: (redis: { increment: unknown }) => ({
-        throttlers: [
-          { name: 'short', ttl: seconds(1), limit: 3 },
-          { name: 'medium', ttl: seconds(60), limit: 10 },
-          { name: 'long', ttl: seconds(60), limit: 100 },
-        ],
+        throttlers: LIMITES_GENERALES,
         storage: new RedisThrottlerStorage(redis as never),
         getTracker: getThrottlerTracker,
         generateKey: getThrottlerKey,
@@ -92,22 +125,43 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     }),
     AuthModule,
     TenantsModule,
+    SaasModule,
+    VehicleHistoryModule,
+    ServicePhasesModule,
     LegalEntitiesModule,
     BranchesModule,
     ClientsModule,
+    ClientTypesModule,
     ContactsModule,
     CustomerVehiclesModule,
     PartCategoriesModule,
     PartsModule,
     PurchaseOrdersModule,
+    PurchaseRequisitionsModule,
+    PartReturnsModule,
+    DeliveriesModule,
+    SalesAppointmentsModule,
+    SurveysModule,
+    SaleSurveysModule,
     StockLocationsModule,
     StockMovementsModule,
+    StockCountsModule,
+    RoleMapModule,
+    ImportsModule,
+    CustomRolesModule,
     SuppliersModule,
     UsersModule,
     CashRegisterModule,
     SalesModule,
     WarehouseTransfersModule,
     GlobalModelsModule,
+    GlobalBrandsModule,
+    VehicleTypesModule,
+    VehicleCategoriesModule,
+    VehicleModelsModule,
+    VehicleVersionsModule,
+    VehicleColorsModule,
+    CombustionTypesModule,
     UnitLocationsModule,
     CatalogUnitsModule,
     UnitReservationsModule,
@@ -121,7 +175,14 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     ServicePlanningModule,
     UnitAccessoriesModule,
     UnitSaleExtrasModule,
+    UnitReturnsModule,
+    UnitReturnDocumentsModule,
     ServiceOrdersModule,
+    SaleDocumentsModule,
+    ServiceKitsModule,
+    SignaturesModule,
+    ClientPortalModule,
+    ExportModule,
     WarrantiesModule,
     CommissionsModule,
     BranchPrintersModule,
@@ -134,6 +195,14 @@ import { UnitSaleExtrasModule } from './modules/unit-sale-extras/unit-sale-extra
     CronModule,
     HealthModule,
     DocumentsModule,
+    PublicPortalModule,
+    DashboardModule,
+    WhatsappBotModule,
+    FinanceModule,
+    LeadsModule,
+    UsedUnitsModule,
+    PldModule,
+    ModulesModule,
   ],
   controllers: [AppController],
   providers: [

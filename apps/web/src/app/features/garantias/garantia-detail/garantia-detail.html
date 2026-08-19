@@ -1,0 +1,164 @@
+<div class="container-fluid garantia-detail">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <h5>Garantía</h5>
+          <a class="btn btn-outline-secondary btn-sm" routerLink="/warranties">Volver</a>
+        </div>
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status"></div>
+            </div>
+          } @else if (garantia(); as w) {
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 35%">Cliente</th>
+                      <td>{{ getClientName(w) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Vehículo</th>
+                      <td>{{ getVehicleLabel(w) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Sucursal</th>
+                      <td>{{ getBranchName(w.branchId) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ getTypeLabel(w.type) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-warning]="w.status === 'OPEN'"
+                          [class.bg-info]="w.status === 'IN_PROGRESS'"
+                          [class.bg-success]="w.status === 'RESOLVED'"
+                          [class.bg-danger]="w.status === 'REJECTED'">
+                          {{ getStatusLabel(w.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Vigencia</th>
+                      <td>{{ w.startDate | date:'shortDate' }} - {{ w.endDate | date:'shortDate' }}</td>
+                    </tr>
+                    @if (w.authorizer) {
+                      <tr>
+                        <th class="text-muted">Autorizado por</th>
+                        <td>{{ w.authorizer.firstName }} {{ w.authorizer.lastName }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-sm">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 35%">Descripción</th>
+                      <td>{{ w.description }}</td>
+                    </tr>
+                    @if (w.resolution) {
+                      <tr>
+                        <th class="text-muted">Resolución</th>
+                        <td>{{ w.resolution }}</td>
+                      </tr>
+                    }
+                    @if (w.unitSale) {
+                      <tr>
+                        <th class="text-muted">Venta de unidad</th>
+                        <td>{{ w.unitSale.folio }}</td>
+                      </tr>
+                    }
+                    @if (w.serviceOrder) {
+                      <tr>
+                        <th class="text-muted">Orden de servicio</th>
+                        <td>{{ w.serviceOrder.folio }}</td>
+                      </tr>
+                    }
+                    <tr>
+                      <th class="text-muted">Creada</th>
+                      <td>{{ w.createdAt | date:'short' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="d-flex flex-wrap gap-3 align-items-end mb-2">
+              @if (canAuthorize()) {
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  (click)="onAuthorize()"
+                  [disabled]="authorizing()"
+                >
+                  @if (authorizing()) {
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                  }
+                  Autorizar
+                </button>
+              }
+              @if (canReject()) {
+                <div class="d-flex gap-2 align-items-center">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    style="width: 200px"
+                    [ngModel]="rejectReason()"
+                    (ngModelChange)="rejectReason.set($event)"
+                    placeholder="Motivo de rechazo (opcional)"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    (click)="onReject()"
+                    [disabled]="rejecting()"
+                  >
+                    @if (rejecting()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    Rechazar
+                  </button>
+                </div>
+              }
+              @if (canResolve()) {
+                <div class="d-flex gap-2 align-items-center">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    style="width: 250px"
+                    [ngModel]="resolution()"
+                    (ngModelChange)="resolution.set($event)"
+                    placeholder="Resolución"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-primary btn-sm"
+                    (click)="onResolve()"
+                    [disabled]="resolving()"
+                  >
+                    @if (resolving()) {
+                      <span class="spinner-border spinner-border-sm me-1"></span>
+                    }
+                    Resolver
+                  </button>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,116 @@
+<div class="container-fluid conteos-list">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Conteos físicos</h5>
+            <span>Toma de inventario y reconciliación de existencias</span>
+          </div>
+          <button type="button" class="btn btn-primary" (click)="abrirNuevo()">
+            Nuevo conteo
+          </button>
+        </div>
+
+        <div class="card-body">
+          @if (loading()) {
+            <div class="text-center py-4"><span class="spinner-border"></span></div>
+          } @else if (error()) {
+            <div class="alert alert-danger">{{ error() }}</div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>Folio</th>
+                    <th>Sucursal</th>
+                    <th>Estatus</th>
+                    <th>Creado</th>
+                    <th>Aplicado</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of conteos(); track c.id) {
+                    <tr>
+                      <td><strong>{{ c.folio }}</strong></td>
+                      <td>{{ getBranchName(c.branchId) }}</td>
+                      <td>
+                        <span
+                          class="badge"
+                          [class.bg-primary]="c.status === 'OPEN'"
+                          [class.bg-success]="c.status === 'APPLIED'"
+                          [class.bg-secondary]="c.status === 'CANCELLED'"
+                        >{{ getStatusLabel(c.status) }}</span>
+                      </td>
+                      <td>{{ c.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
+                      <td>{{ c.appliedAt ? (c.appliedAt | date: "dd/MM/yyyy HH:mm") : "—" }}</td>
+                      <td class="text-end">
+                        <a class="btn btn-sm btn-outline-primary" [routerLink]="['/warehouse/conteos', c.id]">
+                          {{ c.status === "OPEN" ? "Capturar" : "Ver" }}
+                        </a>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="6" class="text-center text-muted py-3">
+                        Aún no hay conteos
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (nuevoAbierto()) {
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Nuevo conteo físico</h5>
+            <button type="button" class="btn-close" (click)="nuevoAbierto.set(false)"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">
+              Se congela la existencia del sistema de todas las partes activas de
+              la sucursal para capturar el conteo.
+            </p>
+            <div class="mb-3">
+              <label class="form-label">Sucursal</label>
+              <select
+                class="form-select"
+                [ngModel]="nuevaBranch()"
+                (ngModelChange)="nuevaBranch.set($event)"
+              >
+                @for (b of branches(); track b.id) {
+                  <option [value]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="mb-1">
+              <label class="form-label">Notas (opcional)</label>
+              <textarea class="form-control" rows="2" [(ngModel)]="nuevasNotas"></textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="nuevoAbierto.set(false)">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-primary" (click)="crear()" [disabled]="abriendo()">
+              @if (abriendo()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Abrir conteo
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

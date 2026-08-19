@@ -1,0 +1,189 @@
+<div class="container-fluid costeo">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>Costeo de inventario</h5>
+            <span>Valuación a costo promedio ponderado</span>
+          </div>
+          <div style="min-width: 240px">
+            <select
+              class="form-select"
+              [ngModel]="branchId()"
+              (ngModelChange)="onBranchChange($event)"
+            >
+              @for (b of branches(); track b.id) {
+                <option [value]="b.id">{{ b.name }}</option>
+              }
+            </select>
+          </div>
+        </div>
+
+        <div class="card-body">
+          @if (loading()) {
+            <div class="text-center py-4">
+              <span class="spinner-border"></span>
+            </div>
+          } @else if (error()) {
+            <div class="alert alert-danger">{{ error() }}</div>
+          } @else if (valuation(); as v) {
+            <div class="row g-3 mb-4">
+              <div class="col-6 col-md-3">
+                <div class="card h-100 border-0 bg-light">
+                  <div class="card-body">
+                    <div class="text-muted small">Partes</div>
+                    <div class="h4 mb-0">{{ v.totals.parts }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card h-100 border-0 bg-light">
+                  <div class="card-body">
+                    <div class="text-muted small">Piezas</div>
+                    <div class="h4 mb-0">{{ v.totals.units }}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card h-100 border-0 bg-light">
+                  <div class="card-body">
+                    <div class="text-muted small">Valor a costo</div>
+                    <div class="h4 mb-0">{{ v.totals.costValue | money}}</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-6 col-md-3">
+                <div class="card h-100 border-0 bg-light">
+                  <div class="card-body">
+                    <div class="text-muted small">Valor a venta</div>
+                    <div class="h4 mb-0">{{ v.totals.retailValue | money}}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="table table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>SKU</th>
+                    <th>Parte</th>
+                    <th class="text-end">Existencia</th>
+                    <th class="text-end">Costo prom.</th>
+                    <th class="text-end">Valor</th>
+                    <th class="text-end">P. público</th>
+                    <th class="text-end">Margen</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (it of v.items; track it.partId) {
+                    <tr>
+                      <td><code>{{ it.sku }}</code></td>
+                      <td>{{ it.name }}</td>
+                      <td class="text-end">{{ it.stockQuantity }}</td>
+                      <td class="text-end">{{ it.averageCost | money}}</td>
+                      <td class="text-end">{{ it.value | money}}</td>
+                      <td class="text-end">{{ it.publicPrice | money}}</td>
+                      <td class="text-end">
+                        @if (it.marginPct !== null) {
+                          <span
+                            class="badge"
+                            [class.bg-success]="it.marginPct >= 30"
+                            [class.bg-warning]="it.marginPct < 30 && it.marginPct >= 10"
+                            [class.bg-danger]="it.marginPct < 10"
+                          >{{ it.marginPct }}%</span>
+                        } @else {
+                          <span class="text-muted">—</span>
+                        }
+                      </td>
+                      <td class="text-end">
+                        <button
+                          type="button"
+                          class="btn btn-sm btn-outline-primary"
+                          (click)="abrirEntrada(it)"
+                        >
+                          Entrada
+                        </button>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="8" class="text-center text-muted py-3">
+                        Sin partes activas en esta sucursal
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (entradaAbierta() && entradaPart(); as part) {
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Entrada de compra</h5>
+            <button type="button" class="btn-close" (click)="entradaAbierta.set(false)"></button>
+          </div>
+          <div class="modal-body">
+            <p class="mb-1"><strong>{{ part.name }}</strong></p>
+            <p class="text-muted small mb-3">
+              Existencia actual: {{ part.stockQuantity }} · costo promedio actual:
+              {{ part.averageCost | money}}
+            </p>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label">Cantidad</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="entradaQty"
+                  min="1"
+                  step="1"
+                />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Costo unitario</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  [(ngModel)]="entradaCosto"
+                  min="0.01"
+                  step="0.01"
+                />
+              </div>
+            </div>
+            <p class="text-muted small mt-3 mb-0">
+              El costo promedio ponderado se recalcula automáticamente al guardar.
+            </p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="entradaAbierta.set(false)">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="guardarEntrada()"
+              [disabled]="guardandoEntrada()"
+            >
+              @if (guardandoEntrada()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Registrar entrada
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>
+

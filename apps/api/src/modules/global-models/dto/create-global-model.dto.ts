@@ -1,31 +1,37 @@
 import {
   IsBoolean,
-  IsEnum,
   IsInt,
+  IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Min,
+  MinLength,
 } from 'class-validator';
-import { VehicleTypeEnum } from '../entities/global-model.entity';
 
 export class CreateGlobalModelDto {
-  @IsString()
-  brandName: string;
+  @IsUUID()
+  brandId: string;
 
-  @IsEnum(VehicleTypeEnum)
-  vehicleType: VehicleTypeEnum;
+  @IsUUID()
+  vehicleTypeId: string;
 
   @IsString()
+  @IsNotEmpty()
   model: string;
 
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(1, { message: 'La versión no puede estar vacía' })
+  version: string;
+
   @IsInt()
   @Min(1900)
-  yearStart: number;
+  year: number;
 
   @IsOptional()
-  @IsInt()
-  @Min(1900)
-  yearEnd?: number;
+  @IsUUID()
+  combustionTypeId?: string;
 
   @IsOptional()
   @IsInt()
@@ -38,6 +44,19 @@ export class CreateGlobalModelDto {
   doorCount?: number;
 
   @IsOptional()
+  @IsInt()
+  @Min(1)
+  passengerCount?: number;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  @IsOptional()
+  @IsUUID()
+  exteriorColorId?: string;
+
+  @IsOptional()
+  @IsUUID()
+  interiorColorId?: string;
 }

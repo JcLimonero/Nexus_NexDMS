@@ -1,0 +1,208 @@
+/* ── Fondo de marca Nexus Q Tech ─────────────────────────
+   El isotipo de Nexus es una red de nodos conectados; el fondo
+   retoma ese lenguaje: base navy de marca (#203848 → #16262F) con
+   una retícula de nodos en el azul de marca y el isotipo como
+   filigrana. Sustituye al mosaico genérico del template. */
+.auth-bg {
+  position: relative;
+  background: radial-gradient(
+      120% 120% at 15% 10%,
+      #2A4459 0%,
+      var(--navy-600) 45%,
+      var(--navy-800) 100%
+    ) !important;
+  overflow: hidden;
+
+  /* Retícula de nodos: evoca la conexión del isotipo */
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%234589B5' stroke-opacity='0.22' stroke-width='1'%3E%3Cpath d='M80 12 L148 50 L148 110 L80 148 L12 110 L12 50 Z'/%3E%3Cpath d='M80 12 L80 148 M12 50 L148 110 M148 50 L12 110'/%3E%3C/g%3E%3Cg fill='%234589B5' fill-opacity='0.4'%3E%3Ccircle cx='80' cy='12' r='2.5'/%3E%3Ccircle cx='148' cy='50' r='2.5'/%3E%3Ccircle cx='148' cy='110' r='2.5'/%3E%3Ccircle cx='80' cy='148' r='2.5'/%3E%3Ccircle cx='12' cy='110' r='2.5'/%3E%3Ccircle cx='12' cy='50' r='2.5'/%3E%3Ccircle cx='80' cy='80' r='3'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 160px 160px;
+    /* Se desvanece hacia el centro para no competir con la tarjeta */
+    -webkit-mask-image: radial-gradient(circle at 50% 45%, transparent 22%, #000 62%);
+    mask-image: radial-gradient(circle at 50% 45%, transparent 22%, #000 62%);
+    pointer-events: none;
+  }
+
+
+}
+
+/* La tarjeta se despega del fondo oscuro */
+.login-authentication-box .card {
+  box-shadow: var(--shadow-lg);
+  border-color: transparent;
+}
+
+/* Logo: mantiene proporciones y tamaño adecuado */
+.login-logo-wrapper {
+  .login-logo {
+    max-width: 220px;
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+  }
+}
+
+/* Responsive: evita overflow en móvil */
+.login-authentication-box {
+  max-width: 100%;
+}
+
+/* Focus visible para cumplir WCAG 2.4.7 */
+.login-authentication-box {
+  .form-control:focus-visible,
+  .btn:focus-visible {
+    outline: 2px solid var(--bs-primary, #4466f2);
+    outline-offset: 2px;
+  }
+
+  a:focus-visible {
+    outline: 2px solid var(--bs-primary, #4466f2);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+}
+
+/* ── Panel de demostración (solo en desarrollo) ──────────
+   Credenciales y accesos a los demás portales para las demos.
+   El componente lo oculta con isDevMode(), así que no llega a
+   una compilación de producción. */
+.demo-panel {
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px dashed var(--border);
+}
+
+/* Mismo separador que el panel de demostración, pero este bloque sí llega a
+   producción: son accesos del producto, no atajos de prueba. */
+.monitores {
+  margin-top: var(--space-24);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--border);
+}
+
+/* Con los dos bloques presentes, el de demostración ya no necesita su propia
+   línea encima: quedarían dos seguidas. */
+.monitores + .demo-panel {
+  margin-top: var(--space-16);
+  padding-top: 0;
+  border-top: none;
+}
+
+.demo-title {
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-muted);
+  margin-bottom: var(--space-8);
+
+  &:not(:first-child) {
+    margin-top: var(--space-16);
+  }
+}
+
+.demo-accounts,
+/* Los accesos a los otros portales van como iconos: son atajos de
+   demostración, no opciones del formulario, y en fila ocupan una fracción de
+   lo que ocupaban como fichas con descripción. */
+.demo-links {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.demo-account {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+  height: auto;
+  padding: var(--space-8) var(--space-12);
+  text-align: left;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+
+  &:hover {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+}
+
+.demo-rol,
+.demo-link-name {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+
+.demo-cred {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--primary);
+}
+
+.demo-detalle {
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+
+/* Explica por qué se pidió la sesión: sin esto, pulsar un enlace de portal
+   devuelve a esta pantalla y parece que no hizo nada. */
+.destino-pendiente {
+  margin: var(--space-8) 0 0;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  color: var(--primary);
+  font-size: var(--text-sm);
+}
+
+
+.portal-icono {
+  flex: 1 1 auto;
+  min-width: 68px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-8) var(--space-4);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  /* El teclado también llega aquí: sin foco visible el atajo se vuelve
+     inalcanzable para quien no usa ratón. */
+  &:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+  }
+}
+
+.portal-glifo {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.portal-nombre {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-align: center;
+}

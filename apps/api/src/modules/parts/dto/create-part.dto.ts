@@ -93,4 +93,14 @@ export class CreatePartDto {
   @IsOptional()
   @IsBoolean()
   isActive?: boolean;
+
+  /** Proveedor principal de la refacción. */
+  @IsOptional()
+  @IsUUID()
+  preferredSupplierId?: string | null;
+
+  /** Bajo demanda: no se mantiene en stock, se pide cuando se necesita. */
+  @IsOptional()
+  @IsBoolean()
+  isOnDemand?: boolean;
 }

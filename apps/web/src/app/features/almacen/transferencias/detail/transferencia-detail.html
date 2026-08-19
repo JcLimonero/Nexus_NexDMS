@@ -1,0 +1,151 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/warehouse/transferencias" class="alert-link ms-2">Volver al listado</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (transferencia(); as t) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Transferencia {{ t.folio }}</h5>
+            <div class="d-flex gap-2 flex-wrap">
+              @if (canApprove()) {
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="onApprove()"
+                  [disabled]="approving()"
+                >
+                  @if (approving()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  Aprobar
+                </button>
+              }
+              @if (canSend()) {
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm"
+                  (click)="onSend()"
+                  [disabled]="sending()"
+                >
+                  @if (sending()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  Enviar
+                </button>
+              }
+              @if (canReceive()) {
+                <button
+                  type="button"
+                  class="btn btn-success btn-sm"
+                  (click)="onReceive()"
+                  [disabled]="receiving()"
+                >
+                  @if (receiving()) {
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                  }
+                  Recibir
+                </button>
+              }
+              @if (canCancel()) {
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  (click)="onCancel()"
+                  [disabled]="cancelling()"
+                >
+                  Cancelar
+                </button>
+              }
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/warehouse/transferencias">
+                Volver
+              </a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Origen</th>
+                      <td>{{ t.originBranch?.name ?? t.originBranchId }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Destino</th>
+                      <td>{{ t.destinationBranch?.name ?? t.destinationBranchId }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ getTypeLabel(t.type) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-secondary]="t.status === 'PENDING'"
+                          [class.bg-primary]="t.status === 'APPROVED'"
+                          [class.bg-info]="t.status === 'IN_TRANSIT'"
+                          [class.bg-success]="t.status === 'RECEIVED'"
+                          [class.bg-danger]="t.status === 'CANCELLED'">
+                          {{ getStatusLabel(t.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Fecha</th>
+                      <td>{{ t.createdAt | date:'medium' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            @if (t.notes) {
+              <div class="mb-3">
+                <h6 class="text-muted">Notas</h6>
+                <p class="mb-0">{{ t.notes }}</p>
+              </div>
+            }
+
+            <h6 class="text-muted mb-3">Líneas</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Parte</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">Unidad</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of t.items ?? []; track item.id) {
+                    <tr>
+                      <td>{{ getItemPartName(item) }}</td>
+                      <td class="text-center">{{ item.quantity }}</td>
+                      <td class="text-end">{{ item.part?.unitOfMeasure ?? '—' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

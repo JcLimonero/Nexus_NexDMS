@@ -1,0 +1,268 @@
+/**
+ * Lo propio de la pantalla de clientes. El panel, la tabla, los botones, el
+ * armazón del diálogo y la lista de módulos son comunes y están en
+ * `styles/_panel.scss`. Aquí tampoco hay colores a mano: todo sale de los
+ * tokens de marca.
+ */
+
+.precio-extra {
+  font-size: var(--text-caption);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El de fuera de plan se ofrece, no se atenúa como antes: ahora se vende. */
+.modulo.extra {
+  border-style: dashed;
+}
+
+/* ── Ficha del cliente ── */
+.dialogo.ancho {
+  width: min(920px, calc(100vw - var(--space-32)));
+}
+
+.indicadores.compactos {
+  margin-bottom: var(--space-16);
+
+  .indicador {
+    padding: var(--space-12);
+    background: var(--bg);
+    box-shadow: none;
+  }
+
+  .cifra {
+    font-size: var(--text-xl);
+  }
+}
+
+.pestanas {
+  display: flex;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-16);
+
+  button {
+    padding: var(--space-8) 14px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-family: inherit;
+    font-size: var(--text-body);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  button.activa {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: var(--font-semibold);
+  }
+}
+
+/* La fila con la que se registra el cobro se separa de la tabla de abajo. */
+.rejilla.cobro {
+  align-items: end;
+  padding-bottom: var(--space-16);
+  margin-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border);
+}
+
+.cobro-estado {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  background: var(--bg);
+  color: var(--text-secondary);
+
+  &[data-estado="PAGADO"] {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  &[data-estado="VENCIDO"] {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  &[data-estado="PENDIENTE"] {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+}
+
+/* ── Pestaña de marca ─────────────────────────────── */
+.marca-intro {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-16);
+}
+
+.marca-titulo {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: var(--space-16) 0 var(--space-8);
+}
+
+.logo-fila {
+  display: flex;
+  gap: var(--space-16);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* Cama a cuadros: deja ver si el logotipo trae transparencia, que es como se
+   verá sobre el azul del sidebar. */
+.logo-vista {
+  width: 180px;
+  height: 72px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background:
+    repeating-conic-gradient(#eef1f4 0% 25%, #fff 0% 50%) 50% / 16px 16px;
+  overflow: hidden;
+
+  img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+  &.vacio span {
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+  }
+}
+
+.logo-acciones {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  align-items: flex-start;
+
+  .pista {
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+  }
+}
+
+.btn-archivo {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-8) 14px;
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  color: #fff;
+  font-size: var(--text-body);
+  font-weight: 500;
+  cursor: pointer;
+}
+
+/* Las paletas se muestran con sus propios colores: se elige por cómo se ve. */
+.paletas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-12);
+}
+
+.paleta {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+  padding: var(--space-12);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  text-align: left;
+
+  &:hover { border-color: var(--border-strong); }
+
+  &.elegida {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--primary) 30%, transparent);
+  }
+}
+
+.muestras {
+  display: flex;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+
+  .tono { flex: 1; }
+  .tono.borde { box-shadow: inset 0 0 0 1px var(--border); }
+}
+
+.paleta-nombre {
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.marca-check {
+  position: absolute;
+  top: var(--space-8);
+  right: var(--space-8);
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* "Entrar" al DMS del cliente: acción destacada entre las de la fila. */
+.btn-chico.entrar {
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* Liga de acceso del cliente en la ficha. */
+.liga-acceso {
+  margin: 0 0 1rem;
+
+  .etiqueta {
+    display: block;
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
+    margin-bottom: 0.35rem;
+    font-weight: 600;
+  }
+  .liga-fila {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+
+    input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.6rem;
+      color: var(--text-primary);
+    }
+    a.btn-chico { text-decoration: none; display: inline-flex; align-items: center; }
+  }
+  .ayuda {
+    margin: 0.35rem 0 0;
+    font-size: var(--text-caption);
+    color: var(--text-muted);
+  }
+}
+
+.liga-acceso .liga-fila { margin-bottom: 0.4rem; }
+.liga-acceso .liga-rotulo {
+  min-width: 78px;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}

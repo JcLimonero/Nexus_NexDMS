@@ -1,0 +1,147 @@
+<div class="container-fluid">
+  <div class="card inicio-header-card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <div>
+        <h5>Inicio</h5>
+        <span class="fecha-hoy">{{ hoy }}</span>
+      </div>
+      <select
+        class="form-control field-lg"
+        [ngModel]="branchId()"
+        (ngModelChange)="onBranchChange($event)"
+      >
+        <option value="">Todas las sucursales</option>
+        @for (b of branches(); track b.id) {
+          <option [value]="b.id">{{ b.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="card"><div class="card-body text-center py-5"><span class="spinner-border"></span></div></div>
+  } @else if (error()) {
+    <div class="alert alert-danger">{{ error() }}</div>
+  } @else if (data(); as d) {
+    <!-- KPIs principales -->
+    <div class="kpi-grid mb-4">
+      <a class="kpi-card" routerLink="/workshop/service-orders">
+        <div class="kpi-icon taller"><app-feather-icons [icon]="'tool'" /></div>
+        <div>
+          <div class="kpi-value">{{ d.taller.ordenesActivas }}</div>
+          <div class="kpi-label">Órdenes activas en taller</div>
+        </div>
+      </a>
+      <a class="kpi-card" routerLink="/workshop/citas">
+        <div class="kpi-icon citas"><app-feather-icons [icon]="'calendar'" /></div>
+        <div>
+          <div class="kpi-value">{{ d.taller.citasHoy }}</div>
+          <div class="kpi-label">Citas para hoy</div>
+        </div>
+      </a>
+      <a class="kpi-card" routerLink="/sales">
+        <div class="kpi-icon ventas"><app-feather-icons [icon]="'trending-up'" /></div>
+        <div>
+          <div class="kpi-value">{{ d.ventas.unidadesMes }}</div>
+          <div class="kpi-label">Unidades vendidas (mes)</div>
+        </div>
+      </a>
+      <a class="kpi-card" routerLink="/cash-register">
+        <div class="kpi-icon caja"><app-feather-icons [icon]="'dollar-sign'" /></div>
+        <div>
+          <div class="kpi-value">{{ money(d.caja.ingresosHoy) }}</div>
+          <div class="kpi-label">Ingresos de mostrador hoy</div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Accesos a los dashboards de cada módulo licenciado -->
+    @if (modulosConDashboard().length > 0) {
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5>Mis módulos</h5>
+          <span>
+            Plan {{ modulesService.plan() }} ·
+            {{ modulosConDashboard().length }} módulos con indicadores
+          </span>
+        </div>
+        <div class="card-body">
+          <div class="mod-links">
+            @for (m of modulosConDashboard(); track m.key) {
+              <a class="mod-link" [routerLink]="['/m', m.key]">
+                <app-feather-icons [icon]="m.icon" />
+                <span>{{ m.name }}</span>
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <div class="row">
+      <!-- Taller por estatus -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header"><h5>Taller — órdenes por estatus</h5></div>
+          <div class="card-body">
+            @if (d.taller.porEstatus.length === 0) {
+              <p class="text-muted mb-0">Sin órdenes activas.</p>
+            }
+            @for (s of d.taller.porEstatus; track s.status) {
+              <div class="status-row">
+                <span class="status-name">{{ statusLabel(s.status) }}</span>
+                <div class="status-bar-track">
+                  <div
+                    class="status-bar"
+                    [style.width.%]="statusPct(s.count)"
+                    [style.background]="statusColor(s.status)"
+                  ></div>
+                </div>
+                <span class="status-count">{{ s.count }}</span>
+              </div>
+            }
+            <div class="mini-stats">
+              <span>{{ d.taller.entregadasMes }} entregadas este mes</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel derecho -->
+      <div class="col-md-6 mb-4">
+        <div class="card h-100">
+          <div class="card-header"><h5>Resumen del negocio</h5></div>
+          <div class="card-body">
+            <div class="fact-row">
+              <span class="fact-label">Ventas de unidades (mes)</span>
+              <span class="fact-value">{{ money(d.ventas.montoMes) }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Ventas en proceso</span>
+              <span class="fact-value">{{ d.ventas.enProceso }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Tickets de mostrador hoy</span>
+              <span class="fact-value">{{ d.caja.ticketsHoy }}</span>
+            </div>
+            <div class="fact-row" [class.warn]="d.almacen.piezasBajoMinimo > 0">
+              <span class="fact-label">Piezas bajo mínimo</span>
+              <span class="fact-value">{{ d.almacen.piezasBajoMinimo }}</span>
+            </div>
+            <div class="fact-row">
+              <span class="fact-label">Satisfacción de servicio</span>
+              <span class="fact-value">
+                @if (d.satisfaccion.encuestasRespondidas > 0) {
+                  ⭐ {{ d.satisfaccion.promedio }} / 5
+                  <span class="fact-sub">({{ d.satisfaccion.encuestasRespondidas }} encuestas)</span>
+                } @else {
+                  Sin encuestas aún
+                }
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

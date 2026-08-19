@@ -1,0 +1,13 @@
+.transferencias-list {
+  .transferencias-header-card {
+    margin-bottom: 1rem;
+  }
+  .transferencias-table-card {
+    .table-action-btn {
+      color: var(--text-muted);
+      &:hover {
+        color: var(--primary);
+      }
+    }
+  }
+}

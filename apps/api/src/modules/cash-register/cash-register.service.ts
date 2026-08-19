@@ -14,6 +14,10 @@ import { FilterCashSessionsDto } from './dto/filter-cash-sessions.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { Branch } from '../branches/entities/branch.entity';
+import {
+  CashMovement,
+  CashMovementKindEnum,
+} from './entities/cash-movement.entity';
 
 @Injectable()
 export class CashRegisterService {
@@ -22,6 +26,8 @@ export class CashRegisterService {
     private readonly sessionRepo: Repository<CashSession>,
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
+    @InjectRepository(CashMovement)
+    private readonly movementRepo: Repository<CashMovement>,
   ) {}
 
   private applyScope(
@@ -95,16 +101,18 @@ export class CashRegisterService {
     this.assertCanWrite(user);
     await this.assertBranchInScope(user, dto.branchId);
 
+    // El candado es por cajero, no por sucursal: dos personas pueden tener su
+    // propia caja abierta en el mismo mostrador, pero nadie dos a la vez.
     const existing = await this.sessionRepo.findOne({
       where: {
         tenantId: user.tenantId,
-        branchId: dto.branchId,
+        userId: user.sub,
         status: CashSessionStatusEnum.OPEN,
       },
     });
     if (existing) {
       throw new BadRequestException(
-        'Ya existe una sesión de caja abierta para esta sucursal',
+        'Ya tienes una caja abierta; ciérrala antes de abrir otra',
       );
     }
 
@@ -140,21 +148,100 @@ export class CashRegisterService {
 
     const session = await this.getActiveSession(user, branchId);
 
-    const expectedBalance =
-      Number(session.openingBalance) + Number(session.totalCash);
-    const difference = Number(dto.closingBalance) - Number(expectedBalance);
+    // Efectivo esperado: fondo + ventas en efectivo + depósitos − retiros −
+    // gastos. Los movimientos manuales cuentan igual que las ventas.
+    const movimientos = await this.movementRepo.find({
+      where: { cashSessionId: session.id },
+    });
+    const netoMovimientos = movimientos.reduce((a, m) => {
+      const monto = Number(m.amount);
+      return m.kind === CashMovementKindEnum.DEPOSIT ? a + monto : a - monto;
+    }, 0);
+    const expected =
+      Number(session.openingBalance) +
+      Number(session.totalCash) +
+      netoMovimientos;
 
-    session.closingBalance = dto.closingBalance;
+    // El contado sale del arqueo si vino; si no, del monto manual.
+    const contado = dto.denominations
+      ? this.sumaArqueo(dto.denominations)
+      : (dto.closingBalance ?? 0);
+    if (dto.denominations && dto.closingBalance === undefined) {
+      // ok, se calcula del arqueo
+    } else if (!dto.denominations && dto.closingBalance === undefined) {
+      throw new BadRequestException(
+        'Indica el efectivo contado o el arqueo por denominaciones',
+      );
+    }
+
+    session.closingBalance = contado;
+    session.countedCash = String(contado);
+    session.expectedCash = String(expected);
+    session.denominations = dto.denominations ?? null;
     session.closedAt = new Date();
     session.status = CashSessionStatusEnum.CLOSED;
     session.closingNotes = dto.closingNotes ?? null;
-    session.difference = difference;
+    session.difference = contado - expected;
 
     await this.sessionRepo.save(session);
     return this.sessionRepo.findOneOrFail({
       where: { id: session.id },
       relations: ['branch', 'user'],
     });
+  }
+
+  /** Suma del arqueo: cada denominación por su cantidad. */
+  private sumaArqueo(den: Record<string, number>): number {
+    return Object.entries(den).reduce(
+      (a, [valor, piezas]) => a + Number(valor) * (Number(piezas) || 0),
+      0,
+    );
+  }
+
+  // ─── Movimientos manuales de efectivo ────────────
+
+  /** Registra un depósito, retiro o gasto en la caja abierta del cajero. */
+  async registrarMovimiento(
+    user: UserPayload,
+    branchId: string,
+    dto: {
+      kind: CashMovementKindEnum;
+      amount: number;
+      concept: string;
+      reference?: string;
+      serviceOrderId?: string;
+    },
+  ): Promise<CashMovement> {
+    this.assertCanWrite(user);
+    const session = await this.getActiveSession(user, branchId);
+    if (!dto.amount || dto.amount <= 0) {
+      throw new BadRequestException('El monto debe ser mayor a cero');
+    }
+    if (!dto.concept?.trim()) {
+      throw new BadRequestException('El movimiento necesita un concepto');
+    }
+    return this.movementRepo.save(
+      this.movementRepo.create({
+        tenantId: user.tenantId,
+        cashSessionId: session.id,
+        kind: dto.kind,
+        amount: String(dto.amount),
+        concept: dto.concept.trim(),
+        reference: dto.reference ?? null,
+        serviceOrderId: dto.serviceOrderId ?? null,
+        createdBy: { id: user.sub } as never,
+      }),
+    );
+  }
+
+  /** Movimientos de una sesión. */
+  async movimientos(user: UserPayload, sessionId: string) {
+    const session = await this.findOne(user, sessionId);
+    const movs = await this.movementRepo.find({
+      where: { cashSessionId: session.id },
+      order: { createdAt: 'ASC' },
+    });
+    return movs.map((m) => ({ ...m, amount: Number(m.amount) }));
   }
 
   async findAll(
@@ -182,7 +269,7 @@ export class CashRegisterService {
     }
 
     const [data, total] = await qb
-      .orderBy('cs.opened_at', 'DESC')
+      .orderBy('cs.openedAt', 'DESC')
       .skip((page - 1) * limit)
       .take(limit)
       .getManyAndCount();

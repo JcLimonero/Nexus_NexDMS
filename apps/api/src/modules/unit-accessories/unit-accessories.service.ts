@@ -35,13 +35,18 @@ export class UnitAccessoriesService {
     }
   }
 
-  async findAll(user: UserPayload): Promise<UnitAccessory[]> {
+  async findAll(
+    user: UserPayload,
+    incluirInactivos = false,
+  ): Promise<UnitAccessory[]> {
     const qb = this.accessoryRepo
       .createQueryBuilder('a')
       .leftJoinAndSelect('a.compatibilities', 'c')
       .leftJoinAndSelect('c.globalModel', 'gm')
-      .where('a.tenant_id = :tenantId', { tenantId: user.tenantId })
-      .andWhere('a.is_active = true');
+      .where('a.tenant_id = :tenantId', { tenantId: user.tenantId });
+    // Los inactivos se piden a propósito: sin ellos la pantalla de catálogo
+    // no podría volver a activar lo que alguien dio de baja.
+    if (!incluirInactivos) qb.andWhere('a.is_active = true');
     return qb.orderBy('a.name', 'ASC').getMany();
   }
 
@@ -69,6 +74,8 @@ export class UnitAccessoriesService {
       price: dto.price,
       satProductKey: dto.satProductKey ?? null,
       description: dto.description ?? null,
+      isUniversal: dto.isUniversal ?? false,
+      category: dto.category ?? null,
       isActive: dto.isActive ?? true,
     });
     const saved = await this.accessoryRepo.save(accessory);
@@ -102,6 +109,8 @@ export class UnitAccessoriesService {
         satProductKey: dto.satProductKey,
       }),
       ...(dto.description !== undefined && { description: dto.description }),
+      ...(dto.isUniversal !== undefined && { isUniversal: dto.isUniversal }),
+      ...(dto.category !== undefined && { category: dto.category }),
       ...(dto.isActive !== undefined && { isActive: dto.isActive }),
     });
 
@@ -144,9 +153,12 @@ export class UnitAccessoriesService {
       return [];
     }
 
+    // Universales y compatibles con este modelo. Antes era un `INNER JOIN`
+    // contra la tabla de compatibilidad, así que los universales —que por
+    // definición no tienen filas ahí— no salían nunca.
     const accessories = await this.accessoryRepo
       .createQueryBuilder('a')
-      .innerJoin(
+      .leftJoin(
         'unit_accessory_compatibilities',
         'c',
         'c.accessory_id = a.id AND c.global_model_id = :globalModelId',
@@ -154,6 +166,7 @@ export class UnitAccessoriesService {
       )
       .where('a.tenant_id = :tenantId', { tenantId: user.tenantId })
       .andWhere('a.is_active = true')
+      .andWhere('(a.is_universal = true OR c.id IS NOT NULL)')
       .orderBy('a.name', 'ASC')
       .getMany();
 

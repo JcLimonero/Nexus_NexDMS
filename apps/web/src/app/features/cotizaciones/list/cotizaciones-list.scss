@@ -1,0 +1,14 @@
+.cotizaciones-list {
+  .table-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.25rem;
+    color: var(--theme-deafult);
+    text-decoration: none;
+    &:hover {
+      color: var(--theme-deafult);
+      opacity: 0.8;
+    }
+  }
+}

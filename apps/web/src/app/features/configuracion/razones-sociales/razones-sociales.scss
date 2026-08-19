@@ -1,0 +1,58 @@
+.tabla-scroll {
+  overflow-x: auto;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+
+  th,
+  td {
+    padding: var(--space-8);
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+
+  th {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Las inactivas siguen visibles pero atenuadas: se desactivan, no se
+     esconden, porque sus sucursales y su historial siguen existiendo. */
+  tr.inactiva td {
+    opacity: 0.55;
+  }
+}
+
+.estado {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  background: var(--bg);
+  font-size: var(--text-xs);
+
+  &[data-activa="true"] {
+    background: var(--success);
+    color: var(--card);
+  }
+}
+
+.acciones {
+  display: flex;
+  gap: var(--space-8);
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--font-mono, monospace);
+  font-size: var(--text-xs);
+}

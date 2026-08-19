@@ -1,0 +1,249 @@
+<div class="container-fluid cfdi-list">
+  <div class="row">
+    <div class="col-sm-12">
+      <div class="card cfdi-header-card">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div>
+            <h5>CFDI</h5>
+            <span>Comprobantes fiscales digitales</span>
+          </div>
+          <button type="button" class="btn btn-primary" (click)="abrirGlobal()">
+            Factura global
+          </button>
+        </div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="statusFilter()"
+                (ngModelChange)="statusFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todos los estados</option>
+                <option value="VALID">Vigente</option>
+                <option value="CANCELLED">Cancelado</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="tipoFilter()"
+                (ngModelChange)="tipoFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todos los tipos</option>
+                <option value="INCOME">Ingreso</option>
+                <option value="EXPENSE">Egreso</option>
+                <option value="PAYMENT">Pago</option>
+              </select>
+            </div>
+            <div class="col-md-2">
+              <select
+                class="form-select"
+                [ngModel]="branchFilter()"
+                (ngModelChange)="branchFilter.set($event); onFilterChange()"
+              >
+                <option value="">Todas las sucursales</option>
+                @for (b of branches(); track b.id) {
+                  <option [ngValue]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="col-md-2">
+              <input
+                type="date"
+                class="form-control"
+                [ngModel]="fechaDesde()"
+                (ngModelChange)="fechaDesde.set($event); onFilterChange()"
+                placeholder="Desde"
+              />
+            </div>
+            <div class="col-md-2">
+              <input
+                type="date"
+                class="form-control"
+                [ngModel]="fechaHasta()"
+                (ngModelChange)="fechaHasta.set($event); onFilterChange()"
+                placeholder="Hasta"
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card cfdi-table-card">
+        <div class="card-body">
+          @if (error()) {
+            <div class="alert alert-danger" role="alert">{{ error() }}</div>
+          }
+
+          @if (loading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else {
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Folio</th>
+                    <th>UUID SAT</th>
+                    <th>Tipo</th>
+                    <th>Referencia</th>
+                    <th>Sucursal</th>
+                    <th>Fecha</th>
+                    <th class="text-end">Total</th>
+                    <th class="text-center">Estado</th>
+                    <th class="text-end">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (c of cfdis(); track c.id) {
+                    <tr>
+                      <td>{{ c.series }}-{{ c.fiscalFolio }}</td>
+                      <td class="small text-muted">{{ c.satUuid | slice:0:8 }}...</td>
+                      <td>{{ getTypeLabel(c.cfdiType) }}</td>
+                      <td>{{ getReferenceTypeLabel(c.referenceType) }}</td>
+                      <td>{{ getBranchName(c.branchId) }}</td>
+                      <td>{{ c.stampedAt | date:'short' }}</td>
+                      <td class="text-end">{{ c.total | number:'1.2-2' }}</td>
+                      <td class="text-center">
+                        <span class="badge"
+                          [class.bg-success]="c.status === 'VALID'"
+                          [class.bg-danger]="c.status === 'CANCELLED'">
+                          {{ getStatusLabel(c.status) }}
+                        </span>
+                      </td>
+                      <td class="text-end">
+                        <a
+                          class="table-action-btn"
+                          [routerLink]="[c.id]"
+                          title="Ver"
+                        >
+                          <app-feather-icons [icon]="'eye'" />
+                        </a>
+                      </td>
+                    </tr>
+                  } @empty {
+                    <tr>
+                      <td colspan="9" class="text-center text-muted py-4">
+                        No hay CFDIs
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if (meta(); as m) {
+              @if (m.totalPages > 1) {
+                <nav class="mt-3 d-flex justify-content-between align-items-center">
+                  <span class="text-muted small">
+                    {{ m.total }} CFDI(s) · Página {{ m.page }} de {{ m.totalPages }}
+                  </span>
+                  <ul class="pagination mb-0">
+                    <li class="page-item" [class.disabled]="m.page <= 1">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page - 1)">Anterior</a>
+                    </li>
+                    <li class="page-item" [class.disabled]="m.page >= m.totalPages">
+                      <a class="page-link" href="#" (click)="$event.preventDefault(); goToPage(m.page + 1)">Siguiente</a>
+                    </li>
+                  </ul>
+                </nav>
+              }
+            }
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  @if (globalAbierto()) {
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal fade show d-block" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Factura global de público en general</h5>
+            <button type="button" class="btn-close" (click)="globalAbierto.set(false)"></button>
+          </div>
+          <div class="modal-body">
+            <p class="text-muted small mb-3">
+              Agrupa en un solo CFDI los tickets de mostrador pagados del periodo
+              que aún no se han facturado.
+            </p>
+            <div class="mb-3">
+              <label class="form-label">Sucursal</label>
+              <select
+                class="form-select"
+                [ngModel]="globalBranch()"
+                (ngModelChange)="globalBranch.set($event)"
+              >
+                <option value="">— Selecciona —</option>
+                @for (b of branches(); track b.id) {
+                  <option [value]="b.id">{{ b.name }}</option>
+                }
+              </select>
+            </div>
+            <div class="row g-2">
+              <div class="col-6">
+                <label class="form-label">Mes</label>
+                <select
+                  class="form-select"
+                  [ngModel]="globalMonth()"
+                  (ngModelChange)="globalMonth.set(+$event)"
+                >
+                  @for (m of meses; track m.v) {
+                    <option [value]="m.v">{{ m.n }}</option>
+                  }
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Año</label>
+                <input
+                  type="number"
+                  class="form-control"
+                  [ngModel]="globalYear()"
+                  (ngModelChange)="globalYear.set(+$event)"
+                  min="2020"
+                  max="2100"
+                />
+              </div>
+            </div>
+            <div class="mt-3">
+              <label class="form-label">Periodicidad</label>
+              <select
+                class="form-select"
+                [ngModel]="globalPeriodicity()"
+                (ngModelChange)="globalPeriodicity.set($event)"
+              >
+                <option value="day">Diaria</option>
+                <option value="week">Semanal</option>
+                <option value="fortnight">Quincenal</option>
+                <option value="month">Mensual</option>
+                <option value="two_months">Bimestral</option>
+              </select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-outline-secondary" (click)="globalAbierto.set(false)">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-primary"
+              (click)="generarGlobal()"
+              [disabled]="generandoGlobal()"
+            >
+              @if (generandoGlobal()) {
+                <span class="spinner-border spinner-border-sm me-1"></span>
+              }
+              Timbrar factura global
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

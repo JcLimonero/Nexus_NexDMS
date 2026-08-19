@@ -1,0 +1,327 @@
+/* Pensado para una tablet en el mostrador: una columna, objetivos grandes. */
+.pantalla {
+  min-height: 100dvh;
+  background: var(--bg, #f1f5f9);
+  padding-bottom: 24px;
+}
+
+.cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(to bottom, var(--navy-600, #203848), var(--navy-800, #16283a));
+  color: #fff;
+
+  /* Logo + identidad juntos a la izquierda, como en la PWA. */
+  .ident {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .quien {
+    font-weight: 600;
+  }
+  .sub {
+    font-size: 12px;
+    opacity: 0.75;
+
+    /* `capitalize` pondría mayúscula en cada palabra —"Jueves 13 De Agosto"—.
+       Solo la primera letra de la frase. */
+    &::first-letter {
+      text-transform: uppercase;
+    }
+  }
+}
+
+.salir {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.salir:hover {
+  background: rgb(255 255 255 / 22%);
+}
+
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  flex-wrap: wrap;
+
+  input,
+  select {
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  /* Sin acotar el ancho, el campo de fecha se lleva toda la línea y parte la
+     fila en tres. 160px alcanzan para dd/mm/aaaa en cualquier motor. */
+  input[type="date"] {
+    flex: 0 0 160px;
+    width: 160px;
+  }
+
+  select {
+    flex: 1 1 160px;
+    min-width: 0;
+  }
+}
+
+.dia {
+  width: 40px;
+  height: 40px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 18px;
+}
+
+.alcance {
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+
+  &.activo {
+    background: var(--navy-600, #203848);
+    border-color: var(--navy-600, #203848);
+    color: #fff;
+  }
+}
+
+.aviso {
+  margin: 24px 16px;
+  color: #64748b;
+
+  &.error {
+    color: #b91c1c;
+  }
+}
+
+.lista {
+  list-style: none;
+  margin: 0;
+  padding: 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cita {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+
+  /* La ya recibida se atenúa pero no se esconde: sirve de historial del día. */
+  &.recibida {
+    opacity: 0.6;
+  }
+}
+
+.hora {
+  flex: 0 0 56px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--navy-600, #203848);
+}
+
+.datos {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .unidad,
+  .servicio {
+    font-size: 13px;
+    color: #64748b;
+  }
+}
+
+.etiquetas {
+  margin-top: 4px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #e2e8f0;
+  color: #475569;
+
+  &.libre {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  &.mia {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  &.hecha {
+    background: #d1fae5;
+    color: #047857;
+  }
+}
+
+.accion {
+  flex: 0 0 auto;
+  min-height: 44px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary, #105078);
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Logotipo del cliente en la cabecera de recepción (igual que la PWA). */
+.cabecera .logo-cliente {
+  height: 40px;
+  max-width: 150px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: 8px;
+  padding: 3px 6px;
+}
+
+/* ── Recepción sin cita (walk-in) ── */
+.walkin-btn {
+  margin-left: auto;
+  height: 40px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  background: var(--primary, #105078);
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+.walkin-btn:hover { background: var(--primary-hover, #0c4062); }
+
+.walkin-fondo {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 38, 47, 0.55);
+  z-index: 40;
+}
+.walkin-modal {
+  position: fixed;
+  z-index: 41;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(680px, 94vw);
+  max-height: 90dvh;
+  overflow: auto;
+  background: var(--card, #fff);
+  border-radius: 14px;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.4);
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border, #dde3e9);
+
+    h2 { margin: 0; font-size: 18px; color: var(--navy-600, #203848); }
+    .cerrar {
+      border: none;
+      background: none;
+      font-size: 26px;
+      line-height: 1;
+      color: var(--text-muted, #8a98a4);
+      cursor: pointer;
+    }
+  }
+
+  .cuerpo {
+    padding: 16px 20px;
+
+    h3 {
+      margin: 14px 0 8px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary, #5a6b78);
+    }
+    h3:first-child { margin-top: 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary, #5a6b78);
+    }
+    label.ancho { width: 100%; }
+
+    input, select, textarea {
+      height: 44px;
+      padding: 0 12px;
+      font-size: 16px;
+      border: 1px solid var(--border, #dde3e9);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--text-primary, #16262f);
+    }
+    textarea { height: auto; padding: 10px 12px; resize: vertical; }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary, #105078);
+      box-shadow: 0 0 0 2px rgba(16, 80, 120, 0.25);
+    }
+  }
+
+  footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border, #dde3e9);
+
+    button {
+      height: 46px;
+      padding: 0 20px;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-sec { border: 1px solid var(--border, #dde3e9); background: #fff; color: var(--text-primary, #16262f); }
+    .btn-pri { border: none; background: var(--primary, #105078); color: #fff; }
+    .btn-pri:disabled { opacity: 0.6; }
+  }
+}

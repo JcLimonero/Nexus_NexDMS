@@ -1,0 +1,281 @@
+/**
+ * Clientes, vehículos y servicios.
+ *
+ * Se lee de izquierda a derecha —cliente, sus unidades, la ficha de una—
+ * así que la columna de vehículos hace de índice y la de la derecha de
+ * detalle. Los colores salen de los tokens del tema.
+ */
+
+.relaciones {
+  .buscador {
+    max-width: 520px;
+  }
+}
+
+/* Lista de resultados de búsqueda; la comparten el buscador y el traspaso. */
+.resultados {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+
+  li + li {
+    border-top: 1px solid var(--border);
+  }
+
+  button {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    background: var(--card);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--bg);
+    }
+
+    span {
+      font-size: var(--text-caption);
+      color: var(--text-secondary);
+    }
+  }
+}
+
+.elegido {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.lista-vehiculos {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  button {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    text-align: left;
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--border-hover);
+    }
+
+    /* El elegido se marca con la franja de marca, no solo con el fondo:
+       sobre una lista de tarjetas el fondo solo casi no se distingue. */
+    &.activo {
+      border-color: var(--primary);
+      box-shadow: inset 3px 0 0 var(--primary);
+    }
+
+    &.pasado {
+      opacity: 0.7;
+    }
+  }
+}
+
+.veh-nombre {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.veh-datos,
+.veh-fechas {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+
+.resumen {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.resumen-dato {
+  display: flex;
+  flex-direction: column;
+
+  strong {
+    font-size: var(--text-xl);
+    font-variant-numeric: tabular-nums;
+  }
+
+  span {
+    font-size: var(--text-caption);
+    color: var(--text-secondary);
+  }
+}
+
+.titulo-seccion {
+  margin: 24px 0 12px;
+  font-size: var(--text-body);
+  font-weight: var(--font-semibold);
+
+  &:first-of-type {
+    margin-top: 0;
+  }
+}
+
+/* La sucesión de dueños se dibuja como una línea de tiempo: es una cadena,
+   no una lista suelta, y así se ve que uno sigue al otro. */
+.cadena {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 0 8px;
+
+  li {
+    position: relative;
+    display: flex;
+    gap: 12px;
+    padding: 0 0 16px 20px;
+    border-left: 2px solid var(--border);
+
+    &:last-child {
+      border-left-color: transparent;
+      padding-bottom: 0;
+    }
+  }
+}
+
+.cadena-punto {
+  position: absolute;
+  left: -7px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--border-strong);
+}
+
+.cadena li.actual .cadena-punto {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-soft);
+}
+
+.cadena-texto {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+
+  /* `.btn` centra su texto y, estirado en una columna flexible, dejaba el
+     nombre del dueño flotando en medio de la línea. */
+  .btn {
+    text-align: left;
+  }
+}
+
+/* El servicio de un dueño anterior se atenúa: sigue siendo historial del
+   vehículo, pero no es del cliente que lo trae hoy. */
+tr.anterior td {
+  opacity: 0.75;
+}
+
+/* ── Diálogo de traspaso ── */
+.fondo-modal {
+  position: fixed;
+  inset: 0;
+  background: rgb(15 23 42 / 45%);
+  z-index: 1040;
+}
+
+.panel-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  z-index: 1050;
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.panel-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 12px;
+
+  h5 {
+    margin: 0;
+  }
+}
+
+/* `min-height: 0` es imprescindible: el mínimo de un elemento flexible es su
+   contenido, así que sin eso no encoge y la rueda movería la página. */
+.panel-cuerpo {
+  padding: 0 24px;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.panel-pie {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px 20px;
+  border-top: 1px solid var(--border);
+}
+
+/* El folio no se parte en varios renglones. */
+.tabla-servicios td:first-child,
+.tabla-servicios th:first-child {
+  white-space: nowrap;
+}
+
+/* El control va bajo el folio y no en su propia columna: con siete columnas
+   la tabla se salía del contenedor y lo primero que quedaba fuera era él. */
+.ver-recepcion {
+  display: block;
+  margin-top: 2px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover { color: var(--primary); }
+}
+
+/* Recepción desplegada bajo su servicio: se separa del resto de la tabla con
+   un fondo tenue para que se lea como detalle de esa fila y no como otra. */
+.fila-evidencia > td {
+  background: var(--bg);
+  padding: var(--space-16);
+}

@@ -13,6 +13,22 @@ import {
   QuotationTypeEnum,
   QuotationPriceListEnum,
 } from '../entities/quotation.entity';
+import { QuotationLineUrgencyEnum } from '../entities/quotation-item.entity';
+
+/** Una refacción que cuelga de un trabajo del presupuesto. */
+export class CreateQuotationRefaccionDto {
+  @IsUUID()
+  partId: string;
+
+  @IsNumber()
+  @Min(1)
+  quantity: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitPrice?: number;
+}
 
 export class CreateQuotationItemDto {
   @IsOptional()
@@ -39,6 +55,23 @@ export class CreateQuotationItemDto {
   @IsNumber()
   @Min(0)
   discount?: number;
+
+  /** Urgencia del trabajo, como la verá el cliente. */
+  @IsOptional()
+  @IsEnum(QuotationLineUrgencyEnum)
+  urgency?: QuotationLineUrgencyEnum;
+
+  /** Nota del técnico para el cliente sobre esta línea. */
+  @IsOptional()
+  @IsString()
+  technicianNote?: string;
+
+  /** Refacciones que cuelgan de este trabajo (presupuesto de servicio). */
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreateQuotationRefaccionDto)
+  refacciones?: CreateQuotationRefaccionDto[];
 }
 
 export class CreateQuotationDto {

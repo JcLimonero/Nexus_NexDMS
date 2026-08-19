@@ -1,0 +1,51 @@
+<div class="acceso">
+  <form class="tarjeta" (ngSubmit)="entrar()">
+    <div class="marca">
+      <span class="marca-icono">N</span>
+      <div>
+        <strong>NexDMS</strong>
+        <span class="marca-sub">Administración del SaaS</span>
+      </div>
+    </div>
+
+    <label>
+      <span>Correo</span>
+      <input
+        type="email"
+        autocomplete="username"
+        [(ngModel)]="email"
+        name="email"
+      />
+    </label>
+    <label>
+      <span>Contraseña</span>
+      <input
+        type="password"
+        autocomplete="current-password"
+        [(ngModel)]="password"
+        name="password"
+      />
+    </label>
+
+    @if (error()) {
+      <p class="error">{{ error() }}</p>
+    }
+
+    <button type="submit" [disabled]="entrando()">
+      {{ entrando() ? "Entrando…" : "Entrar" }}
+    </button>
+
+    <!-- Solo en compilaciones de desarrollo (ver modoDemo) -->
+    @if (modoDemo) {
+      <div class="demo">
+        <div class="demo-titulo">Cuenta de demostración</div>
+        <button type="button" class="demo-fila" (click)="usarDemo()">
+          <span class="demo-nombre">{{ cuentaDemo.nombre }}</span>
+          <span class="demo-cred">
+            {{ cuentaDemo.email }} · {{ cuentaDemo.password }}
+          </span>
+        </button>
+      </div>
+    }
+  </form>
+</div>

@@ -1,0 +1,161 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a routerLink="/cash-register/ventas" class="alert-link ms-2">Volver</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (venta(); as v) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">Venta {{ v.ticketNumber }}</h5>
+            <div class="d-flex gap-2 flex-wrap">
+              @if (canCancel()) {
+                <div class="d-flex gap-1 align-items-center">
+                  <input
+                    type="text"
+                    class="form-control form-control-sm"
+                    placeholder="Motivo de cancelación"
+                    [ngModel]="cancelReason()"
+                    (ngModelChange)="setCancelReason($event)"
+                    style="width: 180px"
+                  />
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-sm"
+                    (click)="onCancel()"
+                    [disabled]="cancelling()"
+                  >
+                    @if (cancelling()) {
+                      <span class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    }
+                    Cancelar venta
+                  </button>
+                </div>
+              }
+              <a class="btn btn-outline-secondary btn-sm" routerLink="/cash-register/ventas">Volver</a>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="row mb-4">
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Datos generales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Cliente</th>
+                      <td>{{ getClientName(v) }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Sucursal</th>
+                      <td>{{ v.branch?.name ?? v.branchId }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Estado</th>
+                      <td>
+                        <span class="badge"
+                          [class.bg-secondary]="v.status === 'OPEN'"
+                          [class.bg-success]="v.status === 'PAID'"
+                          [class.bg-danger]="v.status === 'CANCELLED'">
+                          {{ getStatusLabel(v.status) }}
+                        </span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Fecha</th>
+                      <td>{{ v.createdAt | date:'medium' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-muted mb-2">Totales</h6>
+                <table class="table table-sm table-borderless">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Subtotal</th>
+                      <td class="text-end">{{ v.subtotal | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Descuento</th>
+                      <td class="text-end">{{ v.discount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">IVA</th>
+                      <td class="text-end">{{ v.taxAmount | number:'1.2-2' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Total</th>
+                      <td class="text-end fw-bold">{{ v.total | number:'1.2-2' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <h6 class="text-muted mb-3">Líneas</h6>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Parte</th>
+                    <th class="text-center">Cantidad</th>
+                    <th class="text-end">Precio unit.</th>
+                    <th class="text-end">Descuento</th>
+                    <th class="text-end">Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of v.items ?? []; track item.id) {
+                    <tr>
+                      <td>{{ getItemPartName(item) }}</td>
+                      <td class="text-center">{{ item.quantity }}</td>
+                      <td class="text-end">{{ item.unitPrice | number:'1.2-2' }}</td>
+                      <td class="text-end">{{ item.discount | number:'1.2-2' }}</td>
+                      <td class="text-end">{{ item.subtotal | number:'1.2-2' }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+
+            @if ((v.payments ?? []).length > 0) {
+              <h6 class="text-muted mt-4 mb-3">Pagos</h6>
+              <div class="table-responsive">
+                <table class="table table-sm">
+                  <thead>
+                    <tr>
+                      <th>Método</th>
+                      <th class="text-end">Monto</th>
+                      <th>Referencia</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (p of v.payments; track p.id) {
+                      <tr>
+                        <td>{{ p.method === 'CASH' ? 'Efectivo' : p.method === 'CARD' ? 'Tarjeta' : 'Transferencia' }}</td>
+                        <td class="text-end">{{ p.amount | number:'1.2-2' }}</td>
+                        <td>{{ p.reference ?? '—' }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

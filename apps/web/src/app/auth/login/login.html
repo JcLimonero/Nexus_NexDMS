@@ -1,0 +1,228 @@
+<div class="page-wrapper">
+  <div class="auth-bg">
+    <div class="authentication-box login-authentication-box">
+      <div class="text-center login-logo-wrapper">
+        @if (logoCliente) {
+          <img [src]="logoCliente" [alt]="clienteNombre || 'Logotipo'" class="login-logo login-logo-cliente" />
+        } @else {
+          <img
+            src="assets/nexus_images/logo/logo_white.png"
+            alt="NexDMS"
+            loading="lazy"
+            class="login-logo"
+          />
+        }
+      </div>
+      <div class="card mt-4">
+        <div class="card-body">
+          <div class="text-center">
+            <h4>Iniciar sesión</h4>
+            @if (clienteNombre) {
+              <h6 class="cliente-acceso">Acceso a <strong>{{ clienteNombre }}</strong></h6>
+            } @else {
+              <h6>Ingresa tu correo electrónico y contraseña</h6>
+            }
+            @if (destinoPendiente) {
+              <p class="destino-pendiente">
+                Al entrar te llevamos {{ destinoPendiente }}.
+              </p>
+            }
+          </div>
+          @if (!newUser) {
+            <form
+              class="theme-form"
+              [formGroup]="loginForm"
+              (ngSubmit)="login()"
+              autocomplete="on"
+            >
+              <div aria-live="polite" aria-atomic="true">
+                @if (error) {
+                  <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                  </div>
+                }
+              </div>
+              <div class="form-group">
+                <label for="login-email" class="col-form-label pt-0"
+                  >Correo electrónico</label
+                >
+                <input
+                  id="login-email"
+                  class="form-control"
+                  formControlName="email"
+                  type="email"
+                  autocomplete="email"
+                  [attr.aria-invalid]="
+                    loginForm.controls['email'].invalid &&
+                    loginForm.controls['email'].touched
+                  "
+                  [attr.aria-describedby]="
+                    loginForm.controls['email'].touched &&
+                    loginForm.controls['email'].errors
+                      ? 'email-error'
+                      : null
+                  "
+                />
+                @if (
+                  loginForm.controls["email"].touched &&
+                  loginForm.controls["email"].errors
+                ) {
+                  <div
+                    id="email-error"
+                    class="text text-danger mt-1"
+                    role="alert"
+                  >
+                    @if (loginForm.controls["email"].errors["required"]) {
+                      El correo es obligatorio
+                    } @else if (loginForm.controls["email"].errors["email"]) {
+                      Correo electrónico no válido
+                    }
+                  </div>
+                }
+              </div>
+              <div class="form-group">
+                <label for="login-password" class="col-form-label"
+                  >Contraseña</label
+                >
+                <input
+                  id="login-password"
+                  class="form-control"
+                  type="password"
+                  formControlName="password"
+                  autocomplete="current-password"
+                  [attr.aria-invalid]="
+                    loginForm.controls['password'].invalid &&
+                    loginForm.controls['password'].touched
+                  "
+                  [attr.aria-describedby]="
+                    loginForm.controls['password'].touched &&
+                    loginForm.controls['password'].errors
+                      ? 'password-error'
+                      : null
+                  "
+                />
+                @if (
+                  loginForm.controls["password"].touched &&
+                  loginForm.controls["password"].errors &&
+                  loginForm.controls["password"].errors["required"]
+                ) {
+                  <div
+                    id="password-error"
+                    class="text text-danger mt-1"
+                    role="alert"
+                  >
+                    La contraseña es obligatoria
+                  </div>
+                }
+              </div>
+              <div class="form-group d-flex justify-content-end">
+                <a
+                  routerLink="/auth/forgot-password"
+                  class="text-muted small"
+                  >¿Olvidaste tu contraseña?</a
+                >
+              </div>
+              <div class="form-group row mt-3 mb-0">
+                <button
+                  class="btn btn-primary btn-block btn-lg login-submit-btn"
+                  [disabled]="!loginForm.valid || loading"
+                  type="submit"
+                  [attr.aria-busy]="loading"
+                >
+                  @if (loading) {
+                    <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                    <span>Iniciando sesión...</span>
+                  } @else {
+                    <span>Iniciar sesión</span>
+                  }
+                </button>
+              </div>
+            </form>
+          }
+
+          <!-- Pantallas de taller: siempre, también en producción. Son rutas
+               de esta aplicación y piden sesión al abrirlas. -->
+          <div class="monitores">
+            <div class="demo-title">Pantallas para el taller</div>
+            <div class="demo-links">
+              @for (m of monitores; track m.url) {
+                <!-- En otra pestaña aunque sea una ruta de esta aplicación:
+                     el monitor se queda puesto en su pantalla, y quien lo
+                     abrió sigue en el acceso para entrar al DMS. La sesión
+                     se comparte entre pestañas del mismo origen, así que si
+                     ya entró, la nueva abre directa. -->
+                <a
+                  class="portal-icono"
+                  [href]="m.url"
+                  target="_blank"
+                  rel="noopener"
+                  [title]="m.descripcion"
+                  [attr.aria-label]="
+                    m.nombre + ': ' + m.descripcion + ' (abre en otra pestaña)'
+                  "
+                >
+                  <span class="portal-glifo" aria-hidden="true">{{ m.icono }}</span>
+                  <span class="portal-nombre">{{ m.nombre }}</span>
+                </a>
+              }
+            </div>
+          </div>
+
+          <!-- Solo en compilaciones de desarrollo (ver demoMode) -->
+          @if (demoMode) {
+            <div class="demo-panel">
+              <div class="demo-title">
+                {{ clienteNombre ? "Cuentas de " + clienteNombre : "Cuentas de demostración" }}
+              </div>
+              <div class="demo-accounts">
+                @for (c of demoCuentas(); track c.email) {
+                  <button
+                    type="button"
+                    class="demo-account"
+                    (click)="usarCuenta(c)"
+                    [title]="'Usar la cuenta de ' + c.rol"
+                  >
+                    <span class="demo-rol">{{ c.rol }}</span>
+                    <span class="demo-cred">{{ c.email }} · {{ c.password }}</span>
+                    <span class="demo-detalle">{{ c.detalle }}</span>
+                  </button>
+                }
+              </div>
+
+              <div class="demo-title">Otros portales</div>
+              <div class="demo-links">
+                @for (p of demoPortales; track p.url) {
+                  @if (p.interno) {
+                    <!-- Ruta de esta misma aplicación: se abre aquí para que
+                         el acceso pida la sesión y luego lleve al portal -->
+                    <a
+                      class="portal-icono"
+                      [routerLink]="p.url"
+                      [title]="p.descripcion"
+                      [attr.aria-label]="p.nombre + ': ' + p.descripcion"
+                    >
+                      <span class="portal-glifo" aria-hidden="true">{{ p.icono }}</span>
+                      <span class="portal-nombre">{{ p.nombre }}</span>
+                    </a>
+                  } @else {
+                    <a
+                      class="portal-icono"
+                      [href]="p.url"
+                      target="_blank"
+                      rel="noopener"
+                      [title]="p.descripcion"
+                      [attr.aria-label]="p.nombre + ': ' + p.descripcion + ' (abre en otra pestaña)'"
+                    >
+                      <span class="portal-glifo" aria-hidden="true">{{ p.icono }}</span>
+                      <span class="portal-nombre">{{ p.nombre }}</span>
+                    </a>
+                  }
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
