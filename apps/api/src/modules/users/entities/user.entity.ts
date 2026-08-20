@@ -90,6 +90,19 @@ export class User {
   @Column({ name: 'specialty', type: 'varchar', length: 100, nullable: true })
   specialty: string | null;
 
+  // ── Comisión del mecánico ──
+  /** Periodo de pago de comisión: 'WEEKLY' | 'BIWEEKLY'. null = sin comisión. */
+  @Column({ name: 'commission_period', type: 'varchar', length: 12, nullable: true })
+  commissionPeriod: string | null;
+
+  /** % de comisión sobre la mano de obra de las operaciones que ficha. */
+  @Column({ name: 'commission_percent', type: 'decimal', precision: 5, scale: 2, default: 0 })
+  commissionPercent: number;
+
+  /** Sueldo garantía por periodo (se paga además de la comisión). */
+  @Column({ name: 'guaranteed_salary', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  guaranteedSalary: number;
+
   @Column({ name: 'avatar_key', type: 'varchar', length: 500, nullable: true })
   avatarKey: string | null;
 

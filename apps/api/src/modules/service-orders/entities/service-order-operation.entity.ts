@@ -115,6 +115,21 @@ export class ServiceOrderOperation {
   @Column({ name: 'mechanic_id', type: 'uuid', nullable: true })
   mechanicId: string | null;
 
+  /** Excluye esta operación de la comisión del mecánico (override manual). */
+  @Column({ name: 'no_commission', type: 'boolean', default: false })
+  noCommission: boolean;
+
+  /** Ganancia fija del mecánico en esta operación; si es null, se usa la regla
+   * del % sobre la mano de obra. */
+  @Column({
+    name: 'commission_override',
+    type: 'decimal',
+    precision: 12,
+    scale: 2,
+    nullable: true,
+  })
+  commissionOverride: number | null;
+
   @Column({ name: 'sort_order', type: 'int', default: 0 })
   sortOrder: number;
 
