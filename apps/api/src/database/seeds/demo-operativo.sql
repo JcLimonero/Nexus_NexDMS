@@ -67,6 +67,7 @@ DELETE FROM service_order_updates;
 DELETE FROM service_order_parts;
 DELETE FROM service_order_phases;
 DELETE FROM service_surveys;
+DELETE FROM deliveries;
 DELETE FROM reception_photo_marks;
 DELETE FROM reception_photos;
 DELETE FROM reception_checklists;
@@ -78,6 +79,7 @@ DELETE FROM warranties;
 DELETE FROM service_orders;
 DELETE FROM service_order_folio_seq;
 DELETE FROM appointments;
+DELETE FROM sales_appointments;
 DELETE FROM quotation_items;
 DELETE FROM quotations;
 DELETE FROM quotation_folio_seq;
@@ -310,54 +312,84 @@ WHERE a.is_universal = false;
 -- ── Citas ────────────────────────────────────────────────────────────
 -- La agenda de hoy: las de la mañana ya se atendieron, una no llegó, y las
 -- de la tarde siguen esperándose. Repartidas entre los tres asesores, que
--- es lo que hace que el tablero por asesor tenga sentido.
+-- es lo que hace que el tablero por asesor tenga sentido. Cada cita también
+-- trae técnico asignado —los tres, al menos una vez— porque el Planificador
+-- arma sus carriles por técnico y sin esto todo caía en "Sin asignar".
 INSERT INTO appointments (id, tenant_id, branch_id, client_id, vehicle_id, advisor_id,
-                          origin, status, service_type, service_type_id,
+                          mechanic_id, origin, status, service_type, service_type_id,
                           client_name, client_phone, scheduled_at, duration_min, notes)
 SELECT gen_random_uuid(), r.tenant_id, r.central,
        c.id, v.id,
        CASE a.asesor WHEN 1 THEN r.asesor1 WHEN 2 THEN r.asesor2 ELSE r.asesor3 END,
+       CASE a.tecnico WHEN 1 THEN r.tecnico1 WHEN 2 THEN r.tecnico2 ELSE r.tecnico3 END,
        'INTERNAL', a.estado::appointments_status_enum, a.servicio,
        (SELECT id FROM service_types WHERE code = a.codigo),
        coalesce(c.company_name, c.first_name || ' ' || c.last_name), c.phone,
        r.hoy + a.hora::time, a.dur, a.nota
 FROM ref r, (VALUES
-  ('NGZ-4401', 'COMPLETED', 'Servicio de 5,000 km',  'MTTO-5K',  '08:30', 75,  1, 'Llegó puntual'),
-  ('MPT-2210', 'COMPLETED', 'Cambio de balatas',     'FRENOS',   '09:00', 60,  2, 'Ruido al frenar'),
-  ('JKL-5512', 'NO_SHOW',   'Diagnóstico',           'DIAG',     '09:30', 45,  3, 'No se presentó; se le llamó sin respuesta'),
-  ('RTS-8890', 'COMPLETED', 'Servicio de 1,000 km',  'MTTO-1K',  '10:00', 60,  1, 'Primer servicio'),
-  ('FLT-1001', 'CONFIRMED', 'Servicio de 10,000 km', 'MTTO-10K', '12:00', 120, 2, 'Flotilla: recoge el mismo día'),
-  ('BNM-7766', 'SCHEDULED', 'Servicio de 5,000 km',  'MTTO-5K',  '13:30', 75,  3, NULL),
-  ('ZXC-1188', 'SCHEDULED', 'Cambio de balatas',     'FRENOS',   '16:00', 60,  1, 'Trae las balatas de repuesto'),
-  ('POI-9922', 'SCHEDULED', 'Servicio de 1,000 km',  'MTTO-1K',  '17:00', 60,  2, NULL)
-) AS a(placa, estado, servicio, codigo, hora, dur, asesor, nota)
+  ('NGZ-4401', 'COMPLETED', 'Servicio de 5,000 km',  'MTTO-5K',  '08:30', 75,  1, 1, 'Llegó puntual'),
+  ('MPT-2210', 'COMPLETED', 'Cambio de balatas',     'FRENOS',   '09:00', 60,  2, 2, 'Ruido al frenar'),
+  ('JKL-5512', 'NO_SHOW',   'Diagnóstico',           'DIAG',     '09:30', 45,  3, 3, 'No se presentó; se le llamó sin respuesta'),
+  ('RTS-8890', 'COMPLETED', 'Servicio de 1,000 km',  'MTTO-1K',  '10:00', 60,  1, 3, 'Primer servicio'),
+  ('FLT-1001', 'CONFIRMED', 'Servicio de 10,000 km', 'MTTO-10K', '12:00', 120, 2, 1, 'Flotilla: recoge el mismo día'),
+  ('BNM-7766', 'SCHEDULED', 'Servicio de 5,000 km',  'MTTO-5K',  '13:30', 75,  3, 2, NULL),
+  ('ZXC-1188', 'SCHEDULED', 'Cambio de balatas',     'FRENOS',   '16:00', 60,  1, 3, 'Trae las balatas de repuesto'),
+  ('POI-9922', 'SCHEDULED', 'Servicio de 1,000 km',  'MTTO-1K',  '17:00', 60,  2, 1, NULL)
+) AS a(placa, estado, servicio, codigo, hora, dur, asesor, tecnico, nota)
 JOIN customer_vehicles v ON v.plate = a.placa
 JOIN clients c           ON c.id = v.owner_id;
 
 -- Y algo de agenda futura, para que el calendario no se vea vacío mañana.
 INSERT INTO appointments (id, tenant_id, branch_id, client_id, vehicle_id, advisor_id,
-                          origin, status, service_type, service_type_id,
+                          mechanic_id, origin, status, service_type, service_type_id,
                           client_name, client_phone, scheduled_at, duration_min)
 SELECT gen_random_uuid(), r.tenant_id, r.central, c.id, v.id, r.asesor1,
+       CASE a.tecnico WHEN 1 THEN r.tecnico1 WHEN 2 THEN r.tecnico2 ELSE r.tecnico3 END,
        'INTERNAL', 'SCHEDULED', 'Servicio de 5,000 km',
        (SELECT id FROM service_types WHERE code = 'MTTO-5K'),
        coalesce(c.company_name, c.first_name || ' ' || c.last_name), c.phone,
        r.hoy + a.dias + a.hora::time, 75
 FROM ref r, (VALUES
-  ('FLT-1002', 1, '09:00'),
-  ('FER-2001', 1, '11:00'),
-  ('QWE-3344', 2, '10:00'),
-  ('FLT-1003', 3, '08:30')
-) AS a(placa, dias, hora)
+  ('FLT-1002', 1, '09:00', 1),
+  ('FER-2001', 1, '11:00', 2),
+  ('QWE-3344', 2, '10:00', 3),
+  ('FLT-1003', 3, '08:30', 1)
+) AS a(placa, dias, hora, tecnico)
 JOIN customer_vehicles v ON v.plate = a.placa
 JOIN clients c           ON c.id = v.owner_id;
 
+-- ── Citas de ventas ──────────────────────────────────────────────────
+-- Aparte de las citas de taller: prueba de manejo, entrega de unidad ya
+-- vendida, visita a cotizar y seguimiento. Mezcla clientes que ya están en
+-- el catálogo (dueno con match) con prospectos que aún no se dan de alta
+-- (dueno NULL → client_id queda NULL, que es como llegan de mostrador).
+INSERT INTO sales_appointments (id, tenant_id, branch_id, client_id, client_name,
+                                client_phone, seller_id, unit_label, purpose,
+                                status, scheduled_at, duration_min, notes)
+SELECT gen_random_uuid(), r.tenant_id, r.central,
+       (SELECT id FROM clients WHERE coalesce(company_name, last_name) = a.dueno LIMIT 1),
+       a.nombre, a.tel,
+       CASE a.asesor WHEN 1 THEN r.asesor1 WHEN 2 THEN r.asesor2 ELSE r.asesor3 END,
+       a.unidad, a.proposito, a.estado, r.hoy + a.dias + a.hora::time, a.dur, a.nota
+FROM ref r, (VALUES
+  ('Rojas Cabrera', 'Miguel Rojas Cabrera',  '5551002033', 1, 'Honda CB500F 2026',    'TEST_DRIVE', 'DONE',      0, '09:30', 45, 'Vino por la nueva CB500F, ya la manejó'),
+  ('Ruiz Vega',     'Ana Ruiz Vega',         '5551002034', 2, 'Honda XR150L 2025',    'DELIVERY',   'DONE',      0, '11:00', 30, 'Entrega de unidad recién facturada'),
+  (NULL,            'Sandra Ochoa',          '5539901122', 3, 'Italika FT150 2025',   'VISIT',      'CONFIRMED', 0, '13:00', 45, 'Primera visita, quiere cotización de contado y crédito'),
+  (NULL,            'Ricardo Peña',          '5539901133', 1, 'Honda CB190R 2025',    'TEST_DRIVE', 'SCHEDULED', 0, '16:30', 45, NULL),
+  ('Nava Estrada',  'Fernando Nava Estrada', '5551002037', 2, 'Honda Cargo 150 2025', 'FOLLOW_UP',  'SCHEDULED', 0, '17:15', 30, 'Se llevó folleto la semana pasada'),
+  (NULL,            'Karina Torres',         '5539901144', 3, 'Honda CB500F 2025',    'VISIT',      'NO_SHOW',   0, '10:00', 45, 'No llegó ni avisó'),
+  (NULL,            'Édgar Salinas',         '5539901155', 1, 'Honda XR150L 2025',    'TEST_DRIVE', 'CANCELLED', 0, '15:00', 45, 'Canceló, prefiere venir el fin de semana'),
+  (NULL,            'Mónica Vargas',         '5539901166', 2, 'Italika FT150 2025',   'VISIT',      'SCHEDULED', 1, '10:30', 45, NULL),
+  (NULL,            'Héctor Ibáñez',         '5539901177', 3, 'Honda CB190R 2025',    'TEST_DRIVE', 'SCHEDULED', 1, '12:00', 45, NULL)
+) AS a(dueno, nombre, tel, asesor, unidad, proposito, estado, dias, hora, dur, nota);
+
 -- ── Órdenes de servicio ──────────────────────────────────────────────
--- Cinco en el taller ahora mismo y dos entregadas. Las abiertas son las que
+-- Cinco en el taller ahora mismo y tres entregadas. Las abiertas son las que
 -- llenan el magneto plano; las entregadas dan historial al vehículo y al
--- cliente, que es lo que hace creíble la ficha.
+-- cliente —y son las que reciben encuesta de satisfacción—, que es lo que
+-- hace creíble la ficha.
 INSERT INTO service_order_folio_seq (tenant_id, year, last_value)
-SELECT tenant_id, extract(year FROM hoy)::int, 7 FROM ref;
+SELECT tenant_id, extract(year FROM hoy)::int, 8 FROM ref;
 
 INSERT INTO service_orders (id, tenant_id, branch_id, owner_id, vehicle_id, user_id,
                             mechanic_id, folio, status, reported_fault, diagnosis,
@@ -381,7 +413,8 @@ FROM ref r, (VALUES
   ('OS-2026-0004', 'FLT-1001', 'WAITING_PARTS', 'Servicio de 10,000 km de flotilla',  'Falta filtro de aire en almacén',        1200, 2100, 1, '11:00', '18:00', 0),
   ('OS-2026-0005', 'QWE-3344', 'READY',         'Cambio de kit de arrastre',          'Cadena estirada y catarina desgastada',  900,  1650, 2, '08:00', '15:00', 1),
   ('OS-2026-0006', 'ZXC-1188', 'DELIVERED',     'Servicio de 10,000 km',              'Completo, sin observaciones',            1200, 1980, 3, '09:00', '17:00', 6),
-  ('OS-2026-0007', 'JKL-5512', 'DELIVERED',     'Falla intermitente de encendido',    'Bujía sulfatada; se reemplazó',          400,  155,  1, '10:00', '13:00', 12)
+  ('OS-2026-0007', 'JKL-5512', 'DELIVERED',     'Falla intermitente de encendido',    'Bujía sulfatada; se reemplazó',          400,  155,  1, '10:00', '13:00', 12),
+  ('OS-2026-0008', 'POI-9922', 'DELIVERED',     'Primer servicio de 1,000 km',        'Ajustes de fábrica, sin novedades',      450,  300,  2, '09:30', '12:00', 2)
 ) AS o(folio, placa, estado, falla, diagnostico, mano_obra, refacciones, tecnico, recibida, prometida, dias_atras)
 JOIN customer_vehicles v ON v.plate = o.placa;
 
@@ -393,10 +426,63 @@ FROM (VALUES
   ('OS-2026-0006', 'ACE-20W50', 1),
   ('OS-2026-0006', 'FIL-ACE',   1),
   ('OS-2026-0006', 'BUJ-CR8',   1),
-  ('OS-2026-0007', 'BUJ-CR8',   1)
+  ('OS-2026-0007', 'BUJ-CR8',   1),
+  ('OS-2026-0008', 'ACE-10W40', 1),
+  ('OS-2026-0008', 'FIL-ACE',   1)
 ) AS x(folio, sku, cant)
 JOIN service_orders so ON so.folio = x.folio
 JOIN parts p           ON p.sku    = x.sku;
+
+-- Encuestas de satisfacción post-entrega: dos ya respondidas (una muy buena,
+-- otra que se queja de la demora) y una enviada que el cliente aún no
+-- contesta, para que el resumen distinga total vs. respondidas.
+INSERT INTO service_surveys (id, tenant_id, service_order_id, score, comment,
+                             questions, answers, intro, thanks, sent_at, answered_at)
+SELECT gen_random_uuid(), r.tenant_id, so.id, e.score, e.comentario,
+       '[
+          {"id":"trato","label":"¿Cómo calificarías el trato del asesor?","type":"RATING"},
+          {"id":"tiempo","label":"¿Qué tan a tiempo se entregó tu vehículo?","type":"RATING"},
+          {"id":"comentario","label":"¿Algo que quieras contarnos?","type":"TEXT"}
+        ]'::jsonb,
+       e.respuestas::jsonb,
+       'Gracias por confiar tu vehículo a nuestro taller. Tu opinión nos ayuda a mejorar.',
+       '¡Gracias por tu tiempo! Tu respuesta quedó registrada.',
+       (now() AT TIME ZONE 'America/Mexico_City') - (e.dias_envio || ' days')::interval,
+       e.dias_resp
+FROM ref r, service_orders so, (VALUES
+  ('OS-2026-0006', 5, 'Excelente atención, muy rápidos y me explicaron todo.', '{"trato":5,"tiempo":5,"comentario":"Excelente atención, muy rápidos y me explicaron todo."}', 6,
+   (now() AT TIME ZONE 'America/Mexico_City') - interval '5 days'),
+  ('OS-2026-0007', 3, 'Se tardaron más de lo que me prometieron.', '{"trato":3,"tiempo":2,"comentario":"Se tardaron más de lo que me prometieron."}', 12,
+   (now() AT TIME ZONE 'America/Mexico_City') - interval '11 days'),
+  ('OS-2026-0008', NULL, NULL, '{}', 2, NULL)
+) AS e(folio, score, comentario, respuestas, dias_envio, dias_resp)
+WHERE so.folio = e.folio;
+
+-- ── Entregas de taller ───────────────────────────────────────────────
+-- Acta de entrega de las tres órdenes ya cerradas: checklist completo,
+-- firmado por el asesor que atendió al cliente en el mostrador.
+INSERT INTO deliveries (id, tenant_id, branch_id, folio, kind, reference_type,
+                        reference_id, reference_label, client_id, checklist,
+                        notes, delivered_by, delivered_at, created_at)
+SELECT gen_random_uuid(), r.tenant_id, r.central, e.folio, 'SERVICE',
+       'service_order', so.id, so.folio, so.owner_id,
+       '[
+          {"label":"Trabajos realizados explicados al cliente","done":true},
+          {"label":"Refacciones cambiadas mostradas","done":true},
+          {"label":"Prueba de manejo / funcionamiento","done":true},
+          {"label":"Sin pendientes ni observaciones","done":true},
+          {"label":"Vehículo limpio","done":true},
+          {"label":"Conformidad del cliente","done":true}
+        ]'::jsonb,
+       e.notas,
+       CASE e.asesor WHEN 1 THEN r.asesor1 WHEN 2 THEN r.asesor2 ELSE r.asesor3 END,
+       so.delivered_at, so.delivered_at
+FROM ref r, service_orders so, (VALUES
+  ('ENT-2026-0001', 'OS-2026-0006', 3, 'Cliente conforme, se explicó el mantenimiento realizado.'),
+  ('ENT-2026-0002', 'OS-2026-0007', 1, 'Se mostró al cliente la bujía sustituida.'),
+  ('ENT-2026-0003', 'OS-2026-0008', 2, 'Entrega rápida, cliente satisfecho.')
+) AS e(folio, os_folio, asesor, notas)
+WHERE so.folio = e.os_folio;
 
 -- ── Fases de las órdenes abiertas ────────────────────────────────────
 -- Se copian del paquete que corresponde y se les da tiempo real: una va
@@ -612,8 +698,11 @@ FROM ref r, (VALUES
 JOIN leads l ON l.name = a.prospecto;
 
 -- ── Cotizaciones ─────────────────────────────────────────────────────
+-- De servicio (taller) y de refacciones sueltas, con estatus repartidos
+-- para que la pantalla de "Presupuestos de servicio" no se vea con un solo
+-- caso: borrador, por autorizar, enviado, aceptado y rechazado.
 INSERT INTO quotation_folio_seq (tenant_id, year, last_value)
-SELECT tenant_id, extract(year FROM hoy)::int, 3 FROM ref;
+SELECT tenant_id, extract(year FROM hoy)::int, 7 FROM ref;
 
 INSERT INTO quotations (id, tenant_id, branch_id, client_id, user_id, type, folio,
                         status, price_list, subtotal, discount_pct, discount_amount,
@@ -630,7 +719,11 @@ SELECT gen_random_uuid(), r.tenant_id, r.central,
 FROM ref r, (VALUES
   ('COT-2026-0001', 'Silva Ortega',  'PARTS',   'SENT',     'PUBLIC',   2075, 0, 'Precios vigentes 15 días. No incluye mano de obra.', 3),
   ('COT-2026-0002', 'Mensajería Rápida del Centro SA de CV', 'SERVICE', 'ACCEPTED', 'BUSINESS', 6800, 8, 'Servicio de flotilla, tres unidades.', 6),
-  ('COT-2026-0003', 'Nava Estrada',  'PARTS',   'DRAFT',    'PUBLIC',   1650, 0, NULL, 1)
+  ('COT-2026-0003', 'Nava Estrada',  'PARTS',   'DRAFT',    'PUBLIC',   1650, 0, NULL, 1),
+  ('COT-2026-0004', 'Ibarra Luna',   'SERVICE', 'DRAFT',            'PUBLIC',  610,  0, 'Cambio de cadena por desgaste detectado en revisión.', 0),
+  ('COT-2026-0005', 'Rojas Cabrera', 'SERVICE', 'PENDING_APPROVAL', 'PUBLIC',  610,  0, 'Balatas delanteras y purga de frenos; pendiente de autorización del gerente por el descuento solicitado.', 1),
+  ('COT-2026-0006', 'Ruiz Vega',     'SERVICE', 'SENT',             'PUBLIC',  1065, 0, 'Batería y foco delantero. Enviado al cliente para autorización.', 2),
+  ('COT-2026-0007', 'Distribuidora Ferretera del Bajío SA', 'SERVICE', 'REJECTED', 'BUSINESS', 2905, 5, 'Silenciador y empaque de culata. El cliente rechazó, prefiere taller externo.', 4)
 ) AS q(folio, cliente, tipo, estado, lista, subtotal, desc_pct, condiciones, dias);
 
 INSERT INTO quotation_items (quotation_id, part_id, description, quantity, unit_price, discount, subtotal)
@@ -643,7 +736,14 @@ FROM (VALUES
   ('COT-2026-0002', 'ACE-20W50', 3),
   ('COT-2026-0002', 'FIL-ACE',   3),
   ('COT-2026-0002', 'BUJ-CR8',   3),
-  ('COT-2026-0003', 'KIT-ARR',   1)
+  ('COT-2026-0003', 'KIT-ARR',   1),
+  ('COT-2026-0004', 'CAD-428',   1),
+  ('COT-2026-0005', 'BAL-DEL',   1),
+  ('COT-2026-0005', 'LIQ-FRE',   1),
+  ('COT-2026-0006', 'BAT-YTX7',  1),
+  ('COT-2026-0006', 'FOC-H4',    1),
+  ('COT-2026-0007', 'SIL-ESC',   1),
+  ('COT-2026-0007', 'EMP-CUL',   1)
 ) AS x(folio, sku, cant)
 JOIN quotations q ON q.folio = x.folio
 JOIN parts p      ON p.sku   = x.sku;
