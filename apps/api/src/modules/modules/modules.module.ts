@@ -48,6 +48,24 @@ export class ModulesService {
 
   /** Catálogo completo con el estado de cada módulo para este tenant. */
   async catalog(tenantId: string) {
+    // Sin tenant (administrador del SaaS): catálogo base, sin estado por tenant.
+    if (!tenantId) {
+      return {
+        plan: null,
+        modules: MODULE_REGISTRY.map((m) => ({
+          key: m.key,
+          name: m.name,
+          description: m.description,
+          icon: m.icon,
+          route: m.route,
+          minPlan: m.minPlan,
+          core: !!m.core,
+          hasDashboard: !!m.hasDashboard,
+          includedInPlan: false,
+          active: false,
+        })),
+      };
+    }
     const t = await this.tenant(tenantId);
     const inPlan = new Set(modulesForPlan(t.plan));
     const active = new Set(resolveModules(t.plan, t.enabledModules));

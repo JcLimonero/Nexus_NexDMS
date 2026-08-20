@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getDatabaseConfig } from './config/database.config';
 import { AuthModule } from './modules/auth/auth.module';
+import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 import { LegalEntitiesModule } from './modules/legal-entities/legal-entities.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
@@ -124,6 +125,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
       }),
     }),
     AuthModule,
+    AdminAuthModule,
     TenantsModule,
     SaasModule,
     VehicleHistoryModule,
