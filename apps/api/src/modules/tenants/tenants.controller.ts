@@ -123,6 +123,24 @@ export class TenantsController {
     return this.tenantsService.setCurrency(user.tenantId, body.currency);
   }
 
+  @Get('me/commission-config')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  getMyCommissionConfig(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getCommissionConfig(user.tenantId);
+  }
+
+  @Patch('me/commission-config')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyCommissionConfig(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { exemptChargeTypes: string[] },
+  ) {
+    return this.tenantsService.setCommissionConfig(
+      user.tenantId,
+      body.exemptChargeTypes,
+    );
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(

@@ -60,6 +60,9 @@ export class UsersController {
       isActive?: boolean;
       roles?: RoleEnum[];
       branchIds?: string[];
+      commissionPeriod?: string | null;
+      commissionPercent?: number;
+      guaranteedSalary?: number;
     },
   ) {
     // Se pasa quién edita para impedir que alguien se deje a sí mismo sin

@@ -70,6 +70,10 @@ export interface Usuario {
   bloqueado: boolean;
   roles: string[];
   branchIds: string[];
+  /** Comisión del mecánico. */
+  commissionPeriod: string | null;
+  commissionPercent: number;
+  guaranteedSalary: number;
 }
 
 export interface NuevoUsuario {

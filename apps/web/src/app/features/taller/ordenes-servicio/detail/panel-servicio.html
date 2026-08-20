@@ -165,6 +165,19 @@
           placeholder="Cuenta de cargo"
           [(ngModel)]="nuevaOp.chargeAccount"
         />
+        <input
+          type="number"
+          class="form-control field-sm"
+          placeholder="Ganancia mec. (fija)"
+          title="Ganancia fija del mecánico en esta operación; si se deja vacío, aplica su %"
+          min="0"
+          step="0.01"
+          [(ngModel)]="nuevaOp.commissionOverride"
+        />
+        <label class="d-inline-flex align-items-center gap-1 ms-1" title="No paga comisión al mecánico">
+          <input type="checkbox" [(ngModel)]="nuevaOp.noCommission" />
+          <span class="small">Sin comisión</span>
+        </label>
         <button
           type="button"
           class="btn btn-primary"

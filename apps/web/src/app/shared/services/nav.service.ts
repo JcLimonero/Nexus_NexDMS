@@ -87,6 +87,7 @@ export class NavService {
         // garantía de venta de la unidad). Hoy comparte pantalla con la de
         // unidades; se separará cuando el backend distinga el tipo.
         { path: "/warranties", title: "Garantías de taller", type: "link" },
+        { path: "/workshop/comisiones", title: "Comisiones", type: "link" },
       ],
     },
     // ── Ventas de unidades ─────────────────────────────────

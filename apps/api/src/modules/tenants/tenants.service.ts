@@ -148,6 +148,31 @@ export class TenantsService {
     return { currency: tenant.currency };
   }
 
+  async getCommissionConfig(
+    tenantId: string,
+  ): Promise<{ exemptChargeTypes: string[] }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    return { exemptChargeTypes: tenant.commissionExemptChargeTypes ?? [] };
+  }
+
+  async setCommissionConfig(
+    tenantId: string,
+    exemptChargeTypes: string[],
+  ): Promise<{ exemptChargeTypes: string[] }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    const validos = ['CLIENT', 'WARRANTY', 'INTERNAL', 'QUOTE', 'FAST_SERVICE'];
+    const limpio = (exemptChargeTypes ?? []).filter((t) => validos.includes(t));
+    tenant.commissionExemptChargeTypes = limpio.length ? limpio : null;
+    await this.tenantRepo.save(tenant);
+    return { exemptChargeTypes: tenant.commissionExemptChargeTypes ?? [] };
+  }
+
   async setEnabledModules(
     tenantId: string,
     enabledModules: string[] | null,

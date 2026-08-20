@@ -70,6 +70,8 @@ export class PanelServicio implements OnInit {
     laborPrice: 0,
     chargeType: "CLIENT",
     chargeAccount: "",
+    noCommission: false,
+    commissionOverride: null as number | null,
   };
 
   // ── Trabajos adicionales ──
@@ -152,6 +154,8 @@ export class PanelServicio implements OnInit {
           laborPrice: 0,
           chargeType: "CLIENT",
           chargeAccount: "",
+          noCommission: false,
+          commissionOverride: null,
         };
         this.toastr.success("Operación agregada");
         this.cargar();

@@ -117,6 +117,8 @@ export class PanelServicioService {
       laborPrice?: number;
       chargeType?: string;
       chargeAccount?: string;
+      noCommission?: boolean;
+      commissionOverride?: number | null;
     },
   ): Observable<unknown> {
     return this.http.post(`/api/v1/operations/order/${serviceOrderId}`, dto);

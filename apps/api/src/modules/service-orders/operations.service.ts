@@ -24,6 +24,10 @@ export interface OperationDto {
   chargeType?: ChargeTypeEnum;
   chargeAccount?: string;
   mechanicId?: string;
+  /** Excluir esta operación de la comisión del mecánico. */
+  noCommission?: boolean;
+  /** Ganancia fija del mecánico en esta operación (override del %). */
+  commissionOverride?: number | null;
 }
 
 /** Lo que ve el técnico antes de fichar. */
@@ -169,6 +173,8 @@ export class OperationsService {
       chargeType: dto.chargeType ?? ChargeTypeEnum.CLIENT,
       chargeAccount: dto.chargeAccount?.trim() || null,
       mechanicId: dto.mechanicId ?? null,
+      noCommission: dto.noCommission ?? false,
+      commissionOverride: dto.commissionOverride ?? null,
       source,
       findingId: extra?.findingId ?? null,
       kitId: extra?.kitId ?? null,
@@ -194,6 +200,12 @@ export class OperationsService {
           ? dto.chargeAccount || null
           : op.chargeAccount,
       mechanicId: dto.mechanicId !== undefined ? dto.mechanicId : op.mechanicId,
+      noCommission:
+        dto.noCommission !== undefined ? dto.noCommission : op.noCommission,
+      commissionOverride:
+        dto.commissionOverride !== undefined
+          ? dto.commissionOverride
+          : op.commissionOverride,
       status: dto.status ?? op.status,
     });
     return this.opRepo.save(op);

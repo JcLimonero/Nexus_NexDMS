@@ -1,0 +1,102 @@
+<div class="container-fluid">
+  <div class="card mb-3">
+    <div class="card-header">
+      <h5 class="mb-0">Comisiones a mecánicos</h5>
+      <small class="text-muted">Calcula la comisión y el sueldo garantía por mecánico y periodo.</small>
+    </div>
+    <div class="card-body">
+      <!-- Config: tipos exentos -->
+      <h6>Tipos de cargo exentos de comisión</h6>
+      <p class="text-muted small mb-2">
+        Las operaciones de estos tipos no pagan comisión (p. ej. garantía o trabajos internos).
+      </p>
+      <div class="d-flex flex-wrap gap-3 mb-2">
+        @for (t of tiposCargo; track t.value) {
+          <label class="d-inline-flex align-items-center gap-1">
+            <input type="checkbox" [checked]="esExento(t.value)" (change)="alternarExento(t.value)" />
+            {{ t.label }}
+          </label>
+        }
+      </div>
+      <button type="button" class="btn btn-outline-primary btn-sm" [disabled]="guardandoExentos()" (click)="guardarExentos()">
+        {{ guardandoExentos() ? "Guardando…" : "Guardar exentos" }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Reporte -->
+  <div class="card">
+    <div class="card-header"><h6 class="mb-0">Comisión por mecánico</h6></div>
+    <div class="card-body">
+      <div class="row g-2 align-items-end mb-3">
+        <div class="col-md-4">
+          <label class="form-label">Mecánico</label>
+          <select class="form-select" [ngModel]="mecanicoId()" (ngModelChange)="mecanicoId.set($event)">
+            <option value="">Seleccionar…</option>
+            @for (m of mecanicos(); track m.id) {
+              <option [value]="m.id">
+                {{ m.firstName }} {{ m.lastName }}{{ m.commissionPeriod ? "" : " (sin comisión)" }}
+              </option>
+            }
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Desde</label>
+          <input type="date" class="form-control" [ngModel]="desde()" (ngModelChange)="desde.set($event)" />
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Hasta</label>
+          <input type="date" class="form-control" [ngModel]="hasta()" (ngModelChange)="hasta.set($event)" />
+        </div>
+        <div class="col-md-2">
+          <button type="button" class="btn btn-primary w-100" [disabled]="cargando() || !puedeCalcular()" (click)="calcular()">
+            {{ cargando() ? "Calculando…" : "Calcular" }}
+          </button>
+        </div>
+      </div>
+
+      @if (resultado(); as r) {
+        <div class="alert alert-light border d-flex flex-wrap gap-4">
+          <div><small class="text-muted d-block">Mecánico</small><strong>{{ r.mecanico.nombre }}</strong></div>
+          <div><small class="text-muted d-block">Periodo</small><strong>{{ r.mecanico.periodo === "WEEKLY" ? "Semanal" : (r.mecanico.periodo === "BIWEEKLY" ? "Quincenal" : "—") }}</strong></div>
+          <div><small class="text-muted d-block">% M.O.</small><strong>{{ r.mecanico.porcentaje }}%</strong></div>
+        </div>
+
+        @if (r.operaciones.length) {
+          <div class="table-responsive">
+            <table class="table table-sm align-middle">
+              <thead>
+                <tr>
+                  <th>Operación</th>
+                  <th>Tipo</th>
+                  <th class="text-end">Mano de obra</th>
+                  <th class="text-end">Comisión</th>
+                  <th>Regla</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of r.operaciones; track o.operationId) {
+                  <tr>
+                    <td>{{ o.description }}</td>
+                    <td>{{ etiquetaCargo(o.chargeType) }}</td>
+                    <td class="text-end">{{ money(o.laborPrice) }}</td>
+                    <td class="text-end">{{ money(o.comision) }}</td>
+                    <td class="small text-muted">{{ o.motivo }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="text-muted">Sin operaciones terminadas en el rango.</p>
+        }
+
+        <div class="d-flex justify-content-end gap-4 mt-2">
+          <div class="text-end"><small class="text-muted d-block">Comisión</small><strong>{{ money(r.comisionTotal) }}</strong></div>
+          <div class="text-end"><small class="text-muted d-block">Sueldo garantía</small><strong>{{ money(r.sueldoGarantia) }}</strong></div>
+          <div class="text-end"><small class="text-muted d-block">Total a pagar</small><strong class="fs-5">{{ money(r.total) }}</strong></div>
+        </div>
+      }
+    </div>
+  </div>
+</div>
