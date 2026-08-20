@@ -68,6 +68,10 @@ export class OrdenCompraForm implements OnInit {
       partId: ["", Validators.required],
       quantity: [1, [Validators.required, Validators.min(1)]],
       unitPrice: [0, [Validators.required, Validators.min(0)]],
+      // Garantía del proveedor sobre la refacción (opcional). Al recibir la
+      // orden se copia al proveedor y se ve en el detalle de la refacción.
+      warrantyMonths: [null as number | null, [Validators.min(0)]],
+      warrantyNote: [""],
     });
   }
 
@@ -110,11 +114,24 @@ export class OrdenCompraForm implements OnInit {
     const raw = this.form.getRawValue();
     const lines: CreatePurchaseOrderLineDto[] = raw.lines
       .filter((l: { partId: string }) => l.partId)
-      .map((l: { partId: string; quantity: number; unitPrice: number }) => ({
-        partId: l.partId,
-        quantity: Number(l.quantity),
-        unitPrice: Number(l.unitPrice),
-      }));
+      .map(
+        (l: {
+          partId: string;
+          quantity: number;
+          unitPrice: number;
+          warrantyMonths: number | null;
+          warrantyNote: string;
+        }) => ({
+          partId: l.partId,
+          quantity: Number(l.quantity),
+          unitPrice: Number(l.unitPrice),
+          warrantyMonths:
+            l.warrantyMonths != null && `${l.warrantyMonths}` !== ""
+              ? Number(l.warrantyMonths)
+              : undefined,
+          warrantyNote: l.warrantyNote?.trim() || undefined,
+        }),
+      );
 
     if (lines.length === 0) {
       this.toastr.error("Debe incluir al menos una línea");

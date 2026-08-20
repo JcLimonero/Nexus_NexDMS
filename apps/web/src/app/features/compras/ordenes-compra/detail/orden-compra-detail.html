@@ -149,6 +149,7 @@
                     }
                     <th class="text-end">Precio unit.</th>
                     <th class="text-end">Subtotal</th>
+                    <th class="text-center">Garantía</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,6 +177,9 @@
                       }
                       <td class="text-end">{{ item.unitPrice | number:'1.2-2' }}</td>
                       <td class="text-end">{{ item.subtotal | number:'1.2-2' }}</td>
+                      <td class="text-center" [title]="item.warrantyNote || ''">
+                        {{ item.warrantyMonths ? item.warrantyMonths + ' m' : '—' }}
+                      </td>
                     </tr>
                   }
                 </tbody>

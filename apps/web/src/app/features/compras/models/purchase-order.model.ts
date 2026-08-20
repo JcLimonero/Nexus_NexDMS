@@ -14,6 +14,8 @@ export interface PurchaseOrderItem {
   quantityReceived: number;
   unitPrice: number;
   subtotal: number;
+  warrantyMonths?: number | null;
+  warrantyNote?: string | null;
   part?: {
     id: string;
     sku: string;
@@ -63,6 +65,9 @@ export interface CreatePurchaseOrderLineDto {
   partId: string;
   quantity: number;
   unitPrice: number;
+  /** Garantía del proveedor (meses) capturada al comprar. */
+  warrantyMonths?: number;
+  warrantyNote?: string;
 }
 
 export interface CreatePurchaseOrderDto {

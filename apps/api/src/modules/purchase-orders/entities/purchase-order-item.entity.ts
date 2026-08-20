@@ -34,6 +34,14 @@ export class PurchaseOrderItem {
   @Column({ name: 'subtotal', type: 'decimal', precision: 12, scale: 2 })
   subtotal: number;
 
+  /** Garantía del proveedor capturada al comprar; al recibir se copia a
+   * part_suppliers para verla en el detalle de la refacción. */
+  @Column({ name: 'warranty_months', type: 'int', nullable: true })
+  warrantyMonths: number | null;
+
+  @Column({ name: 'warranty_note', type: 'varchar', length: 300, nullable: true })
+  warrantyNote: string | null;
+
   @ManyToOne(() => PurchaseOrder, (po) => po.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'purchase_order_id' })
   purchaseOrder: PurchaseOrder;
