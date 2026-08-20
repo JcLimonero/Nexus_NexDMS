@@ -1,5 +1,7 @@
-import { Component, computed, signal } from "@angular/core";
+import { Component, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
+import { ToastrService } from "ngx-toastr";
 
 import { FeatherIcons } from "../../../shared/components/feather-icons/feather-icons";
 import {
@@ -30,11 +32,13 @@ const REASONS: Record<EscalationReason, string> = {
 @Component({
   selector: "app-conversaciones",
   standalone: true,
-  imports: [CommonModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, FeatherIcons],
   templateUrl: "./conversaciones.html",
   styleUrls: ["./conversaciones.scss"],
 })
 export class Conversaciones {
+  private toastr = inject(ToastrService);
+
   conversations = signal<Conversation[]>(DEMO_CONVERSATIONS);
   selectedId = signal<string>(DEMO_CONVERSATIONS[0]?.id ?? "");
 
@@ -57,8 +61,71 @@ export class Conversaciones {
     () => this.conversations().filter((c) => c.reason).length,
   );
 
+  /** What's typed for the currently open conversation, not yet sent. */
+  borrador = signal("");
+
   select(c: Conversation): void {
     this.selectedId.set(c.id);
+    // A draft for one customer has no business appearing under another's.
+    this.borrador.set("");
+  }
+
+  /**
+   * An advisor jumping into a chat the assistant is still handling fine —
+   * not a rescue (that's `reason`), just someone deciding to take it from
+   * here. Drops an agent bubble so the customer sees a person answered, and
+   * flips the state so the "Tomar conversación" button disappears — and the
+   * reply box appears — once someone's already in.
+   */
+  tomarConversacion(conv: Conversation): void {
+    this.agregarMensajeAgente(
+      conv,
+      "Hola, soy del taller y tomé tu conversación. ¿En qué te ayudo?",
+    );
+    this.toastr.success("Tomaste la conversación");
+  }
+
+  /** Sends what's in the draft box as this advisor's own reply. */
+  enviarMensaje(conv: Conversation): void {
+    const texto = this.borrador().trim();
+    if (!texto) return;
+    this.agregarMensajeAgente(conv, texto);
+    this.borrador.set("");
+  }
+
+  /** Enter sends, like WhatsApp; Shift+Enter still breaks the line. */
+  onComposerKeydown(ev: KeyboardEvent, conv: Conversation): void {
+    if (ev.key === "Enter" && !ev.shiftKey) {
+      ev.preventDefault();
+      this.enviarMensaje(conv);
+    }
+  }
+
+  private agregarMensajeAgente(conv: Conversation, texto: string): void {
+    const hora = new Date().toLocaleTimeString("es-MX", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+    this.conversations.update((list) =>
+      list.map((c) =>
+        c.id === conv.id
+          ? {
+              ...c,
+              state: "WITH_AGENT" as const,
+              lastActivity: "justo ahora",
+              messages: [
+                ...c.messages,
+                {
+                  author: "agent" as const,
+                  agentName: "Tú",
+                  text: texto,
+                  time: hora,
+                },
+              ],
+            }
+          : c,
+      ),
+    );
   }
 
   stateLabel(state: ConversationState): string {
