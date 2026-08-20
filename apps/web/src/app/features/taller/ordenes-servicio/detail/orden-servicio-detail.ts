@@ -12,6 +12,7 @@ import { BranchesService } from "../../../inventario-refacciones/services/branch
 import {
   ServiceOrder,
   ServiceOrderStatus,
+  PromiseChange,
 } from "../../models/service-order.model";
 
 const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
@@ -57,6 +58,70 @@ export class OrdenServicioDetail implements OnInit {
   cancelling = signal(false);
   selectedStatus = signal<ServiceOrderStatus | "">("");
   selectedMechanicId = signal<string>("");
+
+  // Edición de la fecha prometida (con justificación) + su historial.
+  editandoPromesa = signal(false);
+  guardandoPromesa = signal(false);
+  nuevaPromesa = signal<string>("");
+  motivoPromesa = signal<string>("");
+  historialPromesa = signal<PromiseChange[]>([]);
+  verHistorialPromesa = signal(false);
+
+  /** Fecha ISO → valor para <input type="datetime-local"> (hora local). */
+  private aInputLocal(iso: string | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const off = d.getTimezoneOffset();
+    return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
+  }
+
+  abrirEdicionPromesa(): void {
+    const o = this.orden();
+    this.nuevaPromesa.set(this.aInputLocal(o?.promisedAt ?? null));
+    this.motivoPromesa.set("");
+    this.editandoPromesa.set(true);
+  }
+
+  guardarPromesa(): void {
+    const o = this.orden();
+    if (!o) return;
+    const motivo = this.motivoPromesa().trim();
+    if (motivo.length < 3) {
+      this.toastr.warning("Escribe el motivo del cambio (mín. 3 caracteres)");
+      return;
+    }
+    const iso = this.nuevaPromesa()
+      ? new Date(this.nuevaPromesa()).toISOString()
+      : null;
+    this.guardandoPromesa.set(true);
+    this.tallerService.updatePromisedDate(o.id, iso, motivo).subscribe({
+      next: (upd) => {
+        this.orden.set(upd);
+        this.guardandoPromesa.set(false);
+        this.editandoPromesa.set(false);
+        this.toastr.success("Fecha prometida actualizada");
+        if (this.verHistorialPromesa()) this.cargarHistorialPromesa();
+      },
+      error: (err) => {
+        this.guardandoPromesa.set(false);
+        this.toastr.error(err?.error?.message || "No se pudo actualizar");
+      },
+    });
+  }
+
+  cargarHistorialPromesa(): void {
+    const o = this.orden();
+    if (!o) return;
+    this.tallerService.getPromiseHistory(o.id).subscribe({
+      next: (h) => this.historialPromesa.set(h),
+    });
+  }
+
+  toggleHistorialPromesa(): void {
+    const abrir = !this.verHistorialPromesa();
+    this.verHistorialPromesa.set(abrir);
+    if (abrir) this.cargarHistorialPromesa();
+  }
 
   /**
    * Abre la orden en PDF.

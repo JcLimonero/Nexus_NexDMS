@@ -67,10 +67,64 @@
                       <th class="text-muted">Recibida</th>
                       <td>{{ o.receivedAt | date:'short' }}</td>
                     </tr>
-                    @if (o.promisedAt) {
+                    <tr>
+                      <th class="text-muted">Prometida</th>
+                      <td>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <span>{{ o.promisedAt ? (o.promisedAt | date:'short') : '—' }}</span>
+                          @if (o.status !== 'DELIVERED' && o.status !== 'CANCELLED') {
+                            <button type="button" class="btn btn-link btn-sm p-0" (click)="abrirEdicionPromesa()">
+                              {{ o.promisedAt ? 'Cambiar' : 'Poner fecha' }}
+                            </button>
+                          }
+                          <button type="button" class="btn btn-link btn-sm p-0 text-muted" (click)="toggleHistorialPromesa()">
+                            Historial
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    @if (editandoPromesa()) {
                       <tr>
-                        <th class="text-muted">Prometida</th>
-                        <td>{{ o.promisedAt | date:'short' }}</td>
+                        <td colspan="2">
+                          <div class="p-2 border rounded bg-light">
+                            <label class="form-label small mb-1">Nueva fecha prometida</label>
+                            <input type="datetime-local" class="form-control form-control-sm mb-2"
+                              [ngModel]="nuevaPromesa()" (ngModelChange)="nuevaPromesa.set($event)" />
+                            <label class="form-label small mb-1">Motivo del cambio <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm mb-2"
+                              placeholder="Ej. refacción en respaldo, retraso del proveedor…"
+                              [ngModel]="motivoPromesa()" (ngModelChange)="motivoPromesa.set($event)" />
+                            <div class="d-flex gap-2">
+                              <button type="button" class="btn btn-primary btn-sm" [disabled]="guardandoPromesa()" (click)="guardarPromesa()">
+                                @if (guardandoPromesa()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                Guardar
+                              </button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="editandoPromesa.set(false)">Cancelar</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                    @if (verHistorialPromesa()) {
+                      <tr>
+                        <td colspan="2">
+                          @if (!historialPromesa().length) {
+                            <p class="text-muted small mb-0">Sin cambios registrados.</p>
+                          } @else {
+                            <ul class="list-unstyled small mb-0">
+                              @for (h of historialPromesa(); track h.id) {
+                                <li class="mb-1">
+                                  <strong>{{ h.newPromisedAt ? (h.newPromisedAt | date:'short') : 'sin fecha' }}</strong>
+                                  <span class="text-muted">
+                                    (antes {{ h.oldPromisedAt ? (h.oldPromisedAt | date:'short') : '—' }})
+                                    — {{ h.reason }}
+                                    · {{ h.changedBy || 'usuario' }}, {{ h.createdAt | date:'short' }}
+                                  </span>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </td>
                       </tr>
                     }
                   </tbody>

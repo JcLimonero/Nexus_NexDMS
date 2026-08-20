@@ -8,6 +8,16 @@ export enum ServiceOrderStatus {
   CANCELLED = "CANCELLED",
 }
 
+/** Un cambio registrado de la fecha prometida de entrega. */
+export interface PromiseChange {
+  id: string;
+  oldPromisedAt: string | null;
+  newPromisedAt: string | null;
+  reason: string;
+  changedBy: string | null;
+  createdAt: string;
+}
+
 export interface ServiceOrderVehicle {
   id: string;
   make: string;

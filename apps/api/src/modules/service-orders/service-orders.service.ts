@@ -15,6 +15,8 @@ import { ReceptionPhoto } from './entities/reception-photo.entity';
 import { ServiceOrderPart } from './entities/service-order-part.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { ServiceOrderUpdate } from './entities/service-order-update.entity';
+import { ServiceOrderPromiseChange } from './entities/service-order-promise-change.entity';
+import { UpdatePromisedDateDto } from './dto/update-promised-date.dto';
 import { ServiceOrderFinding } from './entities/service-order-finding.entity';
 import {
   FindingCriticalityEnum,
@@ -119,6 +121,8 @@ export class ServiceOrdersService {
     private readonly surveyRepo: Repository<ServiceSurvey>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    @InjectRepository(ServiceOrderPromiseChange)
+    private readonly promiseChangeRepo: Repository<ServiceOrderPromiseChange>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly branchesService: BranchesService,
@@ -379,6 +383,62 @@ export class ServiceOrdersService {
     }
     await this.soRepo.update(id, dto as Partial<ServiceOrder>);
     return this.findOne(user, id);
+  }
+
+  /**
+   * Cambia la fecha prometida de entrega registrando la justificación en la
+   * bitácora (de→a, motivo, quién, cuándo). El motivo es obligatorio.
+   */
+  async updatePromisedDate(
+    user: UserPayload,
+    id: string,
+    dto: UpdatePromisedDateDto,
+  ): Promise<ServiceOrder> {
+    const so = await this.findOne(user, id);
+    if (
+      so.status === ServiceOrderStatusEnum.DELIVERED ||
+      so.status === ServiceOrderStatusEnum.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'No se puede cambiar la fecha de una OS entregada o cancelada',
+      );
+    }
+    const nueva = dto.promisedAt ? new Date(dto.promisedAt) : null;
+    const anterior = so.promisedAt ? new Date(so.promisedAt) : null;
+    await this.dataSource.transaction(async (em) => {
+      await em.update(ServiceOrder, id, { promisedAt: nueva });
+      await em.save(
+        em.create(ServiceOrderPromiseChange, {
+          tenantId: user.tenantId,
+          serviceOrderId: id,
+          oldPromisedAt: anterior,
+          newPromisedAt: nueva,
+          reason: dto.reason.trim(),
+          changedByUserId: user.sub,
+        }),
+      );
+    });
+    return this.findOne(user, id);
+  }
+
+  /** Bitácora de cambios de la fecha prometida, más reciente primero. */
+  async historialFechaPromesa(user: UserPayload, id: string) {
+    await this.findOne(user, id); // valida acceso/tenant
+    const rows = await this.promiseChangeRepo.find({
+      where: { serviceOrderId: id, tenantId: user.tenantId },
+      relations: ['changedBy'],
+      order: { createdAt: 'DESC' },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      oldPromisedAt: r.oldPromisedAt,
+      newPromisedAt: r.newPromisedAt,
+      reason: r.reason,
+      changedBy: r.changedBy
+        ? `${r.changedBy.firstName} ${r.changedBy.lastName}`.trim()
+        : null,
+      createdAt: r.createdAt,
+    }));
   }
 
   async changeStatus(

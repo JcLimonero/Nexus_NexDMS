@@ -7,6 +7,7 @@ import {
   ServiceOrdersResponse,
   CreateServiceOrderDto,
   ServiceOrderStatus,
+  PromiseChange,
 } from "./models/service-order.model";
 import { CustomerVehicle } from "../clientes/models/client.model";
 
@@ -55,6 +56,25 @@ export class TallerService {
 
   createServiceOrder(dto: CreateServiceOrderDto): Observable<ServiceOrder> {
     return this.http.post<ServiceOrder>(SERVICE_ORDERS_URL, dto);
+  }
+
+  /** Cambia la fecha prometida registrando la justificación. */
+  updatePromisedDate(
+    id: string,
+    promisedAt: string | null,
+    reason: string,
+  ): Observable<ServiceOrder> {
+    return this.http.patch<ServiceOrder>(
+      `${SERVICE_ORDERS_URL}/${id}/promised-date`,
+      { promisedAt, reason },
+    );
+  }
+
+  /** Bitácora de cambios de la fecha prometida. */
+  getPromiseHistory(id: string): Observable<PromiseChange[]> {
+    return this.http.get<PromiseChange[]>(
+      `${SERVICE_ORDERS_URL}/${id}/promise-history`,
+    );
   }
 
   changeStatus(
