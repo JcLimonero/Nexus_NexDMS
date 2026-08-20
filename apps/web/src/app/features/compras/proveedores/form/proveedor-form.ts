@@ -10,7 +10,7 @@ import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { ComprasService } from "../../compras.service";
-import { CreateSupplierDto } from "../../models/supplier.model";
+import { CreateSupplierDto, SupplierCredit } from "../../models/supplier.model";
 
 @Component({
   selector: "app-proveedor-form",
@@ -30,6 +30,7 @@ export class ProveedorForm implements OnInit {
   loading = signal(false);
   isEdit = signal(false);
   proveedorId = signal<string | null>(null);
+  credito = signal<SupplierCredit | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
@@ -45,13 +46,24 @@ export class ProveedorForm implements OnInit {
       address: ["", [Validators.maxLength(500)]],
       paymentTerms: ["", [Validators.maxLength(200)]],
       creditDays: [0, [Validators.min(0)]],
+      creditLimit: [0, [Validators.min(0)]],
       notes: [""],
       isActive: [true],
     });
 
     if (id) {
       this.loadProveedor(id);
+      this.comprasService.getSupplierCredit(id).subscribe({
+        next: (c) => this.credito.set(c),
+      });
     }
+  }
+
+  money(n: number): string {
+    return (Number(n) || 0).toLocaleString("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    });
   }
 
   private loadProveedor(id: string): void {
@@ -67,6 +79,7 @@ export class ProveedorForm implements OnInit {
           address: p.address ?? "",
           paymentTerms: p.paymentTerms ?? "",
           creditDays: p.creditDays ?? 0,
+          creditLimit: p.creditLimit ?? 0,
           notes: p.notes ?? "",
           isActive: p.isActive,
         });
@@ -92,6 +105,7 @@ export class ProveedorForm implements OnInit {
       address: raw.address || undefined,
       paymentTerms: raw.paymentTerms || undefined,
       creditDays: Number(raw.creditDays) || 0,
+      creditLimit: Number(raw.creditLimit) || 0,
       notes: raw.notes || undefined,
       isActive: raw.isActive,
     };

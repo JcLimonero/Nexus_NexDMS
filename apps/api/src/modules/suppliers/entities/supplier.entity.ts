@@ -52,6 +52,10 @@ export class Supplier {
   @Column({ name: 'credit_days', type: 'int', default: 0 })
   creditDays: number;
 
+  /** Monto de la línea de crédito acordada con el proveedor. */
+  @Column({ name: 'credit_limit', type: 'decimal', precision: 12, scale: 2, default: 0 })
+  creditLimit: number;
+
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes: string | null;
 

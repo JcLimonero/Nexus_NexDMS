@@ -39,6 +39,7 @@ export interface PurchaseOrder {
   orderedAt: string;
   expectedAt: string | null;
   receivedAt: string | null;
+  paidAt: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;

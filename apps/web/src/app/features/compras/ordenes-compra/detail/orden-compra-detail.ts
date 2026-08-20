@@ -193,6 +193,36 @@ export class OrdenCompraDetail implements OnInit {
     );
   }
 
+  pagando = signal(false);
+
+  /** Solo se paga lo ya recibido (total o parcialmente). */
+  puedePagar(): boolean {
+    const o = this.orden();
+    return (
+      !!o &&
+      !o.paidAt &&
+      (o.status === PurchaseOrderStatus.RECEIVED ||
+        o.status === PurchaseOrderStatus.PARTIAL)
+    );
+  }
+
+  marcarPagada(pagada: boolean): void {
+    const o = this.orden();
+    if (!o || this.pagando()) return;
+    this.pagando.set(true);
+    this.comprasService.markPurchaseOrderPaid(o.id, pagada).subscribe({
+      next: (upd) => {
+        this.orden.set(upd);
+        this.pagando.set(false);
+        this.toastr.success(pagada ? "Orden marcada como pagada" : "Pago revertido");
+      },
+      error: (err) => {
+        this.pagando.set(false);
+        this.toastr.error(err?.error?.message || "No se pudo actualizar");
+      },
+    });
+  }
+
   getStatusLabel(status: string): string {
     return this.comprasService.getStatusLabel(status);
   }

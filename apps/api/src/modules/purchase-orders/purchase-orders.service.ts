@@ -216,6 +216,23 @@ export class PurchaseOrdersService {
   }
 
   /**
+   * Marca la orden de compra como pagada (o revierte el pago). Al pagarla, deja
+   * de contar en la línea de crédito en uso del proveedor.
+   */
+  async marcarPagada(
+    user: UserPayload,
+    id: string,
+    pagada: boolean,
+  ): Promise<PurchaseOrder> {
+    const order = await this.findOne(user, id);
+    if (order.status === PurchaseOrderStatusEnum.CANCELLED) {
+      throw new BadRequestException('La orden está cancelada');
+    }
+    await this.orderRepo.update(id, { paidAt: pagada ? new Date() : null });
+    return this.findOne(user, id);
+  }
+
+  /**
    * Órdenes de servicio (taller) de las que salió esta orden de compra. El
    * vínculo vive en las requisiciones que surtió: las que tienen
    * source_type='service_order' apuntan a la orden de taller que las pidió.

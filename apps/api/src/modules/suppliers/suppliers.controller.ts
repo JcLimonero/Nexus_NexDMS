@@ -46,6 +46,15 @@ export class SuppliersController {
     return this.suppliersService.findOne(user, id);
   }
 
+  @Get(':id/credit')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  credit(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.suppliersService.creditSummary(user, id);
+  }
+
   @Post()
   @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE')
   create(@CurrentUser() user: UserPayload, @Body() dto: CreateSupplierDto) {

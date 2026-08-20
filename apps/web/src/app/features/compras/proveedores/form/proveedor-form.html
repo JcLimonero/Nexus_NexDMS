@@ -47,17 +47,38 @@
               </div>
             </div>
             <div class="row">
-              <div class="col-md-6 mb-3">
+              <div class="col-md-4 mb-3">
                 <label class="form-label">Días de crédito</label>
                 <input type="number" class="form-control" formControlName="creditDays" min="0" />
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Línea de crédito (monto)</label>
+                <input type="number" class="form-control" formControlName="creditLimit" min="0" step="0.01" />
+              </div>
+              <div class="col-md-4 mb-3">
                 <div class="form-check mt-4">
                   <input type="checkbox" class="form-check-input" id="isActive" formControlName="isActive" />
                   <label class="form-check-label" for="isActive">Activo</label>
                 </div>
               </div>
             </div>
+
+            @if (credito()) {
+              <div class="alert alert-light border d-flex flex-wrap gap-4 mb-3">
+                <div>
+                  <small class="text-muted d-block">Línea de crédito</small>
+                  <strong>{{ money(credito()!.creditLimit) }}</strong>
+                </div>
+                <div>
+                  <small class="text-muted d-block">En uso (recibido sin pagar)</small>
+                  <strong>{{ money(credito()!.enUso) }}</strong>
+                </div>
+                <div>
+                  <small class="text-muted d-block">Disponible</small>
+                  <strong [class.text-danger]="credito()!.disponible < 0">{{ money(credito()!.disponible) }}</strong>
+                </div>
+              </div>
+            }
             <div class="row">
               <div class="col-12 mb-3">
                 <label class="form-label">Dirección</label>

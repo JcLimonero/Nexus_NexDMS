@@ -9,10 +9,18 @@ export interface Supplier {
   address: string | null;
   paymentTerms: string | null;
   creditDays: number;
+  creditLimit: number;
   notes: string | null;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Estado de la línea de crédito con un proveedor. */
+export interface SupplierCredit {
+  creditLimit: number;
+  enUso: number;
+  disponible: number;
 }
 
 export interface SupplierFilters {
@@ -36,6 +44,7 @@ export interface CreateSupplierDto {
   address?: string;
   paymentTerms?: string;
   creditDays?: number;
+  creditLimit?: number;
   notes?: string;
   isActive?: boolean;
 }

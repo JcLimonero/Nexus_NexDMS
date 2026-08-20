@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsInt,
+  IsNumber,
   IsOptional,
   IsString,
   MaxLength,
@@ -46,6 +47,11 @@ export class CreateSupplierDto {
   @IsInt()
   @Min(0)
   creditDays?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  creditLimit?: number;
 
   @IsOptional()
   @IsString()

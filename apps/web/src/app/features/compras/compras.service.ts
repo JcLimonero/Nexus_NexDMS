@@ -6,6 +6,7 @@ import {
   SuppliersResponse,
   SupplierFilters,
   CreateSupplierDto,
+  SupplierCredit,
 } from "./models/supplier.model";
 import {
   PurchaseOrder,
@@ -84,6 +85,21 @@ export class ComprasService {
     return this.http.get<{ id: string; folio: string; status: string }[]>(
       `${PURCHASE_ORDERS_URL}/${id}/service-orders`,
     );
+  }
+
+  /** Marca (o revierte) el pago de la orden de compra. */
+  markPurchaseOrderPaid(
+    id: string,
+    paid: boolean,
+  ): Observable<PurchaseOrder> {
+    return this.http.patch<PurchaseOrder>(`${PURCHASE_ORDERS_URL}/${id}/pay`, {
+      paid,
+    });
+  }
+
+  /** Estado de la línea de crédito de un proveedor. */
+  getSupplierCredit(id: string): Observable<SupplierCredit> {
+    return this.http.get<SupplierCredit>(`/api/v1/suppliers/${id}/credit`);
   }
 
   createPurchaseOrder(dto: CreatePurchaseOrderDto): Observable<PurchaseOrder> {
