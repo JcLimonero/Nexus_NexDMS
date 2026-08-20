@@ -46,15 +46,6 @@
           <span class="cuenta alerta">{{ sinLeer() }}</span>
         }
       </button>
-      <button
-        type="button"
-        role="tab"
-        [attr.aria-selected]="pestana() === 'unidad'"
-        [class.activa]="pestana() === 'unidad'"
-        (click)="ir('unidad')"
-      >
-        Unidad de sustitución
-      </button>
     </nav>
   </div>
 
@@ -438,45 +429,5 @@
       </p>
     }
 
-    <!-- ═══ Unidad de sustitución ═══ -->
-    @if (pestana() === "unidad") {
-      @if (sustitucionActiva) {
-        <p class="vacio">
-          Esta orden tiene una unidad de cortesía prestada.
-        </p>
-        <button
-          type="button"
-          class="btn btn-primary"
-          [disabled]="guardando()"
-          (click)="devolver()"
-        >
-          Registrar devolución
-        </button>
-      } @else {
-        <div class="control-row">
-          <select class="form-control field-lg" [(ngModel)]="unidadElegida">
-            <option value="">Elige una unidad disponible…</option>
-            @for (u of unidades(); track u.id) {
-              <option [value]="u.id">
-                {{ u.descripcion }}{{ u.placa ? " · " + u.placa : "" }}
-              </option>
-            }
-          </select>
-          <button
-            type="button"
-            class="btn btn-primary"
-            [disabled]="guardando() || !unidadElegida"
-            (click)="prestar()"
-          >
-            Prestar unidad
-          </button>
-        </div>
-        @if (unidades().length === 0) {
-          <p class="vacio">
-            No hay unidades libres en el inventario para prestar.
-          </p>
-        }
-      }
-    }
   </div>
 </div>

@@ -187,13 +187,10 @@
         </div>
       </div>
 
-      <!-- Trabajo de la orden: operaciones, adicionales, firmas, mensajes
-           y unidad de cortesía. Solo tiene sentido con la orden cargada. -->
+      <!-- Trabajo de la orden: operaciones, adicionales, firmas y mensajes.
+           Solo tiene sentido con la orden cargada. -->
       @if (orden(); as o) {
-        <app-panel-servicio
-          [serviceOrderId]="o.id"
-          [sustitucionActiva]="!!o.substituteUnitId && !o.substituteReturnedAt"
-        />
+        <app-panel-servicio [serviceOrderId]="o.id" />
 
         <!-- Cómo llegó la unidad. Es lo que se mira al entregarla, o cuando
              el cliente dice que ese golpe no venía. Si la orden se abrió en
