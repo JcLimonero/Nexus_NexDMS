@@ -187,53 +187,15 @@ async function runSeeds() {
     }
   }
 
-  // El administrador de Nexus (SUPERADMIN) vive en su propio tenant de
-  // sistema, separado de los tenants cliente.
+  // Usuario de pruebas con máximo acceso (SUPERADMIN)
   const NEXUS_EMAIL = 'admin@nexusqtech.com';
   const NEXUS_PASSWORD = '00@Limonero';
-  let sistema = await tenantRepo.findOne({ where: { isSystem: true } });
-  if (!sistema) {
-    sistema = await tenantRepo.save(
-      tenantRepo.create({
-        name: 'Nexus Q Tech',
-        slug: 'nexus',
-        plan: TenantPlanEnum.ENTERPRISE,
-        isSystem: true,
-        isActive: true,
-      }),
-    );
-    const sysLegal = await legalEntityRepo.save(
-      legalEntityRepo.create({
-        tenantId: sistema.id,
-        name: 'Nexus Q Tech',
-        type: LegalEntityTypeEnum.BOTH,
-        isActive: true,
-      }),
-    );
-    await branchRepo.save(
-      branchRepo.create({
-        tenantId: sistema.id,
-        legalEntityId: sysLegal.id,
-        name: 'Nexus',
-        slug: 'nexus',
-        address: 'N/A',
-        city: 'N/A',
-        state: 'N/A',
-        counterPhone: 'N/A',
-        email: NEXUS_EMAIL,
-        schedule: {},
-        timezone: 'America/Mexico_City',
-        isPrimary: true,
-        isActive: true,
-      }),
-    );
-  }
   const existingNexus = await userRepo.findOne({
-    where: { email: NEXUS_EMAIL, tenantId: sistema.id },
+    where: { email: NEXUS_EMAIL, tenantId: tenant.id },
   });
-  if (!existingNexus && sistema) {
+  if (!existingNexus && tenant) {
     const nexusBranch = await branchRepo.findOne({
-      where: { tenantId: sistema.id },
+      where: { tenantId: tenant.id },
     });
     if (nexusBranch) {
       const nexusPasswordHash = await bcrypt.hash(
@@ -241,7 +203,7 @@ async function runSeeds() {
         BCRYPT_ROUNDS,
       );
       const nexusUser = userRepo.create({
-        tenantId: sistema.id,
+        tenantId: tenant.id,
         firstName: 'Admin',
         lastName: 'NexusQTech',
         email: NEXUS_EMAIL,

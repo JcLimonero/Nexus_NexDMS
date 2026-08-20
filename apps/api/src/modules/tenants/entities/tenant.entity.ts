@@ -124,10 +124,6 @@ export class Tenant {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
-  /** Tenant de sistema de Nexus (aloja a los administradores del SaaS). */
-  @Column({ name: 'is_system', type: 'boolean', default: false })
-  isSystem: boolean;
-
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

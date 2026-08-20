@@ -210,32 +210,7 @@ export class Login implements OnInit {
     });
   }
 
-  /**
-   * Portal de administración de Nexus, derivado del host actual:
-   * app.nexusqsystem.com → admin.nexusqsystem.com; en local, :4200 → :4202.
-   */
-  private urlAdmin(): string {
-    const { protocol, hostname, port } = window.location;
-    if (hostname === "localhost" || hostname === "127.0.0.1") {
-      return `${protocol}//${hostname}:4202`;
-    }
-    if (port && port !== "80" && port !== "443") {
-      return `${protocol}//${hostname}:4202`;
-    }
-    if (hostname.startsWith("app.")) {
-      return `${protocol}//admin.${hostname.slice(4)}`;
-    }
-    return `${protocol}//admin.${hostname}`;
-  }
-
   ngOnInit(): void {
-    // El DMS es solo para clientes y se entra por su liga (`/<slug>/…`). La
-    // raíz sin cliente es "de administración": se manda al portal de Nexus.
-    if (!this.tenant.slug) {
-      window.location.href = this.urlAdmin();
-      return;
-    }
-
     if (this.auth.isAuthenticated()) {
       this.router.navigateByUrl(this.destino());
     }

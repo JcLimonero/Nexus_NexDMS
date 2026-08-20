@@ -18,9 +18,7 @@ export class TenantsService {
   ) {}
 
   async findAll(_user: UserPayload): Promise<Tenant[]> {
-    // Los tenants de sistema (Nexus) no son clientes: no salen en la lista.
     return this.tenantRepo.find({
-      where: { isSystem: false },
       order: { name: 'ASC' },
     });
   }
