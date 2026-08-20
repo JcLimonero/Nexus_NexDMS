@@ -53,6 +53,57 @@
     </div>
   </div>
 
+  @if (kind === "SERVICE") {
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+          <h6 class="mb-0">Órdenes listas para entregar</h6>
+          <small class="text-muted">Órdenes de taller completadas (estado "Lista para entregar").</small>
+        </div>
+        <input
+          type="search"
+          class="form-control form-control-sm"
+          style="max-width: 320px"
+          placeholder="Buscar por folio, cliente, teléfono o placa…"
+          [ngModel]="busqueda()"
+          (ngModelChange)="onBuscar($event)"
+        />
+      </div>
+      <div class="card-body">
+        @if (cargandoOrdenes()) {
+          <div class="spinner-border" role="status"></div>
+        } @else if (!ordenesListas().length) {
+          <p class="text-muted mb-0">
+            No hay órdenes listas para entregar{{ busqueda().trim() ? " que coincidan con la búsqueda" : "" }}.
+          </p>
+        } @else {
+          <div class="table-responsive">
+            <table class="table table-hover align-middle">
+              <thead>
+                <tr><th>Folio</th><th>Cliente</th><th>Vehículo</th><th>Prometida</th><th class="text-end">Acciones</th></tr>
+              </thead>
+              <tbody>
+                @for (o of ordenesListas(); track o.id) {
+                  <tr>
+                    <td><strong>{{ o.folio }}</strong></td>
+                    <td>{{ nombreCliente(o) }}</td>
+                    <td>{{ etiquetaVehiculo(o) }}</td>
+                    <td>{{ o.promisedAt ? (o.promisedAt | date: "dd/MM/yy HH:mm") : "—" }}</td>
+                    <td class="text-end">
+                      <a class="btn btn-sm btn-outline-primary" [routerLink]="['/workshop/service-orders', o.id]">
+                        Abrir
+                      </a>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+
   <div class="card">
     <div class="card-header"><h6 class="mb-0">Historial</h6></div>
     <div class="card-body">
