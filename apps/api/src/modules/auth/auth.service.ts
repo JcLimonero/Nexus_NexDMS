@@ -77,8 +77,24 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
+    // El login es estricto por tenant: con slug entra al tenant del cliente;
+    // sin slug (portal de administración) entra al tenant de sistema de Nexus.
+    // Así los usuarios de un cliente y los administradores del SaaS quedan
+    // separados y no hay búsqueda global por correo.
+    let effectiveTenantId = dto.tenantId;
+    let esTenantSistema = false;
+    if (!effectiveTenantId) {
+      const sistema = await this.tenantRepo.findOne({
+        where: { isSystem: true },
+      });
+      if (sistema) {
+        effectiveTenantId = sistema.id;
+        esTenantSistema = true;
+      }
+    }
+
     const user = await this.usersService.findByEmail(
-      dto.tenantId ?? '',
+      effectiveTenantId ?? '',
       dto.email,
     );
     if (!user) {
@@ -90,6 +106,11 @@ export class AuthService {
     }
 
     const roles = this.usersService.getRoleNames(user);
+
+    // El acceso sin slug (tenant de sistema) es exclusivo del personal de Nexus.
+    if (esTenantSistema && !roles.includes('SUPERADMIN')) {
+      throw new UnauthorizedException('Credenciales inválidas');
+    }
     if (roles.length === 0) {
       throw new UnauthorizedException(
         'Usuario sin roles asignados. Contacte al administrador.',
