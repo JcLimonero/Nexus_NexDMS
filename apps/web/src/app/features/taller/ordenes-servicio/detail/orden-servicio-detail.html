@@ -346,27 +346,46 @@
 
   @if (valeAbierto()) {
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;" (click)="valeAbierto.set(false)"></div>
-    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(440px,94vw);">
-      <div class="card-header"><h6 class="mb-0">Vale de compra</h6></div>
+    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(620px,94vw);max-height:90vh;overflow:auto;">
+      <div class="card-header"><h6 class="mb-0">Vale(s) de compra</h6></div>
       <div class="card-body">
-        <p class="text-muted small">Egreso de caja por una refacción comprada para esta orden. Queda ligado al auto y entra al corte.</p>
-        <div class="mb-2">
+        <p class="text-muted small">Egresos de caja por refacciones compradas para esta orden. Se puede comprar a distintos proveedores: agrega un renglón por vale. Cada uno queda ligado al auto y entra al corte.</p>
+        <div class="mb-3">
           <label class="form-label">¿Qué se compró? <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" [ngModel]="valeConcepto()" (ngModelChange)="valeConcepto.set($event)" placeholder="Ej. Balatas delanteras" />
+          <input type="text" class="form-control" [ngModel]="valeConcepto()" (ngModelChange)="valeConcepto.set($event)" placeholder="Ej. Balatas y filtro" />
         </div>
-        <div class="mb-2">
-          <label class="form-label">Monto <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [ngModel]="valeMonto()" (ngModelChange)="valeMonto.set($event)" min="0" step="0.01" />
-        </div>
-        <div class="mb-2">
-          <label class="form-label">Proveedor / comprador</label>
-          <input type="text" class="form-control" [ngModel]="valeProveedor()" (ngModelChange)="valeProveedor.set($event)" placeholder="Opcional" />
+
+        <label class="form-label">Vales</label>
+        @for (l of valeLineas(); track $index; let i = $index) {
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-4">
+              @if (i === 0) { <label class="form-label small mb-1">Proveedor</label> }
+              <input type="text" class="form-control form-control-sm" [ngModel]="l.proveedor" (ngModelChange)="setLineaVale(i, 'proveedor', $event)" placeholder="Proveedor" />
+            </div>
+            <div class="col-md-3">
+              @if (i === 0) { <label class="form-label small mb-1">N.° de vale</label> }
+              <input type="text" class="form-control form-control-sm" [ngModel]="l.numeroVale" (ngModelChange)="setLineaVale(i, 'numeroVale', $event)" placeholder="Folio" />
+            </div>
+            <div class="col-md-3">
+              @if (i === 0) { <label class="form-label small mb-1">Monto</label> }
+              <input type="number" class="form-control form-control-sm text-end" [ngModel]="l.monto" (ngModelChange)="setLineaVale(i, 'monto', $event)" min="0" step="0.01" />
+            </div>
+            <div class="col-md-2 text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarLineaVale(i)" [disabled]="valeLineas().length <= 1" title="Quitar">✕</button>
+            </div>
+          </div>
+        }
+        <div class="d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="agregarLineaVale()">
+            <i class="icofont icofont-plus me-1"></i> Agregar vale
+          </button>
+          <span class="text-muted small">Total: <strong>{{ money(totalVales()) }}</strong></span>
         </div>
       </div>
       <div class="card-footer d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-outline-secondary btn-sm" (click)="valeAbierto.set(false)">Cancelar</button>
         <button type="button" class="btn btn-primary btn-sm" [disabled]="guardandoVale()" (click)="confirmarVale()">
-          {{ guardandoVale() ? "Registrando…" : "Registrar vale" }}
+          {{ guardandoVale() ? "Registrando…" : "Registrar vale(s)" }}
         </button>
       </div>
     </div>

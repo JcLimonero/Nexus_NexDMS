@@ -4,6 +4,7 @@ import { HttpClient } from "@angular/common/http";
 import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { forkJoin } from "rxjs";
 
 import { TallerService } from "../../taller.service";
 import { PanelServicio } from "./panel-servicio";
@@ -355,54 +356,94 @@ export class OrdenServicioDetail implements OnInit {
       });
   }
 
-  // ── Vale de compra ligado a la orden (R2) ──
+  // ── Vale(s) de compra ligados a la orden (R2) ──
+  // Se puede comprar a distintos proveedores: cada renglón es un vale con su
+  // número, proveedor y monto, y se registra como un egreso de caja.
   valeAbierto = signal(false);
   guardandoVale = signal(false);
-  valeMonto = signal<number | null>(null);
   valeConcepto = signal("");
-  valeProveedor = signal("");
+  valeLineas = signal<
+    { proveedor: string; numeroVale: string; monto: number | null }[]
+  >([{ proveedor: "", numeroVale: "", monto: null }]);
 
   abrirVale(): void {
-    this.valeMonto.set(null);
     this.valeConcepto.set("");
-    this.valeProveedor.set("");
+    this.valeLineas.set([{ proveedor: "", numeroVale: "", monto: null }]);
     this.valeAbierto.set(true);
+  }
+
+  agregarLineaVale(): void {
+    this.valeLineas.update((l) => [
+      ...l,
+      { proveedor: "", numeroVale: "", monto: null },
+    ]);
+  }
+
+  quitarLineaVale(i: number): void {
+    this.valeLineas.update((l) => (l.length > 1 ? l.filter((_, j) => j !== i) : l));
+  }
+
+  setLineaVale(i: number, campo: "proveedor" | "numeroVale" | "monto", valor: string | number): void {
+    this.valeLineas.update((l) =>
+      l.map((ln, j) => (j === i ? { ...ln, [campo]: valor } : ln)),
+    );
+  }
+
+  totalVales(): number {
+    return this.valeLineas().reduce((s, l) => s + (Number(l.monto) || 0), 0);
+  }
+
+  money(n: number): string {
+    return (Number(n) || 0).toLocaleString("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    });
   }
 
   confirmarVale(): void {
     const o = this.orden();
     if (!o || this.guardandoVale()) return;
-    const monto = this.valeMonto();
-    if (!monto || monto <= 0) {
-      this.toastr.warning("Indica el monto");
-      return;
-    }
     if (!this.valeConcepto().trim()) {
       this.toastr.warning("Indica qué se compró");
       return;
     }
+    const lineas = this.valeLineas().filter((l) => Number(l.monto) > 0);
+    if (!lineas.length) {
+      this.toastr.warning("Agrega al menos un vale con monto");
+      return;
+    }
     this.guardandoVale.set(true);
-    this.tallerService
-      .valeDeCompra(o.branchId, {
-        amount: monto,
+    // Un egreso de caja por vale; se puede comprar a varios proveedores.
+    const peticiones = lineas.map((l) => {
+      const ref = [
+        l.numeroVale.trim() ? `Vale ${l.numeroVale.trim()}` : "",
+        l.proveedor.trim(),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return this.tallerService.valeDeCompra(o.branchId, {
+        amount: Number(l.monto),
         concept: this.valeConcepto().trim(),
-        reference: this.valeProveedor().trim() || undefined,
+        reference: ref || undefined,
         serviceOrderId: o.id,
-      })
-      .subscribe({
-        next: () => {
-          this.guardandoVale.set(false);
-          this.valeAbierto.set(false);
-          this.toastr.success("Vale de compra registrado en caja");
-        },
-        error: (err) => {
-          this.guardandoVale.set(false);
-          this.toastr.error(
-            err?.error?.message ||
-              "No se pudo registrar el vale (¿hay caja abierta?)",
-          );
-        },
       });
+    });
+    forkJoin(peticiones).subscribe({
+      next: () => {
+        this.guardandoVale.set(false);
+        this.valeAbierto.set(false);
+        this.toastr.success(
+          `${peticiones.length} vale(s) de compra registrados en caja`,
+        );
+      },
+      error: (err) => {
+        this.guardandoVale.set(false);
+        this.toastr.error(
+          err?.error?.message ||
+            "No se pudo registrar el vale (¿hay caja abierta?)",
+        );
+      },
+    });
   }
 
   onAssignMechanic(): void {
