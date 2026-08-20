@@ -215,6 +215,28 @@ export class PurchaseOrdersService {
     return order;
   }
 
+  /**
+   * Órdenes de servicio (taller) de las que salió esta orden de compra. El
+   * vínculo vive en las requisiciones que surtió: las que tienen
+   * source_type='service_order' apuntan a la orden de taller que las pidió.
+   */
+  async ordenesDeServicioLigadas(
+    user: UserPayload,
+    id: string,
+  ): Promise<{ id: string; folio: string; status: string }[]> {
+    await this.findOne(user, id); // valida acceso/scope
+    return this.dataSource.query(
+      `SELECT DISTINCT so.id, so.folio, so.status
+         FROM purchase_requisitions pr
+         JOIN service_orders so ON so.id = pr.source_id
+        WHERE pr.purchase_order_id = $1
+          AND pr.source_type = 'service_order'
+          AND pr.tenant_id = $2
+        ORDER BY so.folio`,
+      [id, user.tenantId],
+    );
+  }
+
   private async generateFolio(
     tenantId: string,
     em?: EntityManager,

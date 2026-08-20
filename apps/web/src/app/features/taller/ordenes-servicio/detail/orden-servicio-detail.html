@@ -236,6 +236,49 @@
                   Cancelar orden
                 </button>
               }
+              @if (o.status !== 'DELIVERED' && o.status !== 'CANCELLED') {
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="abrirSolicitudRefaccion()">
+                  <i class="icofont icofont-cart me-1"></i> Solicitar refacción
+                </button>
+              }
+            </div>
+          }
+
+          @if (solicitandoRefaccion()) {
+            <div class="p-2 border rounded bg-light mt-2">
+              <h6 class="mb-2">Solicitar refacción al almacén</h6>
+              <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                  <label class="form-label small mb-1">Refacción</label>
+                  <select class="form-select form-select-sm"
+                    [ngModel]="refaccionElegida()" (ngModelChange)="refaccionElegida.set($event)">
+                    <option value="">Seleccionar…</option>
+                    @for (p of partesDisponibles(); track p.id) {
+                      <option [ngValue]="p.id">{{ p.sku }} — {{ p.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small mb-1">Cantidad</label>
+                  <input type="number" min="1" class="form-control form-control-sm"
+                    [ngModel]="cantidadRefaccion()" (ngModelChange)="cantidadRefaccion.set($event)" />
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label small mb-1">Nota (opcional)</label>
+                  <input type="text" class="form-control form-control-sm"
+                    [ngModel]="notaRefaccion()" (ngModelChange)="notaRefaccion.set($event)" />
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-2">
+                <button type="button" class="btn btn-primary btn-sm" [disabled]="enviandoSolicitud()" (click)="solicitarRefaccion()">
+                  @if (enviandoSolicitud()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Solicitar
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="solicitandoRefaccion.set(false)">Cancelar</button>
+              </div>
+              <p class="text-muted small mb-0 mt-2">
+                Crea una requisición de compra ligada a esta orden. Al convertirla en orden de compra, quedará el vínculo.
+              </p>
             </div>
           }
         </div>

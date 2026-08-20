@@ -77,6 +77,15 @@ export class ComprasService {
     return this.http.get<PurchaseOrder>(`${PURCHASE_ORDERS_URL}/${id}`);
   }
 
+  /** Órdenes de servicio (taller) de las que salió esta orden de compra. */
+  getServiceOrdersDeLaOrden(
+    id: string,
+  ): Observable<{ id: string; folio: string; status: string }[]> {
+    return this.http.get<{ id: string; folio: string; status: string }[]>(
+      `${PURCHASE_ORDERS_URL}/${id}/service-orders`,
+    );
+  }
+
   createPurchaseOrder(dto: CreatePurchaseOrderDto): Observable<PurchaseOrder> {
     return this.http.post<PurchaseOrder>(PURCHASE_ORDERS_URL, dto);
   }

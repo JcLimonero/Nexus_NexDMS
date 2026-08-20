@@ -9,6 +9,8 @@ import { TallerService } from "../../taller.service";
 import { PanelServicio } from "./panel-servicio";
 import { EvidenciaRecepcion } from "../../../../shared/components/evidencia-recepcion/evidencia-recepcion";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
+import { InventarioRefaccionesService } from "../../../inventario-refacciones/inventario-refacciones.service";
+import { Part } from "../../../inventario-refacciones/models/part.model";
 import {
   ServiceOrder,
   ServiceOrderStatus,
@@ -44,6 +46,7 @@ export class OrdenServicioDetail implements OnInit {
   private tallerService = inject(TallerService);
   private http = inject(HttpClient);
   private branchesService = inject(BranchesService);
+  private inventario = inject(InventarioRefaccionesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
@@ -121,6 +124,59 @@ export class OrdenServicioDetail implements OnInit {
     const abrir = !this.verHistorialPromesa();
     this.verHistorialPromesa.set(abrir);
     if (abrir) this.cargarHistorialPromesa();
+  }
+
+  // Solicitar una refacción al almacén: crea una requisición ligada a la orden.
+  solicitandoRefaccion = signal(false);
+  enviandoSolicitud = signal(false);
+  partesDisponibles = signal<Part[]>([]);
+  refaccionElegida = signal<string>("");
+  cantidadRefaccion = signal<number>(1);
+  notaRefaccion = signal<string>("");
+
+  abrirSolicitudRefaccion(): void {
+    const o = this.orden();
+    if (!o) return;
+    this.refaccionElegida.set("");
+    this.cantidadRefaccion.set(1);
+    this.notaRefaccion.set("");
+    this.solicitandoRefaccion.set(true);
+    if (!this.partesDisponibles().length) {
+      this.inventario
+        .getParts({ branchId: o.branchId, limit: 500, searchScope: "local" })
+        .subscribe({ next: (res) => this.partesDisponibles.set(res.data) });
+    }
+  }
+
+  solicitarRefaccion(): void {
+    const o = this.orden();
+    if (!o) return;
+    if (!this.refaccionElegida()) {
+      this.toastr.warning("Elige la refacción a solicitar");
+      return;
+    }
+    this.enviandoSolicitud.set(true);
+    this.tallerService
+      .requestPart(o.id, {
+        partId: this.refaccionElegida(),
+        quantity: Number(this.cantidadRefaccion()) || 1,
+        note: this.notaRefaccion().trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.enviandoSolicitud.set(false);
+          this.solicitandoRefaccion.set(false);
+          this.toastr.success("Refacción solicitada (requisición creada)");
+          // La orden pudo pasar a "esperando refacciones".
+          this.tallerService.getServiceOrder(o.id).subscribe({
+            next: (upd) => this.orden.set(upd),
+          });
+        },
+        error: (err) => {
+          this.enviandoSolicitud.set(false);
+          this.toastr.error(err?.error?.message || "No se pudo solicitar");
+        },
+      });
   }
 
   /**

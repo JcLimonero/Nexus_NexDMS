@@ -77,6 +77,17 @@ export class TallerService {
     );
   }
 
+  /** Solicita una refacción al almacén: crea una requisición ligada a la orden. */
+  requestPart(
+    id: string,
+    dto: { partId: string; quantity: number; note?: string },
+  ): Observable<{ requisitionId: string }> {
+    return this.http.post<{ requisitionId: string }>(
+      `${SERVICE_ORDERS_URL}/${id}/request-part`,
+      dto,
+    );
+  }
+
   changeStatus(
     id: string,
     status: ServiceOrderStatus,

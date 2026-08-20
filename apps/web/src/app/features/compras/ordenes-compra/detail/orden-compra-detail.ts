@@ -37,6 +37,8 @@ export class OrdenCompraDetail implements OnInit {
   receiving = signal(false);
   cancelling = signal(false);
   receiveQuantities = signal<Record<string, number>>({});
+  // Órdenes de taller de las que salió esta compra (vía requisiciones).
+  ordenesServicio = signal<{ id: string; folio: string; status: string }[]>([]);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
@@ -51,6 +53,9 @@ export class OrdenCompraDetail implements OnInit {
         this.initReceiveQuantities(order.items ?? []);
         this.loadSupplier(order.supplierId);
         this.loadBranch(order.branchId);
+        this.comprasService.getServiceOrdersDeLaOrden(order.id).subscribe({
+          next: (os) => this.ordenesServicio.set(os),
+        });
         this.loading.set(false);
         this.error.set(null);
       },

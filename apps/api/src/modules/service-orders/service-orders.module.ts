@@ -43,6 +43,7 @@ import { OrdenPdfService } from './orden-pdf.service';
 import { FinanceModule } from '../finance/finance.module';
 import { SurveysModule } from '../surveys/surveys.module';
 import { ServiceOrderPromiseChange } from './entities/service-order-promise-change.entity';
+import { PurchaseRequisition } from '../purchase-requisitions/entities/purchase-requisition.entity';
 
 @Module({
   imports: [
@@ -57,6 +58,7 @@ import { ServiceOrderPromiseChange } from './entities/service-order-promise-chan
       ServiceOrderFolioSeq,
       ServiceOrderOperation,
       ServiceOrderPromiseChange,
+      PurchaseRequisition,
       ServiceSurvey,
       User,
       ReceptionPhotoSpec,

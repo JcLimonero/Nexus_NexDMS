@@ -77,6 +77,15 @@ export class PurchaseOrdersController {
     return this.purchaseOrdersService.findOne(user, id);
   }
 
+  @Get(':id/service-orders')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  serviceOrders(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.purchaseOrdersService.ordenesDeServicioLigadas(user, id);
+  }
+
   @Post()
   @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE')
   @UseGuards(IdempotencyGuard)

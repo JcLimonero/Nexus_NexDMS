@@ -17,6 +17,11 @@ import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { ServiceOrderUpdate } from './entities/service-order-update.entity';
 import { ServiceOrderPromiseChange } from './entities/service-order-promise-change.entity';
 import { UpdatePromisedDateDto } from './dto/update-promised-date.dto';
+import { RequestPartDto } from './dto/request-part.dto';
+import {
+  PurchaseRequisition,
+  RequisitionStatusEnum,
+} from '../purchase-requisitions/entities/purchase-requisition.entity';
 import { ServiceOrderFinding } from './entities/service-order-finding.entity';
 import {
   FindingCriticalityEnum,
@@ -123,6 +128,8 @@ export class ServiceOrdersService {
     private readonly tenantRepo: Repository<Tenant>,
     @InjectRepository(ServiceOrderPromiseChange)
     private readonly promiseChangeRepo: Repository<ServiceOrderPromiseChange>,
+    @InjectRepository(PurchaseRequisition)
+    private readonly requisitionRepo: Repository<PurchaseRequisition>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly branchesService: BranchesService,
@@ -439,6 +446,56 @@ export class ServiceOrdersService {
         : null,
       createdAt: r.createdAt,
     }));
+  }
+
+  /**
+   * Solicita una refacción para la orden: crea una requisición de compra ligada
+   * a esta orden de servicio (source_type='service_order'). Así, cuando esa
+   * requisición se convierta en orden de compra, se sabrá de qué orden de taller
+   * salió. Deja la orden "esperando refacciones".
+   */
+  async requestPart(
+    user: UserPayload,
+    id: string,
+    dto: RequestPartDto,
+  ): Promise<{ requisitionId: string }> {
+    const so = await this.findOne(user, id);
+    if (
+      so.status === ServiceOrderStatusEnum.DELIVERED ||
+      so.status === ServiceOrderStatusEnum.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'No se pueden pedir refacciones para una OS entregada o cancelada',
+      );
+    }
+    const part = await this.partEntityRepo.findOne({
+      where: { id: dto.partId, branchId: so.branchId, tenantId: user.tenantId },
+    });
+    if (!part) throw new NotFoundException('Parte no encontrada');
+
+    const req = await this.requisitionRepo.save(
+      this.requisitionRepo.create({
+        tenantId: user.tenantId,
+        branchId: so.branchId,
+        partId: dto.partId,
+        quantity: dto.quantity,
+        status: RequisitionStatusEnum.PENDING,
+        sourceType: 'service_order',
+        sourceId: id,
+        note: dto.note?.trim() || null,
+        requestedBy: user.sub,
+      }),
+    );
+    // La orden queda esperando la refacción, salvo que ya esté cerrándose.
+    if (
+      so.status !== ServiceOrderStatusEnum.READY &&
+      so.status !== ServiceOrderStatusEnum.WAITING_PARTS
+    ) {
+      await this.soRepo.update(id, {
+        status: ServiceOrderStatusEnum.WAITING_PARTS,
+      });
+    }
+    return { requisitionId: req.id };
   }
 
   async changeStatus(

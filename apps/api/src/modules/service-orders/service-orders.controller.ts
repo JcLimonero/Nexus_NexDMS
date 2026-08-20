@@ -23,6 +23,7 @@ import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { FilterServiceOrdersDto } from './dto/filter-service-orders.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
 import { UpdatePromisedDateDto } from './dto/update-promised-date.dto';
+import { RequestPartDto } from './dto/request-part.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { AddPartDto } from './dto/add-part.dto';
 import { CreateChecklistDto } from './dto/create-checklist.dto';
@@ -161,6 +162,16 @@ export class ServiceOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.serviceOrdersService.historialFechaPromesa(user, id);
+  }
+
+  @Post(':id/request-part')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  requestPart(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RequestPartDto,
+  ) {
+    return this.serviceOrdersService.requestPart(user, id, dto);
   }
 
   @Post(':id/change-status')
