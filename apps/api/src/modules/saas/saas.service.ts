@@ -539,7 +539,8 @@ export class SaasService {
    * Es lo primero que quiere ver quien administra el SaaS.
    */
   async panorama() {
-    const tenants = await this.tenantRepo.find();
+    // Los tenants de sistema (Nexus) no son clientes de pago: se excluyen.
+    const tenants = await this.tenantRepo.find({ where: { isSystem: false } });
     const activos = tenants.filter((t) => t.isActive);
     let recurrente = 0;
     for (const t of activos) {
