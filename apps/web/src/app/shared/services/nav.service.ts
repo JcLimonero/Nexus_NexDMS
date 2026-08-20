@@ -138,7 +138,6 @@ export class NavService {
             { path: "/warehouse/conteos", title: "Conteos físicos", type: "link" },
             { path: "/warehouse/escaneo", title: "Inventario rápido", type: "link" },
             { path: "/warehouse/devoluciones", title: "Devoluciones y garantías", type: "link" },
-            { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
           ],
         },
       ],
@@ -217,6 +216,7 @@ export class NavService {
             { path: "/units-inventory/locations", title: "Ubicaciones de unidades", type: "link" },
             { path: "/cash-register/listas-precio", title: "Listas de precio", type: "link" },
             { path: "/cfdi", title: "CFDI", type: "link" },
+            { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
           ],
         },
       ],
@@ -262,7 +262,8 @@ export class NavService {
       "sale-surveys": ["sales"],
       "sales-appointments": ["sales"],
       deliveries: ["workshop", "sales"],
-      // Importar catálogos vive bajo Almacén y no es un módulo propio.
+      // Importar catálogos vive en Configuración → Catálogos y no es un módulo
+      // propio; se muestra si el tenant tiene almacén o inventario de refacciones.
       "importar-catalogos": ["warehouse", "parts-inventory"],
     };
     const permitido = (path?: string): boolean => {
