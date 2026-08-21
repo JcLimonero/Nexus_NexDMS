@@ -1,93 +1,101 @@
 /**
- * WhatsApp booking conversations.
+ * Conversaciones de WhatsApp entre el cliente y la sucursal.
  *
- * ⚠️ This does NOT reflect what the API does today. The bot running in
- * production (`whatsapp-bot.service.ts`) is a rigid state machine: it sends
- * numbered menus, only understands numbers and `YYYY-MM-DD` dates, ignores
- * images, and has no way to hand the chat over to a person.
+ * Esto es el contrato del API (`/api/v1/whatsapp/conversations`), no un modelo
+ * inventado por la pantalla: los nombres y los valores son los que devuelve
+ * `whatsapp-conversations.service.ts` en el backend.
  *
- * What is drawn here is where we want to take it: the customer writes the way
- * they speak, sends photos, and when the assistant gets stuck someone from the
- * workshop steps in. It is meant for demoing and discussing the product, not
- * for validating current behaviour.
+ * ⚠️ El asistente que contesta hoy es una máquina de estados con menús
+ * numerados: sólo entiende dígitos y fechas `AAAA-MM-DD`, e ignora las fotos.
+ * Lo que la pantalla ya sostiene —guardar el chat, que un asesor lo tome y
+ * responda— funciona de verdad; el asistente conversacional viene después
+ * (ver `docs/PLAN_CONVERSACIONES.md`, fase F7).
  */
 
-/** Who wrote the message. */
-export type Author =
-  /** The customer, from their WhatsApp. */
-  | "customer"
-  /** The automated assistant. */
-  | "bot"
-  /** A person from the workshop who took over the conversation. */
-  | "agent";
+/** Dónde acabó —o va— la conversación. */
+export type ConversationState =
+  /** El asistente la está atendiendo. */
+  | "BOT"
+  /** Una persona la tomó y sigue abierta. */
+  | "WITH_AGENT"
+  | "BOOKED"
+  | "CANCELLED"
+  /** El cliente dejó de contestar. */
+  | "EXPIRED";
 
-/**
- * Why the assistant stopped answering and a person stepped in.
- *
- * This is the thing most worth measuring: if most chats escalate with
- * `BOT_LOOPED`, the problem is the assistant, not the workload.
- */
+/** Por qué dejó de contestar el asistente y entró una persona. */
 export type EscalationReason =
   | "ASKED_FOR_HUMAN"
   | "BOT_LOOPED"
   | "BOT_WAS_WRONG";
 
-/** Where the conversation ended up. */
-export type ConversationState =
-  /** The assistant is still handling it. */
-  | "BOT"
-  /** A person took it over and it is still open. */
-  | "WITH_AGENT"
-  | "BOOKED"
-  | "CANCELLED"
-  /** The customer stopped replying. */
-  | "EXPIRED";
+/** Quién escribió el mensaje. */
+export type MessageAuthor = "CUSTOMER" | "BOT" | "AGENT";
 
-/**
- * An image that travelled through the chat.
- *
- * No file is loaded: the screen draws a box with the description. That is
- * enough to see how the bubble sits when it carries a photo.
- */
 export interface Attachment {
-  type: "image";
-  /** What it shows. Used as the box caption and as alternative text. */
-  description: string;
-  /** Box aspect ratio, e.g. `"4 / 3"`. Defaults to `4 / 3`. */
-  aspectRatio?: string;
+  /** `image`, `audio`, `document`… */
+  type: string;
+  /**
+   * Liga firmada al archivo. `null` mientras no se descargue de Meta: hoy la
+   * burbuja dibuja un recuadro en su lugar (fase F5 del plan).
+   */
+  url: string | null;
 }
 
 export interface Message {
-  author: Author;
-  /** Text exactly as it travels over WhatsApp, with `*bold*` and newlines. */
-  text?: string;
-  attachment?: Attachment;
-  /** Short time for the bubble, e.g. "09:12". */
-  time: string;
-  /** Who from the workshop wrote it. Only when `author` is `"agent"`. */
-  agentName?: string;
+  id: string;
+  author: MessageAuthor;
+  text: string | null;
+  /** Quién del taller lo escribió. Sólo cuando `author` es `AGENT`. */
+  agentName: string | null;
+  attachment: Attachment | null;
+  /** ISO. La pantalla lo formatea; el servidor no manda texto relativo. */
+  createdAt: string;
 }
 
-export interface Conversation {
+/** Una fila de la bandeja. */
+export interface ConversationSummary {
   id: string;
-  /** Customer name, or the phone number when we do not know it yet. */
+  /** Nombre del contacto, o el teléfono enmascarado si aún no se sabe. */
   name: string;
-  /** Already masked: the full number is not kept in the mock. */
+  /** Ya viene enmascarado del servidor. */
   phone: string;
   state: ConversationState;
-  /** Relative text ready to render, e.g. "hace 5 min". */
-  lastActivity: string;
-  /** Why a person stepped in. Only on chats that escalated. */
-  reason?: EscalationReason;
-  /**
-   * Reference of the appointment that came out of this chat, when there was
-   * one.
-   *
-   * Today it is only a label: the bot creates appointments through
-   * `createPublic()` and they are stored as `PUBLIC_PORTAL`, so there is still
-   * no way to tell in the database which ones arrived over WhatsApp, nor to
-   * link them back to their conversation.
-   */
-  appointmentRef?: string;
-  messages: Message[];
+  reason: EscalationReason | null;
+  lastMessageAt: string;
+  unreadCount: number;
+  /** Última línea del chat, resumida por el servidor. */
+  lastLine: string;
+  branchId: string;
+  clientId: string | null;
+  assignedTo: { id: string; name: string } | null;
 }
+
+export interface ConversationDetail extends ConversationSummary {
+  messages: Message[];
+  /**
+   * Si ahora mismo se le puede escribir texto libre.
+   *
+   * WhatsApp sólo lo permite dentro de las 24 h del último mensaje del
+   * cliente. Cuando es `false` el compositor se apaga con el motivo a la
+   * vista, en vez de dejar escribir y que el envío falle después.
+   */
+  canReplyFreeText: boolean;
+  /** Cuándo se cierra esa ventana. `null` si el cliente nunca escribió. */
+  windowExpiresAt: string | null;
+  appointment: {
+    id: string;
+    scheduledAt: string;
+    serviceType: string;
+    status: string;
+  } | null;
+}
+
+/** Motivos por los que el API rechaza una acción sobre la conversación. */
+export type ConversationErrorCode =
+  | "ALREADY_TAKEN"
+  | "NOT_TAKEABLE"
+  | "NOT_TAKEN"
+  | "WINDOW_CLOSED"
+  | "SEND_FAILED"
+  | "NO_CREDENTIALS";

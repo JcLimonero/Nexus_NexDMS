@@ -1,7 +1,5 @@
 import { Routes } from "@angular/router";
 
-import { demoOnlyGuard } from "../../shared/utils/demo-mode";
-
 export const workshopRoutes: Routes = [
   {
     path: "",
@@ -57,9 +55,9 @@ export const workshopRoutes: Routes = [
     data: { title: "Citas", breadcrumb: "Citas" },
   },
   {
-    // Demo screen: the guard closes it when the `demo-mode` switch is off.
+    // Ya no es una pantalla de demostración: lee las conversaciones reales de
+    // WhatsApp de la sucursal, así que sale de detrás del interruptor de demo.
     path: "conversaciones",
-    canActivate: [demoOnlyGuard],
     loadComponent: () =>
       import("./conversaciones/conversaciones").then((m) => m.Conversaciones),
     data: { title: "Conversaciones", breadcrumb: "Conversaciones" },
