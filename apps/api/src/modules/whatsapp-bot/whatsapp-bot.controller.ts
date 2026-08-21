@@ -22,6 +22,11 @@ import { WhatsappSignatureGuard } from './whatsapp-signature.guard';
  *
  * `metadata.phone_number_id` es la pieza clave: dice a qué número llegó el
  * mensaje y con eso se sabe de qué sucursal —y de qué tenant— es.
+ *
+ * `image`/`audio`/`document` traen su propio `id`: es el `media_id` que hace
+ * falta para bajar el archivo después (F5). No se usa nada más de esos
+ * objetos —ni `mime_type` ni `sha256`— porque el tipo real se confirma contra
+ * Meta al momento de descargar, no se confía en lo que dice el webhook.
  */
 interface MetaWebhookPayload {
   entry?: Array<{
@@ -37,6 +42,9 @@ interface MetaWebhookPayload {
           from?: string;
           type?: string;
           text?: { body?: string };
+          image?: { id?: string };
+          audio?: { id?: string };
+          document?: { id?: string };
         }>;
       };
     }>;
@@ -101,6 +109,15 @@ export class WhatsappBotController {
           const profileName = value?.contacts?.find((c) => c.wa_id === msg.from)
             ?.profile?.name;
 
+          const mediaId =
+            msg.type === 'image'
+              ? msg.image?.id
+              : msg.type === 'audio'
+                ? msg.audio?.id
+                : msg.type === 'document'
+                  ? msg.document?.id
+                  : undefined;
+
           const incoming: IncomingMessage = {
             waMessageId: msg.id,
             from: msg.from,
@@ -109,9 +126,14 @@ export class WhatsappBotController {
                 ? 'text'
                 : msg.type === 'image'
                   ? 'image'
-                  : 'unsupported',
+                  : msg.type === 'audio'
+                    ? 'audio'
+                    : msg.type === 'document'
+                      ? 'document'
+                      : 'unsupported',
             text: msg.text?.body ?? '',
             profileName,
+            mediaId,
           };
 
           const out = await this.botService.handleIncoming(route, incoming);

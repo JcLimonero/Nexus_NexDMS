@@ -6,8 +6,11 @@
  * `whatsapp-conversations.service.ts` en el backend.
  *
  * ⚠️ El asistente que contesta hoy es una máquina de estados con menús
- * numerados: sólo entiende dígitos y fechas `AAAA-MM-DD`, e ignora las fotos.
- * Lo que la pantalla ya sostiene —guardar el chat, que un asesor lo tome y
+ * numerados: sólo entiende dígitos y fechas `AAAA-MM-DD`. Desde F5 las fotos,
+ * audios y documentos que manda el cliente sí se guardan y se ven en el
+ * chat —el bot ya no los ignora en la transcripción—, pero tampoco los
+ * interpreta: sigue pidiendo que le escriban para avanzar el agendado. Lo que
+ * la pantalla ya sostiene —guardar el chat, que un asesor lo tome y
  * responda— funciona de verdad; el asistente conversacional viene después
  * (ver `docs/PLAN_CONVERSACIONES.md`, fase F7).
  */
@@ -36,8 +39,10 @@ export interface Attachment {
   /** `image`, `audio`, `document`… */
   type: string;
   /**
-   * Liga firmada al archivo. `null` mientras no se descargue de Meta: hoy la
-   * burbuja dibuja un recuadro en su lugar (fase F5 del plan).
+   * Liga firmada al archivo en B2 (fase F5 del plan). `null` mientras la
+   * descarga en segundo plano no termine, o si falló —tipo no permitido,
+   * tamaño excedido, Meta ya no lo tenía—: la burbuja dibuja un recuadro en
+   * su lugar. El mensaje no se pierde aunque el archivo nunca llegue.
    */
   url: string | null;
 }

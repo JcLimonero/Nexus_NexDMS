@@ -358,8 +358,48 @@
   margin-bottom: var(--space-8);
 }
 
-/* Mientras el archivo no se descargue de Meta (fase F5), la burbuja enseña un
-   recuadro: se sabe que llegó algo aunque todavía no se pueda ver. */
+.attachment-audio {
+  display: block;
+  width: 220px;
+  max-width: 100%;
+  margin-bottom: var(--space-8);
+}
+
+.attachment-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: var(--space-8);
+  padding: var(--space-8) var(--space-12);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background-color: var(--card);
+  color: inherit;
+  text-decoration: none;
+
+  svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  span {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &:hover {
+    border-color: var(--primary);
+  }
+}
+
+/* Mientras el archivo no se descargue de Meta —sigue en la cola de F5 o la
+   descarga falló—, la burbuja enseña un recuadro: se sabe que llegó algo
+   aunque todavía no se pueda ver. */
 .attachment {
   margin: 0 0 var(--space-8);
   width: 200px;
