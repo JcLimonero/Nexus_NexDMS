@@ -42,6 +42,12 @@ export class SaasController {
     return this.saas.panorama();
   }
 
+  /** Resumen de cobro por cliente para la lista (último pago y próximo cobro). */
+  @Get('payments-summary')
+  resumenCobros() {
+    return this.saas.resumenCobros();
+  }
+
   @Get('plans')
   planes() {
     return this.saas.planes();

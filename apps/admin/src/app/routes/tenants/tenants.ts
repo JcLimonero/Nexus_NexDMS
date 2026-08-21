@@ -13,6 +13,7 @@ import {
   Panorama,
   Plan,
   PrecioModulo,
+  ResumenCobro,
   SaasService,
   Tenant,
   TenantsService,
@@ -47,6 +48,8 @@ export class Tenants implements OnInit {
   catalogo = signal<Modulo[]>([]);
   panorama = signal<Panorama | null>(null);
   precios = signal<PrecioModulo[]>([]);
+  /** Último pago y próximo cobro por cliente (id → resumen), para la tabla. */
+  cobros = signal<Map<string, ResumenCobro>>(new Map());
   /** Paquetes comerciales; el alta y la ficha eligen de aquí. */
   planesComerciales = signal<PlanPrecio[]>([]);
 
@@ -178,6 +181,14 @@ export class Tenants implements OnInit {
       },
     });
     this.saas.panorama().subscribe({ next: (p) => this.panorama.set(p) });
+    this.saas.resumenCobros().subscribe({
+      next: (r) => this.cobros.set(new Map(r.map((x) => [x.tenantId, x]))),
+    });
+  }
+
+  /** Resumen de cobro del cliente, para la columna de pagos. */
+  cobroDe(t: Tenant): ResumenCobro | undefined {
+    return this.cobros().get(t.id);
   }
 
   // ─── Alta y edición ─────────────────────────────────────────

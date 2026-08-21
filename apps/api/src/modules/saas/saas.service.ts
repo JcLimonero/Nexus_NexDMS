@@ -26,6 +26,12 @@ import {
 } from './billing-status.service';
 import { ConektaService, CheckoutSalida } from './conekta.service';
 
+export interface ResumenCobroCliente {
+  tenantId: string;
+  ultimoPago: { period: string; status: string; vencido: boolean } | null;
+  proximoCobro: string | null;
+}
+
 /** Lo que un cliente paga al mes, desglosado. */
 export interface Cobro {
   plan: { key: string; name: string; precio: number };
@@ -659,5 +665,64 @@ export class SaasService {
       ).length,
       morosos,
     };
+  }
+
+  /**
+   * Resumen de cobro por cliente para la lista: cómo va su último pago y
+   * cuándo le toca el siguiente. El "próximo" es la fecha límite del pendiente
+   * más cercano; si no hay pendientes, el siguiente día de cobro según su
+   * `billingDay`.
+   */
+  async resumenCobros(): Promise<ResumenCobroCliente[]> {
+    const tenants = await this.tenantRepo.find();
+    const salida: ResumenCobroCliente[] = [];
+    for (const t of tenants) {
+      const pagos = await this.pagoRepo.find({
+        where: { tenantId: t.id },
+        order: { period: 'DESC' },
+      });
+      const ultimo = pagos[0] ?? null;
+      const pendientes = pagos
+        .filter(
+          (p) =>
+            p.status === SaasPaymentStatusEnum.PENDIENTE ||
+            p.status === SaasPaymentStatusEnum.VENCIDO,
+        )
+        .filter((p) => !!p.dueDate)
+        .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
+      const proximoCobro =
+        pendientes[0]?.dueDate ??
+        (t.billingDay ? this.proximoDiaCobro(t.billingDay) : null);
+      salida.push({
+        tenantId: t.id,
+        ultimoPago: ultimo
+          ? {
+              period: ultimo.period,
+              status: ultimo.status,
+              vencido: this.vencido(ultimo),
+            }
+          : null,
+        proximoCobro,
+      });
+    }
+    return salida;
+  }
+
+  /** Siguiente fecha con día de mes = `dia`, hoy o en el futuro (AAAA-MM-DD). */
+  private proximoDiaCobro(dia: number): string {
+    const hoy = new Date();
+    let y = hoy.getFullYear();
+    let m = hoy.getMonth();
+    if (hoy.getDate() > dia) {
+      m++;
+      if (m > 11) {
+        m = 0;
+        y++;
+      }
+    }
+    // Un mes corto (feb) recorta el día al último disponible.
+    const finDeMes = new Date(y, m + 1, 0).getDate();
+    const d = Math.min(dia, finDeMes);
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 }

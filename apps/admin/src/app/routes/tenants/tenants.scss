@@ -137,6 +137,32 @@
   }
 }
 
+/* ── Columna de pagos en la lista ─────────────────────── */
+.pagos-celda {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  font-size: var(--text-caption);
+}
+.pagos-periodo,
+.pagos-proximo,
+.pagos-sin {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.pagos-proximo {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Barra de acciones de la ficha (Entrar / Módulos) ── */
+.ficha-acciones {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin: var(--space-8) 0 var(--space-16);
+}
+
 /* ── Bitácora de estatus (en la ficha) ────────────────── */
 .historial {
   margin-top: var(--space-16);

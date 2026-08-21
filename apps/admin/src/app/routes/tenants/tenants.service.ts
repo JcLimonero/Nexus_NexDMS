@@ -39,6 +39,12 @@ export interface CambioEstatus {
   createdAt: string;
 }
 
+export interface ResumenCobro {
+  tenantId: string;
+  ultimoPago: { period: string; status: EstadoPago; vencido: boolean } | null;
+  proximoCobro: string | null;
+}
+
 export interface Modulo {
   key: string;
   name: string;
@@ -230,6 +236,11 @@ export class SaasService {
 
   panorama(): Observable<Panorama> {
     return this.http.get<Panorama>("/api/v1/saas/overview");
+  }
+
+  /** Último pago y próximo cobro de cada cliente, para la lista. */
+  resumenCobros(): Observable<ResumenCobro[]> {
+    return this.http.get<ResumenCobro[]>("/api/v1/saas/payments-summary");
   }
 
   planes(): Observable<PlanPrecio[]> {

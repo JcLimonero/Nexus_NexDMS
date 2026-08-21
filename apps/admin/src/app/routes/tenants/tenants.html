@@ -97,6 +97,7 @@
             <th>Plan</th>
             <th>Módulos</th>
             <th>Estado</th>
+            <th>Pagos</th>
             <th></th>
           </tr>
         </thead>
@@ -116,21 +117,31 @@
                   {{ t.isActive ? "Activo" : "Suspendido" }}
                 </span>
               </td>
+              <td class="pagos-celda">
+                @if (cobroDe(t); as c) {
+                  @if (c.ultimoPago; as u) {
+                    <span
+                      class="cobro-estado"
+                      [attr.data-estado]="u.vencido ? 'VENCIDO' : u.status"
+                    >
+                      {{ u.vencido ? "Vencido" : (u.status | titlecase) }}
+                    </span>
+                    <span class="pagos-periodo">último: {{ u.period }}</span>
+                  } @else {
+                    <span class="pagos-sin">Sin pagos</span>
+                  }
+                  @if (c.proximoCobro) {
+                    <span class="pagos-proximo">
+                      próximo: {{ c.proximoCobro | date: "dd/MM/yyyy" }}
+                    </span>
+                  }
+                } @else {
+                  <span class="pagos-sin">—</span>
+                }
+              </td>
               <td class="acciones">
-                <button
-                  type="button"
-                  class="btn-chico entrar"
-                  (click)="entrar(t)"
-                  [disabled]="!t.isActive"
-                  title="Entrar al DMS de este cliente"
-                >
-                  Entrar
-                </button>
                 <button type="button" class="btn-chico" (click)="abrirFicha(t)">
                   Ficha
-                </button>
-                <button type="button" class="btn-chico" (click)="abrirModulos(t)">
-                  Módulos
                 </button>
               </td>
             </tr>
@@ -282,6 +293,21 @@
       </div>
       <button type="button" class="btn-cerrar" (click)="cerrarFicha()">×</button>
     </header>
+
+    <div class="ficha-acciones">
+      <button
+        type="button"
+        class="btn-secundario"
+        (click)="entrar(t)"
+        [disabled]="!t.isActive"
+        title="Entrar al DMS de este cliente con la sesión puesta"
+      >
+        Entrar al DMS
+      </button>
+      <button type="button" class="btn-secundario" (click)="abrirModulos(t)">
+        Gestionar módulos
+      </button>
+    </div>
 
     @if (ficha(); as f) {
       <!-- Ligas de acceso del cliente por portal, para copiar y compartir -->
