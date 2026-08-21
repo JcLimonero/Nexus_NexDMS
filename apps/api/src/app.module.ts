@@ -57,6 +57,7 @@ import { SignaturesModule } from './modules/signatures/signatures.module';
 import { ClientPortalModule } from './modules/client-portal/client-portal.module';
 import { ExportModule } from './modules/export/export.module';
 import { WarrantiesModule } from './modules/warranties/warranties.module';
+import { BodyworkModule } from './modules/bodywork/bodywork.module';
 import { CommissionsModule } from './modules/commissions/commissions.module';
 import { BranchPrintersModule } from './modules/branch-printers/branch-printers.module';
 import { CfdiLogModule } from './modules/cfdi-log/cfdi-log.module';
@@ -181,6 +182,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     UnitReturnsModule,
     UnitReturnDocumentsModule,
     ServiceOrdersModule,
+    BodyworkModule,
     SaleDocumentsModule,
     ServiceKitsModule,
     SignaturesModule,
