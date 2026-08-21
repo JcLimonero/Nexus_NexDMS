@@ -4,6 +4,7 @@ import { Router } from "@angular/router";
 import { Observable, catchError, switchMap, throwError } from "rxjs";
 import { AuthService } from "./auth.service";
 import { MonitorAuthService } from "../pages/monitor/monitor-auth.service";
+import { BillingStateService } from "../shared/services/billing-state.service";
 
 /** Renovación en curso, compartida para que varios 401 simultáneos no
  * disparen múltiples refresh a la vez. */
@@ -38,6 +39,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const monitor = inject(MonitorAuthService);
   const router = inject(Router);
+  const billing = inject(BillingStateService);
 
   const enMonitor = location.pathname.startsWith("/monitor");
   const token = enMonitor ? monitor.token() : auth.getAccessToken();
@@ -48,6 +50,26 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(conAuth).pipe(
     catchError((err: unknown) => {
+      // Bloqueo por falta de pago del SaaS: el backend responde 403 con un
+      // código propio. En solo-lectura se avisa y se deja seguir navegando;
+      // bloqueado se manda al portal de pago. El monitor queda al margen.
+      if (
+        err instanceof HttpErrorResponse &&
+        err.status === 403 &&
+        !enMonitor
+      ) {
+        const code = err.error?.code;
+        if (code === "TENANT_PAYMENT_BLOCKED") {
+          billing.marcarDesdeError(err.error);
+          if (!router.url.startsWith("/pago")) router.navigate(["/pago"]);
+          return throwError(() => err);
+        }
+        if (code === "TENANT_PAYMENT_READONLY") {
+          billing.marcarDesdeError(err.error);
+          return throwError(() => err);
+        }
+      }
+
       const es401 =
         err instanceof HttpErrorResponse && err.status === 401;
 

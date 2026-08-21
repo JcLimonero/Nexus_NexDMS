@@ -1,0 +1,156 @@
+.pago-wrap {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: #f4f5f7;
+}
+
+.pago-card {
+  width: 100%;
+  max-width: 440px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  padding: 32px 28px;
+  text-align: center;
+}
+
+.pago-cargando {
+  color: #6b7280;
+  margin: 24px 0;
+}
+
+.pago-emoji {
+  font-size: 44px;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+
+.pago-head h1,
+.pago-ok h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 4px 0 8px;
+}
+
+.pago-head p,
+.pago-ok p {
+  color: #6b7280;
+  font-size: 14px;
+  margin: 0;
+}
+
+.pago-head--block h1 {
+  color: #b91c1c;
+}
+
+.pago-adeudo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 24px 0 16px;
+  padding: 18px;
+  background: #fff6e0;
+  border: 1px solid #f0c36d;
+  border-radius: 10px;
+}
+.pago-adeudo__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #7a5900;
+}
+.pago-adeudo__monto {
+  font-size: 30px;
+  font-weight: 800;
+  color: #7a5900;
+}
+.pago-adeudo__dias {
+  font-size: 12px;
+  color: #9a7a2a;
+}
+
+.pago-periodos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 20px;
+  font-size: 12px;
+}
+.pago-periodos__label {
+  color: #6b7280;
+}
+.pago-periodos__chip {
+  padding: 3px 8px;
+  background: #eef1f4;
+  border-radius: 999px;
+  color: #374151;
+  font-weight: 600;
+}
+
+.pago-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+}
+.pago-btn--primary {
+  background: #2563eb;
+  color: #fff;
+}
+.pago-btn--primary:hover {
+  background: #1d4ed8;
+}
+.pago-btn--primary:disabled {
+  background: #93b4f5;
+  cursor: default;
+}
+.pago-btn--ghost {
+  background: transparent;
+  color: #6b7280;
+  width: auto;
+  padding: 8px 12px;
+}
+.pago-btn--ghost:hover {
+  color: #374151;
+}
+
+.pago-contacto {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #eef1f4;
+}
+.pago-contacto__title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px;
+}
+.pago-contacto__line {
+  display: block;
+  font-size: 13px;
+  color: #6b7280;
+  text-decoration: none;
+}
+a.pago-contacto__line:hover {
+  color: #2563eb;
+}
+
+.pago-foot {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.pago-ok .pago-btn--primary {
+  margin-top: 20px;
+}

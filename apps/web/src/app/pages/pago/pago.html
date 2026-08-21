@@ -1,0 +1,85 @@
+<div class="pago-wrap">
+  <div class="pago-card">
+    @if (cargando()) {
+      <p class="pago-cargando">Consultando tu estado de cuenta…</p>
+    } @else if (alCorriente()) {
+      <div class="pago-ok">
+        <div class="pago-emoji">✅</div>
+        <h1>Estás al corriente</h1>
+        <p>No tienes adeudos vencidos con Nexus. ¡Gracias!</p>
+        <button class="pago-btn pago-btn--primary" (click)="volver()">
+          Ir al inicio
+        </button>
+      </div>
+    } @else if (estado(); as e) {
+      <div class="pago-head" [class.pago-head--block]="bloqueado()">
+        <div class="pago-emoji">{{ bloqueado() ? "🔒" : "⚠️" }}</div>
+        <h1>
+          {{ bloqueado() ? "Cuenta bloqueada por falta de pago" : "Tienes un adeudo vencido" }}
+        </h1>
+        <p>
+          @if (bloqueado()) {
+            El acceso a tu sistema está bloqueado hasta regularizar el pago.
+          } @else {
+            Tu cuenta está en solo lectura. Regulariza el pago para volver a
+            capturar información.
+          }
+        </p>
+      </div>
+
+      <div class="pago-adeudo">
+        <span class="pago-adeudo__label">Adeudo vencido</span>
+        <span class="pago-adeudo__monto">{{
+          e.adeudo | currency: (e.moneda || "MXN") : "symbol-narrow"
+        }}</span>
+        <span class="pago-adeudo__dias">{{ e.diasMora }} días de mora</span>
+      </div>
+
+      @if (e.periodosVencidos.length) {
+        <div class="pago-periodos">
+          <span class="pago-periodos__label">Periodos:</span>
+          @for (p of e.periodosVencidos; track p) {
+            <span class="pago-periodos__chip">{{ p }}</span>
+          }
+        </div>
+      }
+
+      <button
+        class="pago-btn pago-btn--primary"
+        (click)="pagar()"
+        [disabled]="pagando()"
+      >
+        {{ pagando() ? "Redirigiendo a la pasarela…" : "Pagar en línea" }}
+      </button>
+
+      @if (e.contacto; as c) {
+        <div class="pago-contacto">
+          <p class="pago-contacto__title">¿Prefieres transferencia o ayuda?</p>
+          <p class="pago-contacto__line">{{ c.nombre }}</p>
+          @if (c.email) {
+            <a class="pago-contacto__line" [href]="'mailto:' + c.email">{{
+              c.email
+            }}</a>
+          }
+          @if (c.telefono) {
+            <span class="pago-contacto__line">Tel: {{ c.telefono }}</span>
+          }
+          @if (c.whatsapp) {
+            <span class="pago-contacto__line">WhatsApp: {{ c.whatsapp }}</span>
+          }
+        </div>
+      }
+
+      <div class="pago-foot">
+        @if (!bloqueado()) {
+          <button class="pago-btn pago-btn--ghost" (click)="volver()">
+            Volver al sistema
+          </button>
+        }
+        <button class="pago-btn pago-btn--ghost" (click)="salir()">
+          Cerrar sesión
+        </button>
+      </div>
+    }
+  </div>
+</div>

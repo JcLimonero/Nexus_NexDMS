@@ -89,6 +89,50 @@
   }
 }
 
+/* ── Aviso de clientes en mora por pago ───────────── */
+.mora {
+  margin-top: var(--space-16);
+  padding: var(--space-16);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-card, 10px);
+  background: var(--warning-bg);
+}
+.mora-cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
+
+  h2 {
+    margin: 0;
+    font-size: var(--text-body);
+  }
+}
+.mora-resumen {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.pastilla {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  margin-right: 4px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  background: var(--warning-bg);
+  color: var(--warning);
+
+  &[data-estado="BLOQUEADO"] {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  &[data-estado="SOLO_LECTURA"] {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+}
+
 /* ── Pestaña de marca ─────────────────────────────── */
 .marca-intro {
   font-size: var(--text-body);

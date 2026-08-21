@@ -26,6 +26,53 @@
         <span class="pie">Sin acceso al sistema</span>
       </div>
     </section>
+
+    <!-- Aviso a Nexus: clientes que el reloj del impago dejó en solo-lectura o
+         ya bloqueó, para actuar antes de que reclamen. -->
+    @if (p.morosos.length) {
+      <section class="mora">
+        <div class="mora-cabecera">
+          <h2>Clientes en mora por pago</h2>
+          <span class="mora-resumen">
+            {{ p.enSoloLectura }} en solo lectura ·
+            {{ p.bloqueadosPorPago }} bloqueados
+          </span>
+        </div>
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Grupo</th>
+              <th>Estado</th>
+              <th>Días de mora</th>
+              <th>Adeudo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of p.morosos; track m.tenantId) {
+              <tr>
+                <td>{{ m.nombre }}</td>
+                <td>
+                  <span
+                    class="pastilla"
+                    [attr.data-estado]="m.estado"
+                  >{{ m.estado === "BLOQUEADO" ? "Bloqueado" : "Solo lectura" }}</span>
+                  @if (m.suspendidoManual) {
+                    <span class="pastilla" data-estado="BLOQUEADO">Suspendido</span>
+                  }
+                </td>
+                <td>
+                  {{ m.diasMora }}
+                  @if (m.estado === "SOLO_LECTURA") {
+                    <small class="pie">({{ m.diasParaBloqueo }} para bloqueo)</small>
+                  }
+                </td>
+                <td>{{ m.adeudo | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
   }
 
   <!-- Listado -->

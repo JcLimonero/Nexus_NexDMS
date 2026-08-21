@@ -182,6 +182,17 @@ export interface Ficha {
   };
 }
 
+export interface ClienteMoroso {
+  tenantId: string;
+  nombre: string;
+  slug: string;
+  estado: "SOLO_LECTURA" | "BLOQUEADO";
+  diasMora: number;
+  diasParaBloqueo: number;
+  adeudo: number;
+  suspendidoManual: boolean;
+}
+
 export interface Panorama {
   clientes: number;
   activos: number;
@@ -189,6 +200,9 @@ export interface Panorama {
   ingresoMensual: number;
   adeudoTotal: number;
   clientesConAdeudo: number;
+  enSoloLectura: number;
+  bloqueadosPorPago: number;
+  morosos: ClienteMoroso[];
 }
 
 @Injectable({ providedIn: "root" })

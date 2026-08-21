@@ -77,6 +77,7 @@ import { LIMITES_GENERALES } from './common/throttler/limites';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuditInterceptor } from './common/audit/audit.interceptor';
+import { BillingEnforcementInterceptor } from './common/billing/billing-enforcement.interceptor';
 import { SuperadminAuditModule } from './modules/superadmin-audit/superadmin-audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CfdiModule } from './modules/cfdi/cfdi.module';
@@ -210,6 +211,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
   providers: [
     AppService,
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: BillingEnforcementInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

@@ -20,6 +20,11 @@ import {
 import { PALETAS, paletaPorId } from '../tenants/branding.paletas';
 import { StorageService } from '../../common/storage/storage.service';
 import { ConfigService } from '@nestjs/config';
+import {
+  BillingBlockState,
+  BillingStatusService,
+} from './billing-status.service';
+import { ConektaService, CheckoutSalida } from './conekta.service';
 
 /** Lo que un cliente paga al mes, desglosado. */
 export interface Cobro {
@@ -42,6 +47,8 @@ export class SaasService {
     private readonly tenantRepo: Repository<Tenant>,
     private readonly storage: StorageService,
     private readonly config: ConfigService,
+    private readonly billing: BillingStatusService,
+    private readonly conekta: ConektaService,
   ) {}
 
   // ─── Planes ─────────────────────────────────────────────────
@@ -527,11 +534,68 @@ export class SaasService {
           ? (dto.paidAt ?? pago.paidAt ?? new Date())
           : null,
     });
-    return this.pagoRepo.save(pago);
+    const guardado = await this.pagoRepo.save(pago);
+    // El estado de bloqueo se cachea unos segundos; un cobro que cambia debe
+    // reflejarse ya (p. ej. reactivar a quien acaba de pagar).
+    this.billing.invalidar(tenantId);
+    return guardado;
   }
 
   async eliminarPago(id: string): Promise<void> {
+    const pago = await this.pagoRepo.findOne({ where: { id } });
     await this.pagoRepo.delete(id);
+    if (pago) this.billing.invalidar(pago.tenantId);
+  }
+
+  // ─── Cobro en línea (Conekta) ───────────────────────────────
+
+  /**
+   * Arranca el pago en línea del adeudo del cliente: crea la orden en la
+   * pasarela y devuelve a dónde mandarlo. Cobra exactamente lo vencido; si no
+   * hay nada vencido, no hay pago que iniciar.
+   */
+  async iniciarCheckout(tenantId: string): Promise<CheckoutSalida> {
+    const t = await this.tenant(tenantId);
+    const estado = await this.billing.estado(tenantId);
+    if (estado.adeudo <= 0 || estado.periodosVencidos.length === 0) {
+      throw new BadRequestException('No tienes adeudos vencidos por pagar.');
+    }
+    const base = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
+    const liga = t.slug ? `${base}/${t.slug}/pago` : `${base}/pago`;
+    return this.conekta.crearCheckout({
+      tenantId,
+      monto: estado.adeudo,
+      periodos: estado.periodosVencidos,
+      cliente: {
+        nombre: t.name,
+        email: t.billingEmail || t.contactEmail || '',
+        telefono: t.contactPhone || undefined,
+      },
+      successUrl: `${liga}?pago=ok`,
+      failureUrl: `${liga}?pago=error`,
+    });
+  }
+
+  /**
+   * Confirma un pago desde el webhook de Conekta. No se cree al webhook: se
+   * vuelve a consultar la orden a la pasarela y solo si responde "pagada" se
+   * dan por saldados los periodos que cubría.
+   */
+  async confirmarPagoConekta(orderId: string): Promise<void> {
+    const r = await this.conekta.confirmarOrden(orderId);
+    if (!r.pagada || !r.tenantId) return;
+    for (const period of r.periodos) {
+      const pago = await this.pagoRepo.findOne({
+        where: { tenantId: r.tenantId, period },
+      });
+      if (!pago) continue;
+      pago.status = SaasPaymentStatusEnum.PAGADO;
+      pago.paidAt = new Date();
+      pago.method = 'conekta';
+      pago.reference = r.referencia;
+      await this.pagoRepo.save(pago);
+    }
+    this.billing.invalidar(r.tenantId);
   }
 
   /**
@@ -553,13 +617,43 @@ export class SaasService {
         ],
       })
     ).filter((p) => this.vencido(p));
+    // Aviso a Nexus: qué clientes están en solo-lectura o ya bloqueados por
+    // el reloj del impago, para actuar antes de que reclamen. El estado lo
+    // deriva el mismo motor que aplica el bloqueo, así el panel no miente.
+    const conAdeudo = [...new Set(vencidos.map((p) => p.tenantId))];
+    const morosos = (
+      await Promise.all(
+        conAdeudo.map(async (id) => {
+          const t = tenants.find((x) => x.id === id);
+          const e = await this.billing.estado(id);
+          return {
+            tenantId: id,
+            nombre: t?.name ?? '',
+            slug: t?.slug ?? '',
+            estado: e.estado,
+            diasMora: e.diasMora,
+            diasParaBloqueo: e.diasParaBloqueo,
+            adeudo: e.adeudo,
+            suspendidoManual: t ? !t.isActive : false,
+          };
+        }),
+      )
+    ).sort((a, b) => b.diasMora - a.diasMora);
+
     return {
       clientes: tenants.length,
       activos: activos.length,
       suspendidos: tenants.length - activos.length,
       ingresoMensual: recurrente,
       adeudoTotal: vencidos.reduce((a, p) => a + p.amount, 0),
-      clientesConAdeudo: new Set(vencidos.map((p) => p.tenantId)).size,
+      clientesConAdeudo: conAdeudo.length,
+      enSoloLectura: morosos.filter(
+        (m) => m.estado === BillingBlockState.SOLO_LECTURA,
+      ).length,
+      bloqueadosPorPago: morosos.filter(
+        (m) => m.estado === BillingBlockState.BLOQUEADO,
+      ).length,
+      morosos,
     };
   }
 }
