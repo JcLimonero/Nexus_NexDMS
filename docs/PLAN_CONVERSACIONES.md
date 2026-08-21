@@ -63,7 +63,7 @@ Salieron al auditar y son **bloqueantes** para poder persistir con `tenant_id`:
 | D3 | Ventana de 24 h de Meta | El texto libre sólo se puede mandar dentro de las 24 h del último mensaje del cliente. Fuera de eso hay que usar plantilla aprobada. **El mock lo ignora** — hay que exponerlo en el API y bloquear el compositor en la UI. |
 | D4 | ¿El bot sigue contestando cuando hay asesor? | No. En `WITH_AGENT` el bot se calla (si no, escribe encima de la persona). Es la regla más importante del handoff. |
 | D5 | ¿Realtime o polling? | Polling (10–15 s) en la primera entrega. SSE/WebSocket después; no bloquea nada. |
-| D6 | ¿Bot conversacional (LLM) como el mock? | **Fuera de alcance.** El mock dibuja un bot que entiende lenguaje natural y fotos; el real es de menús numerados. Cambiar eso es otro proyecto. Este plan persiste y opera lo que el bot ya hace. |
+| D6 | ¿Bot conversacional (LLM) como el mock? | **Sí: Gemini 2.5 Flash Lite multimodal en Vertex AI (GCP).** Decidido después de escribir este plan; ver la fase F7. No bloquea F0–F6, que son el canal y la bandeja. |
 
 ---
 
@@ -228,23 +228,47 @@ tenant ve cero aunque tenga scope global; `MECHANIC` recibe 403; la ventana de
 > Conviene revisar si hay más casos así en el repo (`clients.service.ts:98`
 > ordena por `c.first_name` con paginación).
 
-### F3 · Handoff y respuesta del asesor — *el corazón*
+### F3 · Handoff y respuesta del asesor — ✅ hecho (`a478289c`)
 
 | Método | Endpoint | Efecto |
 |--------|----------|--------|
 | POST | `/whatsapp/conversations/:id/take` | `BOT` → `WITH_AGENT`, `assigned_user_id = user.sub` |
-| POST | `/whatsapp/conversations/:id/messages` | Manda por Meta + persiste como `author = agent` |
+| POST | `/whatsapp/conversations/:id/messages` | Manda por Meta + persiste como `author = AGENT` |
 | POST | `/whatsapp/conversations/:id/release` | Devuelve al bot |
 | POST | `/whatsapp/conversations/:id/read` | Limpia `unread_count` |
 
-- **Silenciar el bot en `WITH_AGENT`** (D4): guarda temprana en `handleIncoming()`.
-- Validar ventana de 24 h antes de enviar; si venció, 409 con código claro
-  para que la UI muestre el motivo en vez de fallar en silencio.
-- El envío usa credenciales de la sucursal de la conversación (F0).
-- Un solo asesor a la vez: si ya está tomada por otro, 409.
+- ✅ **Silenciar el bot en `WITH_AGENT`** (D4) — ya venía de F1.
+- ✅ Ventana de 24 h validada **en el servidor**, no sólo en la pantalla.
+- ✅ El envío usa credenciales de la sucursal de la conversación (F0).
+- ✅ Un solo asesor a la vez: si ya está tomada por otro, 409.
 
 **Entregable:** los dos botones que el commit `b9c72ace` agregó al front dejan
 de ser de mentiras.
+
+**Decisiones al implementar:**
+
+- **Primero se manda, luego se guarda.** Sólo lo que Meta aceptó entra en la
+  transcripción; si el envío falla no queda rastro. Un asesor no puede creer
+  que el cliente leyó algo que nunca salió.
+- Los rechazos llevan **`code`** además del mensaje (`ALREADY_TAKEN`,
+  `NOT_TAKEN`, `WINDOW_CLOSED`, `SEND_FAILED`, `NO_CREDENTIALS`). La pantalla
+  tiene que distinguirlos para decir qué hacer, y comparar contra el texto en
+  español se rompe en cuanto alguien lo reescribe. El filtro global de
+  excepciones ahora deja pasar ese campo.
+- **Un responsable puede soltar la conversación de otro.** Si alguien se va a
+  comer con tres tomadas, su jefe no debería tener que esperarlo.
+- Tomar dos veces la propia **no falla**: la pantalla pudo quedarse atrás.
+- `WhatsappRoutingService` se mudó a un módulo **`whatsapp-core`**: lo
+  necesitan el webhook (para saber de quién es lo que entra) y la bandeja
+  (para mandar la respuesta), y dejándolo en cualquiera de los dos quedaba un
+  ciclo entre módulos.
+
+**Verificado contra el API corriendo:** toma y relevo, `ALREADY_TAKEN` para el
+segundo asesor, `NOT_TAKEN` al responder sin tomar, `WINDOW_CLOSED` a las 30 h
+sin siquiera llamar a Meta, `NO_CREDENTIALS` sin configuración, y con
+credenciales inválidas `SEND_FAILED` **sin guardar ningún mensaje**.
+
+> Falta probar el envío que Meta sí acepta: hace falta un número real.
 
 ### F4 · Escalamiento y liga con citas
 
@@ -262,14 +286,66 @@ de ser de mentiras.
 **Entregable:** la métrica que el modelo promete ("X de Y escalaron") sale de
 datos reales, y se puede contestar "¿cuántas citas trae WhatsApp?".
 
-### F5 · Media entrante
+### F5 · Media entrante — *ya no es opcional*
 
 - Descargar el media de Meta (`/{media_id}` → URL temporal, requiere el token).
 - Subir a B2 vía `StorageService`; guardar la key.
 - Endpoint de URL firmada para que la UI la pinte.
 - Límite de tamaño y tipos permitidos.
 
-Se puede posponer: sin esto, la burbuja muestra el placeholder que ya existe.
+> **Cambió de prioridad con D6.** Se había marcado como posponible porque sin
+> ella la burbuja muestra un placeholder y ya. Con un asistente multimodal la
+> foto deja de ser un adjunto que se archiva y pasa a ser *entrada del modelo*:
+> el testigo del tablero, el golpe en la salpicadera. F5 se vuelve requisito de
+> F7, no un extra.
+
+### F7 · El asistente de verdad — Gemini 2.5 Flash Lite en Vertex AI
+
+Es lo que cierra la distancia entre la pantalla y el producto: el mock dibuja un
+asistente que entiende cómo habla la gente y lee fotos; el que corre hoy manda
+menús numerados y sólo entiende dígitos y `AAAA-MM-DD`.
+
+**Lo que se tira:** la máquina de estados de `whatsapp-bot.service.ts`
+(`SERVICE→DATE→SLOT→NAME→CONFIRM`) y su sesión en Redis. Eso se sostenía porque
+no había memoria; ahora la hay.
+
+**Lo que ya quedó listo sin buscarlo:** la transcripción de F1 es el contexto
+del modelo. `whatsapp_messages` deja de ser sólo lo que lee el asesor y pasa a
+ser la memoria de la conversación.
+
+#### Reglas que no se negocian
+
+1. **El modelo no inventa datos del taller.** Precios, horarios y citas salen de
+   *function calling* contra los servicios que ya existen
+   (`UserAvailabilityService.getAvailableSlots`,
+   `AppointmentsService.createPublic`, catálogo de `service_types`). El caso
+   `wa-005` del mock —el asistente cotizando $2,300 cuando eran $3,900— es
+   exactamente el fallo que un LLM sin herramientas comete solo.
+2. **Escribir siempre pasa por herramienta.** El modelo nunca toca la base
+   directo; propone una llamada y el API la valida con las mismas reglas que
+   usa un humano.
+3. **La ventana de contexto se acota.** El costo por turno crece con la
+   transcripción. Últimos N mensajes + resumen de lo anterior, no el hilo
+   completo cada vez.
+4. **El handoff lo puede pedir el modelo**: una herramienta
+   `escalate_to_human(reason)` que escribe `escalation_reason`. Encaja con F4 y
+   es más fiable que adivinar desde fuera.
+
+#### Decisiones abiertas
+
+| # | Decisión | Nota |
+|---|----------|------|
+| G1 | ¿Proyecto GCP por tenant o uno de Nexus Q Tech? | Uno solo es más simple y barato; por tenant aísla costos y cuotas. Lo que sí es por sucursal es el *prompt* y el catálogo. |
+| G2 | Región de Vertex | Datos de clientes mexicanos. Elegir región y dejar por escrito qué sale del país, que es cláusula de contrato con el grupo. |
+| G3 | ¿Cómo se prueba? | Un LLM no se prueba con `expect(...)`. Hace falta un set de conversaciones reales y una forma de medir si agendó bien, no sólo si respondió. |
+| G4 | Límite de gasto | Por tenant y por conversación. Un bucle con un cliente insistente no puede costar lo que un servicio mayor. |
+
+#### Riesgo mayor
+
+El asistente habla **a nombre del taller**. Lo que prometa —un precio, una
+fecha, una garantía— el cliente lo va a cobrar. Antes de encenderlo en
+producción hay que decidir qué tiene permitido afirmar y qué tiene que derivar
+a una persona, y eso es una decisión del negocio, no del prompt.
 
 ### F6 · Front — quitar el mock
 
@@ -285,14 +361,21 @@ Se puede posponer: sin esto, la burbuja muestra el placeholder que ya existe.
 ## Orden sugerido
 
 ```
-F0 ──► F1 ──► F2 ──► F3 ──► F6 (wiring)
-                       └──► F4
-                            F5 (independiente)
+F0 ✅ ──► F1 ✅ ──► F2 ✅ ──► F3 ✅ ──► F6 (wiring del front)
+                                 └──► F4 (escalamiento y citas)
+                                      F5 (media) ──► F7 (Gemini)
 ```
 
 F0 y F1 no tienen nada visible: son la mitad del trabajo y toda la deuda. F2+F3
-es lo que hace que la pantalla exista de verdad. F4/F5 suman valor pero no
-bloquean.
+es lo que hace que la pantalla exista de verdad. F4 suma valor pero no bloquea.
+
+F5 dejó de ser independiente: con un asistente multimodal, la foto es entrada
+del modelo y no un adjunto, así que va antes de F7.
+
+**Siguiente paso recomendado: F6.** Con F0–F3 el backend ya sostiene la
+pantalla completa; conectarla cierra el ciclo y deja algo que se puede enseñar
+y usar. F7 es el proyecto grande y conviene empezarlo con la bandeja ya
+funcionando, porque es donde se va a ver si el asistente lo está haciendo bien.
 
 ---
 
@@ -306,6 +389,11 @@ bloquean.
   `phone_number_id` no alcanza y hay que desambiguar por otra vía.
 - **Distancia mock ↔ realidad (D6).** La pantalla promete un asistente que
   conversa; el bot real manda menús numerados. Conectar el API va a hacer
-  evidente el contraste. Conviene alinear expectativas antes de la demo.
+  evidente el contraste, y va a seguir así hasta F7. Conviene alinear
+  expectativas antes de la demo: lo que ya funciona es el canal y la bandeja,
+  no el asistente.
+- **Mensaje obsoleto.** El bot contesta hoy "por ahora sólo puedo leer mensajes
+  de texto" cuando llega una foto (F1). Con F5+F7 eso deja de ser cierto y hay
+  que quitarlo.
 - **`WHATSAPP_BOT_BRANCH_SLUG`** queda obsoleto al terminar F0; hay que
   retirarlo de `.env.example` y del deploy.
