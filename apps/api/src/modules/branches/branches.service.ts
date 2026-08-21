@@ -1,11 +1,13 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import type Redis from 'ioredis';
 import { Branch } from './entities/branch.entity';
 import { BranchConfig } from './entities/branch-config.entity';
 import { CreateBranchDto } from './dto/create-branch.dto';
@@ -17,13 +19,14 @@ import { ScopeEnum } from '../users/entities/user.entity';
 import type { PaginatedResponse } from '../../common/dto/paginated-response.dto';
 import { StorageService } from '../../common/storage/storage.service';
 import { EncryptionService } from '../../shared/encryption/encryption.service';
+import { whatsappRouteCacheKey } from '../whatsapp-bot/whatsapp-route-cache';
 
 const SENSITIVE_PLACEHOLDER = '••••••••';
 
 export interface BranchConfigSafe {
   id: string;
   branchId: string;
-  whatsappPhoneId: string | null;
+  whatsappPhoneNumberId: string | null;
   whatsappToken: string | null;
   facturaapiApiKey: string | null;
   bankName: string | null;
@@ -43,6 +46,7 @@ export class BranchesService {
     private readonly configRepo: Repository<BranchConfig>,
     private readonly encryptionService: EncryptionService,
     private readonly storageService: StorageService,
+    @Inject('REDIS_CLIENT') private readonly redis: Redis,
   ) {}
 
   async findAll(
@@ -173,14 +177,13 @@ export class BranchesService {
         delete updates.whatsappToken;
       }
     }
-    if (updates.whatsappPhoneId !== undefined) {
-      if (updates.whatsappPhoneId !== SENSITIVE_PLACEHOLDER) {
-        updates.whatsappPhoneId = this.encryptionService.encrypt(
-          updates.whatsappPhoneId as string,
-        );
-      } else {
-        delete updates.whatsappPhoneId;
-      }
+    // `whatsappPhoneNumberId` va sin cifrar: no es secreto y tiene que quedar
+    // consultable para enrutar el webhook. Vacío es desconectar la sucursal, y
+    // se guarda como NULL: el índice único deja pasar varios NULL, pero dos
+    // cadenas vacías chocarían entre sí.
+    if (updates.whatsappPhoneNumberId !== undefined) {
+      const value = (updates.whatsappPhoneNumberId as string).trim();
+      updates.whatsappPhoneNumberId = value === '' ? null : value;
     }
     if (updates.facturaapiApiKey !== undefined) {
       if (updates.facturaapiApiKey !== SENSITIVE_PLACEHOLDER) {
@@ -192,9 +195,32 @@ export class BranchesService {
       }
     }
 
+    // Se recuerda el anterior: si cambió, hay dos llaves de caché que tirar —
+    // la del número viejo (que ya no debe resolver a esta sucursal) y la del
+    // nuevo (que pudo quedar cacheada como "no configurado").
+    const previousPhoneNumberId = config.whatsappPhoneNumberId;
+
     Object.assign(config, updates);
     const saved = await this.configRepo.save(config);
+
+    if (previousPhoneNumberId !== saved.whatsappPhoneNumberId) {
+      await this.invalidateWhatsappRoute(previousPhoneNumberId);
+      await this.invalidateWhatsappRoute(saved.whatsappPhoneNumberId);
+    }
+
     return this.maskSensitiveConfig(saved);
+  }
+
+  private async invalidateWhatsappRoute(
+    phoneNumberId: string | null,
+  ): Promise<void> {
+    if (!phoneNumberId) return;
+    try {
+      await this.redis.del(whatsappRouteCacheKey(phoneNumberId));
+    } catch {
+      // Redis caído no debe impedir guardar la configuración; la entrada
+      // expira sola.
+    }
   }
 
   async assertBranchInScope(
@@ -255,7 +281,8 @@ export class BranchesService {
   private maskSensitiveConfig(config: BranchConfig): BranchConfigSafe {
     return {
       ...config,
-      whatsappPhoneId: config.whatsappPhoneId ? SENSITIVE_PLACEHOLDER : null,
+      // El id del número se devuelve completo: hay que poder verificar contra
+      // Meta cuál quedó configurado. Lo que no sale nunca es el token.
       whatsappToken: config.whatsappToken ? SENSITIVE_PLACEHOLDER : null,
       facturaapiApiKey: config.facturaapiApiKey ? SENSITIVE_PLACEHOLDER : null,
     };

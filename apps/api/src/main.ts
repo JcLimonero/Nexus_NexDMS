@@ -6,7 +6,9 @@ import { AppModule } from './app.module';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // `rawBody` deja disponibles los bytes tal como llegaron. El webhook de
+  // WhatsApp firma el cuerpo crudo y el JSON reserializado no cuadra.
+  const app = await NestFactory.create(AppModule, { rawBody: true });
   app.enableShutdownHooks();
 
   app.use(helmet());
