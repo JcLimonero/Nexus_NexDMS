@@ -2,6 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { getQueueToken } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Client } from '../clients/entities/client.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ScopeEnum, User } from '../users/entities/user.entity';
@@ -13,6 +14,7 @@ import { ConversationErrorCode } from './dto/send-message.dto';
 import {
   WhatsappConversation,
   WhatsappConversationStateEnum,
+  WhatsappEscalationReasonEnum,
 } from './entities/whatsapp-conversation.entity';
 import {
   WhatsappMessage,
@@ -48,6 +50,7 @@ describe('WhatsappConversationsService', () => {
   let whatsapp: { sendText: jest.Mock };
   let storage: { getSignedUrl: jest.Mock };
   let mediaQueue: { add: jest.Mock };
+  let eventEmitter: { emit: jest.Mock };
   let clientQb: {
     select: jest.Mock;
     where: jest.Mock;
@@ -106,6 +109,7 @@ describe('WhatsappConversationsService', () => {
       getSignedUrl: jest.fn().mockResolvedValue('https://b2.signed/url'),
     };
     mediaQueue = { add: jest.fn().mockResolvedValue(undefined) };
+    eventEmitter = { emit: jest.fn() };
 
     conversationRepo.createQueryBuilder = jest.fn(() => convQb);
 
@@ -158,6 +162,7 @@ describe('WhatsappConversationsService', () => {
         { provide: WhatsAppProvider, useValue: whatsapp },
         { provide: StorageService, useValue: storage },
         { provide: getQueueToken('whatsapp-media'), useValue: mediaQueue },
+        { provide: EventEmitter2, useValue: eventEmitter },
       ],
     }).compile();
 
@@ -499,6 +504,18 @@ describe('WhatsappConversationsService', () => {
       expect(convQb.orderBy).toHaveBeenCalledWith('c.lastMessageAt', 'DESC');
     });
 
+    it('con escalated=true sólo deja las que tuvieron que escalar', async () => {
+      await service.findAll(userWith(), { escalated: true });
+
+      expect(conditions(convQb)).toContain('c.escalation_reason IS NOT NULL');
+    });
+
+    it('sin escalated no filtra por motivo de escalamiento', async () => {
+      await service.findAll(userWith(), {});
+
+      expect(conditions(convQb)).not.toContain('escalation_reason');
+    });
+
     it('busca el teléfono por dígitos, ignorando cómo lo hayan pegado', async () => {
       await service.findAll(userWith(), { q: '(81) 1234-5678' });
 
@@ -723,6 +740,120 @@ describe('WhatsappConversationsService', () => {
       await expect(
         service.take(userWith({ scope: ScopeEnum.SUCURSAL }), 'conv-ajena'),
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it('cualquier asesor puede tomar una conversación ya escalada y sin asignar', async () => {
+      // La dejó `escalate()`: WITH_AGENT pero nadie asignado todavía. Antes
+      // de la corrección, el código trataba todo WITH_AGENT como "ya la
+      // tiene alguien" y esto tronaba con ALREADY_TAKEN contra nadie.
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.WITH_AGENT,
+          assignedUserId: null,
+          escalationReason: WhatsappEscalationReasonEnum.ASKED_FOR_HUMAN,
+        }),
+      );
+
+      await service.take(userWith({ sub: 'user-9' }), 'conv-1');
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        state: WhatsappConversationStateEnum.WITH_AGENT,
+        assignedUserId: 'user-9',
+      });
+    });
+
+    it('el asesor puede marcar que el bot se equivocó al tomarla', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+
+      await service.take(
+        userWith({ sub: 'user-9' }),
+        'conv-1',
+        WhatsappEscalationReasonEnum.BOT_WAS_WRONG,
+      );
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        state: WhatsappConversationStateEnum.WITH_AGENT,
+        assignedUserId: 'user-9',
+        escalationReason: WhatsappEscalationReasonEnum.BOT_WAS_WRONG,
+      });
+    });
+  });
+
+  describe('escalate', () => {
+    it('pone la conversación en WITH_AGENT sin asignar a nadie y guarda el motivo', async () => {
+      conversationRepo.findOne.mockResolvedValue({
+        id: 'conv-1',
+        tenantId: TENANT,
+        branchId: BRANCH,
+        phone: META_PHONE,
+        contactName: 'Laura',
+        state: WhatsappConversationStateEnum.BOT,
+      });
+
+      await service.escalate('conv-1', WhatsappEscalationReasonEnum.BOT_LOOPED);
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        state: WhatsappConversationStateEnum.WITH_AGENT,
+        escalationReason: WhatsappEscalationReasonEnum.BOT_LOOPED,
+      });
+    });
+
+    it('avisa a los asesores con un evento de dominio', async () => {
+      conversationRepo.findOne.mockResolvedValue({
+        id: 'conv-1',
+        tenantId: TENANT,
+        branchId: BRANCH,
+        phone: META_PHONE,
+        contactName: 'Laura',
+        state: WhatsappConversationStateEnum.BOT,
+      });
+
+      await service.escalate(
+        'conv-1',
+        WhatsappEscalationReasonEnum.ASKED_FOR_HUMAN,
+      );
+
+      expect(eventEmitter.emit).toHaveBeenCalledWith(
+        'conversacion.escalada',
+        expect.objectContaining({
+          conversationId: 'conv-1',
+          branchId: BRANCH,
+          tenantId: TENANT,
+          reason: WhatsappEscalationReasonEnum.ASKED_FOR_HUMAN,
+          phone: META_PHONE,
+          contactName: 'Laura',
+        }),
+      );
+    });
+
+    it('no pisa una conversación que ya no está con el bot', async () => {
+      // Ya la tomó un asesor (o ya escaló) justo antes: no hay que
+      // regresarla a un estado anterior.
+      conversationRepo.findOne.mockResolvedValue({
+        id: 'conv-1',
+        tenantId: TENANT,
+        branchId: BRANCH,
+        phone: META_PHONE,
+        state: WhatsappConversationStateEnum.WITH_AGENT,
+        assignedUserId: 'user-9',
+      });
+
+      await service.escalate('conv-1', WhatsappEscalationReasonEnum.BOT_LOOPED);
+
+      expect(conversationRepo.update).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
+    });
+
+    it('no revienta si la conversación ya no existe', async () => {
+      conversationRepo.findOne.mockResolvedValue(null);
+
+      await expect(
+        service.escalate(
+          'conv-fantasma',
+          WhatsappEscalationReasonEnum.BOT_LOOPED,
+        ),
+      ).resolves.toBeUndefined();
+      expect(conversationRepo.update).not.toHaveBeenCalled();
     });
   });
 

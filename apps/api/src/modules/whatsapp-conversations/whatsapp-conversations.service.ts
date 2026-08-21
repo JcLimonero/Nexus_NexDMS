@@ -6,11 +6,14 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { InjectQueue } from '@nestjs/bullmq';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import { Queue } from 'bullmq';
+import { ConversacionEscaladaEvent } from '../../events/domain-events';
 import {
   WhatsappConversation,
   WhatsappConversationStateEnum,
+  WhatsappEscalationReasonEnum,
 } from './entities/whatsapp-conversation.entity';
 import {
   WhatsappMessage,
@@ -92,6 +95,7 @@ export class WhatsappConversationsService {
     private readonly storage: StorageService,
     @InjectQueue('whatsapp-media')
     private readonly mediaQueue: Queue<WhatsappMediaJobPayload>,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   // ─── Lectura ─────────────────────────────────────
@@ -121,6 +125,9 @@ export class WhatsappConversationsService {
       qb.andWhere('c.assigned_user_id = :assignedUserId', {
         assignedUserId: filters.assignedUserId,
       });
+    }
+    if (filters.escalated) {
+      qb.andWhere('c.escalation_reason IS NOT NULL');
     }
     if (filters.q?.trim()) {
       const term = `%${filters.q.trim().toLowerCase()}%`;
@@ -206,16 +213,28 @@ export class WhatsappConversationsService {
   // ─── Toma y respuesta del asesor ─────────────────
 
   /**
-   * Un asesor entra a una conversación que atiende el asistente.
+   * Un asesor entra a una conversación: la que atiende el asistente, o una
+   * que ya escaló y sigue esperando a que alguien la tome.
    *
-   * No es un rescate —eso lleva `escalationReason`—, es alguien decidiendo
-   * seguirla en persona. A partir de aquí el bot se calla: la guarda está en
-   * `WhatsappBotService.handleIncoming`.
+   * Quién la tiene se decide por `assignedUserId`, no por el estado: una
+   * conversación escalada por `escalate()` ya está en `WITH_AGENT` —así
+   * calla al bot— pero sin asignar, y cualquier asesor debe poder tomarla.
+   * Tratar todo `WITH_AGENT` como "ya la tiene alguien" —como hacía antes—
+   * dejaba las escaladas sin dueño atoradas: el primero que intentaba
+   * tomarla se topaba con `ALREADY_TAKEN` contra nadie.
+   *
+   * `reason` es opcional y sólo para `BOT_WAS_WRONG` (ver
+   * `TakeConversationDto`): el asesor lo marca al ver que el bot dio mal la
+   * información, algo que ningún detector automático puede saber.
    */
-  async take(user: UserPayload, id: string): Promise<ConversationDetailDto> {
+  async take(
+    user: UserPayload,
+    id: string,
+    reason?: WhatsappEscalationReasonEnum,
+  ): Promise<ConversationDetailDto> {
     const conversation = await this.findInScope(user, id);
 
-    if (conversation.state === WhatsappConversationStateEnum.WITH_AGENT) {
+    if (conversation.assignedUserId) {
       // Volver a tomar la propia no es un error: la pantalla pudo quedarse
       // atrás, o el asesor le dio dos veces al botón.
       if (conversation.assignedUserId === user.sub) {
@@ -227,7 +246,10 @@ export class WhatsappConversationsService {
       });
     }
 
-    if (conversation.state !== WhatsappConversationStateEnum.BOT) {
+    if (
+      conversation.state !== WhatsappConversationStateEnum.BOT &&
+      conversation.state !== WhatsappConversationStateEnum.WITH_AGENT
+    ) {
       throw new ConflictException({
         message: 'Esta conversación ya terminó',
         code: ConversationErrorCode.NOT_TAKEABLE,
@@ -237,6 +259,7 @@ export class WhatsappConversationsService {
     await this.conversationRepo.update(id, {
       state: WhatsappConversationStateEnum.WITH_AGENT,
       assignedUserId: user.sub,
+      ...(reason ? { escalationReason: reason } : {}),
     });
     return this.findOne(user, id);
   }
@@ -629,6 +652,52 @@ export class WhatsappConversationsService {
         state: In(OPEN_STATES),
       },
     });
+  }
+
+  /**
+   * Saca al bot de la conversación porque detectó que ya no puede solo.
+   *
+   * No asigna a nadie: queda igual que antes de que llegara un asesor, sólo
+   * que en `WITH_AGENT` —la misma guarda de `handleIncoming` que calla al
+   * bot cuando ya lo tomó una persona— y con el motivo puesto para que se
+   * sepa por qué. `take()` la deja tomar aunque nadie la haya asignado
+   * todavía.
+   *
+   * Si ya no está en `BOT` (un asesor la tomó justo antes, o ya escaló) no
+   * se toca: pisar un estado más avanzado con uno anterior sería el propio
+   * bug que `take()` tuvo que arreglar, al revés.
+   */
+  async escalate(
+    conversationId: string,
+    reason: WhatsappEscalationReasonEnum,
+  ): Promise<void> {
+    const conversation = await this.conversationRepo.findOne({
+      where: { id: conversationId },
+    });
+    if (!conversation) {
+      this.logger.warn(
+        `No se pudo escalar: conversación ${conversationId} no existe`,
+      );
+      return;
+    }
+    if (conversation.state !== WhatsappConversationStateEnum.BOT) return;
+
+    await this.conversationRepo.update(conversationId, {
+      state: WhatsappConversationStateEnum.WITH_AGENT,
+      escalationReason: reason,
+    });
+
+    this.eventEmitter.emit(
+      'conversacion.escalada',
+      new ConversacionEscaladaEvent(
+        conversationId,
+        conversation.branchId,
+        conversation.tenantId,
+        reason,
+        conversation.phone,
+        conversation.contactName,
+      ),
+    );
   }
 
   /** Cierra la conversación con el desenlace que tuvo. */

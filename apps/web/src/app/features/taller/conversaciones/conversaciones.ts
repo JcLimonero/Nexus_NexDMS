@@ -79,6 +79,16 @@ export class Conversaciones implements OnInit, OnDestroy {
   /** Cuántas esperan a que alguien conteste, en toda la sucursal. */
   waitingForAgent = signal(0);
 
+  /**
+   * Para el badge "N de M escalaron".
+   *
+   * Los dos salen de `meta.total` del servidor, no de contar la página
+   * cargada: paginando, `conversations().length` da un número distinto y el
+   * badge terminaría mintiendo apenas alguien pasara de la primera página.
+   */
+  escalatedCount = signal(0);
+  totalCount = signal(0);
+
   /** Lo escrito para la conversación abierta, todavía sin mandar. */
   borrador = signal("");
 
@@ -113,6 +123,9 @@ export class Conversaciones implements OnInit, OnDestroy {
         this.conversations.set(res.data);
         this.loading.set(false);
         this.loadError.set(null);
+        // El total de esta misma consulta ya es el "M" del badge de
+        // escaladas: no hace falta pedirlo aparte.
+        this.totalCount.set(res.meta.total);
 
         // Si no hay ninguna abierta, se abre la primera: la pantalla sin nada
         // seleccionado no le sirve a nadie.
@@ -131,6 +144,10 @@ export class Conversaciones implements OnInit, OnDestroy {
     // Cuenta real, no la de la página cargada: se pide sólo el total.
     this.api.list({ state: "WITH_AGENT", limit: 1 }).subscribe({
       next: (res) => this.waitingForAgent.set(res.meta.total),
+    });
+
+    this.api.list({ escalated: true, limit: 1 }).subscribe({
+      next: (res) => this.escalatedCount.set(res.meta.total),
     });
   }
 
