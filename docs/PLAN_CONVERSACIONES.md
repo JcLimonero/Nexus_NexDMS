@@ -156,17 +156,38 @@ rechaza lo que no venga firmado por Meta.
 del siguiente deploy. En producción, sin él, el webhook rechaza todo.
 Y recapturar el `phone_number_id` de cada sucursal en Configuración.
 
-### F1 · Persistencia de la conversación
+### F1 · Persistencia de la conversación — ✅ hecho (`beec5e44`)
 
-- Migración con las dos tablas nuevas.
-- Entidades + `WhatsappConversationsModule`.
-- `ConversationsService.recordInbound()` / `recordOutbound()`.
-- El bot escribe: cada entrante y **cada respuesta del bot** quedan guardadas.
-- Alta/reuso de conversación por `(branch_id, phone)`.
-- Liga a `client_id` cuando el teléfono coincide con un cliente del tenant.
-- Job de expiración: `BOT` sin actividad > N horas → `EXPIRED`.
+- ✅ Migración con las dos tablas nuevas.
+- ✅ Entidades + `WhatsappConversationsModule`.
+- ✅ `ConversationsService.recordInbound()` / `recordOutbound()`.
+- ✅ El bot escribe: cada entrante y **cada respuesta del bot** quedan guardadas.
+- ✅ Alta/reuso de conversación por `(branch_id, phone)`.
+- ✅ Liga a `client_id` cuando el teléfono coincide con un cliente del tenant.
+- ✅ Job de expiración: `BOT` sin actividad > 24 h → `EXPIRED`.
 
 **Entregable:** cada chat de WhatsApp deja rastro. Todavía sin UI.
+
+**Decisiones que se tomaron al implementar:**
+
+- Del bot sólo se guarda lo que Meta aceptó. Si el envío falla, el mensaje no
+  entra en la transcripción: quien la lea después debe ver lo que el cliente
+  recibió, no lo que se intentó mandar.
+- La liga con el cliente es por los **últimos diez dígitos**. Comparar el
+  número completo no empata casi nunca (Meta antepone `521` en México y los
+  teléfonos de `clients` los captura gente). Con dos clientes empatados no se
+  adivina: se deja sin ligar.
+- Si falla el agendado, la conversación **queda abierta** a propósito — el
+  cliente quería una cita y no la tiene.
+- La guarda de silencio del bot en `WITH_AGENT` se adelantó desde F3: todavía
+  no hay forma de llegar a ese estado, pero la regla vive donde se decide
+  contestar y así no se olvida.
+- La ventana de expiración quedó en 24 h, que es la de Meta: pasada esa hora
+  no se le puede escribir texto libre a esa persona de todos modos.
+
+**Verificado contra Postgres** en una base desechable: las dos migraciones
+suben y bajan, y el índice parcial rechaza la segunda conversación abierta del
+mismo teléfono mientras deja convivir el histórico.
 
 ### F2 · API de lectura
 
