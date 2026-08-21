@@ -22,6 +22,10 @@ import {
 } from "../../models/sale.model";
 import { Part } from "../../../inventario-refacciones/models/part.model";
 import { ClientListItem } from "../../../clientes/models/client.model";
+import {
+  ConvenioResumen,
+  FlotillasService,
+} from "../../../flotillas/flotillas.service";
 
 @Component({
   selector: "app-venta-form",
@@ -37,6 +41,7 @@ export class VentaForm implements OnInit {
   private branchesService = inject(BranchesService);
   private inventarioService = inject(InventarioRefaccionesService);
   private clientesService = inject(ClientesService);
+  private flotillasService = inject(FlotillasService);
   private toastr = inject(ToastrService);
 
   form!: FormGroup;
@@ -45,6 +50,8 @@ export class VentaForm implements OnInit {
   clients = signal<ClientListItem[]>([]);
   parts = signal<Part[]>([]);
   partsLoading = signal(false);
+  /** Convenio de flotilla del cliente elegido; aplica precio preferencial. */
+  convenio = signal<ConvenioResumen | null>(null);
 
   readonly priceListOptions = [
     { value: PriceList.PUBLIC, label: "Público" },
@@ -94,6 +101,28 @@ export class VentaForm implements OnInit {
       if (branchId) this.loadParts(branchId);
       else this.parts.set([]);
     });
+
+    // Al elegir cliente, si tiene convenio de flotilla se re-precia el carrito
+    // con su precio preferencial; al quitarlo, vuelve al precio de la lista.
+    this.form.get("clientId")?.valueChanges.subscribe((clientId: string) => {
+      if (!clientId) {
+        this.convenio.set(null);
+        this.reprecioCarrito();
+        return;
+      }
+      this.flotillasService.forClient(clientId).subscribe({
+        next: (c) => {
+          this.convenio.set(c);
+          this.reprecioCarrito();
+        },
+        error: () => this.convenio.set(null),
+      });
+    });
+
+    // Cambiar de lista de precios también re-precia (respetando el convenio).
+    this.form.get("priceList")?.valueChanges.subscribe(() =>
+      this.reprecioCarrito(),
+    );
   }
 
   private createLineGroup(): FormGroup {
@@ -150,15 +179,56 @@ export class VentaForm implements OnInit {
       });
   }
 
+  private precioBase(part: Part, priceList: PriceList): number {
+    if (priceList === PriceList.WHOLESALE) return part.wholesalePrice;
+    if (priceList === PriceList.BUSINESS) return part.businessPrice;
+    return part.publicPrice;
+  }
+
   onPartSelect(index: number): void {
     const partId = this.lines.at(index).get("partId")?.value;
     const priceList = this.form.get("priceList")?.value as PriceList;
     const part = this.parts().find((p) => p.id === partId);
-    if (part) {
-      let price = part.publicPrice;
-      if (priceList === PriceList.WHOLESALE) price = part.wholesalePrice;
-      else if (priceList === PriceList.BUSINESS) price = part.businessPrice;
-      this.lines.at(index).patchValue({ unitPrice: price });
+    if (!part) return;
+    this.lines.at(index).patchValue({
+      unitPrice: this.precioBase(part, priceList),
+    });
+    // Con convenio de flotilla, el precio de la pieza lo pone el servidor.
+    const clientId = this.form.get("clientId")?.value;
+    if (this.convenio() && clientId && partId) {
+      this.flotillasService.quoteParts(clientId, [partId]).subscribe({
+        next: (r) => {
+          const fp = r.find((x) => x.partId === partId);
+          if (fp) this.lines.at(index).patchValue({ unitPrice: fp.unitPrice });
+        },
+      });
+    }
+  }
+
+  /** Reaplica precios a todo el carrito: base por lista y, si hay convenio,
+   * el precio de flotilla que devuelve el servidor. */
+  private reprecioCarrito(): void {
+    const clientId = this.form.get("clientId")?.value;
+    const priceList = this.form.get("priceList")?.value as PriceList;
+    const partIds: string[] = [];
+    for (const ctrl of this.lines.controls) {
+      const pid = ctrl.get("partId")?.value;
+      if (!pid) continue;
+      const part = this.parts().find((p) => p.id === pid);
+      if (part) ctrl.patchValue({ unitPrice: this.precioBase(part, priceList) });
+      partIds.push(pid);
+    }
+    if (this.convenio() && clientId && partIds.length) {
+      this.flotillasService.quoteParts(clientId, partIds).subscribe({
+        next: (r) => {
+          const map = new Map(r.map((x) => [x.partId, x.unitPrice]));
+          for (const ctrl of this.lines.controls) {
+            const pid = ctrl.get("partId")?.value;
+            const fp = pid ? map.get(pid) : undefined;
+            if (fp !== undefined) ctrl.patchValue({ unitPrice: fp });
+          }
+        },
+      });
     }
   }
 

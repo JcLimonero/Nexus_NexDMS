@@ -52,6 +52,17 @@ export interface ClienteOpcion {
   nombre: string;
 }
 
+/** Convenio activo de un cliente, para aplicar descuento en mostrador/venta. */
+export interface ConvenioResumen {
+  id: string;
+  agreementNumber: string;
+  name: string;
+  hasPriceList: boolean;
+  partsDiscountPct: number;
+  laborDiscountPct: number;
+  unitSaleDiscountPct: number;
+}
+
 export type ConvenioPayload = Partial<
   Omit<Convenio, "id" | "clienteNombre" | "unidades">
 > & { clientId?: string };
@@ -85,6 +96,24 @@ export class FlotillasService {
   }
   quitarUnidad(unitId: string): Observable<void> {
     return this.http.delete<void>(`${this.base}/units/${unitId}`);
+  }
+
+  /** Convenio activo del cliente (o null) — mostrador y venta de unidades. */
+  forClient(clientId: string): Observable<ConvenioResumen | null> {
+    return this.http.get<ConvenioResumen | null>(
+      `${this.base}/for-client/${clientId}`,
+    );
+  }
+
+  /** Precio de convenio de varias refacciones para un cliente (mostrador). */
+  quoteParts(
+    clientId: string,
+    partIds: string[],
+  ): Observable<{ partId: string; unitPrice: number }[]> {
+    return this.http.post<{ partId: string; unitPrice: number }[]>(
+      `${this.base}/quote-parts`,
+      { clientId, partIds },
+    );
   }
 
   // Auxiliares

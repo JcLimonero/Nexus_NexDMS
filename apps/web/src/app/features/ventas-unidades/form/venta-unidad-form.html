@@ -59,6 +59,13 @@
                 @if (form.get('clientId')?.invalid && form.get('clientId')?.touched) {
                   <div class="text-danger small mt-1">El cliente es obligatorio</div>
                 }
+                @if (convenio(); as cv) {
+                  @if (cv.unitSaleDiscountPct) {
+                    <small class="text-info d-block mt-1">
+                      🚚 Flotilla «{{ cv.name }}» — {{ cv.unitSaleDiscountPct }}% de descuento en unidad
+                    </small>
+                  }
+                }
               </div>
             </div>
 

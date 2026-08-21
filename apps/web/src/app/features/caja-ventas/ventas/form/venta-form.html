@@ -34,6 +34,11 @@
                     <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
                   }
                 </select>
+                @if (convenio(); as cv) {
+                  <small class="text-info d-block mt-1">
+                    🚚 Flotilla «{{ cv.name }}» — precios de convenio aplicados
+                  </small>
+                }
               </div>
               <div class="col-md-2 mb-3">
                 <label class="form-label">Descuento global</label>
