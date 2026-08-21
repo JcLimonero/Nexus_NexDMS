@@ -1,6 +1,10 @@
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Client } from '../clients/entities/client.entity';
+import { Appointment } from '../appointments/entities/appointment.entity';
+import { ScopeEnum } from '../users/entities/user.entity';
+import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import {
   WhatsappConversation,
   WhatsappConversationStateEnum,
@@ -25,8 +29,16 @@ describe('WhatsappConversationsService', () => {
     create: jest.Mock;
     save: jest.Mock;
     update: jest.Mock;
+    createQueryBuilder: jest.Mock;
   };
-  let messageRepo: { create: jest.Mock; save: jest.Mock };
+  let messageRepo: {
+    create: jest.Mock;
+    save: jest.Mock;
+    find: jest.Mock;
+    createQueryBuilder: jest.Mock;
+  };
+  let convQb: Record<string, jest.Mock>;
+  let msgQb: Record<string, jest.Mock>;
   let clientQb: {
     select: jest.Mock;
     where: jest.Mock;
@@ -41,10 +53,43 @@ describe('WhatsappConversationsService', () => {
       create: jest.fn((v) => ({ ...v })),
       save: jest.fn((v) => Promise.resolve({ id: 'conv-1', ...v })),
       update: jest.fn().mockResolvedValue({ affected: 1 }),
+      createQueryBuilder: jest.fn(),
     };
+    // Un query builder encadenable: cada método devuelve el mismo objeto, y
+    // las aserciones miran qué condiciones se le pidieron.
+    const chainable = (): Record<string, jest.Mock> => {
+      const qb: Record<string, jest.Mock> = {};
+      for (const m of [
+        'select',
+        'addSelect',
+        'leftJoinAndSelect',
+        'innerJoin',
+        'where',
+        'andWhere',
+        'orderBy',
+        'addOrderBy',
+        'distinctOn',
+        'skip',
+        'take',
+      ]) {
+        qb[m] = jest.fn(() => qb);
+      }
+      qb.getManyAndCount = jest.fn().mockResolvedValue([[], 0]);
+      qb.getRawMany = jest.fn().mockResolvedValue([]);
+      qb.getOne = jest.fn().mockResolvedValue(null);
+      return qb;
+    };
+
+    convQb = chainable();
+    msgQb = chainable();
+
+    conversationRepo.createQueryBuilder = jest.fn(() => convQb);
+
     messageRepo = {
       create: jest.fn((v) => ({ ...v })),
       save: jest.fn((v) => Promise.resolve({ id: 'msg-1', ...v })),
+      find: jest.fn().mockResolvedValue([]),
+      createQueryBuilder: jest.fn(() => msgQb),
     };
     clientQb = {
       select: jest.fn().mockReturnThis(),
@@ -68,6 +113,10 @@ describe('WhatsappConversationsService', () => {
         {
           provide: getRepositoryToken(Client),
           useValue: { createQueryBuilder: () => clientQb },
+        },
+        {
+          provide: getRepositoryToken(Appointment),
+          useValue: { findOne: jest.fn().mockResolvedValue(null) },
         },
       ],
     }).compile();
@@ -276,6 +325,220 @@ describe('WhatsappConversationsService', () => {
       expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
         state: WhatsappConversationStateEnum.CANCELLED,
       });
+    });
+  });
+
+  // ─── Lectura ─────────────────────────────────────
+
+  const userWith = (over: Partial<UserPayload> = {}): UserPayload =>
+    ({
+      sub: 'user-1',
+      tenantId: TENANT,
+      branchId: BRANCH,
+      scope: ScopeEnum.GLOBAL,
+      roles: ['ADMIN'],
+      ...over,
+    }) as UserPayload;
+
+  /** Junta las condiciones que se le pusieron al query builder. */
+  const conditions = (qb: Record<string, jest.Mock>): string =>
+    [...qb.where.mock.calls, ...qb.andWhere.mock.calls]
+      .map((c) => String(c[0]))
+      .join(' | ');
+
+  const conversationRow = (over = {}) => ({
+    id: 'conv-1',
+    tenantId: TENANT,
+    branchId: BRANCH,
+    clientId: null,
+    phone: META_PHONE,
+    contactName: 'Laura Jiménez',
+    state: WhatsappConversationStateEnum.BOT,
+    escalationReason: null,
+    appointmentId: null,
+    lastMessageAt: new Date('2026-08-21T10:00:00Z'),
+    lastInboundAt: new Date('2026-08-21T10:00:00Z'),
+    unreadCount: 2,
+    assignedUser: null,
+    ...over,
+  });
+
+  describe('findAll', () => {
+    it('acota siempre al tenant del usuario', async () => {
+      await service.findAll(userWith(), {});
+
+      expect(conditions(convQb)).toContain('c.tenant_id = :tenantId');
+      expect(convQb.where).toHaveBeenCalledWith(expect.any(String), {
+        tenantId: TENANT,
+      });
+    });
+
+    it('con scope SUCURSAL sólo deja ver la sucursal del usuario', async () => {
+      await service.findAll(
+        userWith({ scope: ScopeEnum.SUCURSAL, branchId: 'branch-propia' }),
+        {},
+      );
+
+      expect(conditions(convQb)).toContain('c.branch_id = :userBranchId');
+      expect(convQb.andWhere).toHaveBeenCalledWith(expect.any(String), {
+        userBranchId: 'branch-propia',
+      });
+    });
+
+    it('con scope LEGAL_ENTITY se limita a las sucursales de su razón social', async () => {
+      await service.findAll(
+        userWith({ scope: ScopeEnum.LEGAL_ENTITY, legalEntityId: 'le-1' }),
+        {},
+      );
+
+      expect(convQb.innerJoin).toHaveBeenCalled();
+      expect(conditions(convQb)).toContain('b.legal_entity_id');
+    });
+
+    it('con scope GLOBAL no agrega filtro de sucursal', async () => {
+      await service.findAll(userWith({ scope: ScopeEnum.GLOBAL }), {});
+
+      expect(conditions(convQb)).not.toContain('c.branch_id');
+      expect(convQb.innerJoin).not.toHaveBeenCalled();
+    });
+
+    it('ordena por la última actividad, lo más reciente primero', async () => {
+      await service.findAll(userWith(), {});
+
+      // Por propiedad y no por columna: al paginar, TypeORM resuelve el
+      // ORDER BY contra los metadatos de la entidad y con `last_message_at`
+      // truena. Sale en la prueba porque el mock no lo distingue.
+      expect(convQb.orderBy).toHaveBeenCalledWith('c.lastMessageAt', 'DESC');
+    });
+
+    it('busca el teléfono por dígitos, ignorando cómo lo hayan pegado', async () => {
+      await service.findAll(userWith(), { q: '(81) 1234-5678' });
+
+      expect(convQb.andWhere).toHaveBeenCalledWith(
+        expect.stringContaining('c.phone LIKE :digits'),
+        expect.objectContaining({ digits: '%8112345678%' }),
+      );
+    });
+
+    it('enmascara el teléfono y usa el nombre del contacto', async () => {
+      convQb.getManyAndCount.mockResolvedValue([[conversationRow()], 1]);
+
+      const { data } = await service.findAll(userWith(), {});
+
+      expect(data[0].name).toBe('Laura Jiménez');
+      expect(data[0].phone).toBe('5218 **** 5678');
+      expect(data[0].phone).not.toContain('1234');
+    });
+
+    it('sin nombre de contacto, muestra el teléfono enmascarado', async () => {
+      convQb.getManyAndCount.mockResolvedValue([
+        [conversationRow({ contactName: null })],
+        1,
+      ]);
+
+      const { data } = await service.findAll(userWith(), {});
+
+      expect(data[0].name).toBe('5218 **** 5678');
+    });
+  });
+
+  describe('findOne', () => {
+    it('404 cuando la conversación es de otra sucursal', async () => {
+      convQb.getOne.mockResolvedValue(null);
+
+      await expect(
+        service.findOne(userWith({ scope: ScopeEnum.SUCURSAL }), 'conv-ajena'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('devuelve la transcripción en orden', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+      messageRepo.find.mockResolvedValue([
+        {
+          id: 'm1',
+          author: WhatsappMessageAuthorEnum.CUSTOMER,
+          body: 'hola',
+          attachmentType: null,
+          user: null,
+          createdAt: new Date('2026-08-21T09:59:00Z'),
+        },
+        {
+          id: 'm2',
+          author: WhatsappMessageAuthorEnum.AGENT,
+          body: 'Yo te ayudo',
+          attachmentType: null,
+          user: { firstName: 'Karla', lastName: 'Medina' },
+          createdAt: new Date('2026-08-21T10:00:00Z'),
+        },
+      ]);
+
+      const detail = await service.findOne(userWith(), 'conv-1');
+
+      expect(messageRepo.find).toHaveBeenCalledWith(
+        expect.objectContaining({ order: { createdAt: 'ASC' } }),
+      );
+      expect(detail.messages).toHaveLength(2);
+      expect(detail.messages[1].agentName).toBe('Karla Medina');
+      // El del cliente no lleva nombre de agente.
+      expect(detail.messages[0].agentName).toBeNull();
+    });
+
+    describe('ventana de 24 h de Meta', () => {
+      it('deja contestar si el cliente escribió hace poco', async () => {
+        convQb.getOne.mockResolvedValue(
+          conversationRow({ lastInboundAt: new Date(Date.now() - 60_000) }),
+        );
+
+        const detail = await service.findOne(userWith(), 'conv-1');
+
+        expect(detail.canReplyFreeText).toBe(true);
+        expect(detail.windowExpiresAt).not.toBeNull();
+      });
+
+      it('no deja contestar pasadas las 24 h del último mensaje del cliente', async () => {
+        convQb.getOne.mockResolvedValue(
+          conversationRow({
+            lastInboundAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+          }),
+        );
+
+        const detail = await service.findOne(userWith(), 'conv-1');
+
+        expect(detail.canReplyFreeText).toBe(false);
+      });
+
+      it('no deja contestar si el cliente nunca escribió', async () => {
+        convQb.getOne.mockResolvedValue(
+          conversationRow({ lastInboundAt: null }),
+        );
+
+        const detail = await service.findOne(userWith(), 'conv-1');
+
+        expect(detail.canReplyFreeText).toBe(false);
+        expect(detail.windowExpiresAt).toBeNull();
+      });
+    });
+
+    it('describe la foto aunque el archivo todavía no esté disponible', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+      messageRepo.find.mockResolvedValue([
+        {
+          id: 'm1',
+          author: WhatsappMessageAuthorEnum.CUSTOMER,
+          body: null,
+          attachmentType: 'image',
+          user: null,
+          createdAt: new Date(),
+        },
+      ]);
+
+      const detail = await service.findOne(userWith(), 'conv-1');
+
+      expect(detail.messages[0].attachment).toEqual({
+        type: 'image',
+        url: null,
+      });
+      expect(detail.lastLine).toBe('📷 Imagen');
     });
   });
 });
