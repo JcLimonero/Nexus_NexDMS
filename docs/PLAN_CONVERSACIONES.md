@@ -127,21 +127,34 @@ ALTER TABLE appointments ADD COLUMN whatsapp_conversation_id uuid;
 
 ## Fases
 
-### F0 · Enrutamiento y seguridad del webhook — *bloqueante*
+### F0 · Enrutamiento y seguridad del webhook — ✅ hecho (`bff7023e`)
 
 Sin esto no se puede persistir nada con `tenant_id` correcto.
 
-- Migración: `whatsapp_phone_number_id` en `branch_config` + índice único (D2).
-- `WhatsappRoutingService`: `phone_number_id` → `{ tenantId, branchId }`. Cache en Redis.
-- `resolveBranch()` sale del servicio del bot; el branch llega como parámetro.
-- `WhatsAppProvider`: resolver credenciales por sucursal (descifrar token de
+- ✅ Migración: `whatsapp_phone_number_id` en `branch_config` + índice único (D2).
+- ✅ `WhatsappRoutingService`: `phone_number_id` → `{ tenantId, branchId }`. Cache en Redis.
+- ✅ `resolveBranch()` sale del servicio del bot; el branch llega como parámetro.
+- ✅ `WhatsAppProvider`: resolver credenciales por sucursal (descifrar token de
   `branch_config`), con fallback a env sólo en desarrollo (B2).
-- Validar `X-Hub-Signature-256` contra `WHATSAPP_APP_SECRET` (B3).
-- Deduplicar por `message.id` de Meta (B4).
-- Aceptar `type: 'image'` en el controller (aún sin descargar el media).
+- ✅ Validar `X-Hub-Signature-256` contra `WHATSAPP_APP_SECRET` (B3).
+- ✅ Deduplicar por `message.id` de Meta (B4).
+- ✅ Aceptar `type: 'image'` en el controller (aún sin descargar el media).
 
 **Entregable:** el webhook sabe de qué tenant/sucursal viene cada mensaje y
 rechaza lo que no venga firmado por Meta.
+
+**Extras que salieron al implementar:**
+
+- La sesión del bot se guarda por sucursal (`wabot:<branchId>:<phone>`), no
+  sólo por teléfono: el mismo cliente puede agendar en dos sucursales del grupo.
+- Al cambiar el número en Configuración se invalida la caché de ruteo —la del
+  número viejo y la del nuevo— para que el cambio aplique de inmediato.
+- El campo de la UI dejó de ser tipo `password`: ahora se muestra completo,
+  porque hay que poder verificar contra Meta cuál quedó configurado.
+
+**Pendiente de despliegue:** definir `WHATSAPP_APP_SECRET` en Render *antes*
+del siguiente deploy. En producción, sin él, el webhook rechaza todo.
+Y recapturar el `phone_number_id` de cada sucursal en Configuración.
 
 ### F1 · Persistencia de la conversación
 
