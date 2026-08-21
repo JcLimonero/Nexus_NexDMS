@@ -137,6 +137,24 @@
   }
 }
 
+/* ── Columna de módulos extra en la lista ─────────────── */
+.extras-celda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 220px;
+}
+.extra-chip {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  background: var(--primary-soft, #eef2ff);
+  color: var(--primary, #4338ca);
+  white-space: nowrap;
+}
+
 /* ── Columna de pagos en la lista ─────────────────────── */
 .pagos-celda {
   display: flex;

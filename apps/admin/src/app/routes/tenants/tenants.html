@@ -95,7 +95,7 @@
             <th>Grupo</th>
             <th>Identificador</th>
             <th>Plan</th>
-            <th>Módulos</th>
+            <th>Módulos extra</th>
             <th>Estado</th>
             <th>Pagos</th>
             <th></th>
@@ -111,7 +111,15 @@
                   {{ planDe(t) }}
                 </span>
               </td>
-              <td class="num">{{ contarActivos(t) }}</td>
+              <td class="extras-celda">
+                @if (extrasDe(t).length) {
+                  @for (m of extrasDe(t); track m.key) {
+                    <span class="extra-chip">{{ m.name }}</span>
+                  }
+                } @else {
+                  <span class="pagos-sin">—</span>
+                }
+              </td>
               <td>
                 <span class="estado" [attr.data-activo]="t.isActive">
                   {{ t.isActive ? "Activo" : "Suspendido" }}

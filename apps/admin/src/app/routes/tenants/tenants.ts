@@ -375,12 +375,17 @@ export class Tenants implements OnInit {
     });
   }
 
-  contarActivos(t: Tenant): string {
-    const permitidos = this.catalogo().filter(
-      (m) => this.ordenPlan(m.minPlan) <= this.ordenPlan(t.plan),
-    ).length;
-    const activos = t.enabledModules?.length ?? permitidos;
-    return `${activos} de ${permitidos}`;
+  /**
+   * Módulos que el cliente tiene por encima de su plan (contratados aparte).
+   * Un `enabledModules` nulo significa "solo lo del plan": sin extras.
+   */
+  extrasDe(t: Tenant): Modulo[] {
+    const enabled = t.enabledModules;
+    if (!enabled) return [];
+    const tope = this.ordenPlan(t.plan);
+    return this.catalogo().filter(
+      (m) => enabled.includes(m.key) && this.ordenPlan(m.minPlan) > tope,
+    );
   }
 
   // ─── Ficha del cliente ──────────────────────────────────────
