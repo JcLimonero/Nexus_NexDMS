@@ -76,6 +76,16 @@
                   {{ conv.appointmentRef }}
                 </span>
               }
+              @if (conv.state === "BOT") {
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-primary conv-take-over"
+                  (click)="tomarConversacion(conv)"
+                >
+                  <app-feather-icons [icon]="'log-in'" />
+                  Tomar conversación
+                </button>
+              }
             </div>
           </div>
 
@@ -118,6 +128,27 @@
               </div>
             }
           </div>
+
+          @if (conv.state === "WITH_AGENT") {
+            <div class="conv-compose">
+              <textarea
+                class="form-control conv-compose-input"
+                rows="1"
+                placeholder="Escribe una respuesta…"
+                [ngModel]="borrador()"
+                (ngModelChange)="borrador.set($event)"
+                (keydown)="onComposerKeydown($event, conv)"
+              ></textarea>
+              <button
+                type="button"
+                class="btn btn-primary conv-compose-send"
+                [disabled]="!borrador().trim()"
+                (click)="enviarMensaje(conv)"
+              >
+                <app-feather-icons [icon]="'send'" />
+              </button>
+            </div>
+          }
         </div>
       }
     </div>

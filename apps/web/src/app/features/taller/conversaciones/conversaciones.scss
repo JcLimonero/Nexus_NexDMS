@@ -145,6 +145,17 @@
   }
 }
 
+.conv-take-over {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 .conv-thread {
   max-height: calc(100vh - 360px);
   min-height: 280px;
@@ -175,6 +186,34 @@
 
   span {
     text-align: center;
+  }
+}
+
+/* ─── Composer ──────────────────────────────────────────── */
+
+.conv-compose {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-8);
+  padding: var(--space-12) var(--space-8) 0;
+  border-top: 1px solid var(--border);
+}
+
+.conv-compose-input {
+  flex: 1;
+  resize: none;
+  max-height: 120px;
+}
+
+.conv-compose-send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 }
 
