@@ -2,19 +2,22 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { WhatsappBotController } from './whatsapp-bot.controller';
 import { WhatsappBotService } from './whatsapp-bot.service';
-import { Branch } from '../branches/entities/branch.entity';
+import { WhatsappSignatureGuard } from './whatsapp-signature.guard';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import { AppointmentsModule } from '../appointments/appointments.module';
 import { UserAvailabilityModule } from '../user-availability/user-availability.module';
-import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
+import { WhatsappCoreModule } from '../whatsapp-core/whatsapp-core.module';
+import { WhatsappConversationsModule } from '../whatsapp-conversations/whatsapp-conversations.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Branch, ServiceType]),
+    TypeOrmModule.forFeature([ServiceType]),
     AppointmentsModule,
     UserAvailabilityModule,
+    WhatsappCoreModule,
+    WhatsappConversationsModule,
   ],
   controllers: [WhatsappBotController],
-  providers: [WhatsappBotService, WhatsAppProvider],
+  providers: [WhatsappBotService, WhatsappSignatureGuard],
 })
 export class WhatsappBotModule {}

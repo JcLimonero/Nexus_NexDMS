@@ -108,3 +108,11 @@ services:
         sync: false
       - key: B2_KEY_PREFIX
         sync: false
+      # WhatsApp (Meta Cloud API). Las credenciales de envío son por sucursal y
+      # viven en la BD; lo de aquí es de la app de Meta y aplica a todas.
+      # WHATSAPP_APP_SECRET valida la firma del webhook: en producción, sin él
+      # el webhook se rechaza y el bot deja de recibir mensajes.
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false

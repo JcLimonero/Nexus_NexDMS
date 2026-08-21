@@ -3,12 +3,7 @@
   <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
       <div>
-        <h5>
-          Conversaciones
-          <span class="badge badge-secondary demo-tag">
-            Datos de demostración
-          </span>
-        </h5>
+        <h5>Conversaciones</h5>
         <span>
           Chats de WhatsApp entre los clientes y el asistente de la sucursal
         </span>
@@ -19,105 +14,228 @@
             {{ waitingForAgent() }} esperando asesor
           </span>
         }
-        @if (escalated() > 0) {
+        @if (escalatedCount() > 0) {
           <span class="badge badge-secondary">
-            {{ escalated() }} de {{ conversations().length }} escalaron
+            {{ escalatedCount() }} de {{ totalCount() }} escalaron
           </span>
         }
       </div>
     </div>
   </div>
 
-  <!-- List + transcript -->
   <div class="card conversations-card">
-    <div class="card-body conversations-body">
-      <!-- List -->
-      <ul class="conv-list">
-        @for (c of conversations(); track c.id) {
-          <li
-            class="conv-item"
-            [class.selected]="c.id === selectedId()"
-            (click)="select(c)"
-          >
-            <div class="conv-item-top">
-              <span class="conv-name">{{ c.name }}</span>
-              <span class="conv-time">{{ c.lastActivity }}</span>
-            </div>
-            <p class="conv-preview">{{ lastLine(c) }}</p>
-            <div class="conv-item-badges">
-              <span class="badge {{ stateClass(c.state) }}">
-                {{ stateLabel(c.state) }}
-              </span>
-              @if (c.reason) {
-                <span class="conv-escalated" [title]="reasonText(c.reason)">
-                  <app-feather-icons [icon]="'user-check'" />
-                </span>
-              }
-            </div>
-          </li>
-        }
-      </ul>
-
-      <!-- Transcript -->
-      @if (selected(); as conv) {
-        <div class="conv-detail">
-          <div class="conv-detail-header">
-            <div>
-              <strong>{{ conv.name }}</strong>
-              <span class="conv-phone">{{ conv.phone }}</span>
-            </div>
-            <div class="conv-detail-meta">
-              <span class="badge {{ stateClass(conv.state) }}">
-                {{ stateLabel(conv.state) }}
-              </span>
-              @if (conv.appointmentRef) {
-                <span class="conv-appointment">
-                  <app-feather-icons [icon]="'calendar'" />
-                  {{ conv.appointmentRef }}
-                </span>
-              }
-            </div>
+    <div class="card-body">
+      @if (loading()) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
           </div>
-
-          <div class="conv-thread">
-            @for (m of conv.messages; track $index) {
-              @if (isHandoffPoint(conv, $index) && conv.reason) {
-                <div class="conv-handoff">
-                  <span>
-                    {{ authorLabel(m) }} tomó la conversación ·
-                    {{ reasonText(conv.reason) }}
-                  </span>
+        </div>
+      } @else if (loadError()) {
+        <div class="alert alert-danger" role="alert">{{ loadError() }}</div>
+      } @else if (conversations().length === 0) {
+        <div class="conv-empty">
+          <app-feather-icons [icon]="'message-circle'" />
+          <p>Todavía no hay conversaciones de WhatsApp en esta sucursal.</p>
+          <span>
+            Aparecerán aquí en cuanto un cliente le escriba al número del
+            taller.
+          </span>
+        </div>
+      } @else {
+        <div class="conversations-body">
+          <!-- Lista -->
+          <ul class="conv-list">
+            @for (c of conversations(); track c.id) {
+              <li
+                class="conv-item"
+                [class.selected]="c.id === selectedId()"
+                (click)="select(c)"
+              >
+                <div class="conv-item-top">
+                  <span class="conv-name">{{ c.name }}</span>
+                  <span class="conv-time">{{ desde(c.lastMessageAt) }}</span>
                 </div>
-              }
-
-              <div class="bubble-row bubble-{{ m.author }}">
-                <div class="bubble">
-                  @if (m.author === "agent") {
-                    <span class="bubble-author">{{ authorLabel(m) }}</span>
+                <p class="conv-preview">{{ c.lastLine }}</p>
+                <div class="conv-item-badges">
+                  <span class="badge {{ stateClass(c.state) }}">
+                    {{ stateLabel(c.state) }}
+                  </span>
+                  @if (c.reason) {
+                    <span class="conv-escalated" [title]="reasonText(c.reason)">
+                      <app-feather-icons [icon]="'user-check'" />
+                    </span>
                   }
-
-                  @if (m.attachment; as att) {
-                    <figure
-                      class="attachment"
-                      [style.aspect-ratio]="att.aspectRatio ?? '4 / 3'"
-                    >
-                      <app-feather-icons [icon]="'image'" />
-                      <figcaption>{{ att.description }}</figcaption>
-                    </figure>
+                  @if (c.unreadCount > 0) {
+                    <span class="conv-unread">{{ c.unreadCount }}</span>
                   }
+                </div>
+              </li>
+            }
+          </ul>
 
-                  @if (m.text) {
+          <!-- Transcripción -->
+          @if (detailLoading()) {
+            <div class="text-center py-5">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando...</span>
+              </div>
+            </div>
+          } @else if (detail(); as conv) {
+            <div class="conv-detail">
+              <div class="conv-detail-header">
+                <div>
+                  <strong>{{ conv.name }}</strong>
+                  <span class="conv-phone">{{ conv.phone }}</span>
+                </div>
+                <div class="conv-detail-meta">
+                  <span class="badge {{ stateClass(conv.state) }}">
+                    {{ stateLabel(conv.state) }}
+                  </span>
+
+                  @if (conv.appointment; as cita) {
                     <span
-                      class="bubble-text"
-                      [innerHTML]="withBold(m.text)"
-                    ></span>
+                      class="conv-appointment"
+                      [title]="cita.serviceType + ' · ' + cita.status"
+                    >
+                      <app-feather-icons [icon]="'calendar'" />
+                      {{ cita.scheduledAt | date: "d MMM, HH:mm" }}
+                    </span>
                   }
 
-                  <span class="bubble-time">{{ m.time }}</span>
+                  @if (conv.assignedTo && !esMia()) {
+                    <span class="conv-assigned">
+                      <app-feather-icons [icon]="'user'" />
+                      {{ conv.assignedTo.name }}
+                    </span>
+                  }
+
+                  @if (conv.state === "BOT") {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary conv-take-over"
+                      [disabled]="working()"
+                      (click)="tomarConversacion(conv.id)"
+                    >
+                      <app-feather-icons [icon]="'log-in'" />
+                      Tomar conversación
+                    </button>
+                  }
+
+                  @if (conv.state === "WITH_AGENT" && esMia()) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary conv-take-over"
+                      [disabled]="working()"
+                      (click)="soltarConversacion(conv.id)"
+                    >
+                      <app-feather-icons [icon]="'log-out'" />
+                      Soltar
+                    </button>
+                  }
                 </div>
               </div>
-            }
-          </div>
+
+              <div class="conv-thread" #thread>
+                @for (m of conv.messages; track m.id) {
+                  @if (isHandoffPoint(conv.messages, $index)) {
+                    <div class="conv-handoff">
+                      <span>
+                        {{ authorLabel(m) }} tomó la conversación
+                        @if (conv.reason) {
+                          · {{ reasonText(conv.reason) }}
+                        }
+                      </span>
+                    </div>
+                  }
+
+                  <div class="bubble-row bubble-{{ authorClass(m) }}">
+                    <div class="bubble">
+                      @if (m.author === "AGENT") {
+                        <span class="bubble-author">{{ authorLabel(m) }}</span>
+                      }
+
+                      @if (m.attachment; as att) {
+                        @if (att.url && att.type === "image") {
+                          <img
+                            class="attachment-img"
+                            [src]="att.url"
+                            alt="Imagen enviada por el cliente"
+                          />
+                        } @else if (att.url && att.type === "audio") {
+                          <audio
+                            class="attachment-audio"
+                            controls
+                            [src]="att.url"
+                          ></audio>
+                        } @else if (att.url) {
+                          <a
+                            class="attachment-link"
+                            [href]="att.url"
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            <app-feather-icons [icon]="'file-text'" />
+                            <span>Ver documento</span>
+                          </a>
+                        } @else {
+                          <figure class="attachment">
+                            <app-feather-icons
+                              [icon]="
+                                att.type === 'audio' ? 'headphones' : 'image'
+                              "
+                            />
+                            <figcaption>
+                              El cliente envió un archivo
+                            </figcaption>
+                          </figure>
+                        }
+                      }
+
+                      @if (m.text) {
+                        <span
+                          class="bubble-text"
+                          [innerHTML]="withBold(m.text)"
+                        ></span>
+                      }
+
+                      <span class="bubble-time">{{ hora(m.createdAt) }}</span>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (conv.state === "WITH_AGENT" && esMia()) {
+                @if (conv.canReplyFreeText) {
+                  <div class="conv-compose">
+                    <textarea
+                      class="form-control conv-compose-input"
+                      rows="1"
+                      placeholder="Escribe una respuesta…"
+                      [ngModel]="borrador()"
+                      (ngModelChange)="borrador.set($event)"
+                      (keydown)="onComposerKeydown($event, conv.id)"
+                      [disabled]="sending()"
+                    ></textarea>
+                    <button
+                      type="button"
+                      class="btn btn-primary conv-compose-send"
+                      [disabled]="!borrador().trim() || sending()"
+                      (click)="enviarMensaje(conv.id)"
+                    >
+                      <app-feather-icons [icon]="'send'" />
+                    </button>
+                  </div>
+                } @else {
+                  <!-- Se dice por qué, en vez de dejar escribir y fallar. -->
+                  <div class="conv-blocked">
+                    <app-feather-icons [icon]="'clock'" />
+                    <span>{{ motivoSinRespuesta(conv) }}</span>
+                  </div>
+                }
+              }
+            </div>
+          }
         </div>
       }
     </div>

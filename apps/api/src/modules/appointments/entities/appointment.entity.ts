@@ -13,10 +13,14 @@ import { Client } from '../../clients/entities/client.entity';
 import { CustomerVehicle } from '../../customer-vehicles/entities/customer-vehicle.entity';
 import { User } from '../../users/entities/user.entity';
 import { ServiceType } from '../../service-types/entities/service-type.entity';
+import { WhatsappConversation } from '../../whatsapp-conversations/entities/whatsapp-conversation.entity';
 
 export enum AppointmentOriginEnum {
   INTERNAL = 'INTERNAL',
   PUBLIC_PORTAL = 'PUBLIC_PORTAL',
+  /** Agendada por el bot de WhatsApp. Antes se guardaba como `PUBLIC_PORTAL`
+   *  y era indistinguible de una del portal web. */
+  WHATSAPP_BOT = 'WHATSAPP_BOT',
 }
 
 export enum AppointmentStatusEnum {
@@ -92,6 +96,14 @@ export class Appointment {
   @Column({ name: 'reminder_sent', type: 'boolean', default: false })
   reminderSent: boolean;
 
+  /** Chat de WhatsApp del que salió esta cita, cuando la originó el bot. */
+  @Column({
+    name: 'whatsapp_conversation_id',
+    type: 'uuid',
+    nullable: true,
+  })
+  whatsappConversationId: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
@@ -121,4 +133,8 @@ export class Appointment {
   @ManyToOne(() => ServiceType, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'service_type_id' })
   serviceTypeRelation?: ServiceType;
+
+  @ManyToOne(() => WhatsappConversation, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'whatsapp_conversation_id' })
+  whatsappConversation?: WhatsappConversation | null;
 }

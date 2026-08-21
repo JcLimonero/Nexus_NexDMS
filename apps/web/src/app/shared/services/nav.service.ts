@@ -2,7 +2,6 @@ import { HostListener, Injectable } from "@angular/core";
 
 import { BehaviorSubject } from "rxjs";
 
-import { inDemoMode } from "../utils/demo-mode";
 
 // Menu
 export interface Menu {
@@ -65,17 +64,11 @@ export class NavService {
       children: [
         { path: "/reception", title: "Recepción de unidades", type: "link" },
         { path: "/workshop/citas", title: "Citas", type: "link" },
-        // Demo screen: hidden by the same switch that governs the rest of
-        // the made-up data.
-        ...(inDemoMode()
-          ? [
-              {
-                path: "/workshop/conversaciones",
-                title: "Conversaciones",
-                type: "link",
-              },
-            ]
-          : []),
+        {
+          path: "/workshop/conversaciones",
+          title: "Conversaciones",
+          type: "link",
+        },
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/quotes/servicio", title: "Presupuestos de servicio", type: "link" },
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
