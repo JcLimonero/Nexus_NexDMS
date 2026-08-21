@@ -133,7 +133,11 @@ export class AppointmentsService {
       mechanicId: dto.mechanicId ?? null,
       advisorId:
         dto.advisorId ??
-        (await this.asesorConMenosCarga(user.tenantId, dto.branchId, scheduledAt)),
+        (await this.asesorConMenosCarga(
+          user.tenantId,
+          dto.branchId,
+          scheduledAt,
+        )),
       origin: AppointmentOriginEnum.INTERNAL,
       status: AppointmentStatusEnum.SCHEDULED,
       serviceType: dto.serviceType,
@@ -196,7 +200,11 @@ export class AppointmentsService {
       .andWhere('u.is_active = true')
       .andWhere('ur.role = :rol', { rol: 'RECEPTIONIST' })
       .andWhere('ub.branch_id = :branchId', { branchId })
-      .select(['u.id AS id', 'u.first_name AS nombre', 'u.last_name AS apellido'])
+      .select([
+        'u.id AS id',
+        'u.first_name AS nombre',
+        'u.last_name AS apellido',
+      ])
       .getRawMany<{ id: string; nombre: string; apellido: string }>();
 
     return filas.map((f) => ({
@@ -243,17 +251,20 @@ export class AppointmentsService {
       .andWhere('a.advisor_id IS NOT NULL')
       .andWhere('a.scheduled_at BETWEEN :inicio AND :fin', { inicio, fin })
       // Una cita cancelada no ocupa a nadie; contarla desbalancearía el reparto.
-      .andWhere('a.status != :cancelada', { cancelada: AppointmentStatusEnum.CANCELLED })
+      .andWhere('a.status != :cancelada', {
+        cancelada: AppointmentStatusEnum.CANCELLED,
+      })
       .groupBy('a.advisor_id')
       .getRawMany<{ advisorId: string; total: string }>();
 
     const porId = new Map(conteo.map((c) => [c.advisorId, Number(c.total)]));
-    const disponibilidad = await this.userAvailabilityService.disponibilidadDelDia(
-      asesores.map((a) => a.id),
-      branchId,
-      fecha,
-      fecha,
-    );
+    const disponibilidad =
+      await this.userAvailabilityService.disponibilidadDelDia(
+        asesores.map((a) => a.id),
+        branchId,
+        fecha,
+        fecha,
+      );
 
     return asesores.map((a) => {
       const d = disponibilidad.get(a.id);
@@ -299,7 +310,20 @@ export class AppointmentsService {
     )[0].id;
   }
 
-  async createPublic(dto: CreatePublicAppointmentDto): Promise<Appointment> {
+  /**
+   * `origin` y `whatsappConversationId` no van en `CreatePublicAppointmentDto`
+   * a propósito: ese DTO valida el body de `POST /appointments/public`, que
+   * es público y sin autenticación. Si esos campos fueran parte del DTO,
+   * cualquiera podría mandar `origin: WHATSAPP_BOT` o ligar la cita a la
+   * conversación de otro cliente con sólo adivinar un uuid. Sólo un llamador
+   * de confianza dentro del API —hoy `WhatsappBotService.onConfirm`— puede
+   * ponerlos, pasándolos aparte.
+   */
+  async createPublic(
+    dto: CreatePublicAppointmentDto,
+    origin: AppointmentOriginEnum = AppointmentOriginEnum.PUBLIC_PORTAL,
+    whatsappConversationId?: string,
+  ): Promise<Appointment> {
     const branch = await this.branchRepo.findOne({
       where: { slug: dto.branchSlug },
     });
@@ -318,7 +342,7 @@ export class AppointmentsService {
       clientId: null,
       vehicleId: null,
       mechanicId: null,
-      origin: AppointmentOriginEnum.PUBLIC_PORTAL,
+      origin,
       status: AppointmentStatusEnum.PENDING_CONFIRMATION,
       serviceType: dto.serviceType,
       clientName: dto.clientName,
@@ -326,6 +350,7 @@ export class AppointmentsService {
       notes: dto.notes ?? null,
       scheduledAt,
       durationMin: 60,
+      whatsappConversationId: whatsappConversationId ?? null,
     });
     return this.appointmentRepo.save(appointment);
   }
@@ -562,11 +587,12 @@ export class AppointmentsService {
       ahora: new Date().toISOString(),
       asesores: asesores.map((a) => {
         const d = turnos.get(a.id);
-        const partes = a.nombre.split(" ").filter(Boolean);
+        const partes = a.nombre.split(' ').filter(Boolean);
         return {
           id: a.id,
           nombre: a.nombre,
-          iniciales: `${partes[0]?.[0] ?? ""}${partes[1]?.[0] ?? ""}`.toUpperCase(),
+          iniciales:
+            `${partes[0]?.[0] ?? ''}${partes[1]?.[0] ?? ''}`.toUpperCase(),
           disponible: d?.disponible ?? false,
           motivo: d?.motivo ?? null,
           ventanas: d?.ventanas ?? [],
@@ -578,5 +604,4 @@ export class AppointmentsService {
       sinAsignar: bloques.filter((b) => !b.asesorId),
     };
   }
-
 }

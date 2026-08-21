@@ -22,6 +22,8 @@ export interface ConversationFilters {
   q?: string;
   page?: number;
   limit?: number;
+  /** Sólo las que tuvieron que escalar (`escalation_reason` no nulo). */
+  escalated?: boolean;
 }
 
 @Injectable({ providedIn: "root" })
@@ -36,6 +38,7 @@ export class ConversacionesService {
     if (filters.q?.trim()) params.set("q", filters.q.trim());
     if (filters.page) params.set("page", String(filters.page));
     if (filters.limit) params.set("limit", String(filters.limit));
+    if (filters.escalated) params.set("escalated", "true");
     const qs = params.toString();
     return this.http.get<Paginated<ConversationSummary>>(
       qs ? `${URL}?${qs}` : URL,

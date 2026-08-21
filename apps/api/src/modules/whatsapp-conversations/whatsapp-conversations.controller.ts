@@ -17,6 +17,7 @@ import { RolesGuard } from '../../common/guards/roles.guard';
 import { WhatsappConversationsService } from './whatsapp-conversations.service';
 import { FilterConversationsDto } from './dto/filter-conversations.dto';
 import { SendMessageDto } from './dto/send-message.dto';
+import { TakeConversationDto } from './dto/take-conversation.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 /**
@@ -57,8 +58,9 @@ export class WhatsappConversationsController {
   take(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: TakeConversationDto,
   ) {
-    return this.service.take(user, id);
+    return this.service.take(user, id, dto.reason);
   }
 
   /** La suelta y la devuelve al asistente. */

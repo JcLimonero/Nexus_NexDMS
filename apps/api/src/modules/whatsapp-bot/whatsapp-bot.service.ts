@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import type Redis from 'ioredis';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import { AppointmentsService } from '../appointments/appointments.service';
+import { AppointmentOriginEnum } from '../appointments/entities/appointment.entity';
 import { UserAvailabilityService } from '../user-availability/user-availability.service';
 import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
 import {
@@ -11,7 +12,10 @@ import {
   type WhatsappRoute,
 } from '../whatsapp-core/whatsapp-routing.service';
 import { WhatsappConversationsService } from '../whatsapp-conversations/whatsapp-conversations.service';
-import { WhatsappConversationStateEnum } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
+import {
+  WhatsappConversationStateEnum,
+  WhatsappEscalationReasonEnum,
+} from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
 import { WhatsappMessageAuthorEnum } from '../whatsapp-conversations/entities/whatsapp-message.entity';
 
 /**
@@ -33,6 +37,8 @@ interface BotSession {
   slots?: string[]; // ISO start de cada opción
   slotStart?: string;
   clientName?: string;
+  /** Cuántas veces seguidas el cliente respondió sin que el paso avanzara. */
+  loopCount?: number;
 }
 
 /** Un mensaje entrante ya normalizado desde el payload de Meta. */
@@ -50,6 +56,59 @@ const SESSION_TTL_SEC = 30 * 60;
 
 /** Cuánto se recuerda un mensaje ya atendido, para descartar reintentos. */
 const SEEN_TTL_SEC = 24 * 60 * 60;
+
+/**
+ * Intentos seguidos en el mismo paso antes de dar por hecho que el bot está
+ * en bucle (`BOT_LOOPED`).
+ *
+ * Uno se explica por un dedo que resbaló; dos, por no leer bien las
+ * opciones — a cualquiera le pasa una vez. Al tercer intento fallido
+ * *seguido* en el mismo paso ya no es la persona: es que el bot no se está
+ * dando a entender, y cada mensaje de más es un cliente más cerca de cerrar
+ * WhatsApp sin su cita.
+ */
+const BOT_LOOP_THRESHOLD = 3;
+
+/**
+ * Letras válidas dentro de una palabra en español, para armar límites de
+ * palabra a mano.
+ *
+ * `\b` de JavaScript no sirve aquí: trata las vocales acentuadas como si no
+ * fueran letras, así que `/\basesor\b/` sí encuentra "asesor" dentro de
+ * "asesoría" (la "í" cuenta como límite de palabra). Con esta clase, el
+ * límite sólo cae donde de verdad termina la palabra.
+ */
+const SPANISH_WORD_CHARS = 'a-záéíóúüñ';
+
+/** `true` si `phrase` aparece en `text` como palabra completa, no como parte de otra. */
+function containsWord(text: string, phrase: string): boolean {
+  const re = new RegExp(
+    `(?<![${SPANISH_WORD_CHARS}])${phrase}(?![${SPANISH_WORD_CHARS}])`,
+  );
+  return re.test(text);
+}
+
+/**
+ * Frases con las que un cliente pide que lo atienda una persona (F4 del
+ * plan): "asesor", "una persona", "con alguien", "humano".
+ *
+ * Deliberadamente no se generaliza a sinónimos: cada frase de más agregada
+ * "por si acaso" es una forma nueva de sacar al bot, sin que lo haya pedido
+ * nadie, de una conversación que iba bien. Tampoco se hace con `\b` normal
+ * de JavaScript por lo de arriba — "asesoría" y "personal" son justo los
+ * falsos positivos que hay que evitar, y con `\b` sencillo si caerían.
+ */
+const HUMAN_REQUEST_PHRASES = [
+  'asesor',
+  'una persona',
+  'con alguien',
+  'humano',
+];
+
+/** `true` si el mensaje (ya en minúsculas) pide hablar con una persona. */
+function wantsHuman(lower: string): boolean {
+  return HUMAN_REQUEST_PHRASES.some((phrase) => containsWord(lower, phrase));
+}
 
 @Injectable()
 export class WhatsappBotService {
@@ -116,6 +175,21 @@ export class WhatsappBotService {
     const body = msg.text.trim();
     const lower = body.toLowerCase();
 
+    // Antes que cualquier otra cosa: si el cliente pide una persona, no hay
+    // paso del flujo que valga más que eso. Conservador a propósito (ver
+    // `wantsHuman`) — mejor que lo repita a sacar al bot de una conversación
+    // que iba bien.
+    if (wantsHuman(lower)) {
+      await this.conversations.escalate(
+        ctx.conversationId,
+        WhatsappEscalationReasonEnum.ASKED_FOR_HUMAN,
+      );
+      await this.clearSession(route, from);
+      return this.reply(ctx, from, [
+        'Claro, ahora te comunico con alguien del taller 🙋. En un momento te contactan por aquí mismo.',
+      ]);
+    }
+
     if (['cancelar', 'salir', 'reiniciar'].includes(lower)) {
       await this.clearSession(route, from);
       return this.reply(ctx, from, [
@@ -130,19 +204,72 @@ export class WhatsappBotService {
 
     switch (session.step) {
       case 'SERVICE':
-        return this.onServiceChosen(ctx, from, session, body);
+        return this.withLoopGuard(ctx, from, session, () =>
+          this.onServiceChosen(ctx, from, session, body),
+        );
       case 'DATE':
-        return this.onDateChosen(ctx, from, session, body);
+        return this.withLoopGuard(ctx, from, session, () =>
+          this.onDateChosen(ctx, from, session, body),
+        );
       case 'SLOT':
-        return this.onSlotChosen(ctx, from, session, body);
+        return this.withLoopGuard(ctx, from, session, () =>
+          this.onSlotChosen(ctx, from, session, body),
+        );
       case 'NAME':
-        return this.onNameGiven(ctx, from, session, body);
+        return this.withLoopGuard(ctx, from, session, () =>
+          this.onNameGiven(ctx, from, session, body),
+        );
       case 'CONFIRM':
+        // CONFIRM no entra al conteo de bucle: cualquier respuesta que no
+        // sea "1" cancela la cita ahí mismo (ver `onConfirm`), así que nunca
+        // se repite a sí mismo — no hay "atorado" que detectar.
         return this.onConfirm(ctx, from, session, body);
       default:
         await this.clearSession(route, from);
         return this.startFlow(ctx, from);
     }
+  }
+
+  /**
+   * Cuenta intentos fallidos seguidos en el mismo paso y escala a
+   * `BOT_LOOPED` al llegar a `BOT_LOOP_THRESHOLD`.
+   *
+   * El contador vive en la sesión de Redis, no en memoria: cada mensaje es
+   * una invocación nueva de `handleIncoming`. Se compara el paso antes y
+   * después de que el handler intente avanzar —si sigue igual, no hubo
+   * progreso— en vez de que cada handler lleve su propio conteo, porque el
+   * bucle es el mismo problema en los cuatro pasos y así se detecta una sola
+   * vez.
+   */
+  private async withLoopGuard(
+    ctx: BotContext,
+    from: string,
+    session: BotSession,
+    handler: () => Promise<string[]>,
+  ): Promise<string[]> {
+    const stepBefore = session.step;
+    const salida = await handler();
+
+    session.loopCount =
+      session.step === stepBefore ? (session.loopCount ?? 0) + 1 : 0;
+
+    if (session.loopCount >= BOT_LOOP_THRESHOLD) {
+      await this.conversations.escalate(
+        ctx.conversationId,
+        WhatsappEscalationReasonEnum.BOT_LOOPED,
+      );
+      await this.clearSession(ctx.route, from);
+      const aviso = await this.reply(ctx, from, [
+        'Creo que no me estoy explicando bien 😅. Ya avisé a alguien del taller para que te ayude directamente. En un momento te contactan.',
+      ]);
+      return [...salida, ...aviso];
+    }
+
+    // El handler ya guardó la sesión cuando sí avanzó; aquí se guarda
+    // siempre, porque en el caso "no entendí" el handler no la toca y el
+    // `loopCount` nuevo se perdería.
+    await this.saveSession(ctx.route, from, session);
+    return salida;
   }
 
   // ─── Pasos del flujo ─────────────────────────────
@@ -336,14 +463,18 @@ export class WhatsappBotService {
 
     let appointmentId: string | undefined;
     try {
-      const cita = await this.appointmentsService.createPublic({
-        branchSlug: ctx.route.branchSlug,
-        serviceType: session.serviceTypeName ?? 'Servicio',
-        scheduledAt: session.slotStart!,
-        clientName: session.clientName!,
-        clientPhone: from,
-        notes: 'Agendada vía WhatsApp bot',
-      });
+      const cita = await this.appointmentsService.createPublic(
+        {
+          branchSlug: ctx.route.branchSlug,
+          serviceType: session.serviceTypeName ?? 'Servicio',
+          scheduledAt: session.slotStart!,
+          clientName: session.clientName!,
+          clientPhone: from,
+          notes: 'Agendada vía WhatsApp bot',
+        },
+        AppointmentOriginEnum.WHATSAPP_BOT,
+        ctx.conversationId,
+      );
       appointmentId = cita.id;
     } catch (e) {
       this.logger.error('Error creando cita desde bot', e);

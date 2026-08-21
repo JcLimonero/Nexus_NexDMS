@@ -18,6 +18,7 @@ import {
   MantenimientoSinRefaccionesEvent,
   ServicioProximoVencimientoEvent,
   ServicioHallazgoCotizacionEvent,
+  ConversacionEscaladaEvent,
 } from '../../../events/domain-events';
 import { NotificationChannelEnum } from '../entities/notification-log.entity';
 import { UsersService } from '../../users/users.service';
@@ -264,9 +265,7 @@ export class NotificationsListener {
     );
     // Se avisa a todos los de esos roles en la sucursal, no solo al asesor
     // de la cita: si ese día libró, el aviso moriría con él.
-    const correos = new Set(
-      responsables.map((u) => u.email).filter(Boolean),
-    );
+    const correos = new Set(responsables.map((u) => u.email).filter(Boolean));
 
     const hora = event.scheduledAt.toLocaleTimeString('es-MX', {
       hour: '2-digit',
@@ -290,6 +289,50 @@ export class NotificationsListener {
           `<p><strong>${quien}</strong> no llegó a su cita de las ${hora} ` +
           `(${event.serviceType}).</p>` +
           `<p>Hay que contactarlo para reagendar: ${telefono}</p>`,
+      });
+    }
+  }
+
+  /**
+   * El bot ya no puede solo: hay que avisarle a alguien del mostrador.
+   *
+   * No lleva `assignedUserId` —nadie la tomó todavía—, así que se avisa a
+   * todos los del rol en la sucursal, igual que con la no-presentada: si
+   * quien normalmente contesta libró ese día, el aviso no debe morir con él.
+   */
+  @OnEvent('conversacion.escalada')
+  async onConversacionEscalada(
+    event: ConversacionEscaladaEvent,
+  ): Promise<void> {
+    const responsables = await this.usersService.getUsersByRoleInBranch(
+      event.branchId,
+      [RoleEnum.RECEPTIONIST, RoleEnum.CASHIER, RoleEnum.MANAGER],
+    );
+    const correos = new Set(responsables.map((u) => u.email).filter(Boolean));
+
+    const motivos: Record<string, string> = {
+      ASKED_FOR_HUMAN: 'El cliente pidió hablar con una persona',
+      BOT_LOOPED: 'El asistente se quedó repitiendo el mismo paso',
+      BOT_WAS_WRONG: 'El asesor marcó que el asistente se equivocó',
+    };
+    const quien = event.contactName ?? event.phone;
+    const motivo = motivos[event.reason] ?? event.reason;
+
+    for (const email of correos) {
+      if (!email) continue;
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'conversacion_escalada',
+        referenceType: 'WhatsappConversation',
+        referenceId: event.conversationId,
+        recipient: email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: `WhatsApp necesita una persona: ${quien}`,
+        html:
+          `<p><strong>${quien}</strong> está esperando que alguien tome ` +
+          `su conversación de WhatsApp.</p>` +
+          `<p>Motivo: ${motivo}</p>`,
       });
     }
   }

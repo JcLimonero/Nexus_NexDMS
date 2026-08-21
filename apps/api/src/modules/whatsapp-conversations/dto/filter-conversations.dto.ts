@@ -1,5 +1,6 @@
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
+  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -40,4 +41,16 @@ export class FilterConversationsDto {
   @IsOptional()
   @IsString()
   q?: string;
+
+  /**
+   * Sólo las que tuvieron que escalar (`escalation_reason` no nulo).
+   *
+   * Para el badge "N de M escalaron": el conteo tiene que salir de
+   * `meta.total` de una consulta al servidor, no de contar la página que ya
+   * se cargó — eso da un número distinto en cuanto alguien pagina.
+   */
+  @IsOptional()
+  @Transform(({ value }) => value === 'true' || value === true)
+  @IsBoolean()
+  escalated?: boolean;
 }
