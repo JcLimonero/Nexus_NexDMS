@@ -11,6 +11,7 @@ import { AppointmentsModule } from '../appointments/appointments.module';
 import { UserAvailabilityModule } from '../user-availability/user-availability.module';
 import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
 import { SharedModule } from '../../shared/shared.module';
+import { WhatsappConversationsModule } from '../whatsapp-conversations/whatsapp-conversations.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { SharedModule } from '../../shared/shared.module';
     AppointmentsModule,
     UserAvailabilityModule,
     SharedModule,
+    WhatsappConversationsModule,
   ],
   controllers: [WhatsappBotController],
   providers: [

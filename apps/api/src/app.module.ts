@@ -99,6 +99,7 @@ import { PldModule } from './modules/pld/pld.module';
 import { ModulesModule } from './modules/modules/modules.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
+import { WhatsappConversationsModule } from './modules/whatsapp-conversations/whatsapp-conversations.module';
 
 @Module({
   imports: [
@@ -198,6 +199,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     PublicPortalModule,
     DashboardModule,
     WhatsappBotModule,
+    WhatsappConversationsModule,
     FinanceModule,
     LeadsModule,
     UsedUnitsModule,

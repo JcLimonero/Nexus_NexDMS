@@ -14,6 +14,8 @@ import { PaymentOverdueJob } from './jobs/payment-overdue.job';
 import { ServiceDueRemindersJob } from './jobs/service-due-reminders.job';
 import { ServicePlanningModule } from '../service-planning/service-planning.module';
 import { ServiceDueNotification } from '../service-planning/entities/service-due-notification.entity';
+import { WhatsappConversationExpiryJob } from './jobs/whatsapp-conversation-expiry.job';
+import { WhatsappConversation } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
 
 @Module({
   imports: [
@@ -26,6 +28,7 @@ import { ServiceDueNotification } from '../service-planning/entities/service-due
       CatalogUnit,
       Branch,
       ServiceDueNotification,
+      WhatsappConversation,
     ]),
     ServicePlanningModule,
   ],
@@ -35,6 +38,7 @@ import { ServiceDueNotification } from '../service-planning/entities/service-due
     StockMinimumJob,
     PaymentOverdueJob,
     ServiceDueRemindersJob,
+    WhatsappConversationExpiryJob,
   ],
 })
 export class CronModule {}
