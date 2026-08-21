@@ -286,18 +286,66 @@ credenciales inválidas `SEND_FAILED` **sin guardar ningún mensaje**.
 **Entregable:** la métrica que el modelo promete ("X de Y escalaron") sale de
 datos reales, y se puede contestar "¿cuántas citas trae WhatsApp?".
 
-### F5 · Media entrante — *ya no es opcional*
+### F5 · Media entrante — ✅ hecho (`4a0a3750`)
 
-- Descargar el media de Meta (`/{media_id}` → URL temporal, requiere el token).
-- Subir a B2 vía `StorageService`; guardar la key.
-- Endpoint de URL firmada para que la UI la pinte.
-- Límite de tamaño y tipos permitidos.
+- ✅ `WhatsappMediaService` (`whatsapp-core`): baja el media de Meta en dos
+  pasos —`GET /{media_id}` da una url temporal, que se descarga aparte con el
+  mismo Bearer de la sucursal— y sube a B2 con `StorageService.upload()`.
+- ✅ Lista blanca de tipos MIME por categoría (imagen, audio, documento/pdf) y
+  tope de tamaño por categoría; lo que no encaja se rechaza sin tumbar el
+  webhook.
+- ✅ El webhook (`whatsapp-bot.controller.ts`) extrae `image.id` / `audio.id` /
+  `document.id` y lo pasa como `mediaId` por `IncomingMessage` hasta
+  `recordInbound`.
+- ✅ La descarga va a segundo plano por una cola de BullMQ
+  (`WhatsappMediaProcessor`, cola `whatsapp-media`).
+- ✅ `toMessage()` firma la URL con `StorageService.getSignedUrl()` cuando hay
+  `attachmentKey`.
+- ✅ El bot ya no dice "sólo puedo leer mensajes de texto" cuando llega un
+  adjunto soportado: avisa que lo recibió, sin prometer que lo entiende (sigue
+  siendo una máquina de estados de menús numerados hasta F7).
 
 > **Cambió de prioridad con D6.** Se había marcado como posponible porque sin
 > ella la burbuja muestra un placeholder y ya. Con un asistente multimodal la
 > foto deja de ser un adjunto que se archiva y pasa a ser *entrada del modelo*:
 > el testigo del tablero, el golpe en la salpicadera. F5 se vuelve requisito de
 > F7, no un extra.
+
+**Entregable:** la burbuja de la foto deja de ser un recuadro vacío.
+
+**Decisiones al implementar:**
+
+- **Descarga en segundo plano, no en línea.** Bajarla dentro de
+  `recordInbound()` mismo ataría la respuesta del webhook al tiempo de red
+  hacia Meta y B2 —dos saltos externos, uno de ellos un archivo binario—, y
+  Meta reintenta si tarda. Se reusa la infraestructura de BullMQ que ya tenía
+  el repo (`notifications`, `cfdi`): una cola nueva (`whatsapp-media`) con un
+  job por adjunto, reintentos con backoff exponencial para los cortes
+  transitorios de red, sin bloquear el 200 del webhook.
+- **La URL temporal de Meta se pide al procesar el job, no al recibir el
+  webhook.** Dura minutos; si se guardara en el momento del webhook, podría
+  haber vencido para cuando le tocara su turno en la cola.
+- **Fallo permanente vs. transitorio.** Tipo no permitido, tamaño excedido,
+  sin credenciales o un 4xx de Meta no se reintentan —reintentar no lo
+  arregla—; un 5xx o un fallo al subir a B2 sí se dejan salir como excepción
+  para que la cola reintente. En cualquier caso, el mensaje del cliente ya
+  quedó guardado desde antes de encolar: perder la foto no puede perder el
+  mensaje.
+- **Tope de tamaño por tipo.** Imagen (5 MB) y audio (16 MB) usan el mismo
+  tope que ya aplica Meta al aceptar el envío —no tiene caso guardar algo que
+  Meta no habría dejado mandar—; documento se recorta a 20 MB —Meta permite
+  hasta 100— porque no hay caso de uso de taller que necesite algo tan grande.
+- **`getSignedUrl` sí se llama por mensaje en `findOne()`.** Se midió que no
+  hace una petición de red: firma en el momento con las credenciales de la
+  cuenta (SigV4 es cómputo local). Firmar veinte adjuntos de una transcripción
+  larga no cuesta veinte round-trips.
+- El front ya pintaba `<img>` cuando había `url` y un recuadro cuando no; con
+  audio y documento también llegando con `url`, se agregó un reproductor
+  (`<audio controls>`) y un enlace "Ver documento" para no forzar un `<img>`
+  roto sobre un PDF o una nota de voz.
+
+**Pendiente:** F7 (el asistente multimodal) puede ahora leer estas fotos como
+entrada del modelo, tal como preveía D6.
 
 ### F7 · El asistente de verdad — Gemini 2.5 Flash Lite en Vertex AI
 
@@ -385,19 +433,20 @@ motivo.
 
 ```
 F0 ✅ ──► F1 ✅ ──► F2 ✅ ──► F3 ✅ ──► F6 ✅ (front conectado)
-                                 └──► F4 (escalamiento y citas)
-                                      F5 (media) ──► F7 (Gemini)
+                                 ├──► F4 (escalamiento y citas)
+                                 └──► F5 ✅ (media) ──► F7 (Gemini)
 ```
 
-**Estado: la pantalla funciona de punta a punta.** Un cliente escribe por
-WhatsApp, la conversación se guarda, el asesor la ve en la bandeja, la toma y
-le responde. Falta el asistente (F7), el escalamiento (F4) y las fotos (F5).
+**Estado: la pantalla funciona de punta a punta, con fotos.** Un cliente
+escribe por WhatsApp —con o sin foto—, la conversación se guarda, el asesor la
+ve en la bandeja con el adjunto ya cargado, lo toma y responde. Falta el
+asistente (F7) y el escalamiento (F4).
 
 F0 y F1 no tienen nada visible: son la mitad del trabajo y toda la deuda. F2+F3
 es lo que hace que la pantalla exista de verdad. F4 suma valor pero no bloquea.
 
 F5 dejó de ser independiente: con un asistente multimodal, la foto es entrada
-del modelo y no un adjunto, así que va antes de F7.
+del modelo y no un adjunto, así que iba antes de F7 —y ya quedó lista.
 
 **Siguiente paso recomendado: F6.** Con F0–F3 el backend ya sostiene la
 pantalla completa; conectarla cierra el ciclo y deja algo que se puede enseñar
@@ -419,8 +468,7 @@ funcionando, porque es donde se va a ver si el asistente lo está haciendo bien.
   evidente el contraste, y va a seguir así hasta F7. Conviene alinear
   expectativas antes de la demo: lo que ya funciona es el canal y la bandeja,
   no el asistente.
-- **Mensaje obsoleto.** El bot contesta hoy "por ahora sólo puedo leer mensajes
-  de texto" cuando llega una foto (F1). Con F5+F7 eso deja de ser cierto y hay
-  que quitarlo.
+- ~~**Mensaje obsoleto.**~~ Resuelto en F5: el bot ya no dice "sólo puedo leer
+  mensajes de texto" cuando llega un adjunto soportado.
 - **`WHATSAPP_BOT_BRANCH_SLUG`** queda obsoleto al terminar F0; hay que
   retirarlo de `.env.example` y del deploy.

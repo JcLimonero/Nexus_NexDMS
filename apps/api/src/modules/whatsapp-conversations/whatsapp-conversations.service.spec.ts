@@ -1,12 +1,14 @@
 import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
+import { getQueueToken } from '@nestjs/bullmq';
 import { Client } from '../clients/entities/client.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ScopeEnum, User } from '../users/entities/user.entity';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { WhatsappRoutingService } from '../whatsapp-core/whatsapp-routing.service';
 import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
+import { StorageService } from '../../common/storage/storage.service';
 import { ConversationErrorCode } from './dto/send-message.dto';
 import {
   WhatsappConversation,
@@ -44,6 +46,8 @@ describe('WhatsappConversationsService', () => {
   let msgQb: Record<string, jest.Mock>;
   let routing: { credentialsFor: jest.Mock };
   let whatsapp: { sendText: jest.Mock };
+  let storage: { getSignedUrl: jest.Mock };
+  let mediaQueue: { add: jest.Mock };
   let clientQb: {
     select: jest.Mock;
     where: jest.Mock;
@@ -98,6 +102,10 @@ describe('WhatsappConversationsService', () => {
         .fn()
         .mockResolvedValue({ success: true, messageId: 'wamid.out' }),
     };
+    storage = {
+      getSignedUrl: jest.fn().mockResolvedValue('https://b2.signed/url'),
+    };
+    mediaQueue = { add: jest.fn().mockResolvedValue(undefined) };
 
     conversationRepo.createQueryBuilder = jest.fn(() => convQb);
 
@@ -148,6 +156,8 @@ describe('WhatsappConversationsService', () => {
         },
         { provide: WhatsappRoutingService, useValue: routing },
         { provide: WhatsAppProvider, useValue: whatsapp },
+        { provide: StorageService, useValue: storage },
+        { provide: getQueueToken('whatsapp-media'), useValue: mediaQueue },
       ],
     }).compile();
 
@@ -227,6 +237,54 @@ describe('WhatsappConversationsService', () => {
       expect(messageRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ body: null, attachmentType: 'image' }),
       );
+    });
+
+    describe('descarga del adjunto en segundo plano (F5)', () => {
+      it('encola la descarga cuando el adjunto trae mediaId', async () => {
+        await inbound({
+          body: undefined,
+          attachmentType: 'image',
+          mediaId: 'wamid.media-1',
+        });
+
+        expect(mediaQueue.add).toHaveBeenCalledWith(
+          'download',
+          expect.objectContaining({
+            messageId: 'msg-1',
+            tenantId: TENANT,
+            branchId: BRANCH,
+            conversationId: 'conv-1',
+            waMessageId: 'wamid.1',
+            mediaId: 'wamid.media-1',
+            mediaType: 'image',
+          }),
+          expect.objectContaining({ attempts: expect.any(Number) }),
+        );
+      });
+
+      it('no encola nada sin mediaId, aunque haya attachmentType', async () => {
+        await inbound({ body: undefined, attachmentType: 'image' });
+
+        expect(mediaQueue.add).not.toHaveBeenCalled();
+      });
+
+      it('no encola nada para un mensaje de puro texto', async () => {
+        await inbound();
+
+        expect(mediaQueue.add).not.toHaveBeenCalled();
+      });
+
+      it('no revienta si la cola no responde: el mensaje ya quedó guardado', async () => {
+        mediaQueue.add.mockRejectedValue(new Error('sin Redis'));
+
+        await expect(
+          inbound({
+            body: undefined,
+            attachmentType: 'image',
+            mediaId: 'wamid.media-1',
+          }),
+        ).resolves.toBeDefined();
+      });
     });
 
     describe('liga con el cliente por teléfono', () => {
@@ -569,6 +627,33 @@ describe('WhatsappConversationsService', () => {
         url: null,
       });
       expect(detail.lastLine).toBe('📷 Imagen');
+      // Sin key no hay nada que firmar.
+      expect(storage.getSignedUrl).not.toHaveBeenCalled();
+    });
+
+    it('firma la URL del adjunto una vez que ya se descargó', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+      messageRepo.find.mockResolvedValue([
+        {
+          id: 'm1',
+          author: WhatsappMessageAuthorEnum.CUSTOMER,
+          body: null,
+          attachmentType: 'image',
+          attachmentKey: 'whatsapp/tenant-1/conv-1/wamid.1.jpg',
+          user: null,
+          createdAt: new Date(),
+        },
+      ]);
+
+      const detail = await service.findOne(userWith(), 'conv-1');
+
+      expect(storage.getSignedUrl).toHaveBeenCalledWith(
+        'whatsapp/tenant-1/conv-1/wamid.1.jpg',
+      );
+      expect(detail.messages[0].attachment).toEqual({
+        type: 'image',
+        url: 'https://b2.signed/url',
+      });
     });
   });
 

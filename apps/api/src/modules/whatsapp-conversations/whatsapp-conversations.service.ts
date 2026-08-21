@@ -5,7 +5,9 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { InjectQueue } from '@nestjs/bullmq';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
+import { Queue } from 'bullmq';
 import {
   WhatsappConversation,
   WhatsappConversationStateEnum,
@@ -19,7 +21,9 @@ import { Client } from '../clients/entities/client.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
 import { ScopeEnum, User } from '../users/entities/user.entity';
 import { WhatsappRoutingService } from '../whatsapp-core/whatsapp-routing.service';
+import type { WhatsappMediaType } from '../whatsapp-core/whatsapp-media.service';
 import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
+import { StorageService } from '../../common/storage/storage.service';
 import { ConversationErrorCode, SendMessageDto } from './dto/send-message.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import type { PaginatedResponse } from '../../common/dto/paginated-response.dto';
@@ -29,6 +33,7 @@ import {
   ConversationSummaryDto,
   MessageDto,
 } from './dto/conversation-response.dto';
+import type { WhatsappMediaJobPayload } from './processors/whatsapp-media.processor';
 
 /** Lo que Meta deja para contestar con texto libre. */
 const FREE_TEXT_WINDOW_MS = 24 * 60 * 60 * 1000;
@@ -47,6 +52,8 @@ export interface RecordInboundParams {
   body?: string;
   profileName?: string;
   attachmentType?: string;
+  /** `id` del media en Meta. Con esto se encola la descarga (F5). */
+  mediaId?: string;
 }
 
 export interface RecordOutboundParams {
@@ -82,6 +89,9 @@ export class WhatsappConversationsService {
     private readonly userRepo: Repository<User>,
     private readonly routing: WhatsappRoutingService,
     private readonly whatsapp: WhatsAppProvider,
+    private readonly storage: StorageService,
+    @InjectQueue('whatsapp-media')
+    private readonly mediaQueue: Queue<WhatsappMediaJobPayload>,
   ) {}
 
   // ─── Lectura ─────────────────────────────────────
@@ -179,7 +189,7 @@ export class WhatsappConversationsService {
 
     return {
       ...this.toSummary(conversation, this.lineOf(lastMessage)),
-      messages: messages.map((m) => this.toMessage(m)),
+      messages: await Promise.all(messages.map((m) => this.toMessage(m))),
       canReplyFreeText: !!windowExpiresAt && windowExpiresAt > new Date(),
       windowExpiresAt: windowExpiresAt?.toISOString() ?? null,
       appointment: appointment
@@ -476,7 +486,16 @@ export class WhatsappConversationsService {
     };
   }
 
-  private toMessage(m: WhatsappMessage): MessageDto {
+  /**
+   * `getSignedUrl` no llama a B2: firma la URL en el momento con las
+   * credenciales de la cuenta (SigV4 es cómputo local, no red), así que
+   * generar una por mensaje no cuesta una petición de red por adjunto ni
+   * siquiera en una transcripción larga. Lo único que se evita —por eso sigue
+   * siendo condicional a `attachmentKey`— es firmar algo que no existe: sin
+   * key la descarga falló o sigue en la cola, y la pantalla ya sabe pintar el
+   * recuadro cuando `url` es `null`.
+   */
+  private async toMessage(m: WhatsappMessage): Promise<MessageDto> {
     return {
       id: m.id,
       author: m.author,
@@ -485,8 +504,12 @@ export class WhatsappConversationsService {
         ? `${m.user.firstName} ${m.user.lastName}`.trim()
         : null,
       attachment: m.attachmentType
-        ? // La URL llega en F5, cuando el archivo se descargue de Meta a B2.
-          { type: m.attachmentType, url: null }
+        ? {
+            type: m.attachmentType,
+            url: m.attachmentKey
+              ? await this.storage.getSignedUrl(m.attachmentKey)
+              : null,
+          }
         : null,
       createdAt: m.createdAt.toISOString(),
     };
@@ -508,7 +531,7 @@ export class WhatsappConversationsService {
     const conversation = await this.findOrCreateOpen(params);
     const now = new Date();
 
-    await this.messageRepo.save(
+    const message = await this.messageRepo.save(
       this.messageRepo.create({
         tenantId: params.tenantId,
         conversationId: conversation.id,
@@ -519,6 +542,39 @@ export class WhatsappConversationsService {
         direction: WhatsappMessageDirectionEnum.IN,
       }),
     );
+
+    // La descarga se manda a segundo plano (F5): Meta espera el 200 del
+    // webhook en pocos segundos y bajar una foto —más subirla a B2— puede
+    // tardar más que eso. El mensaje ya quedó guardado con su
+    // `attachmentType` sin importar qué pase con la cola; `attachmentKey`
+    // llega después, cuando `WhatsappMediaProcessor` la complete. Encolar
+    // también deja que BullMQ reintente solo los cortes transitorios de red
+    // hacia Meta o B2, sin bloquear este método ni el webhook por eso.
+    if (params.attachmentType && params.mediaId) {
+      try {
+        await this.mediaQueue.add(
+          'download',
+          {
+            messageId: message.id,
+            tenantId: params.tenantId,
+            branchId: params.branchId,
+            conversationId: conversation.id,
+            waMessageId: params.waMessageId,
+            mediaId: params.mediaId,
+            mediaType: params.attachmentType as WhatsappMediaType,
+          },
+          { attempts: 3, backoff: { type: 'exponential', delay: 5000 } },
+        );
+      } catch (e) {
+        // Sin cola (Redis caído) el mensaje se queda sin `attachmentKey`
+        // hasta que alguien reprocese; no vale la pena tumbar el webhook por
+        // esto. Perder la foto no puede perder el mensaje.
+        this.logger.error(
+          `No se pudo encolar la descarga del adjunto del mensaje ${message.id}`,
+          e,
+        );
+      }
+    }
 
     conversation.lastMessageAt = now;
     conversation.lastInboundAt = now;

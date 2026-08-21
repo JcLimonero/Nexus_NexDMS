@@ -151,15 +151,35 @@
                       }
 
                       @if (m.attachment; as att) {
-                        @if (att.url) {
+                        @if (att.url && att.type === "image") {
                           <img
                             class="attachment-img"
                             [src]="att.url"
                             alt="Imagen enviada por el cliente"
                           />
+                        } @else if (att.url && att.type === "audio") {
+                          <audio
+                            class="attachment-audio"
+                            controls
+                            [src]="att.url"
+                          ></audio>
+                        } @else if (att.url) {
+                          <a
+                            class="attachment-link"
+                            [href]="att.url"
+                            target="_blank"
+                            rel="noopener"
+                          >
+                            <app-feather-icons [icon]="'file-text'" />
+                            <span>Ver documento</span>
+                          </a>
                         } @else {
                           <figure class="attachment">
-                            <app-feather-icons [icon]="'image'" />
+                            <app-feather-icons
+                              [icon]="
+                                att.type === 'audio' ? 'headphones' : 'image'
+                              "
+                            />
                             <figcaption>
                               El cliente envió un archivo
                             </figcaption>

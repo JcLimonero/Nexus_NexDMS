@@ -40,10 +40,12 @@ export interface IncomingMessage {
   /** `id` de Meta. Con él se descartan los reintentos. */
   waMessageId: string;
   from: string;
-  type: 'text' | 'image' | 'unsupported';
+  type: 'text' | 'image' | 'audio' | 'document' | 'unsupported';
   text: string;
   /** Nombre del perfil de WhatsApp, cuando Meta lo manda. */
   profileName?: string;
+  /** `id` del media en Meta, sólo cuando `type` es image/audio/document (F5). */
+  mediaId?: string;
 }
 
 const SESSION_TTL_SEC = 30 * 60;
@@ -86,6 +88,9 @@ export class WhatsappBotService {
     // Se guarda antes de decidir qué hacer: lo que dijo el cliente queda en la
     // transcripción aunque el bot no sepa contestarlo, o aunque no conteste
     // nadie. Es justo lo que hacía falta para poder leer el chat después.
+    const isMedia =
+      msg.type === 'image' || msg.type === 'audio' || msg.type === 'document';
+
     const conversation = await this.conversations.recordInbound({
       tenantId: route.tenantId,
       branchId: route.branchId,
@@ -93,7 +98,8 @@ export class WhatsappBotService {
       waMessageId: msg.waMessageId,
       body: msg.type === 'text' ? msg.text : undefined,
       profileName: msg.profileName,
-      attachmentType: msg.type === 'image' ? 'image' : undefined,
+      attachmentType: isMedia ? msg.type : undefined,
+      mediaId: isMedia ? msg.mediaId : undefined,
     });
 
     // Si ya hay una persona atendiendo, el bot se calla. Contestar encima del
@@ -106,10 +112,15 @@ export class WhatsappBotService {
     const ctx: BotContext = { route, conversationId: conversation.id };
 
     if (msg.type !== 'text') {
-      // El flujo de agendado es de menús numerados: una foto no lo hace
-      // avanzar. Se contesta para que el cliente no se quede en el aire.
+      // Desde F5 la foto/audio/documento sí se guarda (se ve en la bandeja
+      // del asesor), así que ya no es cierto decir que el bot "no puede leer"
+      // el mensaje. Lo que sigue siendo cierto es que el flujo de agendado es
+      // una máquina de estados de menús numerados: un adjunto no lo hace
+      // avanzar, y hasta F7 (el asistente de verdad) el bot no lo interpreta.
       return this.reply(ctx, from, [
-        'Por ahora sólo puedo leer mensajes de texto 🙏. Escríbeme lo que necesitas y te ayudo a agendar tu cita.',
+        isMedia
+          ? 'Recibí tu archivo, gracias 📎. Por ahora no puedo leerlo: escríbeme en palabras qué necesitas y te ayudo a agendar tu cita.'
+          : 'Por ahora sólo puedo leer mensajes de texto 🙏. Escríbeme lo que necesitas y te ayudo a agendar tu cita.',
       ]);
     }
 
