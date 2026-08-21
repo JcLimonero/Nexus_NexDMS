@@ -347,24 +347,51 @@ fecha, una garantía— el cliente lo va a cobrar. Antes de encenderlo en
 producción hay que decidir qué tiene permitido afirmar y qué tiene que derivar
 a una persona, y eso es una decisión del negocio, no del prompt.
 
-### F6 · Front — quitar el mock
+### F6 · Front — quitar el mock — ✅ hecho (`ed1df81d`)
 
-- `ConversacionesService` con `HttpClient` sobre `/api/v1/whatsapp/conversations`.
-- `conversaciones.mock.ts` se borra; `conversacion.model.ts` **se queda** (ya es
-  el contrato), quitándole la nota de "esto no refleja el API".
-- Estados de carga/error y polling (D5).
-- Compositor deshabilitado con motivo visible cuando `canReplyFreeText` es false.
-- Quitar el badge "Datos de demostración".
+- ✅ `ConversacionesService` con `HttpClient` sobre `/api/v1/whatsapp/conversations`.
+- ✅ `conversaciones.mock.ts` borrado; `conversacion.model.ts` se queda, ahora
+  como contrato del API.
+- ✅ Estados de carga/error y sondeo cada 15 s (D5).
+- ✅ Compositor apagado con el motivo visible cuando `canReplyFreeText` es false.
+- ✅ Fuera el badge "Datos de demostración", el `demoOnlyGuard` de la ruta y la
+  entrada condicional del menú.
+
+**Decisiones al implementar:**
+
+- **Se quitó el badge "N de M escalaron".** Nada llena `escalation_reason`
+  todavía (eso es F4), así que hoy sería siempre cero. Vuelve con F4.
+- El contador de "esperando asesor" sale de `meta.total` con filtro de estado,
+  no de contar la página cargada: al paginar darían números distintos.
+- Al responder se agrega al hilo **el mensaje que devolvió el servidor**, no el
+  que se escribió. Si el envío falla no aparece nada y el borrador se conserva
+  para reintentar.
+- El botón de responder sólo sale en la conversación propia; si la tomó alguien
+  más, se ve su nombre.
+
+**Probado en el navegador** contra el API corriendo: lista ordenada y con
+teléfono enmascarado, negritas de WhatsApp pintadas, tomar → cambia de estado y
+aparece el compositor, soltar → vuelve al asistente, ventana vencida → compositor
+bloqueado con su explicación, envío rechazado → el hilo queda intacto y sale el
+motivo.
+
+> `shared/utils/demo-mode.ts` quedó **sin usar**: Conversaciones era su único
+> consumidor. Se deja porque es un mecanismo pensado para futuras pantallas de
+> demostración, pero si no se va a usar, sobra.
 
 ---
 
 ## Orden sugerido
 
 ```
-F0 ✅ ──► F1 ✅ ──► F2 ✅ ──► F3 ✅ ──► F6 (wiring del front)
+F0 ✅ ──► F1 ✅ ──► F2 ✅ ──► F3 ✅ ──► F6 ✅ (front conectado)
                                  └──► F4 (escalamiento y citas)
                                       F5 (media) ──► F7 (Gemini)
 ```
+
+**Estado: la pantalla funciona de punta a punta.** Un cliente escribe por
+WhatsApp, la conversación se guarda, el asesor la ve en la bandeja, la toma y
+le responde. Falta el asistente (F7), el escalamiento (F4) y las fotos (F5).
 
 F0 y F1 no tienen nada visible: son la mitad del trabajo y toda la deuda. F2+F3
 es lo que hace que la pantalla exista de verdad. F4 suma valor pero no bloquea.
