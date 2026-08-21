@@ -14,6 +14,7 @@ import { TenantPlanEnum } from '../tenants/entities/tenant.entity';
 export type ModuleKey =
   | 'dashboard'
   | 'clients'
+  | 'fleets'
   | 'leads'
   | 'catalog'
   | 'parts-inventory'
@@ -97,6 +98,16 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     icon: 'clipboard',
     route: '/reception',
     minPlan: TenantPlanEnum.BASIC,
+    hasDashboard: false,
+  },
+  {
+    key: 'fleets',
+    name: 'Flotillas',
+    description:
+      'Convenios de flotilla: empresas con varias unidades y precios preferenciales en refacciones, mano de obra y venta.',
+    icon: 'truck',
+    route: '/fleets',
+    minPlan: TenantPlanEnum.PRO,
     hasDashboard: false,
   },
   {
