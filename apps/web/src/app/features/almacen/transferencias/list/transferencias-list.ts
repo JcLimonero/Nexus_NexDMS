@@ -34,6 +34,7 @@ export class TransferenciasList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   originFilter = signal<string>("");
   destinationFilter = signal<string>("");
@@ -51,6 +52,7 @@ export class TransferenciasList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.almacenService.getWarehouseTransfers({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as WarehouseTransferStatus | undefined,
             originBranchId: this.originFilter() || undefined,
             destinationBranchId: this.destinationFilter() || undefined,
@@ -78,6 +80,12 @@ export class TransferenciasList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.loadSubject.next();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchFilter.set(value);
+    this.meta.update((m) => (m ? { ...m, page: 1 } : null));
+    this.load();
   }
 
   onStatusFilterChange(value: string): void {

@@ -34,6 +34,45 @@ import { ClientListItem } from "../../clientes/models/client.model";
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
   templateUrl: "./presupuesto-servicio-form.html",
+  styles: [
+    `
+      .combo {
+        position: relative;
+      }
+      .combo-menu {
+        position: absolute;
+        z-index: 20;
+        top: calc(100% + 2px);
+        left: 0;
+        right: 0;
+        max-height: 240px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid var(--border, #d9dee3);
+        border-radius: 8px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        padding: 4px;
+      }
+      .combo-item {
+        display: block;
+        width: 100%;
+        text-align: left;
+        border: 0;
+        background: transparent;
+        padding: 6px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        color: var(--text-primary, #21252a);
+        cursor: pointer;
+      }
+      .combo-item:hover {
+        background: var(--primary-soft, #e8f0f6);
+      }
+      .combo-empty {
+        padding: 8px 10px;
+      }
+    `,
+  ],
 })
 export class PresupuestoServicioForm implements OnInit {
   private fb = inject(FormBuilder);
@@ -52,6 +91,9 @@ export class PresupuestoServicioForm implements OnInit {
   branches = signal<{ id: string; name: string }[]>([]);
   clients = signal<ClientListItem[]>([]);
   parts = signal<Part[]>([]);
+  /** Combobox de refacción abierto, con clave "i:j" (solo uno a la vez). */
+  comboAbierto = signal<string | null>(null);
+  private cerrarTimer: ReturnType<typeof setTimeout> | null = null;
 
   readonly urgencyOptions = [
     { value: QuotationLineUrgency.URGENTE, label: "Urgente" },
@@ -124,11 +166,24 @@ export class PresupuestoServicioForm implements OnInit {
       const refs = grupo.get("refacciones") as FormArray;
       for (const r of items.filter((x) => x.parentItemId === t.id)) {
         const rg = this.nuevaRefaccion();
-        rg.patchValue({
-          partId: r.partId,
-          quantity: r.quantity,
-          unitPrice: r.unitPrice,
-        });
+        if (r.partId) {
+          // Del catálogo: la descripción guardada es el nombre de la parte.
+          rg.patchValue({
+            manual: false,
+            partId: r.partId,
+            search: r.description,
+            quantity: r.quantity,
+            unitPrice: r.unitPrice,
+          });
+        } else {
+          // Capturada a mano.
+          rg.patchValue({
+            manual: true,
+            description: r.description,
+            quantity: r.quantity,
+            unitPrice: r.unitPrice,
+          });
+        }
         refs.push(rg);
       }
       this.trabajos.push(grupo);
@@ -154,7 +209,13 @@ export class PresupuestoServicioForm implements OnInit {
   }
   private nuevaRefaccion(): FormGroup {
     return this.fb.group({
-      partId: ["", Validators.required],
+      // manual = refacción fuera de catálogo (nombre libre, sin partId).
+      manual: [false],
+      partId: [""],
+      // Texto visible del buscador de catálogo / etiqueta de la parte elegida.
+      search: [""],
+      // Nombre capturado a mano cuando manual = true.
+      description: [""],
       quantity: [1, [Validators.required, Validators.min(1)]],
       unitPrice: [0, [Validators.min(0)]],
     });
@@ -173,10 +234,60 @@ export class PresupuestoServicioForm implements OnInit {
     this.refaccionesDe(i).removeAt(j);
   }
 
-  onPartSelect(i: number, j: number): void {
+  // ── Buscador de refacciones (combobox con opción "a mano") ──────────────
+  private clave(i: number, j: number): string {
+    return `${i}:${j}`;
+  }
+  abrirCombo(i: number, j: number): void {
+    if (this.cerrarTimer) clearTimeout(this.cerrarTimer);
+    this.comboAbierto.set(this.clave(i, j));
+  }
+  /** Cierre diferido para dar tiempo al click (mousedown) de una opción. */
+  cerrarComboDiferido(): void {
+    this.cerrarTimer = setTimeout(() => this.comboAbierto.set(null), 150);
+  }
+  onBuscarRefaccion(i: number, j: number, ev: Event): void {
+    const q = (ev.target as HTMLInputElement).value;
+    // Al teclear se abandona la parte previamente elegida del catálogo.
+    this.refaccionesDe(i).at(j).patchValue({ search: q, partId: "" });
+    this.abrirCombo(i, j);
+  }
+  /** Refacciones del catálogo que coinciden con el texto del buscador. */
+  partsFiltradas(i: number, j: number): Part[] {
+    const q = (this.refaccionesDe(i).at(j).get("search")?.value || "")
+      .toString()
+      .trim()
+      .toLowerCase();
+    const base = this.parts();
+    const lista = q
+      ? base.filter((p) =>
+          `${p.sku} ${p.name}`.toLowerCase().includes(q),
+        )
+      : base;
+    return lista.slice(0, 20);
+  }
+  elegirParte(i: number, j: number, p: Part): void {
+    this.refaccionesDe(i).at(j).patchValue({
+      manual: false,
+      partId: p.id,
+      search: this.partLabel(p),
+      description: "",
+      unitPrice: p.publicPrice,
+    });
+    this.comboAbierto.set(null);
+  }
+  /** Convierte el renglón en refacción a mano usando lo tecleado como nombre. */
+  usarAMano(i: number, j: number): void {
     const ref = this.refaccionesDe(i).at(j);
-    const part = this.parts().find((p) => p.id === ref.get("partId")?.value);
-    if (part) ref.patchValue({ unitPrice: part.publicPrice });
+    const nombre = (ref.get("search")?.value || "").toString().trim();
+    ref.patchValue({ manual: true, partId: "", search: "", description: nombre });
+    this.comboAbierto.set(null);
+  }
+  /** Regresa un renglón "a mano" al buscador de catálogo. */
+  volverACatalogo(i: number, j: number): void {
+    this.refaccionesDe(i)
+      .at(j)
+      .patchValue({ manual: false, description: "", search: "", partId: "" });
   }
 
   totalTrabajo(i: number): number {
@@ -214,7 +325,13 @@ export class PresupuestoServicioForm implements OnInit {
         urgency: QuotationLineUrgency;
         manoObra: number;
         technicianNote: string;
-        refacciones: { partId: string; quantity: number; unitPrice: number }[];
+        refacciones: {
+          manual: boolean;
+          partId: string;
+          description: string;
+          quantity: number;
+          unitPrice: number;
+        }[];
       }>
     ).map((t) => ({
       description: t.descripcion,
@@ -223,12 +340,26 @@ export class PresupuestoServicioForm implements OnInit {
       urgency: t.urgency,
       technicianNote: t.technicianNote?.trim() || undefined,
       refacciones: (t.refacciones ?? [])
-        .filter((r) => r.partId)
-        .map((r) => ({
-          partId: r.partId,
-          quantity: Number(r.quantity) || 1,
-          unitPrice: Number(r.unitPrice) || undefined,
-        })),
+        .map((r) => {
+          if (r.manual) {
+            const nombre = (r.description || "").trim();
+            if (!nombre) return null;
+            return {
+              description: nombre,
+              quantity: Number(r.quantity) || 1,
+              unitPrice: Number(r.unitPrice) || 0,
+            };
+          }
+          if (r.partId) {
+            return {
+              partId: r.partId,
+              quantity: Number(r.quantity) || 1,
+              unitPrice: Number(r.unitPrice) || undefined,
+            };
+          }
+          return null;
+        })
+        .filter((r): r is NonNullable<typeof r> => r !== null),
     }));
     if (!items.length) {
       this.toastr.error("Agrega al menos un trabajo");

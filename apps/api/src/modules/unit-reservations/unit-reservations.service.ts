@@ -96,6 +96,19 @@ export class UnitReservationsService {
     if (filters.branchId) {
       qb.andWhere('cu.branch_id = :branchId', { branchId: filters.branchId });
     }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(c.first_name ILIKE :s
+          OR c.last_name ILIKE :s
+          OR c.company_name ILIKE :s
+          OR c.phone ILIKE :s
+          OR cu.serial_number ILIKE :s
+          OR cu.brand ILIKE :s
+          OR cu.model ILIKE :s)`,
+        { s },
+      );
+    }
 
     return qb.orderBy('ur.created_at', 'DESC').getMany();
   }

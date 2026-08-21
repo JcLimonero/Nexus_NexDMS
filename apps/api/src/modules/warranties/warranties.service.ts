@@ -114,6 +114,21 @@ export class WarrantiesService {
         clientId: filters.clientId,
       });
     }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(w.description ILIKE :s
+          OR client.first_name ILIKE :s
+          OR client.last_name ILIKE :s
+          OR client.company_name ILIKE :s
+          OR client.phone ILIKE :s
+          OR vehicle.plate ILIKE :s
+          OR vehicle.vin ILIKE :s
+          OR vehicle.make ILIKE :s
+          OR vehicle.model ILIKE :s)`,
+        { s },
+      );
+    }
     if (filters.status) {
       qb.andWhere('w.status = :status', { status: filters.status });
     }

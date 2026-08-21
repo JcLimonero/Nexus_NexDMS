@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tenant } from './entities/tenant.entity';
+import { TenantStatusChange } from './entities/tenant-status-change.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
@@ -15,6 +16,8 @@ export class TenantsService {
   constructor(
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    @InjectRepository(TenantStatusChange)
+    private readonly statusRepo: Repository<TenantStatusChange>,
   ) {}
 
   async findAll(_user: UserPayload): Promise<Tenant[]> {
@@ -49,10 +52,43 @@ export class TenantsService {
     return this.tenantRepo.save(tenant);
   }
 
-  async suspend(user: UserPayload, id: string): Promise<Tenant> {
+  /**
+   * Alterna el acceso del cliente: suspender (isActive=false) le corta el
+   * acceso a todos sus usuarios, reactivar (true) lo devuelve.
+   *
+   * Exige un motivo y lo deja en bitácora: cortar el acceso de un cliente
+   * entero no puede ser un clic anónimo, y después hay que poder explicar por
+   * qué una cuenta quedó fuera.
+   */
+  async suspend(user: UserPayload, id: string, reason: string): Promise<Tenant> {
+    const motivo = (reason ?? '').trim();
+    if (!motivo) {
+      throw new BadRequestException(
+        'Indica el motivo del cambio de estatus.',
+      );
+    }
     const tenant = await this.findOne(user, id);
-    tenant.isActive = false;
-    return this.tenantRepo.save(tenant);
+    const previo = tenant.isActive;
+    tenant.isActive = !tenant.isActive;
+    const guardado = await this.tenantRepo.save(tenant);
+    await this.statusRepo.save(
+      this.statusRepo.create({
+        tenantId: id,
+        previousActive: previo,
+        newActive: guardado.isActive,
+        reason: motivo,
+        changedBy: user.sub ?? null,
+      }),
+    );
+    return guardado;
+  }
+
+  /** Bitácora de suspensiones/reactivaciones del cliente, del más reciente. */
+  async statusHistory(id: string): Promise<TenantStatusChange[]> {
+    return this.statusRepo.find({
+      where: { tenantId: id },
+      order: { createdAt: 'DESC' },
+    });
   }
 
   /** Módulos habilitados; null = todos. */
@@ -141,6 +177,31 @@ export class TenantsService {
     tenant.currency = code;
     await this.tenantRepo.save(tenant);
     return { currency: tenant.currency };
+  }
+
+  async getCommissionConfig(
+    tenantId: string,
+  ): Promise<{ exemptChargeTypes: string[] }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    return { exemptChargeTypes: tenant.commissionExemptChargeTypes ?? [] };
+  }
+
+  async setCommissionConfig(
+    tenantId: string,
+    exemptChargeTypes: string[],
+  ): Promise<{ exemptChargeTypes: string[] }> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) {
+      throw new NotFoundException(`Tenant ${tenantId} no encontrado`);
+    }
+    const validos = ['CLIENT', 'WARRANTY', 'INTERNAL', 'QUOTE', 'FAST_SERVICE'];
+    const limpio = (exemptChargeTypes ?? []).filter((t) => validos.includes(t));
+    tenant.commissionExemptChargeTypes = limpio.length ? limpio : null;
+    await this.tenantRepo.save(tenant);
+    return { exemptChargeTypes: tenant.commissionExemptChargeTypes ?? [] };
   }
 
   async setEnabledModules(

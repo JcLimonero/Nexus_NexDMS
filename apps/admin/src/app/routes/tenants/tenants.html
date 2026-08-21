@@ -26,6 +26,53 @@
         <span class="pie">Sin acceso al sistema</span>
       </div>
     </section>
+
+    <!-- Aviso a Nexus: clientes que el reloj del impago dejó en solo-lectura o
+         ya bloqueó, para actuar antes de que reclamen. -->
+    @if (p.morosos.length) {
+      <section class="mora">
+        <div class="mora-cabecera">
+          <h2>Clientes en mora por pago</h2>
+          <span class="mora-resumen">
+            {{ p.enSoloLectura }} en solo lectura ·
+            {{ p.bloqueadosPorPago }} bloqueados
+          </span>
+        </div>
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Grupo</th>
+              <th>Estado</th>
+              <th>Días de mora</th>
+              <th>Adeudo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of p.morosos; track m.tenantId) {
+              <tr>
+                <td>{{ m.nombre }}</td>
+                <td>
+                  <span
+                    class="pastilla"
+                    [attr.data-estado]="m.estado"
+                  >{{ m.estado === "BLOQUEADO" ? "Bloqueado" : "Solo lectura" }}</span>
+                  @if (m.suspendidoManual) {
+                    <span class="pastilla" data-estado="BLOQUEADO">Suspendido</span>
+                  }
+                </td>
+                <td>
+                  {{ m.diasMora }}
+                  @if (m.estado === "SOLO_LECTURA") {
+                    <small class="pie">({{ m.diasParaBloqueo }} para bloqueo)</small>
+                  }
+                </td>
+                <td>{{ m.adeudo | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    }
   }
 
   <!-- Listado -->
@@ -48,8 +95,9 @@
             <th>Grupo</th>
             <th>Identificador</th>
             <th>Plan</th>
-            <th>Módulos</th>
+            <th>Módulos extra</th>
             <th>Estado</th>
+            <th>Pagos</th>
             <th></th>
           </tr>
         </thead>
@@ -63,37 +111,45 @@
                   {{ planDe(t) }}
                 </span>
               </td>
-              <td class="num">{{ contarActivos(t) }}</td>
+              <td class="extras-celda">
+                @if (extrasDe(t).length) {
+                  @for (m of extrasDe(t); track m.key) {
+                    <span class="extra-chip">{{ m.name }}</span>
+                  }
+                } @else {
+                  <span class="pagos-sin">—</span>
+                }
+              </td>
               <td>
                 <span class="estado" [attr.data-activo]="t.isActive">
                   {{ t.isActive ? "Activo" : "Suspendido" }}
                 </span>
               </td>
+              <td class="pagos-celda">
+                @if (cobroDe(t); as c) {
+                  @if (c.ultimoPago; as u) {
+                    <span
+                      class="cobro-estado"
+                      [attr.data-estado]="u.vencido ? 'VENCIDO' : u.status"
+                    >
+                      {{ u.vencido ? "Vencido" : (u.status | titlecase) }}
+                    </span>
+                    <span class="pagos-periodo">último: {{ u.period }}</span>
+                  } @else {
+                    <span class="pagos-sin">Sin pagos</span>
+                  }
+                  @if (c.proximoCobro) {
+                    <span class="pagos-proximo">
+                      próximo: {{ c.proximoCobro | date: "dd/MM/yyyy" }}
+                    </span>
+                  }
+                } @else {
+                  <span class="pagos-sin">—</span>
+                }
+              </td>
               <td class="acciones">
-                <button
-                  type="button"
-                  class="btn-chico entrar"
-                  (click)="entrar(t)"
-                  [disabled]="!t.isActive"
-                  title="Entrar al DMS de este cliente"
-                >
-                  Entrar
-                </button>
                 <button type="button" class="btn-chico" (click)="abrirFicha(t)">
                   Ficha
-                </button>
-                <button type="button" class="btn-chico" (click)="editar(t)">
-                  Editar
-                </button>
-                <button type="button" class="btn-chico" (click)="abrirModulos(t)">
-                  Módulos
-                </button>
-                <button
-                  type="button"
-                  class="btn-chico"
-                  (click)="alternarSuspension(t)"
-                >
-                  {{ t.isActive ? "Suspender" : "Reactivar" }}
                 </button>
               </td>
             </tr>
@@ -104,20 +160,14 @@
   </section>
 </div>
 
-<!-- Alta y edición del cliente -->
+<!-- Alta de un cliente nuevo (la edición vive en la ficha) -->
 @if (formAbierto()) {
   <div class="fondo" (click)="cerrarForm()"></div>
   <div class="dialogo" role="dialog" aria-modal="true">
     <header class="dialogo-top">
       <div>
-        <h2>{{ editando() ? "Editar cliente" : "Nuevo cliente" }}</h2>
-        <p>
-          {{
-            editando()
-              ? "El plan define su nivel, su precio y los módulos que recibe"
-              : "Un grupo nuevo con el plan que contrata"
-          }}
-        </p>
+        <h2>Nuevo cliente</h2>
+        <p>Un grupo nuevo con el plan que contrata</p>
       </div>
       <button type="button" class="btn-cerrar" (click)="cerrarForm()">×</button>
     </header>
@@ -153,7 +203,7 @@
         [disabled]="guardando()"
         (click)="guardar()"
       >
-        {{ editando() ? "Guardar" : "Dar de alta" }}
+        Dar de alta
       </button>
     </footer>
   </div>
@@ -252,6 +302,21 @@
       <button type="button" class="btn-cerrar" (click)="cerrarFicha()">×</button>
     </header>
 
+    <div class="ficha-acciones">
+      <button
+        type="button"
+        class="btn-secundario"
+        (click)="entrar(t)"
+        [disabled]="!t.isActive"
+        title="Entrar al DMS de este cliente con la sesión puesta"
+      >
+        Entrar al DMS
+      </button>
+      <button type="button" class="btn-secundario" (click)="abrirModulos(t)">
+        Gestionar módulos
+      </button>
+    </div>
+
     @if (ficha(); as f) {
       <!-- Ligas de acceso del cliente por portal, para copiar y compartir -->
       <section class="liga-acceso">
@@ -341,6 +406,14 @@
       @if (pestana() === "datos") {
         <div class="rejilla">
           <label class="campo">
+            <span>Nombre del grupo</span>
+            <input [(ngModel)]="datos.name" />
+          </label>
+          <label class="campo">
+            <span>Identificador (liga de acceso)</span>
+            <input [(ngModel)]="datos.slug" />
+          </label>
+          <label class="campo ancho-total">
             <span>Plan contratado</span>
             <select [(ngModel)]="datos.saasPlanId">
               <option value="">Sin plan asignado</option>
@@ -391,6 +464,51 @@
             <textarea rows="3" [(ngModel)]="datos.notes"></textarea>
           </label>
         </div>
+
+        <!-- Estatus del cliente y bitácora: suspender/reactivar se hace aquí,
+             con motivo, y queda el rastro de por qué se cortó o devolvió el
+             acceso, quién y cuándo. -->
+        <section class="historial">
+          <div class="historial-cabecera">
+            <div class="historial-estatus">
+              <h4 class="historial-titulo">Estatus del cliente</h4>
+              <span class="estado" [attr.data-activo]="t.isActive">
+                {{ t.isActive ? "Activo" : "Suspendido" }}
+              </span>
+            </div>
+            <button
+              type="button"
+              [class.btn-secundario]="t.isActive"
+              [class.btn-principal]="!t.isActive"
+              class="btn-estatus"
+              (click)="pedirSuspension(t)"
+            >
+              {{ t.isActive ? "Suspender cliente" : "Reactivar cliente" }}
+            </button>
+          </div>
+
+          <h4 class="historial-titulo historial-subtitulo">Historial</h4>
+          @if (historial().length === 0) {
+            <p class="ayuda">Sin cambios de estatus registrados.</p>
+          } @else {
+            <ul class="historial-lista">
+              @for (h of historial(); track h.id) {
+                <li class="historial-item">
+                  <span
+                    class="pastilla"
+                    [attr.data-estado]="h.newActive ? 'ACTIVO' : 'BLOQUEADO'"
+                  >
+                    {{ h.newActive ? "Reactivado" : "Suspendido" }}
+                  </span>
+                  <span class="historial-fecha">
+                    {{ h.createdAt | date: "dd/MM/yyyy HH:mm" }}
+                  </span>
+                  <span class="historial-motivo">{{ h.reason }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
 
         <footer class="dialogo-pie">
           <button type="button" class="btn-secundario" (click)="cerrarFicha()">
@@ -512,7 +630,7 @@
               {{ subiendoLogo() ? "Subiendo…" : "Subir logotipo" }}
               <input
                 type="file"
-                accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                accept="image/png,image/jpeg,image/webp"
                 hidden
                 [disabled]="subiendoLogo()"
                 (change)="subirLogo($event)"
@@ -524,10 +642,10 @@
               </button>
             }
             <ul class="pista pista-logo">
-              <li><strong>Formato:</strong> PNG o SVG con fondo transparente.</li>
+              <li><strong>Formato:</strong> PNG con fondo transparente (SVG no funciona en el almacenamiento).</li>
               <li><strong>Forma:</strong> horizontal (apaisado), proporción ≈ 4:1.</li>
               <li><strong>Tamaño:</strong> 320×80 px o más (se muestra hasta 160×40 px).</li>
-              <li><strong>Contraste:</strong> el menú es oscuro; usa una versión clara o de buen contraste.</li>
+              <li><strong>Contraste:</strong> se muestra sobre un recuadro claro; usa tinta oscura o de color (evita texto blanco).</li>
             </ul>
           </div>
         </div>
@@ -546,7 +664,7 @@
               {{ subiendoIcono() ? "Subiendo…" : "Subir isotipo" }}
               <input
                 type="file"
-                accept="image/png,image/svg+xml,image/webp"
+                accept="image/png,image/webp"
                 hidden
                 [disabled]="subiendoIcono()"
                 (change)="subirIcono($event)"
@@ -559,7 +677,7 @@
             }
             <ul class="pista pista-logo">
               <li><strong>Forma:</strong> cuadrado (1:1).</li>
-              <li><strong>Tamaño:</strong> 512×512 px, PNG o SVG transparente.</li>
+              <li><strong>Tamaño:</strong> 512×512 px, PNG transparente.</li>
               <li><strong>Uso:</strong> favicon, monitores del taller e ícono del PWA.</li>
               <li><strong>Simple:</strong> solo el símbolo o las iniciales, sin texto largo.</li>
             </ul>
@@ -605,5 +723,49 @@
     } @else {
       <p class="vacio">Cargando ficha…</p>
     }
+  </div>
+}
+
+<!-- Confirmar suspensión/reactivación con motivo obligatorio -->
+@if (suspensionDe(); as t) {
+  <div class="fondo" (click)="cerrarSuspension()"></div>
+  <div class="dialogo angosto" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>{{ t.isActive ? "Suspender" : "Reactivar" }} a {{ t.name }}</h2>
+        <p>
+          {{
+            t.isActive
+              ? "Le cortará el acceso a todos sus usuarios. Deja constancia del motivo."
+              : "Le devolverá el acceso. Deja constancia del motivo."
+          }}
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarSuspension()">×</button>
+    </header>
+
+    <label class="campo ancho-total">
+      <span>Motivo del cambio *</span>
+      <textarea
+        rows="3"
+        [ngModel]="motivoSuspension()"
+        (ngModelChange)="motivoSuspension.set($event)"
+        placeholder="Ej. Falta de pago del periodo 2026-08 / Regularizó su adeudo"
+      ></textarea>
+    </label>
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarSuspension()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando()"
+        (click)="confirmarSuspension()"
+      >
+        {{ t.isActive ? "Suspender cliente" : "Reactivar cliente" }}
+      </button>
+    </footer>
   </div>
 }

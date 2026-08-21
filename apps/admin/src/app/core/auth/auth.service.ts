@@ -54,7 +54,7 @@ export class AuthService {
 
   login(email: string, password: string): Observable<RespuestaLogin> {
     return this.http
-      .post<RespuestaLogin>("/api/v1/auth/login", { email, password })
+      .post<RespuestaLogin>("/api/v1/admin-auth/login", { email, password })
       .pipe(
         tap((r) => {
           localStorage.setItem(TOKEN, r.accessToken);

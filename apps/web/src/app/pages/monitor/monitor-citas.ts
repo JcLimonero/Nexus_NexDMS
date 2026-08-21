@@ -12,6 +12,7 @@ import { Title } from "@angular/platform-browser";
 
 import { BranchesService } from "../../features/inventario-refacciones/services/branches.service";
 import { CitaEnTablero, MonitorService, TableroCitas } from "./monitor.service";
+import { MonitorAuthService } from "./monitor-auth.service";
 import { LineaDeTiempo } from "./linea-de-tiempo";
 
 /** Una cita ya colocada sobre la línea de tiempo, en porcentaje. */
@@ -66,6 +67,27 @@ export class MonitorCitas implements OnInit, OnDestroy {
   private branchesSrv = inject(BranchesService);
   private route = inject(ActivatedRoute);
   private titulo = inject(Title);
+  private monitorAuth = inject(MonitorAuthService);
+
+  private renovando = false;
+  private renovacion?: ReturnType<typeof setInterval>;
+
+  /** Renueva el token del monitor (caduca ~15m) para que la pantalla de
+   * pared no se quede "Sin conexión"; reintenta la carga si lo logra. */
+  private renovarSesion(reintentar: boolean): void {
+    if (this.renovando) return;
+    this.renovando = true;
+    this.monitorAuth.renovar().subscribe((ok) => {
+      this.renovando = false;
+      if (ok) {
+        if (reintentar) this.cargar();
+      } else if (reintentar) {
+        // Sesión vencida y no renovable (p. ej. refresh caducado): en vez de
+        // quedarse en blanco, se vuelve al acceso del monitor para re-entrar.
+        this.monitorAuth.salir();
+      }
+    });
+  }
 
   private static readonly REFRESCO_MS = 60_000;
   private static readonly LATIDO_MS = 15_000;
@@ -189,6 +211,11 @@ export class MonitorCitas implements OnInit, OnDestroy {
     this.eje.apilar((this.datos()?.sinAsignar ?? []).map((c) => this.colocar(c))),
   );
 
+  /** Cierra la sesión del monitor y vuelve al acceso (para cambiar de cuenta). */
+  salir(): void {
+    this.monitorAuth.salir();
+  }
+
   ngOnInit(): void {
     const deLaUrl = this.route.snapshot.queryParamMap.get("branch");
     if (deLaUrl) {
@@ -216,6 +243,8 @@ export class MonitorCitas implements OnInit, OnDestroy {
     // La línea avanza aunque no lleguen datos nuevos: entre refrescos el
     // tiempo sigue corriendo y una línea parada envejece mal.
     this.latido = setInterval(() => this.eje.mover(), MonitorCitas.LATIDO_MS);
+    // Renovación proactiva del token, antes de que caduque.
+    this.renovacion = setInterval(() => this.renovarSesion(false), 10 * 60_000);
   }
 
   /**
@@ -238,6 +267,7 @@ export class MonitorCitas implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.temporizador) clearInterval(this.temporizador);
     if (this.latido) clearInterval(this.latido);
+    if (this.renovacion) clearInterval(this.renovacion);
   }
 
   private hoy(): string {
@@ -257,7 +287,11 @@ export class MonitorCitas implements OnInit, OnDestroy {
         // la línea seguiría cuadrando con las citas.
         this.eje.mover(new Date(d.ahora));
       },
-      error: () => this.sinConexion.set(true),
+      error: (err) => {
+        this.sinConexion.set(true);
+        // Token caducado: renueva y reintenta (así no se queda colgado).
+        if (err?.status === 401) this.renovarSesion(true);
+      },
     });
   }
 

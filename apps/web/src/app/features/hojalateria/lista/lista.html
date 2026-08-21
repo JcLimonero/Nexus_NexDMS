@@ -1,0 +1,76 @@
+<div class="hp-page">
+  <div class="hp-head">
+    <div>
+      <h1>Hojalatería y Pintura</h1>
+      <p class="hp-sub">Recepción de carrocería y presupuestos por pieza</p>
+    </div>
+    <div class="hp-head-acc">
+      <a class="hp-btn hp-btn--ghost" routerLink="catalogo">Catálogo de piezas</a>
+      <a class="hp-btn hp-btn--primary" routerLink="nueva">Nueva orden</a>
+    </div>
+  </div>
+
+  <div class="hp-filtros">
+    <button
+      class="hp-chip"
+      [class.activo]="filtro() === ''"
+      (click)="filtrar('')"
+    >
+      Todas
+    </button>
+    @for (e of estados; track e.value) {
+      <button
+        class="hp-chip"
+        [class.activo]="filtro() === e.value"
+        (click)="filtrar(e.value)"
+      >
+        {{ e.label }}
+      </button>
+    }
+  </div>
+
+  @if (cargando()) {
+    <p class="hp-vacio">Cargando…</p>
+  } @else if (ordenes().length === 0) {
+    <p class="hp-vacio">No hay órdenes con este filtro.</p>
+  } @else {
+    <table class="hp-tabla">
+      <thead>
+        <tr>
+          <th>Folio</th>
+          <th>Cliente</th>
+          <th>Vehículo</th>
+          <th>Pago</th>
+          <th>Estado</th>
+          <th class="hp-num">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (o of ordenes(); track o.id) {
+          <tr [routerLink]="[o.id]" class="hp-fila">
+            <td class="hp-mono">#{{ o.folio }}</td>
+            <td>{{ o.clientName }}</td>
+            <td class="hp-muted">{{ vehiculo(o) || "—" }}</td>
+            <td>
+              @if (o.paymentType === "INSURANCE") {
+                <span class="hp-badge hp-badge--seg">
+                  Aseguradora{{ o.insuranceCompany ? ": " + o.insuranceCompany : "" }}
+                </span>
+              } @else {
+                <span class="hp-badge">Particular</span>
+              }
+            </td>
+            <td>
+              <span class="hp-estado" [attr.data-estado]="o.status">{{
+                etiquetaEstado(o.status)
+              }}</span>
+            </td>
+            <td class="hp-num">
+              {{ o.total | currency: "MXN" : "symbol-narrow" : "1.2-2" }}
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

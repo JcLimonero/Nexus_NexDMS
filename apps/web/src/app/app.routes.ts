@@ -94,6 +94,15 @@ export const routes: Routes = [
         (m) => m.ForgetPwd,
       ),
   },
+  // Portal de pago del SaaS: fuera del shell del DMS a propósito. Es a donde
+  // llega un cliente bloqueado por falta de pago, así que no debe cargar el
+  // layout (que dispararía peticiones bloqueadas y un bucle de 403).
+  {
+    path: "pago",
+    loadComponent: () => import("./pages/pago/pago").then((m) => m.Pago),
+    canActivate: [AdminGuard],
+    data: { title: "Pago de suscripción" },
+  },
   // Portal de recepción: fuera del layout del DMS a propósito, para que en el
   // iPad no aparezca el menú de módulos. Pide sesión igual que el resto.
   {

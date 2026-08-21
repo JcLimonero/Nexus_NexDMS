@@ -20,6 +20,7 @@ interface DatosPerfil {
   firstName: string;
   lastName: string;
   email: string;
+  avatarUrl?: string | null;
   roles?: string[];
   scope?: string;
   branches?: {
@@ -102,6 +103,8 @@ export class Perfil implements OnInit {
     return (this.perfil()?.roles ?? []).includes("SUPERADMIN");
   }
 
+  subiendoAvatar = signal(false);
+
   ngOnInit(): void {
     this.http.get<DatosPerfil>("/api/v1/auth/me").subscribe({
       next: (p) => {
@@ -110,6 +113,36 @@ export class Perfil implements OnInit {
         if (this.esSuperadmin() && p.tenantId) this.cargarSuscripcion(p.tenantId);
       },
       error: () => this.cargando.set(false),
+    });
+  }
+
+  subirAvatar(ev: Event): void {
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append("file", file);
+    this.subiendoAvatar.set(true);
+    this.http.post<DatosPerfil>("/api/v1/auth/me/avatar", form).subscribe({
+      next: (p) => {
+        this.perfil.set(p);
+        this.subiendoAvatar.set(false);
+        this.toastr.success("Foto de perfil actualizada");
+      },
+      error: (e) => {
+        this.subiendoAvatar.set(false);
+        this.toastr.error(e?.error?.message || "No se pudo subir la foto");
+      },
+    });
+    input.value = "";
+  }
+
+  quitarAvatar(): void {
+    this.http.delete<DatosPerfil>("/api/v1/auth/me/avatar").subscribe({
+      next: (p) => {
+        this.perfil.set(p);
+        this.toastr.success("Foto de perfil quitada");
+      },
     });
   }
 

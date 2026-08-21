@@ -54,6 +54,8 @@ export class OrdenServicioForm implements OnInit {
       reportedFault: ["", [Validators.required, Validators.maxLength(2000)]],
       kmIn: [0, [Validators.required, Validators.min(0)]],
       mechanicId: [""],
+      // Fecha promesa de entrega, capturada al recibir la unidad.
+      promisedAt: [""],
       notes: [""],
     });
 
@@ -147,6 +149,9 @@ export class OrdenServicioForm implements OnInit {
       reportedFault: raw.reportedFault.trim(),
       kmIn: Number(raw.kmIn) || 0,
       mechanicId: raw.mechanicId || undefined,
+      promisedAt: raw.promisedAt
+        ? new Date(raw.promisedAt).toISOString()
+        : undefined,
       notes: raw.notes?.trim() || undefined,
     };
 

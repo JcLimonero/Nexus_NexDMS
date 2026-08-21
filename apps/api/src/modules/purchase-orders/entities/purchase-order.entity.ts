@@ -71,6 +71,10 @@ export class PurchaseOrder {
   @Column({ name: 'received_at', type: 'date', nullable: true })
   receivedAt: Date | null;
 
+  /** Cuándo se pagó al proveedor; null = aún en la línea de crédito. */
+  @Column({ name: 'paid_at', type: 'timestamp', nullable: true })
+  paidAt: Date | null;
+
   @Column({ name: 'notes', type: 'text', nullable: true })
   notes: string | null;
 

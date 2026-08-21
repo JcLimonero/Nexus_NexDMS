@@ -1,13 +1,17 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   HttpCode,
   Param,
   Patch,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
@@ -99,6 +103,24 @@ export class AuthController {
   @ApiBearerAuth()
   me(@CurrentUser() user: UserPayload) {
     return this.authService.getMe(user);
+  }
+
+  @Post('me/avatar')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  @UseInterceptors(FileInterceptor('file'))
+  subirAvatar(
+    @CurrentUser() user: UserPayload,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.authService.subirAvatar(user, file);
+  }
+
+  @Delete('me/avatar')
+  @UseGuards(AuthGuard)
+  @ApiBearerAuth()
+  quitarAvatar(@CurrentUser() user: UserPayload) {
+    return this.authService.quitarAvatar(user);
   }
 
   @Post('switch-branch')

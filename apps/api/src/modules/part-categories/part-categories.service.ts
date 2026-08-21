@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { ILike, Repository } from 'typeorm';
 import { PartCategory } from './entities/part-category.entity';
 import { CreatePartCategoryDto } from './dto/create-part-category.dto';
 import { FilterPartCategoriesDto } from './dto/filter-part-categories.dto';
@@ -23,9 +23,13 @@ export class PartCategoriesService {
   }> {
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 20;
+    const search = filters.search?.trim();
 
     const [data, total] = await this.repo.findAndCount({
-      where: { tenantId: user.tenantId },
+      where: {
+        tenantId: user.tenantId,
+        ...(search ? { name: ILike(`%${search}%`) } : {}),
+      },
       order: { name: 'ASC' },
       skip: (page - 1) * limit,
       take: limit,

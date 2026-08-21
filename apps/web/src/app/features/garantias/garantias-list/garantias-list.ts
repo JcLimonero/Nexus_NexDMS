@@ -35,6 +35,7 @@ export class GarantiasList implements OnInit {
   } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   typeFilter = signal<string>("");
   branchFilter = signal<string>("");
@@ -52,6 +53,7 @@ export class GarantiasList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.garantiasService.getWarranties({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as WarrantyStatus | undefined,
             type: this.typeFilter() as WarrantyType | undefined,
             branchId: this.branchFilter() || undefined,

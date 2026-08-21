@@ -5,6 +5,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { getDatabaseConfig } from './config/database.config';
 import { AuthModule } from './modules/auth/auth.module';
+import { AdminAuthModule } from './modules/admin-auth/admin-auth.module';
 import { LegalEntitiesModule } from './modules/legal-entities/legal-entities.module';
 import { BranchesModule } from './modules/branches/branches.module';
 import { ClientsModule } from './modules/clients/clients.module';
@@ -56,6 +57,7 @@ import { SignaturesModule } from './modules/signatures/signatures.module';
 import { ClientPortalModule } from './modules/client-portal/client-portal.module';
 import { ExportModule } from './modules/export/export.module';
 import { WarrantiesModule } from './modules/warranties/warranties.module';
+import { BodyworkModule } from './modules/bodywork/bodywork.module';
 import { CommissionsModule } from './modules/commissions/commissions.module';
 import { BranchPrintersModule } from './modules/branch-printers/branch-printers.module';
 import { CfdiLogModule } from './modules/cfdi-log/cfdi-log.module';
@@ -76,6 +78,7 @@ import { LIMITES_GENERALES } from './common/throttler/limites';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerGuard } from '@nestjs/throttler';
 import { AuditInterceptor } from './common/audit/audit.interceptor';
+import { BillingEnforcementInterceptor } from './common/billing/billing-enforcement.interceptor';
 import { SuperadminAuditModule } from './modules/superadmin-audit/superadmin-audit.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { CfdiModule } from './modules/cfdi/cfdi.module';
@@ -125,6 +128,7 @@ import { WhatsappConversationsModule } from './modules/whatsapp-conversations/wh
       }),
     }),
     AuthModule,
+    AdminAuthModule,
     TenantsModule,
     SaasModule,
     VehicleHistoryModule,
@@ -179,6 +183,7 @@ import { WhatsappConversationsModule } from './modules/whatsapp-conversations/wh
     UnitReturnsModule,
     UnitReturnDocumentsModule,
     ServiceOrdersModule,
+    BodyworkModule,
     SaleDocumentsModule,
     ServiceKitsModule,
     SignaturesModule,
@@ -210,6 +215,7 @@ import { WhatsappConversationsModule } from './modules/whatsapp-conversations/wh
   providers: [
     AppService,
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: BillingEnforcementInterceptor },
     { provide: APP_GUARD, useClass: ThrottlerGuard },
   ],
 })

@@ -1,8 +1,13 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 import { SaleStatusEnum } from '../entities/sale.entity';
 
 export class FilterSalesDto {
+  /** Búsqueda de texto: ticket/folio o nombre/teléfono del cliente. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   clientId?: string;

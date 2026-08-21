@@ -77,6 +77,25 @@ export class PurchaseOrdersController {
     return this.purchaseOrdersService.findOne(user, id);
   }
 
+  @Get(':id/service-orders')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  serviceOrders(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.purchaseOrdersService.ordenesDeServicioLigadas(user, id);
+  }
+
+  @Patch(':id/pay')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE')
+  markPaid(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { paid?: boolean },
+  ) {
+    return this.purchaseOrdersService.marcarPagada(user, id, body?.paid !== false);
+  }
+
   @Post()
   @Roles('SUPERADMIN', 'ADMIN', 'WAREHOUSE')
   @UseGuards(IdempotencyGuard)

@@ -7,6 +7,7 @@ import {
   ServiceOrdersResponse,
   CreateServiceOrderDto,
   ServiceOrderStatus,
+  PromiseChange,
 } from "./models/service-order.model";
 import { CustomerVehicle } from "../clientes/models/client.model";
 
@@ -35,6 +36,7 @@ export class TallerService {
     filters: ServiceOrderFilters = {}
   ): Observable<ServiceOrdersResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.clientId) params = params.set("clientId", filters.clientId);
     if (filters.mechanicId) params = params.set("mechanicId", filters.mechanicId);
     if (filters.status) params = params.set("status", filters.status);
@@ -54,6 +56,36 @@ export class TallerService {
 
   createServiceOrder(dto: CreateServiceOrderDto): Observable<ServiceOrder> {
     return this.http.post<ServiceOrder>(SERVICE_ORDERS_URL, dto);
+  }
+
+  /** Cambia la fecha prometida registrando la justificación. */
+  updatePromisedDate(
+    id: string,
+    promisedAt: string | null,
+    reason: string,
+  ): Observable<ServiceOrder> {
+    return this.http.patch<ServiceOrder>(
+      `${SERVICE_ORDERS_URL}/${id}/promised-date`,
+      { promisedAt, reason },
+    );
+  }
+
+  /** Bitácora de cambios de la fecha prometida. */
+  getPromiseHistory(id: string): Observable<PromiseChange[]> {
+    return this.http.get<PromiseChange[]>(
+      `${SERVICE_ORDERS_URL}/${id}/promise-history`,
+    );
+  }
+
+  /** Solicita una refacción al almacén: crea una requisición ligada a la orden. */
+  requestPart(
+    id: string,
+    dto: { partId: string; quantity: number; note?: string },
+  ): Observable<{ requisitionId: string }> {
+    return this.http.post<{ requisitionId: string }>(
+      `${SERVICE_ORDERS_URL}/${id}/request-part`,
+      dto,
+    );
   }
 
   changeStatus(

@@ -45,6 +45,7 @@ export class OrdenesCompraList implements OnInit {
   meta = signal<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   statusFilter = signal<string>("");
   branchFilter = signal<string>("");
   supplierFilter = signal<string>("");
@@ -69,6 +70,7 @@ export class OrdenesCompraList implements OnInit {
         debounceTime(100),
         switchMap(() =>
           this.comprasService.getPurchaseOrders({
+            search: this.searchFilter().trim() || undefined,
             status: this.statusFilter() as PurchaseOrderStatus | undefined,
             branchId: this.branchFilter() || undefined,
             supplierId: this.supplierFilter() || undefined,
@@ -96,6 +98,12 @@ export class OrdenesCompraList implements OnInit {
   load(): void {
     this.loading.set(true);
     this.loadSubject.next();
+  }
+
+  onSearchFilterChange(value: string): void {
+    this.searchFilter.set(value);
+    this.meta.update((m) => (m ? { ...m, page: 1 } : null));
+    this.load();
   }
 
   onStatusFilterChange(value: string): void {

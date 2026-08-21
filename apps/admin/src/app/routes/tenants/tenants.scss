@@ -89,6 +89,163 @@
   }
 }
 
+/* ── Aviso de clientes en mora por pago ───────────── */
+.mora {
+  margin-top: var(--space-16);
+  padding: var(--space-16);
+  border: 1px solid var(--warning);
+  border-radius: var(--radius-card, 10px);
+  background: var(--warning-bg);
+}
+.mora-cabecera {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-8);
+  margin-bottom: var(--space-8);
+
+  h2 {
+    margin: 0;
+    font-size: var(--text-body);
+  }
+}
+.mora-resumen {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+}
+.pastilla {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  margin-right: 4px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  background: var(--warning-bg);
+  color: var(--warning);
+
+  &[data-estado="BLOQUEADO"] {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  &[data-estado="SOLO_LECTURA"] {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  &[data-estado="ACTIVO"] {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+}
+
+/* ── Columna de módulos extra en la lista ─────────────── */
+.extras-celda {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-width: 220px;
+}
+.extra-chip {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  background: var(--primary-soft, #eef2ff);
+  color: var(--primary, #4338ca);
+  white-space: nowrap;
+}
+
+/* ── Columna de pagos en la lista ─────────────────────── */
+.pagos-celda {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-start;
+  font-size: var(--text-caption);
+}
+.pagos-periodo,
+.pagos-proximo,
+.pagos-sin {
+  color: var(--text-secondary);
+  font-size: var(--text-caption);
+}
+.pagos-proximo {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Barra de acciones de la ficha (Entrar / Módulos) ── */
+.ficha-acciones {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin: var(--space-8) 0 var(--space-16);
+}
+
+/* ── Bitácora de estatus (en la ficha) ────────────────── */
+.historial {
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--borde, #e5e7eb);
+}
+.historial-titulo {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-body);
+}
+.historial-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+.historial-estatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+
+  .historial-titulo {
+    margin: 0;
+  }
+}
+.historial-subtitulo {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.btn-estatus {
+  white-space: nowrap;
+}
+.historial-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.historial-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  font-size: var(--text-caption);
+}
+.historial-fecha {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.historial-motivo {
+  flex: 1 1 200px;
+  color: var(--text-primary, #1f2937);
+}
+
+/* Diálogo angosto para confirmaciones cortas. */
+.dialogo.angosto {
+  max-width: 460px;
+}
+
 /* ── Pestaña de marca ─────────────────────────────── */
 .marca-intro {
   font-size: var(--text-body);

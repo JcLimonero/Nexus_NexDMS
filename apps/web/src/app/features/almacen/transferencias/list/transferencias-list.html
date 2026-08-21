@@ -14,6 +14,15 @@
         <div class="card-body">
           <div class="row g-2">
             <div class="col-md-3">
+              <input
+                type="search"
+                class="form-control"
+                placeholder="Buscar por folio o refacción (SKU/nombre)…"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="onSearchChange($event)"
+              />
+            </div>
+            <div class="col-md-3">
               <select
                 class="form-select"
                 [ngModel]="statusFilter()"

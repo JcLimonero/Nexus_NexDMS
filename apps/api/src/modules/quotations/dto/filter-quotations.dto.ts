@@ -1,4 +1,10 @@
-import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import {
   QuotationTypeEnum,
@@ -6,6 +12,11 @@ import {
 } from '../entities/quotation.entity';
 
 export class FilterQuotationsDto {
+  /** Búsqueda de texto: folio o cliente (nombre/razón social). */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsEnum(QuotationTypeEnum)
   type?: QuotationTypeEnum;

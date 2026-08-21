@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   ServiceUnavailableException,
@@ -37,6 +38,43 @@ export class AuthService {
     private readonly tenantRepo: Repository<Tenant>,
     private readonly storage: StorageService,
   ) {}
+
+  /**
+   * Datos de contacto de Nexus (dueño del producto) que se muestran cuando un
+   * cliente suspendido intenta entrar. Configurables por entorno para no tocar
+   * código si cambian.
+   */
+  private contactoNexus() {
+    return {
+      nombre: this.config.get<string>('NEXUS_SUPPORT_NAME') || 'Nexus Q Tech',
+      email:
+        this.config.get<string>('NEXUS_SUPPORT_EMAIL') ||
+        'soporte@nexusqtech.com',
+      telefono: this.config.get<string>('NEXUS_SUPPORT_PHONE') || '',
+      whatsapp: this.config.get<string>('NEXUS_SUPPORT_WHATSAPP') || '',
+    };
+  }
+
+  /**
+   * Un cliente (tenant) suspendido pierde el acceso: sus usuarios no entran y
+   * se les muestra a quién contactar en Nexus para reactivarlo. El personal de
+   * Nexus (SUPERADMIN) queda exento para poder seguir administrándolo.
+   */
+  private async asegurarTenantActivo(
+    tenantId: string,
+    roles: string[],
+  ): Promise<void> {
+    if (roles.includes('SUPERADMIN')) return;
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (tenant && !tenant.isActive) {
+      throw new ForbiddenException({
+        code: 'TENANT_SUSPENDED',
+        message:
+          'Tu cuenta está temporalmente suspendida. Contacta a Nexus para reactivarla.',
+        contacto: this.contactoNexus(),
+      });
+    }
+  }
 
   async login(dto: LoginDto) {
     const user = await this.usersService.findByEmail(
@@ -95,6 +133,10 @@ export class AuthService {
         throw new UnauthorizedException('Código de autenticación inválido');
       }
     }
+
+    // Cliente (tenant) suspendido: credenciales correctas pero sin acceso.
+    // Se valida tras la contraseña para no delatar el estado a un extraño.
+    await this.asegurarTenantActivo(user.tenantId, roles);
 
     user.loginAttempts = 0;
     user.blockedUntil = null;
@@ -238,6 +280,8 @@ export class AuthService {
         throw new UnauthorizedException('Usuario sin sucursales asignadas');
       }
       const roles = this.usersService.getRoleNames(user);
+      // Si el cliente fue suspendido mientras había sesión, no se renueva.
+      await this.asegurarTenantActivo(user.tenantId, roles);
       const accessPayload: UserPayload = {
         sub: user.id,
         tenantId: user.tenantId,
@@ -250,6 +294,7 @@ export class AuthService {
       return { accessToken };
     } catch (err) {
       if (err instanceof UnauthorizedException) throw err;
+      if (err instanceof ForbiddenException) throw err;
       throw new UnauthorizedException('Session expired');
     }
   }
@@ -363,6 +408,14 @@ export class AuthService {
     // predeterminada hacía que el cambio pareciera no surtir efecto.
     const activa =
       branches.find((b) => b.branchId === user.branchId) ?? defaultBranch;
+    let avatarUrl: string | null = null;
+    if (dbUser.avatarKey) {
+      try {
+        avatarUrl = await this.storage.getSignedUrl(dbUser.avatarKey, 24 * 3600);
+      } catch {
+        /* sin almacenamiento se entra igual, solo sin foto */
+      }
+    }
     return {
       id: dbUser.id,
       tenantId: dbUser.tenantId,
@@ -371,6 +424,7 @@ export class AuthService {
       firstName: dbUser.firstName,
       lastName: dbUser.lastName,
       email: dbUser.email,
+      avatarUrl,
       roles: this.usersService.getRoleNames(dbUser),
       scope: dbUser.scope,
       branches,
@@ -380,6 +434,27 @@ export class AuthService {
       // con los colores de fábrica en cada entrada.
       branding: await this.brandingDelTenant(dbUser.tenantId),
     };
+  }
+
+  /** Sube (cambia) la foto de perfil del usuario y devuelve su ficha. */
+  async subirAvatar(user: UserPayload, file: Express.Multer.File) {
+    if (!file) throw new BadRequestException('Archivo requerido');
+    if (!file.mimetype.startsWith('image/')) {
+      throw new BadRequestException('La foto debe ser una imagen');
+    }
+    const key = await this.storage.upload(
+      file.buffer,
+      `avatars/${user.sub}/foto-${Date.now()}`,
+      file.mimetype,
+    );
+    await this.usersService.setAvatarKey(user.sub, user.tenantId, key);
+    return this.getMe(user);
+  }
+
+  /** Quita la foto de perfil (vuelve a las iniciales). */
+  async quitarAvatar(user: UserPayload) {
+    await this.usersService.setAvatarKey(user.sub, user.tenantId, null);
+    return this.getMe(user);
   }
 
   /**

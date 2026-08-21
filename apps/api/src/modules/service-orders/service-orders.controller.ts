@@ -22,6 +22,8 @@ import { OrdenPdfService } from './orden-pdf.service';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { FilterServiceOrdersDto } from './dto/filter-service-orders.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
+import { UpdatePromisedDateDto } from './dto/update-promised-date.dto';
+import { RequestPartDto } from './dto/request-part.dto';
 import { ChangeStatusDto } from './dto/change-status.dto';
 import { AddPartDto } from './dto/add-part.dto';
 import { CreateChecklistDto } from './dto/create-checklist.dto';
@@ -141,6 +143,35 @@ export class ServiceOrdersController {
     @Body() dto: UpdateServiceOrderDto,
   ) {
     return this.serviceOrdersService.update(user, id, dto);
+  }
+
+  @Patch(':id/promised-date')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  updatePromisedDate(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: UpdatePromisedDateDto,
+  ) {
+    return this.serviceOrdersService.updatePromisedDate(user, id, dto);
+  }
+
+  @Get(':id/promise-history')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  promiseHistory(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.serviceOrdersService.historialFechaPromesa(user, id);
+  }
+
+  @Post(':id/request-part')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  requestPart(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RequestPartDto,
+  ) {
+    return this.serviceOrdersService.requestPart(user, id, dto);
   }
 
   @Post(':id/change-status')

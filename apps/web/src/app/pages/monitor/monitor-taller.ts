@@ -17,6 +17,7 @@ import {
   Semaforo,
   UnidadEnTablero,
 } from "./monitor.service";
+import { MonitorAuthService } from "./monitor-auth.service";
 import { LineaDeTiempo } from "./linea-de-tiempo";
 
 /** Un trabajo ya colocado sobre la línea de tiempo, en porcentaje. */
@@ -79,6 +80,26 @@ export class MonitorTaller implements OnInit, OnDestroy {
   private branchesSrv = inject(BranchesService);
   private route = inject(ActivatedRoute);
   private titulo = inject(Title);
+  private monitorAuth = inject(MonitorAuthService);
+
+  private renovando = false;
+  private renovacion?: ReturnType<typeof setInterval>;
+
+  /** Renueva el token del monitor (caduca ~15m) para que la pantalla de
+   * pared no se quede "Sin conexión"; reintenta la carga si lo logra. */
+  private renovarSesion(reintentar: boolean): void {
+    if (this.renovando) return;
+    this.renovando = true;
+    this.monitorAuth.renovar().subscribe((ok) => {
+      this.renovando = false;
+      if (ok) {
+        if (reintentar) this.cargar();
+      } else if (reintentar) {
+        // Sesión vencida y no renovable: se vuelve al acceso del monitor.
+        this.monitorAuth.salir();
+      }
+    });
+  }
 
   /** Los datos, cada minuto; la línea de "ahora", cada quince segundos. */
   private static readonly REFRESCO_MS = 60_000;
@@ -189,6 +210,11 @@ export class MonitorTaller implements OnInit, OnDestroy {
     };
   }
 
+  /** Cierra la sesión del monitor y vuelve al acceso (para cambiar de cuenta). */
+  salir(): void {
+    this.monitorAuth.salir();
+  }
+
   ngOnInit(): void {
     const deLaUrl = this.route.snapshot.queryParamMap.get("branch");
     if (deLaUrl) {
@@ -216,6 +242,8 @@ export class MonitorTaller implements OnInit, OnDestroy {
     // La línea avanza aunque no lleguen datos nuevos: entre refrescos el
     // tiempo sigue corriendo y una línea parada envejece mal.
     this.latido = setInterval(() => this.eje.mover(), MonitorTaller.LATIDO_MS);
+    // Renovación proactiva del token, antes de que caduque.
+    this.renovacion = setInterval(() => this.renovarSesion(false), 10 * 60_000);
   }
 
   /**
@@ -238,6 +266,7 @@ export class MonitorTaller implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.temporizador) clearInterval(this.temporizador);
     if (this.latido) clearInterval(this.latido);
+    if (this.renovacion) clearInterval(this.renovacion);
   }
 
   cargar(): void {
@@ -254,7 +283,10 @@ export class MonitorTaller implements OnInit, OnDestroy {
         // línea seguiría cuadrando con los bloques.
         this.eje.mover(new Date(d.ahora));
       },
-      error: () => this.sinConexion.set(true),
+      error: (err) => {
+        this.sinConexion.set(true);
+        if (err?.status === 401) this.renovarSesion(true);
+      },
     });
     // Las mismas unidades, pero como lista, para la vista por estado.
     this.srv.tablero(b).subscribe({

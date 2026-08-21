@@ -15,6 +15,17 @@
           }
 
           <div class="row mb-3">
+            <div class="col-md-4">
+              <label class="form-label">Buscar</label>
+              <input
+                type="search"
+                class="form-control form-control-sm"
+                placeholder="Folio, cliente, teléfono o VIN/serie"
+                [ngModel]="searchFilter()"
+                (ngModelChange)="searchFilter.set($event); onFiltersChange()"
+                [ngModelOptions]="{standalone: true}"
+              />
+            </div>
             <div class="col-md-3">
               <label class="form-label">Sucursal</label>
               <select

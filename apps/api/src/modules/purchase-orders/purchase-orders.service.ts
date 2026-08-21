@@ -49,13 +49,18 @@ export class PurchaseOrdersService {
     private readonly branchesService: BranchesService,
   ) {}
 
-  /** Registra/actualiza el precio de una parte para un proveedor (top 3). */
+  /**
+   * Registra/actualiza el precio de una parte para un proveedor (top 3). Si la
+   * orden de compra trajo garantía (meses/nota), la copia a la relación para
+   * que se vea en el detalle de la refacción.
+   */
   private async registrarPrecioProveedor(
     em: EntityManager,
     tenantId: string,
     partId: string,
     supplierId: string,
     price: number,
+    warranty?: { months: number | null; note: string | null },
   ): Promise<void> {
     const hoy = new Date().toISOString().slice(0, 10);
     const existing = await em.findOne(PartSupplier, {
@@ -65,6 +70,11 @@ export class PurchaseOrdersService {
       existing.lastPrice = price;
       existing.lastPurchasedAt = hoy;
       existing.timesPurchased = existing.timesPurchased + 1;
+      // Solo se pisa la garantía si la compra trajo un dato de garantía.
+      if (warranty && warranty.months != null) {
+        existing.warrantyMonths = warranty.months;
+        existing.warrantyNote = warranty.note;
+      }
       await em.save(existing);
       return;
     }
@@ -75,6 +85,8 @@ export class PurchaseOrdersService {
       lastPrice: price,
       lastPurchasedAt: hoy,
       timesPurchased: 1,
+      warrantyMonths: warranty?.months ?? null,
+      warrantyNote: warranty?.note ?? null,
     });
     await em.save(ps);
   }
@@ -141,10 +153,15 @@ export class PurchaseOrdersService {
       .createQueryBuilder('po')
       .leftJoinAndSelect('po.items', 'items')
       .leftJoinAndSelect('items.part', 'part')
+      .leftJoin(Supplier, 'supplier', 'supplier.id = po.supplier_id')
       .where('po.tenant_id = :tenantId', { tenantId: user.tenantId });
 
     this.applyScope(qb, user);
 
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere('(po.folio ILIKE :s OR supplier.name ILIKE :s)', { s });
+    }
     if (filters.supplierId) {
       qb.andWhere('po.supplier_id = :supplierId', {
         supplierId: filters.supplierId,
@@ -196,6 +213,45 @@ export class PurchaseOrdersService {
     }
     await this.assertInScope(user, order);
     return order;
+  }
+
+  /**
+   * Marca la orden de compra como pagada (o revierte el pago). Al pagarla, deja
+   * de contar en la línea de crédito en uso del proveedor.
+   */
+  async marcarPagada(
+    user: UserPayload,
+    id: string,
+    pagada: boolean,
+  ): Promise<PurchaseOrder> {
+    const order = await this.findOne(user, id);
+    if (order.status === PurchaseOrderStatusEnum.CANCELLED) {
+      throw new BadRequestException('La orden está cancelada');
+    }
+    await this.orderRepo.update(id, { paidAt: pagada ? new Date() : null });
+    return this.findOne(user, id);
+  }
+
+  /**
+   * Órdenes de servicio (taller) de las que salió esta orden de compra. El
+   * vínculo vive en las requisiciones que surtió: las que tienen
+   * source_type='service_order' apuntan a la orden de taller que las pidió.
+   */
+  async ordenesDeServicioLigadas(
+    user: UserPayload,
+    id: string,
+  ): Promise<{ id: string; folio: string; status: string }[]> {
+    await this.findOne(user, id); // valida acceso/scope
+    return this.dataSource.query(
+      `SELECT DISTINCT so.id, so.folio, so.status
+         FROM purchase_requisitions pr
+         JOIN service_orders so ON so.id = pr.source_id
+        WHERE pr.purchase_order_id = $1
+          AND pr.source_type = 'service_order'
+          AND pr.tenant_id = $2
+        ORDER BY so.folio`,
+      [id, user.tenantId],
+    );
   }
 
   private async generateFolio(
@@ -266,6 +322,8 @@ export class PurchaseOrdersService {
         quantity: line.quantity,
         unitPrice: line.unitPrice,
         subtotal: lineSubtotal,
+        warrantyMonths: line.warrantyMonths ?? null,
+        warrantyNote: line.warrantyNote?.trim() || null,
       };
     });
 
@@ -300,6 +358,8 @@ export class PurchaseOrdersService {
             quantityReceived: 0,
             unitPrice: line.unitPrice,
             subtotal: line.subtotal,
+            warrantyMonths: line.warrantyMonths,
+            warrantyNote: line.warrantyNote,
           });
           await em.save(item);
         }
@@ -366,6 +426,8 @@ export class PurchaseOrdersService {
           quantity: line.quantity,
           unitPrice: line.unitPrice,
           subtotal: lineSubtotal,
+          warrantyMonths: line.warrantyMonths ?? null,
+          warrantyNote: line.warrantyNote?.trim() || null,
         };
       });
       const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
@@ -388,6 +450,8 @@ export class PurchaseOrdersService {
           quantityReceived: 0,
           unitPrice: line.unitPrice,
           subtotal: line.subtotal,
+          warrantyMonths: line.warrantyMonths,
+          warrantyNote: line.warrantyNote,
         });
         await this.itemRepo.save(item);
       }
@@ -525,13 +589,15 @@ export class PurchaseOrdersService {
           }
           await em.save(part);
 
-          // Historial de precio por proveedor (base del top 3).
+          // Historial de precio por proveedor (base del top 3) + la garantía
+          // que se capturó en la orden de compra.
           await this.registrarPrecioProveedor(
             em,
             user.tenantId,
             item.partId,
             order.supplierId,
             unitCost,
+            { months: item.warrantyMonths, note: item.warrantyNote },
           );
         }
 

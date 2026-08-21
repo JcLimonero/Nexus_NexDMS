@@ -57,6 +57,25 @@ export class Login implements OnInit {
   public error: string | null = null;
 
   /**
+   * Cliente (tenant) suspendido: en vez del error genérico se muestra un aviso
+   * con los datos de contacto de Nexus para reactivar la cuenta.
+   */
+  public suspension: {
+    message: string;
+    contacto: {
+      nombre: string;
+      email: string;
+      telefono: string;
+      whatsapp: string;
+    };
+  } | null = null;
+
+  /** Liga wa.me para el WhatsApp de Nexus (solo dígitos). */
+  public whatsappLink(numero: string): string {
+    return "https://wa.me/" + (numero || "").replace(/[^0-9]/g, "");
+  }
+
+  /**
    * Panel de demostración: credenciales y accesos a los otros portales.
    *
    * Solo aparece en compilaciones de desarrollo (`ng build` de producción
@@ -191,7 +210,33 @@ export class Login implements OnInit {
     });
   }
 
+  /**
+   * Portal de administración de Nexus, derivado del host actual:
+   * app.nexusqsystem.com → admin.nexusqsystem.com; en local, :4200 → :4202.
+   */
+  private urlAdmin(): string {
+    const { protocol, hostname, port } = window.location;
+    if (hostname === "localhost" || hostname === "127.0.0.1") {
+      return `${protocol}//${hostname}:4202`;
+    }
+    if (port && port !== "80" && port !== "443") {
+      return `${protocol}//${hostname}:4202`;
+    }
+    if (hostname.startsWith("app.")) {
+      return `${protocol}//admin.${hostname.slice(4)}`;
+    }
+    return `${protocol}//admin.${hostname}`;
+  }
+
   ngOnInit(): void {
+    // El DMS es solo para clientes y se entra por su liga (`/<slug>/…`). La
+    // raíz sin cliente es "de administración": se manda al portal de Nexus,
+    // para no dejar que un login global entre a un tenant cualquiera.
+    if (!this.tenant.slug) {
+      window.location.href = this.urlAdmin();
+      return;
+    }
+
     if (this.auth.isAuthenticated()) {
       this.router.navigateByUrl(this.destino());
     }
@@ -236,6 +281,7 @@ export class Login implements OnInit {
     if (this.loginForm.invalid || this.loading) return;
     this.loading = true;
     this.error = null;
+    this.suspension = null;
 
     this.auth
       .login({
@@ -254,6 +300,15 @@ export class Login implements OnInit {
         },
         error: (err) => {
           this.loading = false;
+          // Cliente suspendido: mostrar contacto de Nexus, no un error genérico.
+          if (err?.error?.code === "TENANT_SUSPENDED" && err.error.contacto) {
+            this.suspension = {
+              message: err.error.message,
+              contacto: err.error.contacto,
+            };
+            this.error = null;
+            return;
+          }
           this.error = this.mensajeDeError(err);
         },
       });

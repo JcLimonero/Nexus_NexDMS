@@ -34,6 +34,7 @@ export interface UnitReservation {
 }
 
 export interface UnitReservationFilters {
+  search?: string;
   status?: UnitReservationStatus;
   catalogUnitId?: string;
   clientId?: string;

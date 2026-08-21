@@ -16,19 +16,17 @@ import {
   standalone: true,
   imports: [CommonModule, RouterModule],
   template: `
-    <header class="topbar">
-      <div class="who">
+    <header class="cabecera">
+      <div class="ident">
         @if (logoUrl(); as url) {
           <img class="logo-cliente" [src]="url" alt="Logotipo" />
-        } @else {
-          <div class="avatar">{{ initials() }}</div>
         }
         <div>
-          <div class="name">{{ userName() }}</div>
-          <div class="date">{{ todayLabel }}</div>
+          <div class="quien">{{ userName() }}</div>
+          <div class="sub">{{ citas().length }} citas hoy · {{ todayLabel }}</div>
         </div>
       </div>
-      <button class="btn-salir" (click)="logout()" title="Cerrar sesión">
+      <button type="button" class="salir" (click)="logout()" title="Cerrar sesión">
         <span aria-hidden="true">⎋</span> Salir
       </button>
     </header>

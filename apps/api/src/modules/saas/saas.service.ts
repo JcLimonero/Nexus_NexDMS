@@ -20,6 +20,17 @@ import {
 import { PALETAS, paletaPorId } from '../tenants/branding.paletas';
 import { StorageService } from '../../common/storage/storage.service';
 import { ConfigService } from '@nestjs/config';
+import {
+  BillingBlockState,
+  BillingStatusService,
+} from './billing-status.service';
+import { ConektaService, CheckoutSalida } from './conekta.service';
+
+export interface ResumenCobroCliente {
+  tenantId: string;
+  ultimoPago: { period: string; status: string; vencido: boolean } | null;
+  proximoCobro: string | null;
+}
 
 /** Lo que un cliente paga al mes, desglosado. */
 export interface Cobro {
@@ -42,6 +53,8 @@ export class SaasService {
     private readonly tenantRepo: Repository<Tenant>,
     private readonly storage: StorageService,
     private readonly config: ConfigService,
+    private readonly billing: BillingStatusService,
+    private readonly conekta: ConektaService,
   ) {}
 
   // ─── Planes ─────────────────────────────────────────────────
@@ -137,16 +150,16 @@ export class SaasService {
   }
 
   /**
-   * Recorta la lista a lo que el nivel permite. Vender un módulo que el nivel
-   * no alcanza daría un plan que promete algo que el guard no deja abrir.
+   * Valida que sean módulos reales del catálogo. Un plan a la medida puede
+   * incluir cualquier módulo, sin importar el nivel técnico de origen.
    */
   private modulosDelNivel(
     modulos: string[] | null | undefined,
-    tier: TenantPlanEnum,
+    _tier: TenantPlanEnum,
   ): string[] | null {
     if (!modulos) return null;
-    const permitidos = new Set<string>(modulesForPlan(tier));
-    return modulos.filter((k) => permitidos.has(k));
+    const validos = new Set<string>(MODULE_REGISTRY.map((m) => m.key));
+    return modulos.filter((k) => validos.has(k));
   }
 
   // ─── Precio por módulo ──────────────────────────────────────
@@ -403,6 +416,10 @@ export class SaasService {
     const t = await this.tenant(tenantId);
     if (dto.saasPlanId !== undefined) await this.asignarPlan(t, dto.saasPlanId);
     Object.assign(t, {
+      // Identidad del cliente: antes se editaba en un diálogo aparte; ahora
+      // vive en la misma ficha, así que la ficha también la guarda.
+      name: dto.name?.trim() || t.name,
+      slug: dto.slug?.trim() || t.slug,
       contactName: dto.contactName ?? t.contactName,
       contactEmail: dto.contactEmail ?? t.contactEmail,
       contactPhone: dto.contactPhone ?? t.contactPhone,
@@ -527,11 +544,68 @@ export class SaasService {
           ? (dto.paidAt ?? pago.paidAt ?? new Date())
           : null,
     });
-    return this.pagoRepo.save(pago);
+    const guardado = await this.pagoRepo.save(pago);
+    // El estado de bloqueo se cachea unos segundos; un cobro que cambia debe
+    // reflejarse ya (p. ej. reactivar a quien acaba de pagar).
+    this.billing.invalidar(tenantId);
+    return guardado;
   }
 
   async eliminarPago(id: string): Promise<void> {
+    const pago = await this.pagoRepo.findOne({ where: { id } });
     await this.pagoRepo.delete(id);
+    if (pago) this.billing.invalidar(pago.tenantId);
+  }
+
+  // ─── Cobro en línea (Conekta) ───────────────────────────────
+
+  /**
+   * Arranca el pago en línea del adeudo del cliente: crea la orden en la
+   * pasarela y devuelve a dónde mandarlo. Cobra exactamente lo vencido; si no
+   * hay nada vencido, no hay pago que iniciar.
+   */
+  async iniciarCheckout(tenantId: string): Promise<CheckoutSalida> {
+    const t = await this.tenant(tenantId);
+    const estado = await this.billing.estado(tenantId);
+    if (estado.adeudo <= 0 || estado.periodosVencidos.length === 0) {
+      throw new BadRequestException('No tienes adeudos vencidos por pagar.');
+    }
+    const base = this.config.get<string>('WEB_APP_URL', 'http://app.localhost');
+    const liga = t.slug ? `${base}/${t.slug}/pago` : `${base}/pago`;
+    return this.conekta.crearCheckout({
+      tenantId,
+      monto: estado.adeudo,
+      periodos: estado.periodosVencidos,
+      cliente: {
+        nombre: t.name,
+        email: t.billingEmail || t.contactEmail || '',
+        telefono: t.contactPhone || undefined,
+      },
+      successUrl: `${liga}?pago=ok`,
+      failureUrl: `${liga}?pago=error`,
+    });
+  }
+
+  /**
+   * Confirma un pago desde el webhook de Conekta. No se cree al webhook: se
+   * vuelve a consultar la orden a la pasarela y solo si responde "pagada" se
+   * dan por saldados los periodos que cubría.
+   */
+  async confirmarPagoConekta(orderId: string): Promise<void> {
+    const r = await this.conekta.confirmarOrden(orderId);
+    if (!r.pagada || !r.tenantId) return;
+    for (const period of r.periodos) {
+      const pago = await this.pagoRepo.findOne({
+        where: { tenantId: r.tenantId, period },
+      });
+      if (!pago) continue;
+      pago.status = SaasPaymentStatusEnum.PAGADO;
+      pago.paidAt = new Date();
+      pago.method = 'conekta';
+      pago.reference = r.referencia;
+      await this.pagoRepo.save(pago);
+    }
+    this.billing.invalidar(r.tenantId);
   }
 
   /**
@@ -553,13 +627,102 @@ export class SaasService {
         ],
       })
     ).filter((p) => this.vencido(p));
+    // Aviso a Nexus: qué clientes están en solo-lectura o ya bloqueados por
+    // el reloj del impago, para actuar antes de que reclamen. El estado lo
+    // deriva el mismo motor que aplica el bloqueo, así el panel no miente.
+    const conAdeudo = [...new Set(vencidos.map((p) => p.tenantId))];
+    const morosos = (
+      await Promise.all(
+        conAdeudo.map(async (id) => {
+          const t = tenants.find((x) => x.id === id);
+          const e = await this.billing.estado(id);
+          return {
+            tenantId: id,
+            nombre: t?.name ?? '',
+            slug: t?.slug ?? '',
+            estado: e.estado,
+            diasMora: e.diasMora,
+            diasParaBloqueo: e.diasParaBloqueo,
+            adeudo: e.adeudo,
+            suspendidoManual: t ? !t.isActive : false,
+          };
+        }),
+      )
+    ).sort((a, b) => b.diasMora - a.diasMora);
+
     return {
       clientes: tenants.length,
       activos: activos.length,
       suspendidos: tenants.length - activos.length,
       ingresoMensual: recurrente,
       adeudoTotal: vencidos.reduce((a, p) => a + p.amount, 0),
-      clientesConAdeudo: new Set(vencidos.map((p) => p.tenantId)).size,
+      clientesConAdeudo: conAdeudo.length,
+      enSoloLectura: morosos.filter(
+        (m) => m.estado === BillingBlockState.SOLO_LECTURA,
+      ).length,
+      bloqueadosPorPago: morosos.filter(
+        (m) => m.estado === BillingBlockState.BLOQUEADO,
+      ).length,
+      morosos,
     };
+  }
+
+  /**
+   * Resumen de cobro por cliente para la lista: cómo va su último pago y
+   * cuándo le toca el siguiente. El "próximo" es la fecha límite del pendiente
+   * más cercano; si no hay pendientes, el siguiente día de cobro según su
+   * `billingDay`.
+   */
+  async resumenCobros(): Promise<ResumenCobroCliente[]> {
+    const tenants = await this.tenantRepo.find();
+    const salida: ResumenCobroCliente[] = [];
+    for (const t of tenants) {
+      const pagos = await this.pagoRepo.find({
+        where: { tenantId: t.id },
+        order: { period: 'DESC' },
+      });
+      const ultimo = pagos[0] ?? null;
+      const pendientes = pagos
+        .filter(
+          (p) =>
+            p.status === SaasPaymentStatusEnum.PENDIENTE ||
+            p.status === SaasPaymentStatusEnum.VENCIDO,
+        )
+        .filter((p) => !!p.dueDate)
+        .sort((a, b) => (a.dueDate! < b.dueDate! ? -1 : 1));
+      const proximoCobro =
+        pendientes[0]?.dueDate ??
+        (t.billingDay ? this.proximoDiaCobro(t.billingDay) : null);
+      salida.push({
+        tenantId: t.id,
+        ultimoPago: ultimo
+          ? {
+              period: ultimo.period,
+              status: ultimo.status,
+              vencido: this.vencido(ultimo),
+            }
+          : null,
+        proximoCobro,
+      });
+    }
+    return salida;
+  }
+
+  /** Siguiente fecha con día de mes = `dia`, hoy o en el futuro (AAAA-MM-DD). */
+  private proximoDiaCobro(dia: number): string {
+    const hoy = new Date();
+    let y = hoy.getFullYear();
+    let m = hoy.getMonth();
+    if (hoy.getDate() > dia) {
+      m++;
+      if (m > 11) {
+        m = 0;
+        y++;
+      }
+    }
+    // Un mes corto (feb) recorta el día al último disponible.
+    const finDeMes = new Date(y, m + 1, 0).getDate();
+    const d = Math.min(dia, finDeMes);
+    return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
   }
 }

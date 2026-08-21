@@ -1,8 +1,19 @@
-import { IsDateString, IsEnum, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { ServiceOrderStatusEnum } from '../entities/service-order.entity';
 
 export class FilterServiceOrdersDto {
+  /** Búsqueda de texto: folio, cliente, teléfono o placa. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   clientId?: string;

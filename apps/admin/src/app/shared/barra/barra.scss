@@ -28,14 +28,7 @@
   width: 34px;
   height: 34px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--nexus-500), var(--nexus-700));
-  color: #fff;
-  font-weight: var(--font-bold);
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 10px -3px rgba(16, 80, 120, 0.5);
+  object-fit: contain;
 }
 
 .marca-txt {

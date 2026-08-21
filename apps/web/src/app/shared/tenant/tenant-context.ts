@@ -21,6 +21,15 @@ const RESERVADOS = new Set([
   "reception",
   "assets",
   "api",
+  // Ligas públicas por token que se envían al cliente: seguimiento (t),
+  // cotización/autorización (c), factura (f), encuestas (s, sv). Su primer
+  // segmento NO es un slug de cliente; sin esto, `/c/<token>` pone el base
+  // href en `/c/` y la ruta no hace match (pantalla en blanco).
+  "t",
+  "c",
+  "f",
+  "s",
+  "sv",
 ]);
 
 /** El slug del cliente en la URL actual, o null si se entró sin prefijo. */

@@ -19,8 +19,24 @@
       <div class="col-sm-12">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">Orden {{ o.folio }}</h5>
+            <h5 class="mb-0">
+              Orden {{ o.folio }}
+              @if (o.paidAt) {
+                <span class="badge bg-success ms-2">Pagada</span>
+              }
+            </h5>
             <div class="d-flex gap-2 flex-wrap">
+              @if (puedePagar()) {
+                <button type="button" class="btn btn-outline-success btn-sm" [disabled]="pagando()" (click)="marcarPagada(true)">
+                  @if (pagando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Marcar pagada
+                </button>
+              }
+              @if (o.paidAt) {
+                <button type="button" class="btn btn-outline-secondary btn-sm" [disabled]="pagando()" (click)="marcarPagada(false)">
+                  Revertir pago
+                </button>
+              }
               @if (canSend()) {
                 <button
                   type="button"
@@ -136,6 +152,19 @@
               </div>
             }
 
+            @if (ordenesServicio().length) {
+              <div class="mb-3">
+                <h6 class="text-muted">Órdenes de servicio de origen</h6>
+                <div class="d-flex flex-wrap gap-2">
+                  @for (os of ordenesServicio(); track os.id) {
+                    <a class="btn btn-sm btn-outline-secondary" [routerLink]="['/workshop/service-orders', os.id]">
+                      {{ os.folio }}
+                    </a>
+                  }
+                </div>
+              </div>
+            }
+
             <h6 class="text-muted mb-3">Líneas</h6>
             <div class="table-responsive">
               <table class="table table-sm">
@@ -149,6 +178,7 @@
                     }
                     <th class="text-end">Precio unit.</th>
                     <th class="text-end">Subtotal</th>
+                    <th class="text-center">Garantía</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -176,6 +206,9 @@
                       }
                       <td class="text-end">{{ item.unitPrice | number:'1.2-2' }}</td>
                       <td class="text-end">{{ item.subtotal | number:'1.2-2' }}</td>
+                      <td class="text-center" [title]="item.warrantyNote || ''">
+                        {{ item.warrantyMonths ? item.warrantyMonths + ' m' : '—' }}
+                      </td>
                     </tr>
                   }
                 </tbody>

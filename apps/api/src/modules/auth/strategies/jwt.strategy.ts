@@ -11,6 +11,8 @@ export interface UserPayload {
   legalEntityId: string;
   roles: string[];
   scope: ScopeEnum;
+  /** true = administrador del SaaS (tabla admin_users), sin tenant. */
+  admin?: boolean;
 }
 
 @Injectable()
@@ -24,7 +26,8 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   }
 
   validate(payload: UserPayload): UserPayload {
-    if (!payload.sub || !payload.tenantId) {
+    // Los administradores del SaaS no tienen tenant; los usuarios de tenant sí.
+    if (!payload.sub || (!payload.tenantId && !payload.admin)) {
       throw new UnauthorizedException();
     }
     return payload;

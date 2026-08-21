@@ -123,6 +123,24 @@ export class TenantsController {
     return this.tenantsService.setCurrency(user.tenantId, body.currency);
   }
 
+  @Get('me/commission-config')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  getMyCommissionConfig(@CurrentUser() user: UserPayload) {
+    return this.tenantsService.getCommissionConfig(user.tenantId);
+  }
+
+  @Patch('me/commission-config')
+  @Roles('SUPERADMIN', 'ADMIN')
+  updateMyCommissionConfig(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { exemptChargeTypes: string[] },
+  ) {
+    return this.tenantsService.setCommissionConfig(
+      user.tenantId,
+      body.exemptChargeTypes,
+    );
+  }
+
   @Get(':id')
   @Roles('SUPERADMIN')
   findOne(
@@ -153,7 +171,15 @@ export class TenantsController {
   suspend(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { reason: string },
   ) {
-    return this.tenantsService.suspend(user, id);
+    return this.tenantsService.suspend(user, id, body?.reason);
+  }
+
+  /** Bitácora de cambios de estatus (suspender/reactivar) del cliente. */
+  @Get(':id/status-history')
+  @Roles('SUPERADMIN')
+  statusHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.statusHistory(id);
   }
 }

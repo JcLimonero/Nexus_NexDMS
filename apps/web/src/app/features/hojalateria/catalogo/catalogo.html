@@ -1,0 +1,121 @@
+<div class="hp-page">
+  <div class="hp-head">
+    <div>
+      <h1>Catálogo de piezas de carrocería</h1>
+      <p class="hp-sub">Piezas para cotizar. Las de fábrica son de solo lectura.</p>
+    </div>
+    <div class="hp-head-acc">
+      <a class="hp-btn hp-btn--ghost" routerLink="..">Volver a órdenes</a>
+      <button class="hp-btn hp-btn--primary" (click)="abrirNueva()">
+        Nueva pieza
+      </button>
+    </div>
+  </div>
+
+  @if (nueva(); as n) {
+    <div class="cat-form">
+      <div class="hp-field">
+        <label>Código</label>
+        <input [(ngModel)]="n.code" placeholder="EJ_MOLDURA" />
+      </div>
+      <div class="hp-field">
+        <label>Nombre</label>
+        <input [(ngModel)]="n.name" placeholder="Moldura lateral" />
+      </div>
+      <div class="hp-field">
+        <label>Zona</label>
+        <select [(ngModel)]="n.zone">
+          @for (z of zonas; track z.value) {
+            <option [value]="z.value">{{ z.label }}</option>
+          }
+        </select>
+      </div>
+      <div class="hp-field">
+        <label>Precio sugerido</label>
+        <input type="number" min="0" [(ngModel)]="n.defaultPrice" />
+      </div>
+      <button class="hp-btn hp-btn--primary" (click)="guardarNueva()">
+        Guardar
+      </button>
+      <button class="hp-btn hp-btn--ghost" (click)="cancelar()">Cancelar</button>
+    </div>
+  }
+
+  @if (cargando()) {
+    <p class="hp-vacio">Cargando…</p>
+  } @else {
+    <div class="cat-seccion">
+      <h2>Mis piezas</h2>
+      @if (propias().length === 0) {
+        <p class="cat-nota">
+          Aún no has agregado piezas propias. Usa el catálogo de fábrica o crea
+          una nueva.
+        </p>
+      } @else {
+        <table class="hp-tabla">
+          <thead>
+            <tr>
+              <th>Código</th>
+              <th>Nombre</th>
+              <th>Zona</th>
+              <th class="hp-num">Precio sugerido</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of propias(); track p.id) {
+              <tr>
+                <td class="hp-mono">{{ p.code }}</td>
+                <td><input [(ngModel)]="p.name" (blur)="guardarPieza(p)" /></td>
+                <td>
+                  <select [(ngModel)]="p.zone" (change)="guardarPieza(p)">
+                    @for (z of zonas; track z.value) {
+                      <option [value]="z.value">{{ z.label }}</option>
+                    }
+                  </select>
+                </td>
+                <td class="hp-num">
+                  <input
+                    type="number"
+                    min="0"
+                    class="w-precio"
+                    [(ngModel)]="p.defaultPrice"
+                    (blur)="guardarPieza(p)"
+                  />
+                </td>
+                <td>
+                  <button class="hp-btn hp-btn--danger" (click)="eliminar(p)">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </div>
+
+    <div class="cat-seccion">
+      <h2>Piezas de fábrica</h2>
+      <p class="cat-nota">Set estándar compartido. No se editan.</p>
+      <table class="hp-tabla">
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Zona</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of deFabrica(); track p.id) {
+            <tr>
+              <td class="hp-mono">{{ p.code }}</td>
+              <td>{{ p.name }}</td>
+              <td class="hp-muted">{{ etiquetaZona(p.zone) }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

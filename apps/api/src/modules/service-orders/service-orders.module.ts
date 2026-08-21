@@ -42,6 +42,8 @@ import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { OrdenPdfService } from './orden-pdf.service';
 import { FinanceModule } from '../finance/finance.module';
 import { SurveysModule } from '../surveys/surveys.module';
+import { ServiceOrderPromiseChange } from './entities/service-order-promise-change.entity';
+import { PurchaseRequisition } from '../purchase-requisitions/entities/purchase-requisition.entity';
 
 @Module({
   imports: [
@@ -55,6 +57,8 @@ import { SurveysModule } from '../surveys/surveys.module';
       ServiceOrderFinding,
       ServiceOrderFolioSeq,
       ServiceOrderOperation,
+      ServiceOrderPromiseChange,
+      PurchaseRequisition,
       ServiceSurvey,
       User,
       ReceptionPhotoSpec,

@@ -75,6 +75,7 @@ export interface Quotation {
 }
 
 export interface QuotationFilters {
+  search?: string;
   type?: QuotationType;
   status?: QuotationStatus;
   clientId?: string;
@@ -91,7 +92,10 @@ export interface QuotationResponse {
 }
 
 export interface CreateQuotationRefaccionDto {
-  partId: string;
+  /** Refacción del catálogo. Ausente cuando se captura a mano. */
+  partId?: string;
+  /** Nombre de la refacción capturada a mano (sin partId). */
+  description?: string;
   quantity: number;
   unitPrice?: number;
 }

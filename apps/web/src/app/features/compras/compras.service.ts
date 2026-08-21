@@ -6,6 +6,7 @@ import {
   SuppliersResponse,
   SupplierFilters,
   CreateSupplierDto,
+  SupplierCredit,
 } from "./models/supplier.model";
 import {
   PurchaseOrder,
@@ -59,6 +60,7 @@ export class ComprasService {
     filters: PurchaseOrderFilters = {}
   ): Observable<PurchaseOrdersResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.supplierId)
       params = params.set("supplierId", filters.supplierId);
     if (filters.status) params = params.set("status", filters.status);
@@ -74,6 +76,30 @@ export class ComprasService {
 
   getPurchaseOrder(id: string): Observable<PurchaseOrder> {
     return this.http.get<PurchaseOrder>(`${PURCHASE_ORDERS_URL}/${id}`);
+  }
+
+  /** Órdenes de servicio (taller) de las que salió esta orden de compra. */
+  getServiceOrdersDeLaOrden(
+    id: string,
+  ): Observable<{ id: string; folio: string; status: string }[]> {
+    return this.http.get<{ id: string; folio: string; status: string }[]>(
+      `${PURCHASE_ORDERS_URL}/${id}/service-orders`,
+    );
+  }
+
+  /** Marca (o revierte) el pago de la orden de compra. */
+  markPurchaseOrderPaid(
+    id: string,
+    paid: boolean,
+  ): Observable<PurchaseOrder> {
+    return this.http.patch<PurchaseOrder>(`${PURCHASE_ORDERS_URL}/${id}/pay`, {
+      paid,
+    });
+  }
+
+  /** Estado de la línea de crédito de un proveedor. */
+  getSupplierCredit(id: string): Observable<SupplierCredit> {
+    return this.http.get<SupplierCredit>(`/api/v1/suppliers/${id}/credit`);
   }
 
   createPurchaseOrder(dto: CreatePurchaseOrderDto): Observable<PurchaseOrder> {

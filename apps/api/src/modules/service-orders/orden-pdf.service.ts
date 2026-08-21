@@ -17,6 +17,7 @@ import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { paletaPorId } from '../tenants/branding.paletas';
 import { Part } from '../parts/entities/part.entity';
+import { StorageService } from '../../common/storage/storage.service';
 
 /** Etiquetas de los daños, las mismas que ve el asesor en la pantalla. */
 const DANOS: Record<string, string> = {
@@ -92,7 +93,44 @@ export class OrdenPdfService {
     private readonly legalRepo: Repository<LegalEntity>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    private readonly storage: StorageService,
   ) {}
+
+  /**
+   * Baja las fotos de recepción del almacenamiento para incrustarlas en el PDF.
+   * Best-effort: si alguna no se puede bajar, se omite (el papel sale igual).
+   * Devuelve buffer + etiqueta (ángulo/vista) por foto.
+   */
+  private async descargarFotosRecepcion(
+    fotos: ReceptionPhoto[],
+    checklist: ReceptionChecklist | null,
+    nombreSpec: Map<string, string>,
+  ): Promise<{ buffer: Buffer; etiqueta: string }[]> {
+    // Fuente principal: las fotos estructuradas (con ángulo/vista). Si no hay,
+    // se usan las llaves sueltas del checklist (flujo de recepción simple).
+    const fuentes =
+      fotos.length > 0
+        ? fotos.map((f) => ({
+            key: f.storageKey,
+            etiqueta:
+              nombreSpec.get(f.specCode ?? '') ?? f.angle ?? f.specCode ?? '',
+          }))
+        : (checklist?.photosKeys ?? []).map((key) => ({ key, etiqueta: '' }));
+    // Tope prudente para no generar PDFs enormes.
+    const limitadas = fuentes.slice(0, 12);
+    const bajadas = await Promise.all(
+      limitadas.map(async (f) => {
+        try {
+          return { buffer: await this.storage.download(f.key), etiqueta: f.etiqueta };
+        } catch {
+          return null;
+        }
+      }),
+    );
+    return bajadas.filter(
+      (x): x is { buffer: Buffer; etiqueta: string } => x !== null,
+    );
+  }
 
   private dinero(n: number): string {
     return n.toLocaleString('es-MX', {
@@ -193,6 +231,11 @@ export class OrdenPdfService {
       : [];
     const specs = await this.specRepo.find();
     const nombreSpec = new Map(specs.map((s) => [s.code, s.name]));
+    const fotosImg = await this.descargarFotosRecepcion(
+      fotos,
+      checklist,
+      nombreSpec,
+    );
 
     const doc = new PDFDocument({ size: 'LETTER', margin: M, bufferPages: true });
     const trozos: Buffer[] = [];
@@ -216,7 +259,7 @@ export class OrdenPdfService {
       nombreParte,
       sucursal,
     );
-    this.recepcion(doc, ancho, c, checklist, fotos, marcas, nombreSpec);
+    this.recepcion(doc, ancho, c, checklist, fotos, marcas, nombreSpec, fotosImg);
     this.cierre(doc, ancho, c, so);
     this.pieDePagina(doc);
 
@@ -567,6 +610,7 @@ export class OrdenPdfService {
     fotos: ReceptionPhoto[],
     marcas: ReceptionPhotoMark[],
     nombreSpec: Map<string, string>,
+    fotosImg: { buffer: Buffer; etiqueta: string }[] = [],
   ): void {
     if (!checklist) return;
     this.seccion(doc, ancho, c, 'Cómo se recibió la unidad');
@@ -655,6 +699,61 @@ export class OrdenPdfService {
       }
       doc.x = M;
     }
+
+    // Las fotos reales de cómo llegó la unidad: es la evidencia que se compara
+    // a la entrega si el cliente reclama un golpe que no traía.
+    if (fotosImg.length) {
+      doc.moveDown(0.3);
+      if (doc.y > doc.page.height - 130) doc.addPage();
+      doc
+        .fontSize(6.5)
+        .fillColor(TENUE)
+        .text(`FOTOS DE RECEPCIÓN (${fotosImg.length})`);
+      doc.moveDown(0.2);
+
+      const cols = 3;
+      const gap = 8;
+      const celda = (ancho - gap * (cols - 1)) / cols;
+      const altoFoto = celda * 0.72;
+      const altoEtiqueta = 10;
+      const altoCelda = altoFoto + altoEtiqueta;
+
+      fotosImg.forEach((f, i) => {
+        const col = i % cols;
+        if (col === 0) {
+          // Nueva fila: salta de página si no cabe completa.
+          if (doc.y + altoCelda > doc.page.height - 40) doc.addPage();
+        }
+        const filaY = doc.y;
+        const x = M + col * (celda + gap);
+        try {
+          doc.image(f.buffer, x, filaY, {
+            fit: [celda, altoFoto],
+            align: 'center',
+            valign: 'center',
+          });
+        } catch {
+          // Formato no soportado por pdfkit (p.ej. no era JPEG/PNG): se omite.
+        }
+        doc.rect(x, filaY, celda, altoFoto).lineWidth(0.5).strokeColor(TENUE).stroke();
+        if (f.etiqueta) {
+          doc
+            .fontSize(6.5)
+            .fillColor(TENUE)
+            .text(f.etiqueta, x, filaY + altoFoto + 2, {
+              width: celda,
+              align: 'center',
+              lineBreak: false,
+            });
+        }
+        // Al cerrar la fila (o en la última foto), baja el cursor una fila.
+        if (col === cols - 1 || i === fotosImg.length - 1) {
+          doc.y = filaY + altoCelda + gap;
+          doc.x = M;
+        }
+      });
+    }
+
     doc.moveDown(0.4);
   }
 

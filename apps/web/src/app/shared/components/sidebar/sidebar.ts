@@ -1,4 +1,5 @@
 import { Component, DestroyRef, computed, inject } from "@angular/core";
+import { HttpClient } from "@angular/common/http";
 import { ModulesService } from "../../services/modules.service";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { filter } from "rxjs/operators";
@@ -33,6 +34,7 @@ const ROLE_LABELS: Record<string, string> = {
 export class Sidebar {
   private router = inject(Router);
   private auth = inject(AuthService);
+  private http = inject(HttpClient);
   private destroyRef = inject(DestroyRef);
   navServices = inject(NavService);
 
@@ -63,6 +65,18 @@ export class Sidebar {
   );
 
   constructor() {
+    // Foto de perfil del usuario para el avatar del menú (si no tiene, queda
+    // el genérico). Se pide a /me, que resuelve la liga temporal del avatar.
+    this.http
+      .get<{ avatarUrl?: string | null }>("/api/v1/auth/me")
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (me) => {
+          if (me?.avatarUrl) this.url = me.avatarUrl;
+        },
+        error: () => undefined,
+      });
+
     this.navServices.items
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((menuItems) => {

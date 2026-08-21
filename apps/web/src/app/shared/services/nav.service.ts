@@ -80,6 +80,18 @@ export class NavService {
         // garantía de venta de la unidad). Hoy comparte pantalla con la de
         // unidades; se separará cuando el backend distinga el tipo.
         { path: "/warranties", title: "Garantías de taller", type: "link" },
+        { path: "/workshop/comisiones", title: "Comisiones", type: "link" },
+      ],
+    },
+    // ── Hojalatería y Pintura (módulo propio, aparte del taller) ──
+    {
+      title: "Hojalatería y Pintura",
+      icon: "edit-3",
+      type: "sub",
+      active: false,
+      children: [
+        { path: "/bodywork", title: "Órdenes de carrocería", type: "link" },
+        { path: "/bodywork/catalogo", title: "Catálogo de piezas", type: "link" },
       ],
     },
     // ── Ventas de unidades ─────────────────────────────────
@@ -131,7 +143,6 @@ export class NavService {
             { path: "/warehouse/conteos", title: "Conteos físicos", type: "link" },
             { path: "/warehouse/escaneo", title: "Inventario rápido", type: "link" },
             { path: "/warehouse/devoluciones", title: "Devoluciones y garantías", type: "link" },
-            { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
           ],
         },
       ],
@@ -210,6 +221,7 @@ export class NavService {
             { path: "/units-inventory/locations", title: "Ubicaciones de unidades", type: "link" },
             { path: "/cash-register/listas-precio", title: "Listas de precio", type: "link" },
             { path: "/cfdi", title: "CFDI", type: "link" },
+            { path: "/importar-catalogos", title: "Importar catálogos", type: "link" },
           ],
         },
       ],
@@ -255,7 +267,8 @@ export class NavService {
       "sale-surveys": ["sales"],
       "sales-appointments": ["sales"],
       deliveries: ["workshop", "sales"],
-      // Importar catálogos vive bajo Almacén y no es un módulo propio.
+      // Importar catálogos vive en Configuración → Catálogos y no es un módulo
+      // propio; se muestra si el tenant tiene almacén o inventario de refacciones.
       "importar-catalogos": ["warehouse", "parts-inventory"],
     };
     const permitido = (path?: string): boolean => {

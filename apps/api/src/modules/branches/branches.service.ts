@@ -76,6 +76,11 @@ export class BranchesService {
         break;
     }
 
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere('(b.name ILIKE :s OR b.slug ILIKE :s)', { s });
+    }
+
     const [data, total] = await qb
       .orderBy('b.name', 'ASC')
       .skip((page - 1) * limit)

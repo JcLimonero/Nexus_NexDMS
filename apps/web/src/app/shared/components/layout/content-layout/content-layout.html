@@ -21,6 +21,7 @@
         <app-sidebar />
       </div>
       <div class="page-body">
+        <app-billing-banner />
         <main [@animateRoute]="getRouterOutletState(o)">
           <router-outlet #o="outlet" />
         </main>

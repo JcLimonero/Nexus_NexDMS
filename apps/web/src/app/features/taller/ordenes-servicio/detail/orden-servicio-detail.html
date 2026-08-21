@@ -67,10 +67,64 @@
                       <th class="text-muted">Recibida</th>
                       <td>{{ o.receivedAt | date:'short' }}</td>
                     </tr>
-                    @if (o.promisedAt) {
+                    <tr>
+                      <th class="text-muted">Prometida</th>
+                      <td>
+                        <div class="d-flex align-items-center gap-2 flex-wrap">
+                          <span>{{ o.promisedAt ? (o.promisedAt | date:'short') : '—' }}</span>
+                          @if (o.status !== 'DELIVERED' && o.status !== 'CANCELLED') {
+                            <button type="button" class="btn btn-link btn-sm p-0" (click)="abrirEdicionPromesa()">
+                              {{ o.promisedAt ? 'Cambiar' : 'Poner fecha' }}
+                            </button>
+                          }
+                          <button type="button" class="btn btn-link btn-sm p-0 text-muted" (click)="toggleHistorialPromesa()">
+                            Historial
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                    @if (editandoPromesa()) {
                       <tr>
-                        <th class="text-muted">Prometida</th>
-                        <td>{{ o.promisedAt | date:'short' }}</td>
+                        <td colspan="2">
+                          <div class="p-2 border rounded bg-light">
+                            <label class="form-label small mb-1">Nueva fecha prometida</label>
+                            <input type="datetime-local" class="form-control form-control-sm mb-2"
+                              [ngModel]="nuevaPromesa()" (ngModelChange)="nuevaPromesa.set($event)" />
+                            <label class="form-label small mb-1">Motivo del cambio <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-sm mb-2"
+                              placeholder="Ej. refacción en respaldo, retraso del proveedor…"
+                              [ngModel]="motivoPromesa()" (ngModelChange)="motivoPromesa.set($event)" />
+                            <div class="d-flex gap-2">
+                              <button type="button" class="btn btn-primary btn-sm" [disabled]="guardandoPromesa()" (click)="guardarPromesa()">
+                                @if (guardandoPromesa()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                                Guardar
+                              </button>
+                              <button type="button" class="btn btn-outline-secondary btn-sm" (click)="editandoPromesa.set(false)">Cancelar</button>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    }
+                    @if (verHistorialPromesa()) {
+                      <tr>
+                        <td colspan="2">
+                          @if (!historialPromesa().length) {
+                            <p class="text-muted small mb-0">Sin cambios registrados.</p>
+                          } @else {
+                            <ul class="list-unstyled small mb-0">
+                              @for (h of historialPromesa(); track h.id) {
+                                <li class="mb-1">
+                                  <strong>{{ h.newPromisedAt ? (h.newPromisedAt | date:'short') : 'sin fecha' }}</strong>
+                                  <span class="text-muted">
+                                    (antes {{ h.oldPromisedAt ? (h.oldPromisedAt | date:'short') : '—' }})
+                                    — {{ h.reason }}
+                                    · {{ h.changedBy || 'usuario' }}, {{ h.createdAt | date:'short' }}
+                                  </span>
+                                </li>
+                              }
+                            </ul>
+                          }
+                        </td>
                       </tr>
                     }
                   </tbody>
@@ -182,18 +236,58 @@
                   Cancelar orden
                 </button>
               }
+              @if (o.status !== 'DELIVERED' && o.status !== 'CANCELLED') {
+                <button type="button" class="btn btn-outline-primary btn-sm" (click)="abrirSolicitudRefaccion()">
+                  <i class="icofont icofont-cart me-1"></i> Solicitar refacción
+                </button>
+              }
+            </div>
+          }
+
+          @if (solicitandoRefaccion()) {
+            <div class="p-2 border rounded bg-light mt-2">
+              <h6 class="mb-2">Solicitar refacción al almacén</h6>
+              <div class="row g-2 align-items-end">
+                <div class="col-md-5">
+                  <label class="form-label small mb-1">Refacción</label>
+                  <select class="form-select form-select-sm"
+                    [ngModel]="refaccionElegida()" (ngModelChange)="refaccionElegida.set($event)">
+                    <option value="">Seleccionar…</option>
+                    @for (p of partesDisponibles(); track p.id) {
+                      <option [ngValue]="p.id">{{ p.sku }} — {{ p.name }}</option>
+                    }
+                  </select>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label small mb-1">Cantidad</label>
+                  <input type="number" min="1" class="form-control form-control-sm"
+                    [ngModel]="cantidadRefaccion()" (ngModelChange)="cantidadRefaccion.set($event)" />
+                </div>
+                <div class="col-md-5">
+                  <label class="form-label small mb-1">Nota (opcional)</label>
+                  <input type="text" class="form-control form-control-sm"
+                    [ngModel]="notaRefaccion()" (ngModelChange)="notaRefaccion.set($event)" />
+                </div>
+              </div>
+              <div class="d-flex gap-2 mt-2">
+                <button type="button" class="btn btn-primary btn-sm" [disabled]="enviandoSolicitud()" (click)="solicitarRefaccion()">
+                  @if (enviandoSolicitud()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                  Solicitar
+                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" (click)="solicitandoRefaccion.set(false)">Cancelar</button>
+              </div>
+              <p class="text-muted small mb-0 mt-2">
+                Crea una requisición de compra ligada a esta orden. Al convertirla en orden de compra, quedará el vínculo.
+              </p>
             </div>
           }
         </div>
       </div>
 
-      <!-- Trabajo de la orden: operaciones, adicionales, firmas, mensajes
-           y unidad de cortesía. Solo tiene sentido con la orden cargada. -->
+      <!-- Trabajo de la orden: operaciones, adicionales, firmas y mensajes.
+           Solo tiene sentido con la orden cargada. -->
       @if (orden(); as o) {
-        <app-panel-servicio
-          [serviceOrderId]="o.id"
-          [sustitucionActiva]="!!o.substituteUnitId && !o.substituteReturnedAt"
-        />
+        <app-panel-servicio [serviceOrderId]="o.id" />
 
         <!-- Cómo llegó la unidad. Es lo que se mira al entregarla, o cuando
              el cliente dice que ese golpe no venía. Si la orden se abrió en
@@ -252,27 +346,46 @@
 
   @if (valeAbierto()) {
     <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;" (click)="valeAbierto.set(false)"></div>
-    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(440px,94vw);">
-      <div class="card-header"><h6 class="mb-0">Vale de compra</h6></div>
+    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(620px,94vw);max-height:90vh;overflow:auto;">
+      <div class="card-header"><h6 class="mb-0">Vale(s) de compra</h6></div>
       <div class="card-body">
-        <p class="text-muted small">Egreso de caja por una refacción comprada para esta orden. Queda ligado al auto y entra al corte.</p>
-        <div class="mb-2">
+        <p class="text-muted small">Egresos de caja por refacciones compradas para esta orden. Se puede comprar a distintos proveedores: agrega un renglón por vale. Cada uno queda ligado al auto y entra al corte.</p>
+        <div class="mb-3">
           <label class="form-label">¿Qué se compró? <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" [ngModel]="valeConcepto()" (ngModelChange)="valeConcepto.set($event)" placeholder="Ej. Balatas delanteras" />
+          <input type="text" class="form-control" [ngModel]="valeConcepto()" (ngModelChange)="valeConcepto.set($event)" placeholder="Ej. Balatas y filtro" />
         </div>
-        <div class="mb-2">
-          <label class="form-label">Monto <span class="text-danger">*</span></label>
-          <input type="number" class="form-control" [ngModel]="valeMonto()" (ngModelChange)="valeMonto.set($event)" min="0" step="0.01" />
-        </div>
-        <div class="mb-2">
-          <label class="form-label">Proveedor / comprador</label>
-          <input type="text" class="form-control" [ngModel]="valeProveedor()" (ngModelChange)="valeProveedor.set($event)" placeholder="Opcional" />
+
+        <label class="form-label">Vales</label>
+        @for (l of valeLineas(); track $index; let i = $index) {
+          <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-4">
+              @if (i === 0) { <label class="form-label small mb-1">Proveedor</label> }
+              <input type="text" class="form-control form-control-sm" [ngModel]="l.proveedor" (ngModelChange)="setLineaVale(i, 'proveedor', $event)" placeholder="Proveedor" />
+            </div>
+            <div class="col-md-3">
+              @if (i === 0) { <label class="form-label small mb-1">N.° de vale</label> }
+              <input type="text" class="form-control form-control-sm" [ngModel]="l.numeroVale" (ngModelChange)="setLineaVale(i, 'numeroVale', $event)" placeholder="Folio" />
+            </div>
+            <div class="col-md-3">
+              @if (i === 0) { <label class="form-label small mb-1">Monto</label> }
+              <input type="number" class="form-control form-control-sm text-end" [ngModel]="l.monto" (ngModelChange)="setLineaVale(i, 'monto', $event)" min="0" step="0.01" />
+            </div>
+            <div class="col-md-2 text-end">
+              <button type="button" class="btn btn-sm btn-outline-danger" (click)="quitarLineaVale(i)" [disabled]="valeLineas().length <= 1" title="Quitar">✕</button>
+            </div>
+          </div>
+        }
+        <div class="d-flex justify-content-between align-items-center">
+          <button type="button" class="btn btn-outline-primary btn-sm" (click)="agregarLineaVale()">
+            <i class="icofont icofont-plus me-1"></i> Agregar vale
+          </button>
+          <span class="text-muted small">Total: <strong>{{ money(totalVales()) }}</strong></span>
         </div>
       </div>
       <div class="card-footer d-flex justify-content-end gap-2">
         <button type="button" class="btn btn-outline-secondary btn-sm" (click)="valeAbierto.set(false)">Cancelar</button>
         <button type="button" class="btn btn-primary btn-sm" [disabled]="guardandoVale()" (click)="confirmarVale()">
-          {{ guardandoVale() ? "Registrando…" : "Registrar vale" }}
+          {{ guardandoVale() ? "Registrando…" : "Registrar vale(s)" }}
         </button>
       </div>
     </div>

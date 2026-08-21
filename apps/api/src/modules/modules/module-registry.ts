@@ -27,6 +27,7 @@ export type ModuleKey =
   | 'quotes'
   | 'workshop'
   | 'reception'
+  | 'bodywork'
   | 'warranties'
   | 'finance'
   | 'cfdi'
@@ -96,6 +97,16 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     icon: 'clipboard',
     route: '/reception',
     minPlan: TenantPlanEnum.BASIC,
+    hasDashboard: false,
+  },
+  {
+    key: 'bodywork',
+    name: 'Hojalatería y Pintura',
+    description:
+      'Recepción de carrocería, valoración de daños con fotos y presupuesto por pieza (reparar, cambiar, pintar).',
+    icon: 'edit-3',
+    route: '/bodywork',
+    minPlan: TenantPlanEnum.PRO,
     hasDashboard: false,
   },
   {

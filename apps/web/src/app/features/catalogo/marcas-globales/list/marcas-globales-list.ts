@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
@@ -10,7 +11,7 @@ import { FeatherIcons } from "../../../../shared/components/feather-icons/feathe
 @Component({
   selector: "app-marcas-globales-list",
   standalone: true,
-  imports: [CommonModule, RouterModule, FeatherIcons],
+  imports: [CommonModule, FormsModule, RouterModule, FeatherIcons],
   templateUrl: "./marcas-globales-list.html",
   styleUrls: ["./marcas-globales-list.scss"],
 })
@@ -21,6 +22,15 @@ export class MarcasGlobalesList implements OnInit {
   brands = signal<GlobalBrand[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
+
+  filteredBrands = computed(() => {
+    const term = this.searchFilter().trim().toLowerCase();
+    if (!term) return this.brands();
+    return this.brands().filter((b) =>
+      b.name.toLowerCase().includes(term),
+    );
+  });
 
   ngOnInit(): void {
     this.load();

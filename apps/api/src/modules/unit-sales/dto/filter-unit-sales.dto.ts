@@ -1,10 +1,15 @@
-import { IsEnum, IsOptional, IsUUID } from 'class-validator';
+import { IsEnum, IsOptional, IsString, IsUUID } from 'class-validator';
 import {
   UnitSaleStatusEnum,
   UnitSaleFinancingTypeEnum,
 } from '../entities/unit-sale.entity';
 
 export class FilterUnitSalesDto {
+  /** Búsqueda de texto: folio, cliente, teléfono o VIN/serie de la unidad. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @IsUUID()
   clientId?: string;

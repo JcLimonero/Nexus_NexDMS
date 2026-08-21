@@ -87,12 +87,42 @@
                         @for (r of refaccionesDe(i).controls; track $index; let j = $index) {
                           <div class="row g-2 align-items-center mb-1" [formGroupName]="j">
                             <div class="col-md-6">
-                              <select class="form-select form-select-sm" formControlName="partId" (change)="onPartSelect(i, j)">
-                                <option value="">Seleccionar refacción</option>
-                                @for (p of parts(); track p.id) {
-                                  <option [ngValue]="p.id">{{ partLabel(p) }}</option>
-                                }
-                              </select>
+                              @if (r.get('manual')?.value) {
+                                <!-- Refacción capturada a mano (fuera de catálogo) -->
+                                <div class="input-group input-group-sm">
+                                  <span class="input-group-text" title="Refacción fuera de catálogo">A mano</span>
+                                  <input type="text" class="form-control" formControlName="description" placeholder="Nombre de la refacción" />
+                                  <button type="button" class="btn btn-outline-secondary" title="Buscar en catálogo" (click)="volverACatalogo(i, j)">
+                                    <i class="icofont icofont-search-1"></i>
+                                  </button>
+                                </div>
+                              } @else {
+                                <!-- Buscador de catálogo -->
+                                <div class="combo">
+                                  <input type="text" class="form-control form-control-sm" autocomplete="off"
+                                    placeholder="Buscar refacción…"
+                                    [value]="r.get('search')?.value"
+                                    (input)="onBuscarRefaccion(i, j, $event)"
+                                    (focus)="abrirCombo(i, j)"
+                                    (blur)="cerrarComboDiferido()" />
+                                  @if (comboAbierto() === i + ':' + j) {
+                                    <div class="combo-menu">
+                                      @for (p of partsFiltradas(i, j); track p.id) {
+                                        <button type="button" class="combo-item" (mousedown)="elegirParte(i, j, p)">
+                                          {{ partLabel(p) }}
+                                        </button>
+                                      } @empty {
+                                        <div class="combo-empty">
+                                          <small class="text-muted d-block mb-2">Sin coincidencias en el catálogo</small>
+                                          <button type="button" class="btn btn-sm btn-outline-primary w-100" (mousedown)="usarAMano(i, j)">
+                                            <i class="icofont icofont-plus me-1"></i> Agregar a mano
+                                          </button>
+                                        </div>
+                                      }
+                                    </div>
+                                  }
+                                </div>
+                              }
                             </div>
                             <div class="col-md-2">
                               <input type="number" class="form-control form-control-sm text-end" formControlName="quantity" min="1" placeholder="Cant." />

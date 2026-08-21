@@ -18,6 +18,7 @@ export class CatalogoService {
 
   getAll(filters: FilterGlobalModels = {}): Observable<GlobalModelsResponse> {
     let params = new HttpParams();
+    if (filters.search) params = params.set("search", filters.search);
     if (filters.brandId) params = params.set("brandId", filters.brandId);
     if (filters.vehicleTypeId)
       params = params.set("vehicleTypeId", filters.vehicleTypeId);

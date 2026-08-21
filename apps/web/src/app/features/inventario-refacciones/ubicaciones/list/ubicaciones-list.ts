@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
@@ -25,6 +25,18 @@ export class UbicacionesList implements OnInit {
   selectedBranchId = signal<string>("");
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
+
+  // Filtrado client-side: la lista llega completa (sin paginar) por sucursal.
+  ubicacionesFiltradas = computed(() => {
+    const term = this.searchFilter().trim().toLowerCase();
+    if (!term) return this.ubicaciones();
+    return this.ubicaciones().filter((loc) =>
+      [loc.code, loc.zone, loc.description]
+        .filter((v): v is string => !!v)
+        .some((v) => v.toLowerCase().includes(term)),
+    );
+  });
 
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({

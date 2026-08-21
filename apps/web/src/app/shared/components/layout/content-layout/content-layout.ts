@@ -18,6 +18,8 @@ import { Customizer } from "../../customizer/customizer";
 import { Footer } from "../../footer/footer";
 import { Header } from "../../header/header";
 import { Sidebar } from "../../sidebar/sidebar";
+import { BillingBanner } from "../../billing-banner/billing-banner";
+import { BillingStateService } from "../../../services/billing-state.service";
 
 @Component({
   selector: "app-content-layout",
@@ -28,6 +30,7 @@ import { Sidebar } from "../../sidebar/sidebar";
     Footer,
     Customizer,
     NgClass,
+    BillingBanner,
   ],
   templateUrl: "./content-layout.html",
   styleUrls: ["./content-layout.scss"],
@@ -47,12 +50,16 @@ export class ContentLayout implements AfterViewInit {
   navServices = inject(NavService);
   customizer = inject(CustomizerService);
   private cd = inject(ChangeDetectorRef);
+  private billing = inject(BillingStateService);
 
   ngAfterViewInit() {
     this.cd.detectChanges();
     setTimeout(() => {
       feather.replace();
     });
+    // Al entrar al DMS se consulta el estado de cobro para que el banner de
+    // solo-lectura aparezca sin tener que chocar antes con un 403.
+    this.billing.refrescar();
   }
 
   @HostListener("document:click", ["$event"])

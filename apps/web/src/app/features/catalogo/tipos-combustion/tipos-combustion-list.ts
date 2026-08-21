@@ -1,5 +1,6 @@
-import { Component, OnInit, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
@@ -9,7 +10,7 @@ import { CombustionType } from "../models/modelo-global.model";
 @Component({
   selector: "app-tipos-combustion-list",
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: "./tipos-combustion-list.html",
 })
 export class TiposCombustionList implements OnInit {
@@ -19,6 +20,17 @@ export class TiposCombustionList implements OnInit {
   types = signal<CombustionType[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
+
+  filteredTypes = computed(() => {
+    const term = this.searchFilter().trim().toLowerCase();
+    if (!term) return this.types();
+    return this.types().filter(
+      (t) =>
+        t.label.toLowerCase().includes(term) ||
+        t.code.toLowerCase().includes(term),
+    );
+  });
 
   ngOnInit(): void {
     this.load();

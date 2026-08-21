@@ -81,9 +81,42 @@ export class SuppliersService {
       ...dto,
       tenantId: user.tenantId,
       creditDays: dto.creditDays ?? 0,
+      creditLimit: dto.creditLimit ?? 0,
       isActive: dto.isActive ?? true,
     });
     return this.supplierRepo.save(supplier);
+  }
+
+  /**
+   * Estado de la línea de crédito con el proveedor: cuánto se le tiene
+   * autorizado, cuánto está en uso (órdenes recibidas y no pagadas) y cuánto
+   * queda disponible.
+   */
+  async creditSummary(
+    user: UserPayload,
+    id: string,
+  ): Promise<{ creditLimit: number; enUso: number; disponible: number }> {
+    const supplier = await this.findOne(user, id);
+    const row = await this.purchaseOrderRepo
+      .createQueryBuilder('po')
+      .select('COALESCE(SUM(po.total), 0)', 'total')
+      .where('po.supplier_id = :id', { id })
+      .andWhere('po.tenant_id = :tenantId', { tenantId: user.tenantId })
+      .andWhere('po.paid_at IS NULL')
+      .andWhere('po.status IN (:...st)', {
+        st: [
+          PurchaseOrderStatusEnum.PARTIAL,
+          PurchaseOrderStatusEnum.RECEIVED,
+        ],
+      })
+      .getRawOne<{ total: string }>();
+    const creditLimit = Number(supplier.creditLimit) || 0;
+    const enUso = Number(row?.total) || 0;
+    return {
+      creditLimit,
+      enUso,
+      disponible: Math.round((creditLimit - enUso) * 100) / 100,
+    };
   }
 
   async update(

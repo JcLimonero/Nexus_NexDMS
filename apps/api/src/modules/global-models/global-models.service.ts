@@ -72,19 +72,42 @@ export class GlobalModelsService {
     const page = filters.page ?? 1;
     const limit = filters.limit ?? 50;
 
-    const where: Record<string, unknown> = {};
-    if (filters.vehicleTypeId) where.vehicleTypeId = filters.vehicleTypeId;
-    if (filters.year !== undefined) where.year = filters.year;
-    if (filters.isActive !== undefined) where.isActive = filters.isActive;
-    if (filters.brandId) where.brandId = filters.brandId;
+    const qb = this.modelRepo
+      .createQueryBuilder('gm')
+      .leftJoinAndSelect('gm.brand', 'brand')
+      .leftJoinAndSelect('gm.vehicleType', 'vehicleType')
+      .leftJoinAndSelect('gm.combustionType', 'combustionType');
 
-    const [data, total] = await this.modelRepo.findAndCount({
-      where: Object.keys(where).length ? where : undefined,
-      relations: ['brand', 'vehicleType', 'combustionType'],
-      order: { brand: { name: 'ASC' }, model: 'ASC' },
-      skip: (page - 1) * limit,
-      take: limit,
-    });
+    if (filters.vehicleTypeId) {
+      qb.andWhere('gm.vehicle_type_id = :vehicleTypeId', {
+        vehicleTypeId: filters.vehicleTypeId,
+      });
+    }
+    if (filters.year !== undefined) {
+      qb.andWhere('gm.year = :year', { year: filters.year });
+    }
+    if (filters.isActive !== undefined) {
+      qb.andWhere('gm.is_active = :isActive', { isActive: filters.isActive });
+    }
+    if (filters.brandId) {
+      qb.andWhere('gm.brand_id = :brandId', { brandId: filters.brandId });
+    }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(brand.name ILIKE :s
+          OR gm.model ILIKE :s
+          OR gm.version ILIKE :s)`,
+        { s },
+      );
+    }
+
+    const [data, total] = await qb
+      .orderBy('brand.name', 'ASC')
+      .addOrderBy('gm.model', 'ASC')
+      .skip((page - 1) * limit)
+      .take(limit)
+      .getManyAndCount();
 
     return {
       data,

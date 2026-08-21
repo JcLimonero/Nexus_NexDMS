@@ -35,6 +35,18 @@ export class CommissionsController {
     return this.commissionsService.findAllPeriods(user, filters);
   }
 
+  /** Cálculo de comisión de un mecánico en un rango (from/to = YYYY-MM-DD). */
+  @Get('preview')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'EXECUTIVE')
+  preview(
+    @CurrentUser() user: UserPayload,
+    @Query('mechanicId', ParseUUIDPipe) mechanicId: string,
+    @Query('from') from: string,
+    @Query('to') to: string,
+  ) {
+    return this.commissionsService.previewMecanico(user, mechanicId, from, to);
+  }
+
   @Get('periods/:id')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'EXECUTIVE')
   findOnePeriod(

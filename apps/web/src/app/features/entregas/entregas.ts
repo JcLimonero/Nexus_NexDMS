@@ -1,8 +1,9 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { Subject, debounceTime } from "rxjs";
 
 import {
   EntregasService,
@@ -11,16 +12,22 @@ import {
   ChecklistItem,
 } from "./entregas.service";
 import { BranchesService } from "../inventario-refacciones/services/branches.service";
+import { TallerService } from "../taller/taller.service";
+import {
+  ServiceOrder,
+  ServiceOrderStatus,
+} from "../taller/models/service-order.model";
 
 @Component({
   selector: "app-entregas",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: "./entregas.html",
 })
 export class Entregas implements OnInit {
   private srv = inject(EntregasService);
   private branchesSrv = inject(BranchesService);
+  private taller = inject(TallerService);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
 
@@ -28,6 +35,12 @@ export class Entregas implements OnInit {
   guardando = signal(false);
   entregas = signal<Delivery[]>([]);
   branches = signal<{ id: string; name: string }[]>([]);
+
+  // Órdenes de taller listas para entregar (completadas) + su buscador.
+  ordenesListas = signal<ServiceOrder[]>([]);
+  cargandoOrdenes = signal(false);
+  busqueda = signal("");
+  private busqueda$ = new Subject<void>();
 
   kind: DeliveryKind = "UNIT_SALE";
   branchId = "";
@@ -48,6 +61,47 @@ export class Entregas implements OnInit {
     });
     this.cargarPlantilla();
     this.cargar();
+
+    // Buscador con rebote para no golpear el backend en cada tecla.
+    this.busqueda$.pipe(debounceTime(250)).subscribe(() => this.cargarOrdenesListas());
+    if (this.kind === "SERVICE") this.cargarOrdenesListas();
+  }
+
+  /** Órdenes ya completadas (listas para entregar) del taller. */
+  cargarOrdenesListas(): void {
+    this.cargandoOrdenes.set(true);
+    this.taller
+      .getServiceOrders({
+        status: ServiceOrderStatus.READY,
+        search: this.busqueda().trim() || undefined,
+        limit: 50,
+      })
+      .subscribe({
+        next: (res) => {
+          this.ordenesListas.set(res.data);
+          this.cargandoOrdenes.set(false);
+        },
+        error: () => this.cargandoOrdenes.set(false),
+      });
+  }
+
+  onBuscar(v: string): void {
+    this.busqueda.set(v);
+    this.busqueda$.next();
+  }
+
+  nombreCliente(o: ServiceOrder): string {
+    const w = o.owner;
+    if (!w) return "—";
+    return (
+      w.companyName || `${w.firstName ?? ""} ${w.lastName ?? ""}`.trim() || "—"
+    );
+  }
+
+  etiquetaVehiculo(o: ServiceOrder): string {
+    const v = o.vehicle;
+    if (!v) return "";
+    return `${v.make} ${v.model}${v.plate ? " · " + v.plate : ""}`;
   }
 
   etiquetaKind(k: DeliveryKind): string {
@@ -57,6 +111,7 @@ export class Entregas implements OnInit {
   cambiarTipo(k: DeliveryKind): void {
     this.kind = k;
     this.cargarPlantilla();
+    if (k === "SERVICE") this.cargarOrdenesListas();
   }
 
   cargarPlantilla(): void {

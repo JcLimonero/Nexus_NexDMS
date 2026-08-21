@@ -15,6 +15,13 @@ import { ReceptionPhoto } from './entities/reception-photo.entity';
 import { ServiceOrderPart } from './entities/service-order-part.entity';
 import { ServiceOrderTime } from './entities/service-order-time.entity';
 import { ServiceOrderUpdate } from './entities/service-order-update.entity';
+import { ServiceOrderPromiseChange } from './entities/service-order-promise-change.entity';
+import { UpdatePromisedDateDto } from './dto/update-promised-date.dto';
+import { RequestPartDto } from './dto/request-part.dto';
+import {
+  PurchaseRequisition,
+  RequisitionStatusEnum,
+} from '../purchase-requisitions/entities/purchase-requisition.entity';
 import { ServiceOrderFinding } from './entities/service-order-finding.entity';
 import {
   FindingCriticalityEnum,
@@ -119,6 +126,10 @@ export class ServiceOrdersService {
     private readonly surveyRepo: Repository<ServiceSurvey>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    @InjectRepository(ServiceOrderPromiseChange)
+    private readonly promiseChangeRepo: Repository<ServiceOrderPromiseChange>,
+    @InjectRepository(PurchaseRequisition)
+    private readonly requisitionRepo: Repository<PurchaseRequisition>,
     private readonly dataSource: DataSource,
     private readonly cfdiService: CfdiService,
     private readonly branchesService: BranchesService,
@@ -281,6 +292,18 @@ export class ServiceOrdersService {
         clientId: filters.clientId,
       });
     }
+    if (filters.search?.trim()) {
+      const s = `%${filters.search.trim()}%`;
+      qb.andWhere(
+        `(so.folio ILIKE :s
+          OR owner.first_name ILIKE :s
+          OR owner.last_name ILIKE :s
+          OR owner.company_name ILIKE :s
+          OR owner.phone ILIKE :s
+          OR vehicle.plate ILIKE :s)`,
+        { s },
+      );
+    }
     if (filters.status) {
       qb.andWhere('so.status = :status', { status: filters.status });
     }
@@ -367,6 +390,112 @@ export class ServiceOrdersService {
     }
     await this.soRepo.update(id, dto as Partial<ServiceOrder>);
     return this.findOne(user, id);
+  }
+
+  /**
+   * Cambia la fecha prometida de entrega registrando la justificación en la
+   * bitácora (de→a, motivo, quién, cuándo). El motivo es obligatorio.
+   */
+  async updatePromisedDate(
+    user: UserPayload,
+    id: string,
+    dto: UpdatePromisedDateDto,
+  ): Promise<ServiceOrder> {
+    const so = await this.findOne(user, id);
+    if (
+      so.status === ServiceOrderStatusEnum.DELIVERED ||
+      so.status === ServiceOrderStatusEnum.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'No se puede cambiar la fecha de una OS entregada o cancelada',
+      );
+    }
+    const nueva = dto.promisedAt ? new Date(dto.promisedAt) : null;
+    const anterior = so.promisedAt ? new Date(so.promisedAt) : null;
+    await this.dataSource.transaction(async (em) => {
+      await em.update(ServiceOrder, id, { promisedAt: nueva });
+      await em.save(
+        em.create(ServiceOrderPromiseChange, {
+          tenantId: user.tenantId,
+          serviceOrderId: id,
+          oldPromisedAt: anterior,
+          newPromisedAt: nueva,
+          reason: dto.reason.trim(),
+          changedByUserId: user.sub,
+        }),
+      );
+    });
+    return this.findOne(user, id);
+  }
+
+  /** Bitácora de cambios de la fecha prometida, más reciente primero. */
+  async historialFechaPromesa(user: UserPayload, id: string) {
+    await this.findOne(user, id); // valida acceso/tenant
+    const rows = await this.promiseChangeRepo.find({
+      where: { serviceOrderId: id, tenantId: user.tenantId },
+      relations: ['changedBy'],
+      order: { createdAt: 'DESC' },
+    });
+    return rows.map((r) => ({
+      id: r.id,
+      oldPromisedAt: r.oldPromisedAt,
+      newPromisedAt: r.newPromisedAt,
+      reason: r.reason,
+      changedBy: r.changedBy
+        ? `${r.changedBy.firstName} ${r.changedBy.lastName}`.trim()
+        : null,
+      createdAt: r.createdAt,
+    }));
+  }
+
+  /**
+   * Solicita una refacción para la orden: crea una requisición de compra ligada
+   * a esta orden de servicio (source_type='service_order'). Así, cuando esa
+   * requisición se convierta en orden de compra, se sabrá de qué orden de taller
+   * salió. Deja la orden "esperando refacciones".
+   */
+  async requestPart(
+    user: UserPayload,
+    id: string,
+    dto: RequestPartDto,
+  ): Promise<{ requisitionId: string }> {
+    const so = await this.findOne(user, id);
+    if (
+      so.status === ServiceOrderStatusEnum.DELIVERED ||
+      so.status === ServiceOrderStatusEnum.CANCELLED
+    ) {
+      throw new BadRequestException(
+        'No se pueden pedir refacciones para una OS entregada o cancelada',
+      );
+    }
+    const part = await this.partEntityRepo.findOne({
+      where: { id: dto.partId, branchId: so.branchId, tenantId: user.tenantId },
+    });
+    if (!part) throw new NotFoundException('Parte no encontrada');
+
+    const req = await this.requisitionRepo.save(
+      this.requisitionRepo.create({
+        tenantId: user.tenantId,
+        branchId: so.branchId,
+        partId: dto.partId,
+        quantity: dto.quantity,
+        status: RequisitionStatusEnum.PENDING,
+        sourceType: 'service_order',
+        sourceId: id,
+        note: dto.note?.trim() || null,
+        requestedBy: user.sub,
+      }),
+    );
+    // La orden queda esperando la refacción, salvo que ya esté cerrándose.
+    if (
+      so.status !== ServiceOrderStatusEnum.READY &&
+      so.status !== ServiceOrderStatusEnum.WAITING_PARTS
+    ) {
+      await this.soRepo.update(id, {
+        status: ServiceOrderStatusEnum.WAITING_PARTS,
+      });
+    }
+    return { requisitionId: req.id };
   }
 
   async changeStatus(

@@ -232,6 +232,15 @@ export class UsersService {
     return !!ub;
   }
 
+  /** Actualiza (o quita, con null) la foto de perfil del usuario. */
+  async setAvatarKey(
+    userId: string,
+    tenantId: string,
+    key: string | null,
+  ): Promise<void> {
+    await this.userRepo.update({ id: userId, tenantId }, { avatarKey: key });
+  }
+
   /**
    * Fija la sucursal por default del usuario. Se llama cuando cambia de
    * sucursal en cualquier módulo: la elección queda persistida para que el
@@ -296,6 +305,9 @@ export class UsersService {
       email: u.email,
       phone: u.phone,
       specialty: u.specialty,
+      commissionPeriod: u.commissionPeriod,
+      commissionPercent: Number(u.commissionPercent) || 0,
+      guaranteedSalary: Number(u.guaranteedSalary) || 0,
       scope: u.scope,
       isActive: u.isActive,
       lastLoginAt: u.lastLoginAt,
@@ -335,6 +347,9 @@ export class UsersService {
       isActive?: boolean;
       roles?: RoleEnum[];
       branchIds?: string[];
+      commissionPeriod?: string | null;
+      commissionPercent?: number;
+      guaranteedSalary?: number;
     },
     quienEdita?: string,
   ) {
@@ -389,6 +404,18 @@ export class UsersService {
       specialty: dto.specialty === undefined ? u.specialty : dto.specialty,
       scope: dto.scope ?? u.scope,
       isActive: dto.isActive ?? u.isActive,
+      commissionPeriod:
+        dto.commissionPeriod === undefined
+          ? u.commissionPeriod
+          : dto.commissionPeriod,
+      commissionPercent:
+        dto.commissionPercent === undefined
+          ? u.commissionPercent
+          : dto.commissionPercent,
+      guaranteedSalary:
+        dto.guaranteedSalary === undefined
+          ? u.guaranteedSalary
+          : dto.guaranteedSalary,
     });
     await this.userRepo.save(u);
     return (await this.listar(tenantId)).find((x) => x.id === id);

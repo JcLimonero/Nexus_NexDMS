@@ -162,6 +162,9 @@ export class Usuarios implements OnInit, OnDestroy {
     scope: "SUCURSAL",
     roles: [] as string[],
     branchIds: [] as string[],
+    commissionPeriod: "" as string,
+    commissionPercent: 0,
+    guaranteedSalary: 0,
   };
 
   nuevo(): void {
@@ -176,6 +179,9 @@ export class Usuarios implements OnInit, OnDestroy {
       scope: "SUCURSAL",
       roles: [],
       branchIds: this.branchId() ? [this.branchId()] : [],
+      commissionPeriod: "",
+      commissionPercent: 0,
+      guaranteedSalary: 0,
     };
     this.formAbierto.set(true);
   }
@@ -192,8 +198,16 @@ export class Usuarios implements OnInit, OnDestroy {
       scope: u.scope,
       roles: [...u.roles],
       branchIds: [...u.branchIds],
+      commissionPeriod: u.commissionPeriod ?? "",
+      commissionPercent: u.commissionPercent ?? 0,
+      guaranteedSalary: u.guaranteedSalary ?? 0,
     };
     this.formAbierto.set(true);
+  }
+
+  /** La sección de comisión solo aplica a mecánicos. */
+  esMecanico(): boolean {
+    return this.form.roles.includes("MECHANIC");
   }
 
   cerrarForm(): void {
@@ -263,6 +277,9 @@ export class Usuarios implements OnInit, OnDestroy {
           scope: this.form.scope as Usuario["scope"],
           roles: this.form.roles,
           branchIds: this.form.branchIds,
+          commissionPeriod: this.form.commissionPeriod || null,
+          commissionPercent: Number(this.form.commissionPercent) || 0,
+          guaranteedSalary: Number(this.form.guaranteedSalary) || 0,
         })
         .subscribe({ next: listo, error: falló });
       return;

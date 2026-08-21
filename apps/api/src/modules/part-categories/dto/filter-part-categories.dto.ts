@@ -1,7 +1,12 @@
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FilterPartCategoriesDto {
+  /** Búsqueda de texto: nombre de la categoría. */
+  @IsOptional()
+  @IsString()
+  search?: string;
+
   @IsOptional()
   @Type(() => Number)
   @IsInt()

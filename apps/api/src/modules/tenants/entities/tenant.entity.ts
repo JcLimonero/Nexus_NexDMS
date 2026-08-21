@@ -124,6 +124,10 @@ export class Tenant {
   @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive: boolean;
 
+  /** Tipos de cargo (charge_type) que NO pagan comisión al mecánico. */
+  @Column({ name: 'commission_exempt_charge_types', type: 'jsonb', nullable: true })
+  commissionExemptChargeTypes: string[] | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

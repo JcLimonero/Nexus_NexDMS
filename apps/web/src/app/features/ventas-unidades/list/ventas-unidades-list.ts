@@ -22,6 +22,7 @@ export class VentasUnidadesList implements OnInit {
   branches = signal<{ id: string; name: string }[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  searchFilter = signal<string>("");
   branchFilter = signal<string>("");
   statusFilter = signal<string>("");
 
@@ -40,8 +41,14 @@ export class VentasUnidadesList implements OnInit {
   private load(): void {
     this.loading.set(true);
     this.error.set(null);
-    const filters: { clientId?: string; status?: string; branchId?: string } =
-      {};
+    const filters: {
+      search?: string;
+      clientId?: string;
+      status?: string;
+      branchId?: string;
+    } = {};
+    if (this.searchFilter().trim())
+      filters.search = this.searchFilter().trim();
     if (this.statusFilter()) filters.status = this.statusFilter();
     if (this.branchFilter()) filters.branchId = this.branchFilter();
 

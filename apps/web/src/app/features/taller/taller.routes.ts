@@ -7,6 +7,12 @@ export const workshopRoutes: Routes = [
     pathMatch: "full",
   },
   {
+    path: "comisiones",
+    loadComponent: () =>
+      import("./comisiones/comisiones").then((m) => m.Comisiones),
+    data: { title: "Comisiones", breadcrumb: "Comisiones" },
+  },
+  {
     path: "service-orders",
     children: [
       {

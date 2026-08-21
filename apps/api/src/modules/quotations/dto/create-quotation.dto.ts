@@ -15,10 +15,20 @@ import {
 } from '../entities/quotation.entity';
 import { QuotationLineUrgencyEnum } from '../entities/quotation-item.entity';
 
-/** Una refacción que cuelga de un trabajo del presupuesto. */
+/**
+ * Una refacción que cuelga de un trabajo del presupuesto. Puede venir del
+ * catálogo (partId) o capturarse a mano cuando no existe en catálogo
+ * (description + unitPrice, sin partId).
+ */
 export class CreateQuotationRefaccionDto {
+  @IsOptional()
   @IsUUID()
-  partId: string;
+  partId?: string;
+
+  /** Nombre de la refacción cuando se captura a mano (sin partId). */
+  @IsOptional()
+  @IsString()
+  description?: string;
 
   @IsNumber()
   @Min(1)

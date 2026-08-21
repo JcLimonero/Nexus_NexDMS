@@ -101,16 +101,22 @@ export class BrandingService {
     this.pintarFavicon(b.iconUrl ?? null);
   }
 
-  /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene. */
+  /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene.
+   * Sobrescribe todos los links de icono para que ninguno le gane por formato. */
   private pintarFavicon(iconUrl: string | null): void {
     if (!iconUrl) return;
-    let link = document.querySelector<HTMLLinkElement>('link[rel~="icon"]');
-    if (!link) {
-      link = document.createElement("link");
+    const links = document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]');
+    if (links.length === 0) {
+      const link = document.createElement("link");
       link.rel = "icon";
+      link.href = iconUrl;
       document.head.appendChild(link);
+      return;
     }
-    link.href = iconUrl;
+    links.forEach((l) => {
+      l.removeAttribute("type");
+      l.href = iconUrl;
+    });
   }
 
   /**
@@ -134,7 +140,15 @@ export class BrandingService {
     r.setProperty("--nexus-600", p.primary);
     r.setProperty("--nexus-700", p.primaryHover);
     r.setProperty("--nexus-50", p.primarySoft);
+    // Escala navy completa derivada de la tinta. El sidebar y las bandas usan
+    // navy-500..900 (no solo 600); sin derivarlas, el sidebar se quedaba con el
+    // navy de fábrica y la paleta "no cambiaba". Los factores reproducen la
+    // escala nexus original (p.ej. tinta*0.8 = --navy-700).
+    r.setProperty("--navy-500", `color-mix(in srgb, ${p.tinta} 85%, white)`);
     r.setProperty("--navy-600", p.tinta);
+    r.setProperty("--navy-700", `color-mix(in srgb, ${p.tinta} 80%, black)`);
+    r.setProperty("--navy-800", `color-mix(in srgb, ${p.tinta} 68%, black)`);
+    r.setProperty("--navy-900", `color-mix(in srgb, ${p.tinta} 50%, black)`);
     // El anillo de foco comparte el tono de acción, ya en rgba translúcido.
     r.setProperty(
       "--focus-ring",
@@ -154,7 +168,11 @@ export class BrandingService {
       "--nexus-600",
       "--nexus-700",
       "--nexus-50",
+      "--navy-500",
       "--navy-600",
+      "--navy-700",
+      "--navy-800",
+      "--navy-900",
       "--focus-ring",
     ].forEach((v) => r.removeProperty(v));
   }

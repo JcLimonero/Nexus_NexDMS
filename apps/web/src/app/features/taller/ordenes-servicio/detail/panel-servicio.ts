@@ -20,7 +20,6 @@ import {
   Operacion,
   PanelServicioService,
   TipoCargo,
-  UnidadSustitucion,
 } from "./panel-servicio.service";
 
 interface LineaCotizacion {
@@ -29,7 +28,7 @@ interface LineaCotizacion {
   unitPrice: number;
 }
 
-type Pestana = "trabajos" | "adicionales" | "firmas" | "mensajes" | "unidad";
+type Pestana = "trabajos" | "adicionales" | "firmas" | "mensajes";
 
 /**
  * Panel de trabajo de la orden abierta.
@@ -47,8 +46,6 @@ type Pestana = "trabajos" | "adicionales" | "firmas" | "mensajes" | "unidad";
 })
 export class PanelServicio implements OnInit {
   @Input({ required: true }) serviceOrderId!: string;
-  /** Para saber si ya hay unidad prestada sin devolver. */
-  @Input() sustitucionActiva = false;
 
   private srv = inject(PanelServicioService);
   private http = inject(HttpClient);
@@ -73,6 +70,8 @@ export class PanelServicio implements OnInit {
     laborPrice: 0,
     chargeType: "CLIENT",
     chargeAccount: "",
+    noCommission: false,
+    commissionOverride: null as number | null,
   };
 
   // ── Trabajos adicionales ──
@@ -104,10 +103,6 @@ export class PanelServicio implements OnInit {
   sinLeer = computed(
     () => this.mensajes().filter((m) => m.sender === "CLIENT" && !m.leido).length,
   );
-
-  // ── Unidad de sustitución ──
-  unidades = signal<UnidadSustitucion[]>([]);
-  unidadElegida = "";
 
   ngOnInit(): void {
     this.cargar();
@@ -142,11 +137,6 @@ export class PanelServicio implements OnInit {
 
   ir(p: Pestana): void {
     this.pestana.set(p);
-    if (p === "unidad" && !this.unidades().length) {
-      this.srv.unidadesSustitucion().subscribe({
-        next: (u) => this.unidades.set(u),
-      });
-    }
   }
 
   // ─── Operaciones ────────────────────────────────────────────
@@ -164,6 +154,8 @@ export class PanelServicio implements OnInit {
           laborPrice: 0,
           chargeType: "CLIENT",
           chargeAccount: "",
+          noCommission: false,
+          commissionOverride: null,
         };
         this.toastr.success("Operación agregada");
         this.cargar();
@@ -445,43 +437,6 @@ export class PanelServicio implements OnInit {
       error: (e) => {
         this.guardando.set(false);
         this.toastr.error(e?.error?.message || "No se pudo enviar");
-      },
-    });
-  }
-
-  // ─── Unidad de sustitución ──────────────────────────────────
-
-  prestar(): void {
-    if (!this.unidadElegida) return;
-    this.guardando.set(true);
-    this.srv.prestarUnidad(this.serviceOrderId, this.unidadElegida).subscribe({
-      next: () => {
-        this.guardando.set(false);
-        this.sustitucionActiva = true;
-        this.toastr.success("Unidad de sustitución asignada");
-      },
-      error: (e) => {
-        this.guardando.set(false);
-        this.toastr.error(e?.error?.message || "No se pudo asignar");
-      },
-    });
-  }
-
-  devolver(): void {
-    this.guardando.set(true);
-    this.srv.devolverUnidad(this.serviceOrderId).subscribe({
-      next: () => {
-        this.guardando.set(false);
-        this.sustitucionActiva = false;
-        this.unidadElegida = "";
-        this.toastr.success("Unidad devuelta");
-        this.srv.unidadesSustitucion().subscribe({
-          next: (u) => this.unidades.set(u),
-        });
-      },
-      error: (e) => {
-        this.guardando.set(false);
-        this.toastr.error(e?.error?.message || "No se pudo registrar");
       },
     });
   }

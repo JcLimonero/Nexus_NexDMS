@@ -14,6 +14,7 @@ export interface PartCategoriesResponse {
 }
 
 export interface PartCategoryFilters {
+  search?: string;
   page?: number;
   limit?: number;
 }

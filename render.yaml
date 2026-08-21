@@ -72,12 +72,27 @@ services:
         sync: false
       # Bases de las ligas de acceso por portal (superadmin las muestra por
       # cliente como <base>/<slug>). Sin esto, caen a *.localhost.
+      # Base de las ligas que se ENVÍAN al cliente final por WhatsApp/email
+      # (seguimiento /t/, encuesta /s/, cotización /c/). Sin esto caen a
+      # localhost:4200.
+      - key: APP_PUBLIC_URL
+        value: https://app.nexusqsystem.com
       - key: WEB_APP_URL
         value: https://app.nexusqsystem.com
       - key: RECEPCION_APP_URL
         value: https://recepcion.nexusqsystem.com
       - key: PWA_APP_URL
         value: https://pwa.nexusqsystem.com
+      # Contacto de Nexus mostrado cuando un cliente suspendido intenta entrar.
+      # Teléfono/WhatsApp se capturan en el dashboard de Render (sync:false).
+      - key: NEXUS_SUPPORT_NAME
+        value: Nexus Q Tech
+      - key: NEXUS_SUPPORT_EMAIL
+        value: soporte@nexusqtech.com
+      - key: NEXUS_SUPPORT_PHONE
+        sync: false
+      - key: NEXUS_SUPPORT_WHATSAPP
+        sync: false
       # Almacenamiento Backblaze B2 (S3-compatible) para logos/archivos. Sin
       # esto, subir logotipo falla con "Could not load credentials". Copiar los
       # valores desde apps/api/.env.

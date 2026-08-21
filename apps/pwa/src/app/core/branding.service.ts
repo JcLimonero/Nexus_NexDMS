@@ -17,6 +17,8 @@ export interface Branding {
   paletaId: string;
   paleta: Paleta;
   logoUrl: string | null;
+  /** Isotipo cuadrado del cliente; se usa como favicon de la pestaña. */
+  iconUrl?: string | null;
 }
 
 const CLAVE = "nexdms_branding";
@@ -71,11 +73,31 @@ export class BrandingService {
     this.branding.set(null);
   }
 
+  /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene.
+   * Sobrescribe TODOS los links de icono (hay un default NexDMS en el HTML)
+   * y les quita el type para que ninguno le gane por formato. */
+  private pintarFavicon(iconUrl: string | null): void {
+    if (!iconUrl) return;
+    const links = document.querySelectorAll<HTMLLinkElement>('link[rel~="icon"]');
+    if (links.length === 0) {
+      const link = document.createElement("link");
+      link.rel = "icon";
+      link.href = iconUrl;
+      document.head.appendChild(link);
+      return;
+    }
+    links.forEach((l) => {
+      l.removeAttribute("type");
+      l.href = iconUrl;
+    });
+  }
+
   private aplicar(b: Branding): void {
     localStorage.setItem(CLAVE, JSON.stringify(b));
     this.branding.set(b);
     // El cliente al frente de la pestaña, para no confundir portales abiertos.
     if (b.nombre) document.title = `${b.nombre} · NexDMS Técnico`;
+    this.pintarFavicon(b.iconUrl ?? null);
     const r = document.documentElement.style;
     const p = b.paleta;
     // Solo los tonos de marca y de acción; neutrales y semánticos se quedan.

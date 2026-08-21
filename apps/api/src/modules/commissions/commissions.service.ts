@@ -15,8 +15,15 @@ import { CreateCommissionPeriodDto } from './dto/create-commission-period.dto';
 import { CreateCommissionDetailDto } from './dto/create-commission-detail.dto';
 import { FilterCommissionPeriodsDto } from './dto/filter-commissions.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
-import { ScopeEnum } from '../users/entities/user.entity';
+import { ScopeEnum, User } from '../users/entities/user.entity';
 import { BranchesService } from '../branches/branches.service';
+import { ServiceOrderOperation } from '../service-orders/entities/service-order-operation.entity';
+import {
+  ChargeTypeEnum,
+  OperationStatusEnum,
+} from '../service-orders/entities/service-order-operation.entity';
+import { ServiceOrder } from '../service-orders/entities/service-order.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 
 @Injectable()
 export class CommissionsService {
@@ -27,6 +34,12 @@ export class CommissionsService {
     private readonly detailRepo: Repository<CommissionDetail>,
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @InjectRepository(ServiceOrderOperation)
+    private readonly opRepo: Repository<ServiceOrderOperation>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
     private readonly branchesService: BranchesService,
   ) {}
 
@@ -264,5 +277,86 @@ export class CommissionsService {
       status: CommissionPeriodStatusEnum.UNDER_REVIEW,
     });
     return this.findOnePeriod(user, id);
+  }
+
+  /**
+   * Calcula la comisión de un mecánico en un rango de fechas, aplicando las
+   * reglas: por operación fichada (status DONE) de sus órdenes entregadas en el
+   * rango, la comisión es el override si se fijó, o el % del mecánico sobre la
+   * mano de obra; se excluyen las operaciones marcadas sin comisión y las de
+   * tipos de cargo exentos. Al total se suma el sueldo garantía del periodo.
+   */
+  async previewMecanico(
+    user: UserPayload,
+    mechanicId: string,
+    from: string,
+    to: string,
+  ) {
+    const mecanico = await this.userRepo.findOne({
+      where: { id: mechanicId, tenantId: user.tenantId },
+    });
+    if (!mecanico) throw new NotFoundException('Mecánico no encontrado');
+
+    const tenant = await this.tenantRepo.findOne({
+      where: { id: user.tenantId },
+    });
+    const exentos = new Set(tenant?.commissionExemptChargeTypes ?? []);
+    const pct = Number(mecanico.commissionPercent) || 0;
+
+    // Operaciones DONE del mecánico cuya orden se entregó en el rango.
+    const ops = await this.opRepo
+      .createQueryBuilder('op')
+      .innerJoin(ServiceOrder, 'so', 'so.id = op.service_order_id')
+      .where('op.mechanic_id = :mid', { mid: mechanicId })
+      .andWhere('op.status = :done', { done: OperationStatusEnum.DONE })
+      .andWhere('so.tenant_id = :tid', { tid: user.tenantId })
+      .andWhere('so.delivered_at IS NOT NULL')
+      .andWhere('so.delivered_at::date BETWEEN :from AND :to', { from, to })
+      .orderBy('so.delivered_at', 'ASC')
+      .getMany();
+
+    const detalle = ops.map((op) => {
+      const labor = Number(op.laborPrice) || 0;
+      let comision = 0;
+      let motivo = '';
+      if (op.noCommission) {
+        motivo = 'Marcada sin comisión';
+      } else if (exentos.has(op.chargeType)) {
+        motivo = `Tipo exento (${op.chargeType})`;
+      } else if (op.commissionOverride != null) {
+        comision = Number(op.commissionOverride) || 0;
+        motivo = 'Ganancia fija (override)';
+      } else {
+        comision = Math.round(labor * pct) / 100;
+        motivo = `${pct}% de mano de obra`;
+      }
+      return {
+        operationId: op.id,
+        description: op.description,
+        chargeType: op.chargeType,
+        laborPrice: labor,
+        comision,
+        motivo,
+      };
+    });
+
+    const comisionTotal = detalle.reduce((s, d) => s + d.comision, 0);
+    const sueldoGarantia = Number(mecanico.guaranteedSalary) || 0;
+    return {
+      mecanico: {
+        id: mecanico.id,
+        nombre: `${mecanico.firstName} ${mecanico.lastName}`.trim(),
+        periodo: mecanico.commissionPeriod,
+        porcentaje: pct,
+        sueldoGarantia,
+      },
+      desde: from,
+      hasta: to,
+      operaciones: detalle,
+      comisionTotal: Math.round(comisionTotal * 100) / 100,
+      sueldoGarantia,
+      // Sueldo garantía + comisión (siempre se pagan ambos).
+      total: Math.round((sueldoGarantia + comisionTotal) * 100) / 100,
+    };
   }
 }

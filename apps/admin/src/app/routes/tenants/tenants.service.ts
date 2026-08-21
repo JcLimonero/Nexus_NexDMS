@@ -30,6 +30,21 @@ export interface NuevoTenant {
   isActive?: boolean;
 }
 
+export interface CambioEstatus {
+  id: string;
+  previousActive: boolean;
+  newActive: boolean;
+  reason: string;
+  changedBy: string | null;
+  createdAt: string;
+}
+
+export interface ResumenCobro {
+  tenantId: string;
+  ultimoPago: { period: string; status: EstadoPago; vencido: boolean } | null;
+  proximoCobro: string | null;
+}
+
 export interface Modulo {
   key: string;
   name: string;
@@ -58,9 +73,16 @@ export class TenantsService {
     return this.http.patch<Tenant>(`/api/v1/tenants/${id}`, dto);
   }
 
-  /** Suspende o reactiva; el backend alterna según el estado actual. */
-  suspender(id: string): Observable<Tenant> {
-    return this.http.patch<Tenant>(`/api/v1/tenants/${id}/suspend`, {});
+  /** Suspende o reactiva; el backend alterna según el estado actual. Exige motivo. */
+  suspender(id: string, reason: string): Observable<Tenant> {
+    return this.http.patch<Tenant>(`/api/v1/tenants/${id}/suspend`, { reason });
+  }
+
+  /** Bitácora de suspensiones/reactivaciones del cliente. */
+  historialEstatus(id: string): Observable<CambioEstatus[]> {
+    return this.http.get<CambioEstatus[]>(
+      `/api/v1/tenants/${id}/status-history`,
+    );
   }
 
   /**
@@ -144,6 +166,9 @@ export interface Pago {
 
 /** Datos comerciales del cliente; el resto del tenant no cambia aquí. */
 export interface FichaComercial {
+  /** Identidad del cliente: se edita en la propia ficha (ya no en un diálogo aparte). */
+  name: string;
+  slug: string;
   /** Paquete comercial contratado; al cambiarlo se mueven nivel y módulos. */
   saasPlanId: string | null;
   contactName: string | null;
@@ -182,6 +207,17 @@ export interface Ficha {
   };
 }
 
+export interface ClienteMoroso {
+  tenantId: string;
+  nombre: string;
+  slug: string;
+  estado: "SOLO_LECTURA" | "BLOQUEADO";
+  diasMora: number;
+  diasParaBloqueo: number;
+  adeudo: number;
+  suspendidoManual: boolean;
+}
+
 export interface Panorama {
   clientes: number;
   activos: number;
@@ -189,6 +225,9 @@ export interface Panorama {
   ingresoMensual: number;
   adeudoTotal: number;
   clientesConAdeudo: number;
+  enSoloLectura: number;
+  bloqueadosPorPago: number;
+  morosos: ClienteMoroso[];
 }
 
 @Injectable({ providedIn: "root" })
@@ -197,6 +236,11 @@ export class SaasService {
 
   panorama(): Observable<Panorama> {
     return this.http.get<Panorama>("/api/v1/saas/overview");
+  }
+
+  /** Último pago y próximo cobro de cada cliente, para la lista. */
+  resumenCobros(): Observable<ResumenCobro[]> {
+    return this.http.get<ResumenCobro[]>("/api/v1/saas/payments-summary");
   }
 
   planes(): Observable<PlanPrecio[]> {

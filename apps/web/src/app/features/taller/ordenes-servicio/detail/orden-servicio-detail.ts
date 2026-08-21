@@ -4,14 +4,18 @@ import { HttpClient } from "@angular/common/http";
 import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { forkJoin } from "rxjs";
 
 import { TallerService } from "../../taller.service";
 import { PanelServicio } from "./panel-servicio";
 import { EvidenciaRecepcion } from "../../../../shared/components/evidencia-recepcion/evidencia-recepcion";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
+import { InventarioRefaccionesService } from "../../../inventario-refacciones/inventario-refacciones.service";
+import { Part } from "../../../inventario-refacciones/models/part.model";
 import {
   ServiceOrder,
   ServiceOrderStatus,
+  PromiseChange,
 } from "../../models/service-order.model";
 
 const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
@@ -43,6 +47,7 @@ export class OrdenServicioDetail implements OnInit {
   private tallerService = inject(TallerService);
   private http = inject(HttpClient);
   private branchesService = inject(BranchesService);
+  private inventario = inject(InventarioRefaccionesService);
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
@@ -57,6 +62,123 @@ export class OrdenServicioDetail implements OnInit {
   cancelling = signal(false);
   selectedStatus = signal<ServiceOrderStatus | "">("");
   selectedMechanicId = signal<string>("");
+
+  // Edición de la fecha prometida (con justificación) + su historial.
+  editandoPromesa = signal(false);
+  guardandoPromesa = signal(false);
+  nuevaPromesa = signal<string>("");
+  motivoPromesa = signal<string>("");
+  historialPromesa = signal<PromiseChange[]>([]);
+  verHistorialPromesa = signal(false);
+
+  /** Fecha ISO → valor para <input type="datetime-local"> (hora local). */
+  private aInputLocal(iso: string | null): string {
+    if (!iso) return "";
+    const d = new Date(iso);
+    const off = d.getTimezoneOffset();
+    return new Date(d.getTime() - off * 60000).toISOString().slice(0, 16);
+  }
+
+  abrirEdicionPromesa(): void {
+    const o = this.orden();
+    this.nuevaPromesa.set(this.aInputLocal(o?.promisedAt ?? null));
+    this.motivoPromesa.set("");
+    this.editandoPromesa.set(true);
+  }
+
+  guardarPromesa(): void {
+    const o = this.orden();
+    if (!o) return;
+    const motivo = this.motivoPromesa().trim();
+    if (motivo.length < 3) {
+      this.toastr.warning("Escribe el motivo del cambio (mín. 3 caracteres)");
+      return;
+    }
+    const iso = this.nuevaPromesa()
+      ? new Date(this.nuevaPromesa()).toISOString()
+      : null;
+    this.guardandoPromesa.set(true);
+    this.tallerService.updatePromisedDate(o.id, iso, motivo).subscribe({
+      next: (upd) => {
+        this.orden.set(upd);
+        this.guardandoPromesa.set(false);
+        this.editandoPromesa.set(false);
+        this.toastr.success("Fecha prometida actualizada");
+        if (this.verHistorialPromesa()) this.cargarHistorialPromesa();
+      },
+      error: (err) => {
+        this.guardandoPromesa.set(false);
+        this.toastr.error(err?.error?.message || "No se pudo actualizar");
+      },
+    });
+  }
+
+  cargarHistorialPromesa(): void {
+    const o = this.orden();
+    if (!o) return;
+    this.tallerService.getPromiseHistory(o.id).subscribe({
+      next: (h) => this.historialPromesa.set(h),
+    });
+  }
+
+  toggleHistorialPromesa(): void {
+    const abrir = !this.verHistorialPromesa();
+    this.verHistorialPromesa.set(abrir);
+    if (abrir) this.cargarHistorialPromesa();
+  }
+
+  // Solicitar una refacción al almacén: crea una requisición ligada a la orden.
+  solicitandoRefaccion = signal(false);
+  enviandoSolicitud = signal(false);
+  partesDisponibles = signal<Part[]>([]);
+  refaccionElegida = signal<string>("");
+  cantidadRefaccion = signal<number>(1);
+  notaRefaccion = signal<string>("");
+
+  abrirSolicitudRefaccion(): void {
+    const o = this.orden();
+    if (!o) return;
+    this.refaccionElegida.set("");
+    this.cantidadRefaccion.set(1);
+    this.notaRefaccion.set("");
+    this.solicitandoRefaccion.set(true);
+    if (!this.partesDisponibles().length) {
+      this.inventario
+        .getParts({ branchId: o.branchId, limit: 500, searchScope: "local" })
+        .subscribe({ next: (res) => this.partesDisponibles.set(res.data) });
+    }
+  }
+
+  solicitarRefaccion(): void {
+    const o = this.orden();
+    if (!o) return;
+    if (!this.refaccionElegida()) {
+      this.toastr.warning("Elige la refacción a solicitar");
+      return;
+    }
+    this.enviandoSolicitud.set(true);
+    this.tallerService
+      .requestPart(o.id, {
+        partId: this.refaccionElegida(),
+        quantity: Number(this.cantidadRefaccion()) || 1,
+        note: this.notaRefaccion().trim() || undefined,
+      })
+      .subscribe({
+        next: () => {
+          this.enviandoSolicitud.set(false);
+          this.solicitandoRefaccion.set(false);
+          this.toastr.success("Refacción solicitada (requisición creada)");
+          // La orden pudo pasar a "esperando refacciones".
+          this.tallerService.getServiceOrder(o.id).subscribe({
+            next: (upd) => this.orden.set(upd),
+          });
+        },
+        error: (err) => {
+          this.enviandoSolicitud.set(false);
+          this.toastr.error(err?.error?.message || "No se pudo solicitar");
+        },
+      });
+  }
 
   /**
    * Abre la orden en PDF.
@@ -234,54 +356,94 @@ export class OrdenServicioDetail implements OnInit {
       });
   }
 
-  // ── Vale de compra ligado a la orden (R2) ──
+  // ── Vale(s) de compra ligados a la orden (R2) ──
+  // Se puede comprar a distintos proveedores: cada renglón es un vale con su
+  // número, proveedor y monto, y se registra como un egreso de caja.
   valeAbierto = signal(false);
   guardandoVale = signal(false);
-  valeMonto = signal<number | null>(null);
   valeConcepto = signal("");
-  valeProveedor = signal("");
+  valeLineas = signal<
+    { proveedor: string; numeroVale: string; monto: number | null }[]
+  >([{ proveedor: "", numeroVale: "", monto: null }]);
 
   abrirVale(): void {
-    this.valeMonto.set(null);
     this.valeConcepto.set("");
-    this.valeProveedor.set("");
+    this.valeLineas.set([{ proveedor: "", numeroVale: "", monto: null }]);
     this.valeAbierto.set(true);
+  }
+
+  agregarLineaVale(): void {
+    this.valeLineas.update((l) => [
+      ...l,
+      { proveedor: "", numeroVale: "", monto: null },
+    ]);
+  }
+
+  quitarLineaVale(i: number): void {
+    this.valeLineas.update((l) => (l.length > 1 ? l.filter((_, j) => j !== i) : l));
+  }
+
+  setLineaVale(i: number, campo: "proveedor" | "numeroVale" | "monto", valor: string | number): void {
+    this.valeLineas.update((l) =>
+      l.map((ln, j) => (j === i ? { ...ln, [campo]: valor } : ln)),
+    );
+  }
+
+  totalVales(): number {
+    return this.valeLineas().reduce((s, l) => s + (Number(l.monto) || 0), 0);
+  }
+
+  money(n: number): string {
+    return (Number(n) || 0).toLocaleString("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    });
   }
 
   confirmarVale(): void {
     const o = this.orden();
     if (!o || this.guardandoVale()) return;
-    const monto = this.valeMonto();
-    if (!monto || monto <= 0) {
-      this.toastr.warning("Indica el monto");
-      return;
-    }
     if (!this.valeConcepto().trim()) {
       this.toastr.warning("Indica qué se compró");
       return;
     }
+    const lineas = this.valeLineas().filter((l) => Number(l.monto) > 0);
+    if (!lineas.length) {
+      this.toastr.warning("Agrega al menos un vale con monto");
+      return;
+    }
     this.guardandoVale.set(true);
-    this.tallerService
-      .valeDeCompra(o.branchId, {
-        amount: monto,
+    // Un egreso de caja por vale; se puede comprar a varios proveedores.
+    const peticiones = lineas.map((l) => {
+      const ref = [
+        l.numeroVale.trim() ? `Vale ${l.numeroVale.trim()}` : "",
+        l.proveedor.trim(),
+      ]
+        .filter(Boolean)
+        .join(" · ");
+      return this.tallerService.valeDeCompra(o.branchId, {
+        amount: Number(l.monto),
         concept: this.valeConcepto().trim(),
-        reference: this.valeProveedor().trim() || undefined,
+        reference: ref || undefined,
         serviceOrderId: o.id,
-      })
-      .subscribe({
-        next: () => {
-          this.guardandoVale.set(false);
-          this.valeAbierto.set(false);
-          this.toastr.success("Vale de compra registrado en caja");
-        },
-        error: (err) => {
-          this.guardandoVale.set(false);
-          this.toastr.error(
-            err?.error?.message ||
-              "No se pudo registrar el vale (¿hay caja abierta?)",
-          );
-        },
       });
+    });
+    forkJoin(peticiones).subscribe({
+      next: () => {
+        this.guardandoVale.set(false);
+        this.valeAbierto.set(false);
+        this.toastr.success(
+          `${peticiones.length} vale(s) de compra registrados en caja`,
+        );
+      },
+      error: (err) => {
+        this.guardandoVale.set(false);
+        this.toastr.error(
+          err?.error?.message ||
+            "No se pudo registrar el vale (¿hay caja abierta?)",
+        );
+      },
+    });
   }
 
   onAssignMechanic(): void {

@@ -24,10 +24,17 @@ const BRANCHES_URL = "/api/v1/branches";
 export class BranchesService {
   private http = inject(HttpClient);
 
-  getAll(page = 1, limit = 100): Observable<BranchesResponse> {
-    const params = new HttpParams()
+  getAll(
+    page = 1,
+    limit = 100,
+    search?: string,
+  ): Observable<BranchesResponse> {
+    let params = new HttpParams()
       .set("page", page.toString())
       .set("limit", limit.toString());
+    if (search?.trim()) {
+      params = params.set("search", search.trim());
+    }
     return this.http.get<BranchesResponse>(BRANCHES_URL, { params });
   }
 }

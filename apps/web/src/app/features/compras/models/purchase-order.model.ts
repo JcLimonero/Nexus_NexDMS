@@ -14,6 +14,8 @@ export interface PurchaseOrderItem {
   quantityReceived: number;
   unitPrice: number;
   subtotal: number;
+  warrantyMonths?: number | null;
+  warrantyNote?: string | null;
   part?: {
     id: string;
     sku: string;
@@ -37,6 +39,7 @@ export interface PurchaseOrder {
   orderedAt: string;
   expectedAt: string | null;
   receivedAt: string | null;
+  paidAt: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -44,6 +47,7 @@ export interface PurchaseOrder {
 }
 
 export interface PurchaseOrderFilters {
+  search?: string;
   supplierId?: string;
   status?: PurchaseOrderStatus;
   branchId?: string;
@@ -62,6 +66,9 @@ export interface CreatePurchaseOrderLineDto {
   partId: string;
   quantity: number;
   unitPrice: number;
+  /** Garantía del proveedor (meses) capturada al comprar. */
+  warrantyMonths?: number;
+  warrantyNote?: string;
 }
 
 export interface CreatePurchaseOrderDto {
