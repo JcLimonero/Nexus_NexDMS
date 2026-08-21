@@ -267,13 +267,17 @@ export class Tenants implements OnInit {
     }
     this.guardando.set(true);
     this.srv.suspender(t.id, motivo).subscribe({
-      next: () => {
+      next: (actualizado) => {
         this.guardando.set(false);
         this.avisar(t.isActive ? "Cliente suspendido" : "Cliente reactivado");
         this.cerrarSuspension();
         this.cargar();
-        // Si la ficha del mismo cliente está abierta, refresca su bitácora.
-        if (this.fichaDe()?.id === t.id) this.cargarHistorial(t.id);
+        // Si la ficha del mismo cliente está abierta, refresca su estatus y su
+        // bitácora sin cerrarla, para poder alternar de nuevo desde ahí mismo.
+        if (this.fichaDe()?.id === t.id) {
+          this.fichaDe.set(actualizado);
+          this.cargarHistorial(t.id);
+        }
       },
       error: (e) => {
         this.guardando.set(false);

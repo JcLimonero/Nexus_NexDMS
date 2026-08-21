@@ -132,13 +132,6 @@
                 <button type="button" class="btn-chico" (click)="abrirModulos(t)">
                   Módulos
                 </button>
-                <button
-                  type="button"
-                  class="btn-chico"
-                  (click)="pedirSuspension(t)"
-                >
-                  {{ t.isActive ? "Suspender" : "Reactivar" }}
-                </button>
               </td>
             </tr>
           }
@@ -438,10 +431,29 @@
           </label>
         </div>
 
-        <!-- Bitácora de suspensiones/reactivaciones: por qué se le cortó o
-             devolvió el acceso, quién y cuándo. -->
+        <!-- Estatus del cliente y bitácora: suspender/reactivar se hace aquí,
+             con motivo, y queda el rastro de por qué se cortó o devolvió el
+             acceso, quién y cuándo. -->
         <section class="historial">
-          <h4 class="historial-titulo">Historial de estatus</h4>
+          <div class="historial-cabecera">
+            <div class="historial-estatus">
+              <h4 class="historial-titulo">Estatus del cliente</h4>
+              <span class="estado" [attr.data-activo]="t.isActive">
+                {{ t.isActive ? "Activo" : "Suspendido" }}
+              </span>
+            </div>
+            <button
+              type="button"
+              [class.btn-secundario]="t.isActive"
+              [class.btn-principal]="!t.isActive"
+              class="btn-estatus"
+              (click)="pedirSuspension(t)"
+            >
+              {{ t.isActive ? "Suspender cliente" : "Reactivar cliente" }}
+            </button>
+          </div>
+
+          <h4 class="historial-titulo historial-subtitulo">Historial</h4>
           @if (historial().length === 0) {
             <p class="ayuda">Sin cambios de estatus registrados.</p>
           } @else {

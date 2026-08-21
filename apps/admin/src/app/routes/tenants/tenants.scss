@@ -147,6 +147,32 @@
   margin: 0 0 var(--space-8);
   font-size: var(--text-body);
 }
+.historial-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+.historial-estatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+
+  .historial-titulo {
+    margin: 0;
+  }
+}
+.historial-subtitulo {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.btn-estatus {
+  white-space: nowrap;
+}
 .historial-lista {
   list-style: none;
   margin: 0;
