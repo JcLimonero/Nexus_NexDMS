@@ -150,6 +150,16 @@ export const content: Routes = [
       ),
   },
   {
+    // Flotillas: convenios de empresa con varias unidades y precios preferenciales.
+    path: "fleets",
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Flotillas", module: "fleets" },
+    loadChildren: () =>
+      import("../../../app/features/flotillas/flotillas.routes").then(
+        (r) => r.fleetsRoutes,
+      ),
+  },
+  {
     // Hojalatería y Pintura: módulo propio, separado del taller mecánico.
     path: "bodywork",
     canActivate: [moduleGuard],

@@ -53,6 +53,7 @@ export class NavService {
       active: false,
       children: [
         { path: "/clients", title: "Clientes", type: "link" },
+        { path: "/fleets", title: "Flotillas", type: "link" },
         { path: "/leads", title: "Leads", type: "link" },
       ],
     },

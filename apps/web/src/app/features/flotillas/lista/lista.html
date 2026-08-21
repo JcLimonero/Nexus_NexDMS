@@ -1,0 +1,53 @@
+<div class="fl-page">
+  <div class="fl-head">
+    <div>
+      <h1>Flotillas</h1>
+      <p class="fl-sub">Convenios de empresas con varias unidades y precios preferenciales</p>
+    </div>
+    <a class="fl-btn fl-btn--primary" routerLink="nueva">Nuevo convenio</a>
+  </div>
+
+  @if (cargando()) {
+    <p class="fl-vacio">Cargando…</p>
+  } @else if (convenios().length === 0) {
+    <p class="fl-vacio">Aún no hay convenios de flotilla.</p>
+  } @else {
+    <table class="fl-tabla">
+      <thead>
+        <tr>
+          <th>Convenio</th>
+          <th>Empresa</th>
+          <th>Unidades</th>
+          <th>Descuentos</th>
+          <th>Vigencia</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of convenios(); track c.id) {
+          <tr [routerLink]="[c.id]" class="fl-fila">
+            <td>
+              <strong>{{ c.name }}</strong>
+              <span class="fl-mono">{{ c.agreementNumber }}</span>
+            </td>
+            <td>{{ c.clienteNombre || "—" }}</td>
+            <td class="fl-num">{{ c.unidades }}</td>
+            <td class="fl-muted">{{ descuentoResumen(c) }}</td>
+            <td class="fl-muted">
+              @if (c.validFrom || c.validTo) {
+                {{ c.validFrom || "…" }} → {{ c.validTo || "…" }}
+              } @else {
+                Sin límite
+              }
+            </td>
+            <td>
+              <span class="fl-estado" [attr.data-activo]="c.isActive">
+                {{ c.isActive ? "Activo" : "Inactivo" }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

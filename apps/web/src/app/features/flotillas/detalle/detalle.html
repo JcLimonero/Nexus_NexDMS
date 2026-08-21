@@ -1,0 +1,194 @@
+<div class="fl-page">
+  @if (cargando()) {
+    <p class="fl-vacio">Cargando…</p>
+  } @else {
+    <div class="fl-head">
+      <div>
+        <h1>{{ esNuevo() ? "Nuevo convenio de flotilla" : form().name }}</h1>
+        <p class="fl-sub">
+          @if (!esNuevo()) {
+            {{ clienteNombre() }} ·
+            <span [style.color]="vigente() ? '#047857' : '#b45309'">
+              {{ vigente() ? "Vigente" : "No vigente" }}
+            </span>
+          } @else {
+            Empresa con varias unidades y precios preferenciales
+          }
+        </p>
+      </div>
+      <div class="fl-head-acc">
+        <a class="fl-btn fl-btn--ghost" routerLink="/fleets">Volver</a>
+        @if (!esNuevo()) {
+          <button class="fl-btn fl-btn--danger" (click)="eliminar()">Eliminar</button>
+        }
+      </div>
+    </div>
+
+    <div class="fl-detalle">
+      <!-- Datos del convenio -->
+      <div class="fl-card">
+        <h2>Datos del convenio</h2>
+        <div class="fl-grid">
+          <div class="fl-field fl-field--full fl-buscar">
+            <label>Empresa (titular) *</label>
+            @if (esNuevo()) {
+              <input
+                [ngModel]="clienteNombre()"
+                (ngModelChange)="buscarCliente($event)"
+                placeholder="Busca la empresa por nombre…"
+                autocomplete="off"
+              />
+              @if (sugerencias().length) {
+                <div class="fl-sugerencias">
+                  @for (c of sugerencias(); track c.id) {
+                    <div class="fl-sugerencia" (click)="elegirCliente(c)">
+                      {{ c.nombre }}
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <input [value]="clienteNombre()" disabled />
+            }
+          </div>
+          <div class="fl-field">
+            <label>Número de convenio *</label>
+            <input [(ngModel)]="form().agreementNumber" />
+          </div>
+          <div class="fl-field">
+            <label>Nombre del convenio *</label>
+            <input [(ngModel)]="form().name" />
+          </div>
+          <div class="fl-field">
+            <label>Vigente desde</label>
+            <input type="date" [(ngModel)]="form().validFrom" />
+          </div>
+          <div class="fl-field">
+            <label>Vigente hasta</label>
+            <input type="date" [(ngModel)]="form().validTo" />
+          </div>
+          <div class="fl-field">
+            <label>Estado</label>
+            <select [(ngModel)]="form().isActive">
+              <option [ngValue]="true">Activo</option>
+              <option [ngValue]="false">Inactivo</option>
+            </select>
+          </div>
+          <div class="fl-field fl-field--full">
+            <label>Notas</label>
+            <textarea rows="2" [(ngModel)]="form().notes"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Descuentos -->
+      <div class="fl-card">
+        <h2>Descuentos preferenciales</h2>
+        <div class="fl-grid">
+          <div class="fl-field">
+            <label>Refacciones — lista de precios</label>
+            <select [(ngModel)]="form().partsPriceListId">
+              <option [ngValue]="null">Sin lista (usar %)</option>
+              @for (l of listas(); track l.id) {
+                <option [ngValue]="l.id">{{ l.name }}</option>
+              }
+            </select>
+            <span class="fl-hint">Si eliges lista, manda la lista sobre el %.</span>
+          </div>
+          <div class="fl-field">
+            <label>Refacciones — % (sin lista)</label>
+            <input
+              type="number"
+              min="0"
+              max="100"
+              [(ngModel)]="form().partsDiscountPct"
+              [disabled]="usaLista()"
+            />
+          </div>
+          <div class="fl-field">
+            <label>Mano de obra — %</label>
+            <input type="number" min="0" max="100" [(ngModel)]="form().laborDiscountPct" />
+          </div>
+          <div class="fl-field">
+            <label>Venta de unidad — %</label>
+            <input type="number" min="0" max="100" [(ngModel)]="form().unitSaleDiscountPct" />
+          </div>
+        </div>
+        <div style="margin-top: 14px">
+          <button
+            class="fl-btn fl-btn--primary"
+            (click)="guardar()"
+            [disabled]="guardando()"
+          >
+            {{ esNuevo() ? "Crear convenio" : "Guardar cambios" }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Unidades adscritas (solo con convenio creado) -->
+      @if (!esNuevo()) {
+        <div class="fl-card">
+          <h2>Unidades adscritas ({{ unidades().length }})</h2>
+          @if (unidades().length === 0) {
+            <p class="fl-muted">Ninguna unidad adscrita todavía.</p>
+          } @else {
+            <table class="fl-unidades">
+              <thead>
+                <tr>
+                  <th>Placa</th>
+                  <th>Marca</th>
+                  <th>Modelo</th>
+                  <th>Año</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (u of unidades(); track u.unitId) {
+                  <tr>
+                    <td class="fl-mono">{{ u.plate || "—" }}</td>
+                    <td>{{ u.make || "—" }}</td>
+                    <td>{{ u.model || "—" }}</td>
+                    <td>{{ u.year || "—" }}</td>
+                    <td>
+                      <button class="fl-btn fl-btn--danger" (click)="quitarUnidad(u)">
+                        Quitar
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          }
+
+          <div class="fl-add-unidad">
+            <div class="fl-field" style="flex: 1 1 260px">
+              <label>Agregar unidad de la empresa</label>
+              <select
+                [ngModel]="vehiculoElegido()"
+                (ngModelChange)="vehiculoElegido.set($event)"
+              >
+                <option value="">— elige una unidad —</option>
+                @for (v of disponibles(); track v.id) {
+                  <option [value]="v.id">{{ vehiculoLabel(v) }}</option>
+                }
+              </select>
+            </div>
+            <button
+              class="fl-btn fl-btn--ghost"
+              (click)="agregarUnidad()"
+              [disabled]="!vehiculoElegido()"
+            >
+              Adscribir
+            </button>
+          </div>
+          @if (disponibles().length === 0) {
+            <p class="fl-hint" style="margin-top: 8px">
+              No hay más unidades de esta empresa por adscribir. Registra sus
+              vehículos en la ficha del cliente.
+            </p>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
