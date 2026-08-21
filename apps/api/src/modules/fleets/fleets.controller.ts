@@ -23,6 +23,15 @@ import type {
 } from './fleets.service';
 
 const GESTION = ['SUPERADMIN', 'ADMIN', 'MANAGER', 'EXECUTIVE'] as const;
+// Consulta de precios: además de gestión, la usan caja y ventas.
+const CONSULTA = [
+  'SUPERADMIN',
+  'ADMIN',
+  'MANAGER',
+  'EXECUTIVE',
+  'CASHIER',
+  'SELLER',
+] as const;
 
 /**
  * Convenios de flotilla: empresas con varias unidades y precios preferenciales.
@@ -41,6 +50,30 @@ export class FleetsController {
   @Roles(...GESTION)
   listar(@CurrentUser() user: UserPayload) {
     return this.fleets.listar(user);
+  }
+
+  /** Convenio activo de un cliente (para mostrador y venta): descuentos o null. */
+  @Get('for-client/:clientId')
+  @Roles(...CONSULTA)
+  resumenCliente(
+    @CurrentUser() user: UserPayload,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+  ) {
+    return this.fleets.resumenCliente(user.tenantId, clientId);
+  }
+
+  /** Precio de convenio de varias refacciones para un cliente (mostrador). */
+  @Post('quote-parts')
+  @Roles(...CONSULTA)
+  cotizarRefacciones(
+    @CurrentUser() user: UserPayload,
+    @Body() body: { clientId: string; partIds: string[] },
+  ) {
+    return this.fleets.cotizarRefacciones(
+      user.tenantId,
+      body?.clientId,
+      body?.partIds ?? [],
+    );
   }
 
   @Post()

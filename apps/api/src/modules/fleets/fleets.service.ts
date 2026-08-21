@@ -8,6 +8,7 @@ import { In, Repository } from 'typeorm';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { Client } from '../clients/entities/client.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
+import { Part } from '../parts/entities/part.entity';
 import {
   BasePriceTier,
   PartPriceResolver,
@@ -51,6 +52,8 @@ export class FleetsService {
     private readonly clientRepo: Repository<Client>,
     @InjectRepository(CustomerVehicle)
     private readonly vehicleRepo: Repository<CustomerVehicle>,
+    @InjectRepository(Part)
+    private readonly partRepo: Repository<Part>,
     private readonly pricing: PricingService,
   ) {}
 
@@ -135,6 +138,46 @@ export class FleetsService {
       await this.convenioDeCliente(tenantId, clientId),
       tier,
     );
+  }
+
+  /**
+   * Resumen del convenio activo de un cliente, para que mostrador y venta de
+   * unidades sepan si aplican descuento y cuánto. `null` = sin convenio.
+   */
+  async resumenCliente(tenantId: string, clientId: string) {
+    const a = await this.convenioDeCliente(tenantId, clientId);
+    if (!a) return null;
+    return {
+      id: a.id,
+      agreementNumber: a.agreementNumber,
+      name: a.name,
+      hasPriceList: !!a.partsPriceListId,
+      partsDiscountPct: a.partsDiscountPct ?? 0,
+      laborDiscountPct: a.laborDiscountPct ?? 0,
+      unitSaleDiscountPct: a.unitSaleDiscountPct ?? 0,
+    };
+  }
+
+  /**
+   * Precio de convenio de un conjunto de refacciones para un cliente, para que
+   * el mostrador cotice el carrito con el descuento de flotilla. Vacío si el
+   * cliente no tiene convenio (el mostrador usa su precio normal).
+   */
+  async cotizarRefacciones(
+    tenantId: string,
+    clientId: string,
+    partIds: string[],
+    tier: BasePriceTier = BasePriceTier.PUBLIC,
+  ): Promise<{ partId: string; unitPrice: number }[]> {
+    const ctx = await this.contextoCliente(tenantId, clientId, tier);
+    if (!ctx || !partIds.length) return [];
+    const parts = await this.partRepo.find({
+      where: { id: In(partIds), tenantId },
+    });
+    return parts.map((p) => ({
+      partId: p.id,
+      unitPrice: ctx.partsResolver(p),
+    }));
   }
 
   // ─── CRUD de convenios ──────────────────────────────────────
