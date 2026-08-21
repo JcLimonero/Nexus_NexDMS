@@ -3,8 +3,11 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Client } from '../clients/entities/client.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
-import { ScopeEnum } from '../users/entities/user.entity';
+import { ScopeEnum, User } from '../users/entities/user.entity';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import { WhatsappRoutingService } from '../whatsapp-core/whatsapp-routing.service';
+import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
+import { ConversationErrorCode } from './dto/send-message.dto';
 import {
   WhatsappConversation,
   WhatsappConversationStateEnum,
@@ -39,6 +42,8 @@ describe('WhatsappConversationsService', () => {
   };
   let convQb: Record<string, jest.Mock>;
   let msgQb: Record<string, jest.Mock>;
+  let routing: { credentialsFor: jest.Mock };
+  let whatsapp: { sendText: jest.Mock };
   let clientQb: {
     select: jest.Mock;
     where: jest.Mock;
@@ -83,11 +88,26 @@ describe('WhatsappConversationsService', () => {
     convQb = chainable();
     msgQb = chainable();
 
+    routing = {
+      credentialsFor: jest
+        .fn()
+        .mockResolvedValue({ phoneNumberId: '123', token: 'tok' }),
+    };
+    whatsapp = {
+      sendText: jest
+        .fn()
+        .mockResolvedValue({ success: true, messageId: 'wamid.out' }),
+    };
+
     conversationRepo.createQueryBuilder = jest.fn(() => convQb);
 
     messageRepo = {
       create: jest.fn((v) => ({ ...v })),
-      save: jest.fn((v) => Promise.resolve({ id: 'msg-1', ...v })),
+      // `createdAt` lo llena TypeORM al guardar (@CreateDateColumn); el mock
+      // hace lo mismo para no mentir sobre lo que devuelve save().
+      save: jest.fn((v) =>
+        Promise.resolve({ id: 'msg-1', createdAt: new Date(), ...v }),
+      ),
       find: jest.fn().mockResolvedValue([]),
       createQueryBuilder: jest.fn(() => msgQb),
     };
@@ -118,6 +138,16 @@ describe('WhatsappConversationsService', () => {
           provide: getRepositoryToken(Appointment),
           useValue: { findOne: jest.fn().mockResolvedValue(null) },
         },
+        {
+          provide: getRepositoryToken(User),
+          useValue: {
+            findOne: jest
+              .fn()
+              .mockResolvedValue({ firstName: 'Iván', lastName: 'Robles' }),
+          },
+        },
+        { provide: WhatsappRoutingService, useValue: routing },
+        { provide: WhatsAppProvider, useValue: whatsapp },
       ],
     }).compile();
 
@@ -539,6 +569,269 @@ describe('WhatsappConversationsService', () => {
         url: null,
       });
       expect(detail.lastLine).toBe('📷 Imagen');
+    });
+  });
+
+  // ─── Toma y respuesta del asesor ─────────────────
+
+  /** Lo que devuelve el código de una excepción con `code`. */
+  const codeOf = async (fn: () => Promise<unknown>): Promise<string> => {
+    try {
+      await fn();
+    } catch (e) {
+      return (e as { response: { code: string } }).response.code;
+    }
+    throw new Error('se esperaba que fallara');
+  };
+
+  describe('take', () => {
+    it('pone la conversación en manos del asesor que la tomó', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+
+      await service.take(userWith({ sub: 'user-9' }), 'conv-1');
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        state: WhatsappConversationStateEnum.WITH_AGENT,
+        assignedUserId: 'user-9',
+      });
+    });
+
+    it('volver a tomar la propia no falla ni la reasigna', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.WITH_AGENT,
+          assignedUserId: 'user-9',
+        }),
+      );
+
+      await service.take(userWith({ sub: 'user-9' }), 'conv-1');
+
+      expect(conversationRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('no deja arrebatarle la conversación a otro asesor', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.WITH_AGENT,
+          assignedUserId: 'otro-asesor',
+        }),
+      );
+
+      await expect(
+        codeOf(() => service.take(userWith({ sub: 'user-9' }), 'conv-1')),
+      ).resolves.toBe(ConversationErrorCode.ALREADY_TAKEN);
+    });
+
+    it('no se puede tomar una conversación que ya terminó', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({ state: WhatsappConversationStateEnum.BOOKED }),
+      );
+
+      await expect(
+        codeOf(() => service.take(userWith(), 'conv-1')),
+      ).resolves.toBe(ConversationErrorCode.NOT_TAKEABLE);
+    });
+
+    it('404 si la conversación es de otra sucursal', async () => {
+      convQb.getOne.mockResolvedValue(null);
+
+      await expect(
+        service.take(userWith({ scope: ScopeEnum.SUCURSAL }), 'conv-ajena'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('release', () => {
+    it('la devuelve al asistente y la deja sin asignar', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.WITH_AGENT,
+          assignedUserId: 'user-9',
+        }),
+      );
+
+      await service.release(userWith({ sub: 'user-9' }), 'conv-1');
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        state: WhatsappConversationStateEnum.BOT,
+        assignedUserId: null,
+      });
+    });
+
+    it('un responsable puede destrabar la que tomó alguien más', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.WITH_AGENT,
+          assignedUserId: 'quien-se-fue-a-comer',
+        }),
+      );
+
+      await service.release(
+        userWith({ sub: 'jefa', roles: ['MANAGER'] }),
+        'conv-1',
+      );
+
+      expect(conversationRepo.update).toHaveBeenCalled();
+    });
+
+    it('un compañero sin mando no puede soltarle la conversación a otro', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.WITH_AGENT,
+          assignedUserId: 'otro-asesor',
+        }),
+      );
+
+      await expect(
+        codeOf(() =>
+          service.release(
+            userWith({ sub: 'user-9', roles: ['CASHIER'] }),
+            'conv-1',
+          ),
+        ),
+      ).resolves.toBe(ConversationErrorCode.ALREADY_TAKEN);
+    });
+
+    it('no se puede soltar la que nadie tomó', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+
+      await expect(
+        codeOf(() => service.release(userWith(), 'conv-1')),
+      ).resolves.toBe(ConversationErrorCode.NOT_TAKEN);
+    });
+  });
+
+  describe('sendMessage', () => {
+    const tomadaPor = (sub: string, over = {}) =>
+      conversationRow({
+        state: WhatsappConversationStateEnum.WITH_AGENT,
+        assignedUserId: sub,
+        lastInboundAt: new Date(Date.now() - 60_000),
+        ...over,
+      });
+
+    it('manda por WhatsApp con las credenciales de la sucursal', async () => {
+      convQb.getOne.mockResolvedValue(tomadaPor('user-9'));
+
+      await service.sendMessage(userWith({ sub: 'user-9' }), 'conv-1', {
+        text: 'Ya lo reviso y te confirmo',
+      });
+
+      expect(routing.credentialsFor).toHaveBeenCalledWith(BRANCH);
+      expect(whatsapp.sendText).toHaveBeenCalledWith(
+        META_PHONE,
+        'Ya lo reviso y te confirmo',
+        { phoneNumberId: '123', token: 'tok' },
+      );
+    });
+
+    it('guarda el mensaje a nombre de quien lo escribió', async () => {
+      convQb.getOne.mockResolvedValue(tomadaPor('user-9'));
+
+      const msg = await service.sendMessage(
+        userWith({ sub: 'user-9' }),
+        'conv-1',
+        { text: 'Hola' },
+      );
+
+      expect(messageRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          author: WhatsappMessageAuthorEnum.AGENT,
+          userId: 'user-9',
+          direction: WhatsappMessageDirectionEnum.OUT,
+          waMessageId: 'wamid.out',
+        }),
+      );
+      expect(msg.agentName).toBe('Iván Robles');
+    });
+
+    it('no guarda nada si Meta rechaza el envío', async () => {
+      convQb.getOne.mockResolvedValue(tomadaPor('user-9'));
+      whatsapp.sendText.mockResolvedValue({ success: false });
+
+      await expect(
+        codeOf(() =>
+          service.sendMessage(userWith({ sub: 'user-9' }), 'conv-1', {
+            text: 'Hola',
+          }),
+        ),
+      ).resolves.toBe(ConversationErrorCode.SEND_FAILED);
+      // Lo importante: la pantalla no muestra un mensaje que nadie recibió.
+      expect(messageRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('rechaza pasada la ventana de 24 h, sin llamar a Meta', async () => {
+      convQb.getOne.mockResolvedValue(
+        tomadaPor('user-9', {
+          lastInboundAt: new Date(Date.now() - 25 * 60 * 60 * 1000),
+        }),
+      );
+
+      await expect(
+        codeOf(() =>
+          service.sendMessage(userWith({ sub: 'user-9' }), 'conv-1', {
+            text: 'Hola',
+          }),
+        ),
+      ).resolves.toBe(ConversationErrorCode.WINDOW_CLOSED);
+      expect(whatsapp.sendText).not.toHaveBeenCalled();
+    });
+
+    it('hay que tomarla antes de responder', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+
+      await expect(
+        codeOf(() =>
+          service.sendMessage(userWith(), 'conv-1', { text: 'Hola' }),
+        ),
+      ).resolves.toBe(ConversationErrorCode.NOT_TAKEN);
+      expect(whatsapp.sendText).not.toHaveBeenCalled();
+    });
+
+    it('no se puede responder en la conversación de otro asesor', async () => {
+      convQb.getOne.mockResolvedValue(tomadaPor('otro-asesor'));
+
+      await expect(
+        codeOf(() =>
+          service.sendMessage(userWith({ sub: 'user-9' }), 'conv-1', {
+            text: 'Hola',
+          }),
+        ),
+      ).resolves.toBe(ConversationErrorCode.ALREADY_TAKEN);
+    });
+
+    it('avisa si la sucursal no tiene WhatsApp configurado', async () => {
+      convQb.getOne.mockResolvedValue(tomadaPor('user-9'));
+      routing.credentialsFor.mockResolvedValue(null);
+
+      await expect(
+        codeOf(() =>
+          service.sendMessage(userWith({ sub: 'user-9' }), 'conv-1', {
+            text: 'Hola',
+          }),
+        ),
+      ).resolves.toBe(ConversationErrorCode.NO_CREDENTIALS);
+      expect(whatsapp.sendText).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('markRead', () => {
+    it('deja el pendiente en cero', async () => {
+      convQb.getOne.mockResolvedValue(conversationRow());
+
+      await service.markRead(userWith(), 'conv-1');
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        unreadCount: 0,
+      });
+    });
+
+    it('404 si es de otra sucursal', async () => {
+      convQb.getOne.mockResolvedValue(null);
+
+      await expect(
+        service.markRead(userWith({ scope: ScopeEnum.SUCURSAL }), 'ajena'),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 });

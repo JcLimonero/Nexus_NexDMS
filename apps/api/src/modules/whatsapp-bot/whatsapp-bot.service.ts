@@ -9,7 +9,7 @@ import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
 import {
   WhatsappRoutingService,
   type WhatsappRoute,
-} from './whatsapp-routing.service';
+} from '../whatsapp-core/whatsapp-routing.service';
 import { WhatsappConversationsService } from '../whatsapp-conversations/whatsapp-conversations.service';
 import { WhatsappConversationStateEnum } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
 import { WhatsappMessageAuthorEnum } from '../whatsapp-conversations/entities/whatsapp-message.entity';

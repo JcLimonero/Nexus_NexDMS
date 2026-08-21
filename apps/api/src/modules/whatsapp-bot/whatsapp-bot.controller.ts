@@ -14,7 +14,7 @@ import {
   WhatsappBotService,
   type IncomingMessage,
 } from './whatsapp-bot.service';
-import { WhatsappRoutingService } from './whatsapp-routing.service';
+import { WhatsappRoutingService } from '../whatsapp-core/whatsapp-routing.service';
 import { WhatsappSignatureGuard } from './whatsapp-signature.guard';
 
 /**

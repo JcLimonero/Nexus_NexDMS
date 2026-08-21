@@ -19,7 +19,7 @@ import { ScopeEnum } from '../users/entities/user.entity';
 import type { PaginatedResponse } from '../../common/dto/paginated-response.dto';
 import { StorageService } from '../../common/storage/storage.service';
 import { EncryptionService } from '../../shared/encryption/encryption.service';
-import { whatsappRouteCacheKey } from '../whatsapp-bot/whatsapp-route-cache';
+import { whatsappRouteCacheKey } from '../whatsapp-core/whatsapp-route-cache';
 
 const SENSITIVE_PLACEHOLDER = '••••••••';
 

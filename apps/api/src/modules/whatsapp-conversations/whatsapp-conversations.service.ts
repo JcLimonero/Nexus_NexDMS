@@ -1,4 +1,9 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository, SelectQueryBuilder } from 'typeorm';
 import {
@@ -12,7 +17,10 @@ import {
 } from './entities/whatsapp-message.entity';
 import { Client } from '../clients/entities/client.entity';
 import { Appointment } from '../appointments/entities/appointment.entity';
-import { ScopeEnum } from '../users/entities/user.entity';
+import { ScopeEnum, User } from '../users/entities/user.entity';
+import { WhatsappRoutingService } from '../whatsapp-core/whatsapp-routing.service';
+import { WhatsAppProvider } from '../notifications/providers/whatsapp.provider';
+import { ConversationErrorCode, SendMessageDto } from './dto/send-message.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import type { PaginatedResponse } from '../../common/dto/paginated-response.dto';
 import { FilterConversationsDto } from './dto/filter-conversations.dto';
@@ -70,6 +78,10 @@ export class WhatsappConversationsService {
     private readonly clientRepo: Repository<Client>,
     @InjectRepository(Appointment)
     private readonly appointmentRepo: Repository<Appointment>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    private readonly routing: WhatsappRoutingService,
+    private readonly whatsapp: WhatsAppProvider,
   ) {}
 
   // ─── Lectura ─────────────────────────────────────
@@ -179,6 +191,188 @@ export class WhatsappConversationsService {
           }
         : null,
     };
+  }
+
+  // ─── Toma y respuesta del asesor ─────────────────
+
+  /**
+   * Un asesor entra a una conversación que atiende el asistente.
+   *
+   * No es un rescate —eso lleva `escalationReason`—, es alguien decidiendo
+   * seguirla en persona. A partir de aquí el bot se calla: la guarda está en
+   * `WhatsappBotService.handleIncoming`.
+   */
+  async take(user: UserPayload, id: string): Promise<ConversationDetailDto> {
+    const conversation = await this.findInScope(user, id);
+
+    if (conversation.state === WhatsappConversationStateEnum.WITH_AGENT) {
+      // Volver a tomar la propia no es un error: la pantalla pudo quedarse
+      // atrás, o el asesor le dio dos veces al botón.
+      if (conversation.assignedUserId === user.sub) {
+        return this.findOne(user, id);
+      }
+      throw new ConflictException({
+        message: 'Esta conversación ya la está atendiendo alguien más',
+        code: ConversationErrorCode.ALREADY_TAKEN,
+      });
+    }
+
+    if (conversation.state !== WhatsappConversationStateEnum.BOT) {
+      throw new ConflictException({
+        message: 'Esta conversación ya terminó',
+        code: ConversationErrorCode.NOT_TAKEABLE,
+      });
+    }
+
+    await this.conversationRepo.update(id, {
+      state: WhatsappConversationStateEnum.WITH_AGENT,
+      assignedUserId: user.sub,
+    });
+    return this.findOne(user, id);
+  }
+
+  /**
+   * El asesor suelta la conversación y la devuelve al asistente.
+   *
+   * Puede soltarla quien la tomó o, para destrabar, un responsable: si alguien
+   * se va a comer y deja tres conversaciones tomadas, su jefe tiene que poder
+   * liberarlas sin esperar a que vuelva.
+   */
+  async release(user: UserPayload, id: string): Promise<ConversationDetailDto> {
+    const conversation = await this.findInScope(user, id);
+
+    if (conversation.state !== WhatsappConversationStateEnum.WITH_AGENT) {
+      throw new ConflictException({
+        message: 'Esta conversación no la ha tomado nadie',
+        code: ConversationErrorCode.NOT_TAKEN,
+      });
+    }
+    if (conversation.assignedUserId !== user.sub && !this.isSupervisor(user)) {
+      throw new ConflictException({
+        message: 'Sólo quien la tomó puede soltarla',
+        code: ConversationErrorCode.ALREADY_TAKEN,
+      });
+    }
+
+    await this.conversationRepo.update(id, {
+      state: WhatsappConversationStateEnum.BOT,
+      assignedUserId: null,
+    });
+    return this.findOne(user, id);
+  }
+
+  /**
+   * Manda la respuesta del asesor por WhatsApp y la guarda en el chat.
+   *
+   * El orden importa: primero se manda y sólo si Meta lo acepta se guarda. Al
+   * revés, la pantalla mostraría mensajes que el cliente nunca recibió.
+   */
+  async sendMessage(
+    user: UserPayload,
+    id: string,
+    dto: SendMessageDto,
+  ): Promise<MessageDto> {
+    const conversation = await this.findInScope(user, id);
+
+    if (conversation.state !== WhatsappConversationStateEnum.WITH_AGENT) {
+      throw new ConflictException({
+        message: 'Toma la conversación antes de responder',
+        code: ConversationErrorCode.NOT_TAKEN,
+      });
+    }
+    if (conversation.assignedUserId !== user.sub) {
+      throw new ConflictException({
+        message: 'Esta conversación la está atendiendo alguien más',
+        code: ConversationErrorCode.ALREADY_TAKEN,
+      });
+    }
+
+    // La regla de Meta, comprobada aquí y no sólo en la pantalla: entre que se
+    // pintó la conversación y que el asesor le dio enviar pudo vencerse.
+    if (!this.isWindowOpen(conversation)) {
+      throw new ConflictException({
+        message:
+          'Pasaron más de 24 horas desde el último mensaje del cliente: ' +
+          'WhatsApp ya no permite responder con texto libre',
+        code: ConversationErrorCode.WINDOW_CLOSED,
+      });
+    }
+
+    const creds = await this.routing.credentialsFor(conversation.branchId);
+    if (!creds) {
+      throw new ConflictException({
+        message: 'Esta sucursal no tiene WhatsApp configurado',
+        code: ConversationErrorCode.NO_CREDENTIALS,
+      });
+    }
+
+    const result = await this.whatsapp.sendText(
+      conversation.phone,
+      dto.text,
+      creds,
+    );
+    if (!result.success) {
+      throw new ConflictException({
+        message: 'WhatsApp no aceptó el mensaje. Inténtalo de nuevo.',
+        code: ConversationErrorCode.SEND_FAILED,
+      });
+    }
+
+    const saved = await this.messageRepo.save(
+      this.messageRepo.create({
+        tenantId: conversation.tenantId,
+        conversationId: id,
+        author: WhatsappMessageAuthorEnum.AGENT,
+        userId: user.sub,
+        body: dto.text,
+        waMessageId: result.messageId ?? null,
+        direction: WhatsappMessageDirectionEnum.OUT,
+      }),
+    );
+
+    await this.conversationRepo.update(id, { lastMessageAt: new Date() });
+
+    return this.toMessage({
+      ...saved,
+      user: await this.userRepo.findOne({ where: { id: user.sub } }),
+    } as WhatsappMessage);
+  }
+
+  /** El asesor ya leyó lo pendiente. */
+  async markRead(user: UserPayload, id: string): Promise<void> {
+    await this.findInScope(user, id);
+    await this.conversationRepo.update(id, { unreadCount: 0 });
+  }
+
+  /** Trae la conversación sólo si el usuario puede verla; si no, 404. */
+  private async findInScope(
+    user: UserPayload,
+    id: string,
+  ): Promise<WhatsappConversation> {
+    const qb = this.conversationRepo
+      .createQueryBuilder('c')
+      .where('c.id = :id', { id })
+      .andWhere('c.tenant_id = :tenantId', { tenantId: user.tenantId });
+
+    this.applyScope(qb, user);
+
+    const conversation = await qb.getOne();
+    if (!conversation) {
+      throw new NotFoundException(`Conversación ${id} no encontrada`);
+    }
+    return conversation;
+  }
+
+  private isWindowOpen(c: WhatsappConversation): boolean {
+    if (!c.lastInboundAt) return false;
+    return c.lastInboundAt.getTime() + FREE_TEXT_WINDOW_MS > Date.now();
+  }
+
+  /** Quién puede destrabar una conversación que tomó otro. */
+  private isSupervisor(user: UserPayload): boolean {
+    return (user.roles ?? []).some((r) =>
+      ['SUPERADMIN', 'ADMIN', 'MANAGER'].includes(r),
+    );
   }
 
   /**
