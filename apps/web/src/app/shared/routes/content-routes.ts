@@ -150,6 +150,16 @@ export const content: Routes = [
       ),
   },
   {
+    // Hojalatería y Pintura: módulo propio, separado del taller mecánico.
+    path: "bodywork",
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Hojalatería y Pintura", module: "bodywork" },
+    loadChildren: () =>
+      import("../../../app/features/hojalateria/hojalateria.routes").then(
+        (r) => r.bodyworkRoutes,
+      ),
+  },
+  {
     path: "warranties",
     canActivate: [moduleGuard],
     data: { breadcrumb: "Garantías" , module: "warranties" },

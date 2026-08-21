@@ -1,0 +1,25 @@
+.cat-seccion {
+  margin-bottom: 22px;
+}
+.cat-seccion h2 {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  color: #1f2937;
+}
+.cat-nota {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0 0 10px;
+}
+.cat-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  background: #f9fafb;
+  border: 1px solid #eef1f4;
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 14px;
+}

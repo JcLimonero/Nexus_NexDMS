@@ -90,6 +90,17 @@ export class NavService {
         { path: "/workshop/comisiones", title: "Comisiones", type: "link" },
       ],
     },
+    // ── Hojalatería y Pintura (módulo propio, aparte del taller) ──
+    {
+      title: "Hojalatería y Pintura",
+      icon: "edit-3",
+      type: "sub",
+      active: false,
+      children: [
+        { path: "/bodywork", title: "Órdenes de carrocería", type: "link" },
+        { path: "/bodywork/catalogo", title: "Catálogo de piezas", type: "link" },
+      ],
+    },
     // ── Ventas de unidades ─────────────────────────────────
     {
       title: "Ventas de unidades",

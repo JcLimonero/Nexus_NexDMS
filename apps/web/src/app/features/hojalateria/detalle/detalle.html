@@ -1,0 +1,303 @@
+<div class="hp-page">
+  @if (cargando()) {
+    <p class="hp-vacio">Cargando…</p>
+  } @else {
+    <div class="hp-head">
+      <div>
+        <h1>
+          @if (orden(); as o) {
+            Orden #{{ o.folio }}
+          } @else {
+            Nueva orden de carrocería
+          }
+        </h1>
+        <p class="hp-sub">Hojalatería y Pintura</p>
+      </div>
+      <div class="hp-head-acc">
+        <a class="hp-btn hp-btn--ghost" routerLink="/bodywork">Volver</a>
+      </div>
+    </div>
+
+    <!-- Flujo de estado -->
+    @if (orden(); as o) {
+      <div class="hp-card">
+        <div class="hp-barra">
+          <div class="hp-estados-flujo">
+            @for (e of flujo; track e) {
+              <button
+                class="hp-chip"
+                [class.activo]="o.status === e"
+                (click)="cambiarEstado(e)"
+              >
+                {{ etiquetaEstado(e) }}
+              </button>
+            }
+          </div>
+          @if (o.status !== "CANCELLED") {
+            <button
+              class="hp-btn hp-btn--danger"
+              (click)="cambiarEstado('CANCELLED')"
+            >
+              Cancelar orden
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="hp-detalle">
+      <!-- Recepción -->
+      <div class="hp-card">
+        <h2>Recepción</h2>
+
+        <div class="hp-switch">
+          <button
+            [class.activo]="!esSeguro()"
+            (click)="setPago('PARTICULAR')"
+          >
+            Particular
+          </button>
+          <button [class.activo]="esSeguro()" (click)="setPago('INSURANCE')">
+            Aseguradora
+          </button>
+        </div>
+
+        <div class="hp-grid">
+          <div class="hp-field">
+            <label>Cliente *</label>
+            <input [(ngModel)]="form().clientName" />
+          </div>
+          <div class="hp-field">
+            <label>Teléfono</label>
+            <input [(ngModel)]="form().clientPhone" />
+          </div>
+        </div>
+
+        @if (esSeguro()) {
+          <div class="hp-grid" style="margin-top: 12px">
+            <div class="hp-field">
+              <label>Aseguradora</label>
+              <input [(ngModel)]="form().insuranceCompany" />
+            </div>
+            <div class="hp-field">
+              <label>Póliza</label>
+              <input [(ngModel)]="form().policyNumber" />
+            </div>
+            <div class="hp-field">
+              <label>No. de siniestro</label>
+              <input [(ngModel)]="form().claimNumber" />
+            </div>
+            <div class="hp-field">
+              <label>Deducible</label>
+              <input type="number" min="0" [(ngModel)]="form().deductible" />
+            </div>
+            <div class="hp-field">
+              <label>Ajustador</label>
+              <input [(ngModel)]="form().adjuster" />
+            </div>
+            <div class="hp-field">
+              <label>Fecha del siniestro</label>
+              <input type="date" [(ngModel)]="form().claimDate" />
+            </div>
+          </div>
+        }
+
+        <h2 style="margin-top: 18px">Vehículo</h2>
+        <div class="hp-grid">
+          <div class="hp-field">
+            <label>Placa</label>
+            <input [(ngModel)]="form().vehiclePlate" />
+          </div>
+          <div class="hp-field">
+            <label>Marca</label>
+            <input [(ngModel)]="form().vehicleBrand" />
+          </div>
+          <div class="hp-field">
+            <label>Modelo</label>
+            <input [(ngModel)]="form().vehicleModel" />
+          </div>
+          <div class="hp-field">
+            <label>Año</label>
+            <input type="number" [(ngModel)]="form().vehicleYear" />
+          </div>
+          <div class="hp-field">
+            <label>Color</label>
+            <input [(ngModel)]="form().vehicleColor" />
+          </div>
+          <div class="hp-field">
+            <label>VIN</label>
+            <input [(ngModel)]="form().vehicleVin" />
+          </div>
+          <div class="hp-field">
+            <label>Kilometraje</label>
+            <input type="number" min="0" [(ngModel)]="form().kmIn" />
+          </div>
+          <div class="hp-field">
+            <label>Combustible</label>
+            <input [(ngModel)]="form().fuelLevel" placeholder="1/2, lleno…" />
+          </div>
+          <div class="hp-field hp-field--full">
+            <label>Descripción del daño</label>
+            <textarea rows="2" [(ngModel)]="form().damageDescription"></textarea>
+          </div>
+          <div class="hp-field hp-field--full">
+            <label>Observaciones</label>
+            <textarea rows="2" [(ngModel)]="form().observations"></textarea>
+          </div>
+        </div>
+
+        <div style="margin-top: 14px">
+          <button
+            class="hp-btn hp-btn--primary"
+            (click)="guardarRecepcion()"
+            [disabled]="guardando()"
+          >
+            {{ esNuevo() ? "Crear orden" : "Guardar cambios" }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Presupuesto por pieza (solo con orden creada) -->
+      @if (orden(); as o) {
+        <div class="hp-card">
+          <div class="hp-barra">
+            <h2 style="margin: 0">Presupuesto por pieza</h2>
+            <button class="hp-btn hp-btn--ghost" (click)="abrirNuevoItem()">
+              Agregar pieza
+            </button>
+          </div>
+
+          <table class="hp-items">
+            <thead>
+              <tr>
+                <th>Pieza</th>
+                <th>Operación</th>
+                <th>Cant.</th>
+                <th>M. obra</th>
+                <th>Material</th>
+                <th>Pieza $</th>
+                <th class="hp-num">Subtotal</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @if (nuevoItem(); as ni) {
+                <tr>
+                  <td>
+                    <select (change)="elegirPieza($any($event.target).value)">
+                      <option value="">— del catálogo —</option>
+                      @for (p of catalogo(); track p.id) {
+                        <option [value]="p.id">{{ p.name }}</option>
+                      }
+                    </select>
+                    <input
+                      [(ngModel)]="ni.partName"
+                      placeholder="o escribe la pieza"
+                      style="margin-top: 4px"
+                    />
+                  </td>
+                  <td>
+                    <select [(ngModel)]="ni.operation">
+                      @for (op of operaciones; track op.value) {
+                        <option [value]="op.value">{{ op.label }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td><input type="number" min="1" class="w-precio" [(ngModel)]="ni.quantity" /></td>
+                  <td><input type="number" min="0" class="w-precio" [(ngModel)]="ni.laborPrice" /></td>
+                  <td><input type="number" min="0" class="w-precio" [(ngModel)]="ni.materialPrice" /></td>
+                  <td><input type="number" min="0" class="w-precio" [(ngModel)]="ni.partPrice" /></td>
+                  <td class="hp-num">—</td>
+                  <td colspan="2">
+                    <button class="hp-btn hp-btn--primary" (click)="agregarItem()">
+                      Guardar
+                    </button>
+                  </td>
+                </tr>
+              }
+              @for (it of o.items; track it.id) {
+                <tr [class.hp-item-rechazada]="it.status === 'REJECTED'">
+                  <td><input [(ngModel)]="it.partName" (blur)="guardarItem(it)" /></td>
+                  <td>
+                    <select [(ngModel)]="it.operation" (change)="guardarItem(it)">
+                      @for (op of operaciones; track op.value) {
+                        <option [value]="op.value">{{ op.label }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td><input type="number" min="1" class="w-precio" [(ngModel)]="it.quantity" (blur)="guardarItem(it)" /></td>
+                  <td><input type="number" min="0" class="w-precio" [(ngModel)]="it.laborPrice" (blur)="guardarItem(it)" /></td>
+                  <td><input type="number" min="0" class="w-precio" [(ngModel)]="it.materialPrice" (blur)="guardarItem(it)" /></td>
+                  <td><input type="number" min="0" class="w-precio" [(ngModel)]="it.partPrice" (blur)="guardarItem(it)" /></td>
+                  <td class="hp-num">
+                    {{ it.subtotal | currency: "MXN" : "symbol-narrow" : "1.2-2" }}
+                  </td>
+                  <td>
+                    <select
+                      [ngModel]="it.status"
+                      (ngModelChange)="marcarItem(it, $any($event))"
+                    >
+                      @for (s of itemEstados; track s.value) {
+                        <option [value]="s.value">{{ s.label }}</option>
+                      }
+                    </select>
+                  </td>
+                  <td>
+                    <button class="hp-btn hp-btn--danger" (click)="eliminarItem(it)">✕</button>
+                  </td>
+                </tr>
+              }
+              @if (o.items.length === 0 && !nuevoItem()) {
+                <tr>
+                  <td colspan="9" class="hp-muted" style="text-align: center; padding: 16px">
+                    Sin piezas todavía.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <div class="hp-totales">
+            <div class="hp-total-fila">
+              Mano de obra <strong>{{ o.laborTotal | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+            </div>
+            <div class="hp-total-fila">
+              Material <strong>{{ o.materialTotal | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+            </div>
+            <div class="hp-total-fila">
+              Piezas <strong>{{ o.partsTotal | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+            </div>
+            <div class="hp-total-fila hp-total-fila--grand">
+              Total <strong>{{ o.total | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+            </div>
+            @if (esSeguro() && form().deductible) {
+              <div class="hp-total-fila">
+                Deducible <strong>{{ form().deductible | currency: "MXN" : "symbol-narrow" : "1.2-2" }}</strong>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Fotos -->
+        <div class="hp-card">
+          <h2>Fotos del daño</h2>
+          <div class="hp-fotos">
+            @for (f of o.photos; track f.id) {
+              <div class="hp-foto">
+                @if (f.url) {
+                  <img [src]="f.url" [alt]="f.caption || 'Foto'" />
+                }
+                <button (click)="eliminarFoto(f.id)" title="Eliminar">✕</button>
+              </div>
+            }
+            <label class="hp-foto-add">
+              + Agregar foto
+              <input type="file" accept="image/*" (change)="subirFoto($event)" />
+            </label>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
