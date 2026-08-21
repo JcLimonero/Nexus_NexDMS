@@ -50,6 +50,7 @@ import { ScopeEnum } from '../users/entities/user.entity';
 import { CfdiService } from '../cfdi/cfdi.service';
 import { FinanceService } from '../finance/finance.service';
 import { SurveysService } from '../surveys/surveys.service';
+import { FleetsService } from '../fleets/fleets.service';
 import { SurveyAreaEnum } from '../surveys/entities/survey-config.entity';
 import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
@@ -137,7 +138,36 @@ export class ServiceOrdersService {
     private readonly eventEmitter: EventEmitter2,
     private readonly financeService: FinanceService,
     private readonly surveysService: SurveysService,
+    private readonly fleets: FleetsService,
   ) {}
+
+  /**
+   * Recalcula partsCost y total de la orden, aplicando el descuento de flotilla
+   * en mano de obra si el vehículo está en un convenio (las refacciones ya
+   * traen su precio de convenio en cada partida). Único punto de recálculo para
+   * que el total no dependa de qué operación lo dispare.
+   */
+  private async recomputarTotal(
+    em: EntityManager,
+    id: string,
+    tenantId: string,
+    vehicleId: string | null,
+  ): Promise<void> {
+    const [parts, so] = await Promise.all([
+      em.find(ServiceOrderPart, { where: { serviceOrderId: id } }),
+      em.findOne(ServiceOrder, { where: { id } }),
+    ]);
+    if (!so) return;
+    const partsCost = parts.reduce((s, p) => s + Number(p.subtotal), 0);
+    const laborCost = Number(so.laborCost) || 0;
+    const discount = Number(so.discount) || 0;
+    const ctx = await this.fleets.contextoVehiculo(tenantId, vehicleId);
+    const descMO = ctx
+      ? Math.round(laborCost * (ctx.laborDiscountPct / 100) * 100) / 100
+      : 0;
+    const total = partsCost + laborCost - discount - descMO;
+    await em.update(ServiceOrder, id, { partsCost, total });
+  }
 
   private applyScope(
     qb: ReturnType<Repository<ServiceOrder>['createQueryBuilder']>,
@@ -389,6 +419,17 @@ export class ServiceOrdersService {
       );
     }
     await this.soRepo.update(id, dto as Partial<ServiceOrder>);
+    // Al fijar la mano de obra (o el descuento) se recalcula el total: aplica
+    // el descuento de flotilla en MO y evita que el total quede desfasado.
+    const d = dto as Partial<ServiceOrder>;
+    if (d.laborCost !== undefined || d.discount !== undefined) {
+      await this.recomputarTotal(
+        this.dataSource.manager,
+        id,
+        user.tenantId,
+        so.vehicleId,
+      );
+    }
     return this.findOne(user, id);
   }
 
@@ -586,7 +627,10 @@ export class ServiceOrdersService {
       );
     }
 
-    const unitPrice = Number(part.publicPrice);
+    // Si el vehículo está en un convenio de flotilla, la refacción se cobra a
+    // su precio preferencial (lista o %); si no, el precio público de siempre.
+    const ctx = await this.fleets.contextoVehiculo(user.tenantId, so.vehicleId);
+    const unitPrice = ctx ? ctx.partsResolver(part) : Number(part.publicPrice);
     const subtotal = dto.quantity * unitPrice;
 
     return this.dataSource
@@ -631,18 +675,7 @@ export class ServiceOrdersService {
         partEntity.stockQuantity = stockAfter;
         await em.save(partEntity);
 
-        const parts = await em.find(ServiceOrderPart, {
-          where: { serviceOrderId: id },
-        });
-        const partsCost = parts.reduce((s, p) => s + Number(p.subtotal), 0);
-        const laborCost = Number(so.laborCost) || 0;
-        const discount = Number(so.discount) || 0;
-        const total = partsCost + laborCost - discount;
-
-        await em.update(ServiceOrder, id, {
-          partsCost,
-          total,
-        });
+        await this.recomputarTotal(em, id, user.tenantId, so.vehicleId);
       })
       .then(() => this.findOne(user, id));
   }
@@ -708,18 +741,7 @@ export class ServiceOrdersService {
         partEntity.stockQuantity = stockAfter;
         await em.save(partEntity);
 
-        const parts = await em.find(ServiceOrderPart, {
-          where: { serviceOrderId: id },
-        });
-        const partsCost = parts.reduce((s, p) => s + Number(p.subtotal), 0);
-        const laborCost = Number(so.laborCost) || 0;
-        const discount = Number(so.discount) || 0;
-        const total = partsCost + laborCost - discount;
-
-        await em.update(ServiceOrder, id, {
-          partsCost,
-          total,
-        });
+        await this.recomputarTotal(em, id, user.tenantId, so.vehicleId);
       })
       .then(() => this.findOne(user, id));
   }
