@@ -189,21 +189,44 @@ Y recapturar el `phone_number_id` de cada sucursal en Configuración.
 suben y bajan, y el índice parcial rechaza la segunda conversación abierta del
 mismo teléfono mientras deja convivir el histórico.
 
-### F2 · API de lectura
+### F2 · API de lectura — ✅ hecho (`088d733b`)
 
 | Método | Endpoint | Notas |
 |--------|----------|-------|
-| GET | `/api/v1/whatsapp/conversations` | Lista paginada. Filtros: `state`, `branchId`, `assignedUserId`, `q`. Ordena por `last_message_at DESC` |
+| GET | `/api/v1/whatsapp/conversations` | Lista paginada. Filtros: `state`, `branchId`, `assignedUserId`, `q`. Ordena por última actividad |
 | GET | `/api/v1/whatsapp/conversations/:id` | Detalle + transcripción |
 
-- `AuthGuard` + `RolesGuard`. Roles: `SUPERADMIN, ADMIN, MANAGER, ADVISOR`.
-- Filtrado por `tenantId` primero, luego `applyScope()` (`SUCURSAL` /
-  `LEGAL_ENTITY` / `GLOBAL`), igual que `AppointmentsService`.
-- El teléfono se enmascara en el DTO de salida, no en la BD.
-- Respuesta calcada al modelo del front, más lo que el mock no tenía:
-  `canReplyFreeText` y `windowExpiresAt` (D3).
+- ✅ `AuthGuard` + `RolesGuard`. Roles: `SUPERADMIN, ADMIN, MANAGER, CASHIER,
+  RECEPTIONIST` — **no existe el rol `ADVISOR`** que suponía el plan; son los
+  mismos que ya usa citas.
+- ✅ Filtrado por `tenantId` primero, luego `applyScope()`.
+- ✅ El teléfono se enmascara en el DTO de salida, no en la BD.
+- ✅ `canReplyFreeText` y `windowExpiresAt` (D3).
 
 **Entregable:** la pantalla puede dejar de leer el mock para la lista y el detalle.
+
+**Diferencias con lo planeado:**
+
+- `lastMessageAt` sale en **ISO, no como "hace 6 min"**. Un relativo calculado
+  en el servidor nace viejo: se queda escrito mientras la pantalla sigue
+  abierta. Formatearlo es de la UI, que sí puede refrescarlo.
+- La cita ligada sale como **objeto** (`id`, `scheduledAt`, `serviceType`,
+  `status`), no como el folio `CITA-2481` del mock: `appointments` no tiene
+  folio, sólo id, y no se va a inventar uno.
+- La última línea de la lista se resuelve con `DISTINCT ON`: veinte filas son
+  una consulta, no veinte.
+
+**Verificado con el API corriendo** (base desechable, peticiones reales):
+usuario de otra sucursal ve cero y recibe 404 en el detalle; usuario de otro
+tenant ve cero aunque tenga scope global; `MECHANIC` recibe 403; la ventana de
+24 h abre y cierra según el último mensaje del cliente.
+
+> Ahí salió un error que las pruebas con query builder simulado no podían ver:
+> `orderBy` con `skip`/`take` resuelve contra los metadatos de la entidad, así
+> que `c.last_message_at` —que como propiedad no existe— daba 500 al paginar.
+> **Al paginar hay que ordenar por nombre de propiedad**, no de columna.
+> Conviene revisar si hay más casos así en el repo (`clients.service.ts:98`
+> ordena por `c.first_name` con paginación).
 
 ### F3 · Handoff y respuesta del asesor — *el corazón*
 
