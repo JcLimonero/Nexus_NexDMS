@@ -137,16 +137,16 @@ export class SaasService {
   }
 
   /**
-   * Recorta la lista a lo que el nivel permite. Vender un módulo que el nivel
-   * no alcanza daría un plan que promete algo que el guard no deja abrir.
+   * Valida que sean módulos reales del catálogo. Un plan a la medida puede
+   * incluir cualquier módulo, sin importar el nivel técnico de origen.
    */
   private modulosDelNivel(
     modulos: string[] | null | undefined,
-    tier: TenantPlanEnum,
+    _tier: TenantPlanEnum,
   ): string[] | null {
     if (!modulos) return null;
-    const permitidos = new Set<string>(modulesForPlan(tier));
-    return modulos.filter((k) => permitidos.has(k));
+    const validos = new Set<string>(MODULE_REGISTRY.map((m) => m.key));
+    return modulos.filter((k) => validos.has(k));
   }
 
   // ─── Precio por módulo ──────────────────────────────────────

@@ -55,12 +55,12 @@ export class Precios implements OnInit {
   modulosDe = signal<PlanPrecio | null>(null);
   seleccion = signal<Set<string>>(new Set());
 
-  /** Lo que el nivel del plan permite incluir: su tope. */
+  /** Todos los módulos del catálogo: un plan a la medida puede incluir
+   * cualquiera, sin importar el nivel técnico de origen. */
   modulosDelNivel = computed(() => {
     const p = this.modulosDe();
     if (!p) return [];
-    const tope = this.orden(p.tier);
-    return this.catalogo().filter((m) => this.orden(m.minPlan) <= tope);
+    return this.catalogo();
   });
 
   ngOnInit(): void {
