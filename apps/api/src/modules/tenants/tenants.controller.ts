@@ -171,7 +171,15 @@ export class TenantsController {
   suspend(
     @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { reason: string },
   ) {
-    return this.tenantsService.suspend(user, id);
+    return this.tenantsService.suspend(user, id, body?.reason);
+  }
+
+  /** Bitácora de cambios de estatus (suspender/reactivar) del cliente. */
+  @Get(':id/status-history')
+  @Roles('SUPERADMIN')
+  statusHistory(@Param('id', ParseUUIDPipe) id: string) {
+    return this.tenantsService.statusHistory(id);
   }
 }

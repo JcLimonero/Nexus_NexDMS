@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
 import {
+  CambioEstatus,
   Ficha,
   Modulo,
   PlanPrecio,
@@ -52,9 +53,10 @@ export class Tenants implements OnInit {
   /** Los retirados no se ofrecen en un alta, pero siguen vigentes en su ficha. */
   planesALaVenta = computed(() => this.planesComerciales().filter((p) => p.isActive));
 
-  /** Tenant en edición; null = alta nueva. */
-  editando = signal<Tenant | null>(null);
-  /** El alta y la edición viven en un diálogo, no en la propia pantalla. */
+  /**
+   * El alta de un cliente vive en un diálogo. La edición de uno existente ya
+   * no: se hace en su ficha, junto al resto de sus datos.
+   */
   formAbierto = signal(false);
   form: NuevoTenant = { name: "", slug: "", plan: "BASIC", isActive: true };
   /**
@@ -181,7 +183,6 @@ export class Tenants implements OnInit {
   // ─── Alta y edición ─────────────────────────────────────────
 
   nuevo(): void {
-    this.editando.set(null);
     this.form = { name: "", slug: "", plan: "BASIC", isActive: true };
     this.planId = this.planesALaVenta()[0]?.id ?? "";
     this.formAbierto.set(true);
@@ -189,31 +190,10 @@ export class Tenants implements OnInit {
 
   cerrarForm(): void {
     this.formAbierto.set(false);
-    this.editando.set(null);
-  }
-
-  editar(t: Tenant): void {
-    this.editando.set(t);
-    this.form = {
-      name: t.name,
-      slug: t.slug,
-      plan: t.plan,
-      isActive: t.isActive,
-    };
-    // Preselecciona el plan del cliente. Si no tiene un plan comercial ligado
-    // (`saasPlanId`), se toma el que corresponde a su nivel (BASIC/PRO/…), para
-    // que el select no abra en blanco o en el primero.
-    this.planId =
-      t.saasPlanId ||
-      this.planesALaVenta().find((p) => p.key === t.plan)?.id ||
-      this.planesALaVenta()[0]?.id ||
-      "";
-    this.formAbierto.set(true);
   }
 
   /** El identificador sale del nombre; se puede corregir a mano. */
   alEscribirNombre(): void {
-    if (this.editando()) return;
     this.form.slug = this.form.name
       .toLowerCase()
       .normalize("NFD")
@@ -237,21 +217,17 @@ export class Tenants implements OnInit {
     this.form.plan = plan.tier;
 
     this.guardando.set(true);
-    const actual = this.editando();
-    const peticion = actual
-      ? this.srv.actualizar(actual.id, this.form)
-      : this.srv.crear(this.form);
-    peticion.subscribe({
+    this.srv.crear(this.form).subscribe({
       next: (t) => {
         // El paquete se asigna después de existir el cliente: es el paso que
         // le fija precio y módulos.
         this.saas.guardarFicha(t.id, { saasPlanId: plan.id }).subscribe({
           next: () => this.cargar(),
           error: () =>
-            this.avisar("Se guardó el cliente, pero no su plan", "error"),
+            this.avisar("Se dio de alta el cliente, pero no su plan", "error"),
         });
         this.guardando.set(false);
-        this.avisar(actual ? "Cliente actualizado" : "Cliente dado de alta");
+        this.avisar("Cliente dado de alta");
         this.cerrarForm();
         this.cargar();
       },
@@ -266,14 +242,43 @@ export class Tenants implements OnInit {
     });
   }
 
-  alternarSuspension(t: Tenant): void {
-    this.srv.suspender(t.id).subscribe({
+  // ─── Suspender / reactivar (con motivo y bitácora) ──────────
+
+  /** Cliente cuyo cambio de estatus se está confirmando; null = ninguno. */
+  suspensionDe = signal<Tenant | null>(null);
+  motivoSuspension = signal("");
+
+  pedirSuspension(t: Tenant): void {
+    this.suspensionDe.set(t);
+    this.motivoSuspension.set("");
+  }
+
+  cerrarSuspension(): void {
+    this.suspensionDe.set(null);
+  }
+
+  confirmarSuspension(): void {
+    const t = this.suspensionDe();
+    if (!t) return;
+    const motivo = this.motivoSuspension().trim();
+    if (!motivo) {
+      this.avisar("Escribe el motivo del cambio de estatus", "error");
+      return;
+    }
+    this.guardando.set(true);
+    this.srv.suspender(t.id, motivo).subscribe({
       next: () => {
+        this.guardando.set(false);
         this.avisar(t.isActive ? "Cliente suspendido" : "Cliente reactivado");
+        this.cerrarSuspension();
         this.cargar();
+        // Si la ficha del mismo cliente está abierta, refresca su bitácora.
+        if (this.fichaDe()?.id === t.id) this.cargarHistorial(t.id);
       },
-      error: (e) =>
-        this.avisar(e?.error?.message || "No se pudo cambiar", "error"),
+      error: (e) => {
+        this.guardando.set(false);
+        this.avisar(e?.error?.message || "No se pudo cambiar", "error");
+      },
     });
   }
 
@@ -379,6 +384,8 @@ export class Tenants implements OnInit {
   subiendoIcono = signal(false);
 
   datos = {
+    name: "",
+    slug: "",
     saasPlanId: "" as string | null,
     contactName: "",
     contactEmail: "",
@@ -401,11 +408,23 @@ export class Tenants implements OnInit {
     concept: "",
   };
 
+  /** Bitácora de cambios de estatus del cliente de la ficha. */
+  historial = signal<CambioEstatus[]>([]);
+
+  private cargarHistorial(id: string): void {
+    this.srv.historialEstatus(id).subscribe({
+      next: (h) => this.historial.set(h),
+      error: () => this.historial.set([]),
+    });
+  }
+
   abrirFicha(t: Tenant): void {
     this.fichaDe.set(t);
     this.ficha.set(null);
     this.pestana.set("datos");
     this.branding.set(null);
+    this.historial.set([]);
+    this.cargarHistorial(t.id);
     this.saas.branding(t.id).subscribe({
       next: (b) => {
         this.branding.set(b);
@@ -416,6 +435,8 @@ export class Tenants implements OnInit {
       next: (f) => {
         this.ficha.set(f);
         this.datos = {
+          name: f.tenant.name,
+          slug: f.tenant.slug,
           // Si no tiene plan comercial ligado, se propone el que corresponde a
           // su nivel (BASIC/PRO/…) para que no abra en "Sin plan asignado".
           saasPlanId:

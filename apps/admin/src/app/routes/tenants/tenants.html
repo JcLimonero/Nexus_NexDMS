@@ -129,16 +129,13 @@
                 <button type="button" class="btn-chico" (click)="abrirFicha(t)">
                   Ficha
                 </button>
-                <button type="button" class="btn-chico" (click)="editar(t)">
-                  Editar
-                </button>
                 <button type="button" class="btn-chico" (click)="abrirModulos(t)">
                   Módulos
                 </button>
                 <button
                   type="button"
                   class="btn-chico"
-                  (click)="alternarSuspension(t)"
+                  (click)="pedirSuspension(t)"
                 >
                   {{ t.isActive ? "Suspender" : "Reactivar" }}
                 </button>
@@ -151,20 +148,14 @@
   </section>
 </div>
 
-<!-- Alta y edición del cliente -->
+<!-- Alta de un cliente nuevo (la edición vive en la ficha) -->
 @if (formAbierto()) {
   <div class="fondo" (click)="cerrarForm()"></div>
   <div class="dialogo" role="dialog" aria-modal="true">
     <header class="dialogo-top">
       <div>
-        <h2>{{ editando() ? "Editar cliente" : "Nuevo cliente" }}</h2>
-        <p>
-          {{
-            editando()
-              ? "El plan define su nivel, su precio y los módulos que recibe"
-              : "Un grupo nuevo con el plan que contrata"
-          }}
-        </p>
+        <h2>Nuevo cliente</h2>
+        <p>Un grupo nuevo con el plan que contrata</p>
       </div>
       <button type="button" class="btn-cerrar" (click)="cerrarForm()">×</button>
     </header>
@@ -200,7 +191,7 @@
         [disabled]="guardando()"
         (click)="guardar()"
       >
-        {{ editando() ? "Guardar" : "Dar de alta" }}
+        Dar de alta
       </button>
     </footer>
   </div>
@@ -388,6 +379,14 @@
       @if (pestana() === "datos") {
         <div class="rejilla">
           <label class="campo">
+            <span>Nombre del grupo</span>
+            <input [(ngModel)]="datos.name" />
+          </label>
+          <label class="campo">
+            <span>Identificador (liga de acceso)</span>
+            <input [(ngModel)]="datos.slug" />
+          </label>
+          <label class="campo ancho-total">
             <span>Plan contratado</span>
             <select [(ngModel)]="datos.saasPlanId">
               <option value="">Sin plan asignado</option>
@@ -438,6 +437,32 @@
             <textarea rows="3" [(ngModel)]="datos.notes"></textarea>
           </label>
         </div>
+
+        <!-- Bitácora de suspensiones/reactivaciones: por qué se le cortó o
+             devolvió el acceso, quién y cuándo. -->
+        <section class="historial">
+          <h4 class="historial-titulo">Historial de estatus</h4>
+          @if (historial().length === 0) {
+            <p class="ayuda">Sin cambios de estatus registrados.</p>
+          } @else {
+            <ul class="historial-lista">
+              @for (h of historial(); track h.id) {
+                <li class="historial-item">
+                  <span
+                    class="pastilla"
+                    [attr.data-estado]="h.newActive ? 'ACTIVO' : 'BLOQUEADO'"
+                  >
+                    {{ h.newActive ? "Reactivado" : "Suspendido" }}
+                  </span>
+                  <span class="historial-fecha">
+                    {{ h.createdAt | date: "dd/MM/yyyy HH:mm" }}
+                  </span>
+                  <span class="historial-motivo">{{ h.reason }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
 
         <footer class="dialogo-pie">
           <button type="button" class="btn-secundario" (click)="cerrarFicha()">
@@ -652,5 +677,49 @@
     } @else {
       <p class="vacio">Cargando ficha…</p>
     }
+  </div>
+}
+
+<!-- Confirmar suspensión/reactivación con motivo obligatorio -->
+@if (suspensionDe(); as t) {
+  <div class="fondo" (click)="cerrarSuspension()"></div>
+  <div class="dialogo angosto" role="dialog" aria-modal="true">
+    <header class="dialogo-top">
+      <div>
+        <h2>{{ t.isActive ? "Suspender" : "Reactivar" }} a {{ t.name }}</h2>
+        <p>
+          {{
+            t.isActive
+              ? "Le cortará el acceso a todos sus usuarios. Deja constancia del motivo."
+              : "Le devolverá el acceso. Deja constancia del motivo."
+          }}
+        </p>
+      </div>
+      <button type="button" class="btn-cerrar" (click)="cerrarSuspension()">×</button>
+    </header>
+
+    <label class="campo ancho-total">
+      <span>Motivo del cambio *</span>
+      <textarea
+        rows="3"
+        [ngModel]="motivoSuspension()"
+        (ngModelChange)="motivoSuspension.set($event)"
+        placeholder="Ej. Falta de pago del periodo 2026-08 / Regularizó su adeudo"
+      ></textarea>
+    </label>
+
+    <footer class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrarSuspension()">
+        Cancelar
+      </button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando()"
+        (click)="confirmarSuspension()"
+      >
+        {{ t.isActive ? "Suspender cliente" : "Reactivar cliente" }}
+      </button>
+    </footer>
   </div>
 }

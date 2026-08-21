@@ -410,6 +410,10 @@ export class SaasService {
     const t = await this.tenant(tenantId);
     if (dto.saasPlanId !== undefined) await this.asignarPlan(t, dto.saasPlanId);
     Object.assign(t, {
+      // Identidad del cliente: antes se editaba en un diálogo aparte; ahora
+      // vive en la misma ficha, así que la ficha también la guarda.
+      name: dto.name?.trim() || t.name,
+      slug: dto.slug?.trim() || t.slug,
       contactName: dto.contactName ?? t.contactName,
       contactEmail: dto.contactEmail ?? t.contactEmail,
       contactPhone: dto.contactPhone ?? t.contactPhone,
