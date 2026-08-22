@@ -26,6 +26,7 @@ import {
 } from './billing-status.service';
 import { ConektaService, CheckoutSalida } from './conekta.service';
 import { EmailjsService } from '../../common/email/emailjs.service';
+import { wrapAdminEmail } from '../../common/email/templates';
 
 export interface ResumenCobroCliente {
   tenantId: string;
@@ -81,40 +82,42 @@ export class SaasService {
       .map(
         (m) => `
         <tr>
-          <td style="padding:6px 10px;border-bottom:1px solid #eee">${m.nombre}</td>
-          <td style="padding:6px 10px;border-bottom:1px solid #eee">${
+          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7">${m.nombre}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7">${
             m.estado === BillingBlockState.BLOQUEADO
               ? 'Bloqueado'
               : 'Solo lectura'
           }${m.suspendidoManual ? ' (suspendido)' : ''}</td>
-          <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m.diasMora}</td>
-          <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${mxn(m.adeudo)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7;text-align:right">${m.diasMora}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7;text-align:right">${mxn(m.adeudo)}</td>
         </tr>`,
       )
       .join('');
-    const html = `
-      <div style="font-family:Arial,sans-serif;color:#1f2937">
-        <h2 style="margin:0 0 4px">Clientes en mora del SaaS</h2>
-        <p style="color:#6b7280;margin:0 0 16px">Resumen al ${hoy} ·
-          ${panorama.enSoloLectura} en solo lectura ·
-          ${panorama.bloqueadosPorPago} bloqueados ·
-          adeudo total ${mxn(panorama.adeudoTotal)}</p>
-        <table style="border-collapse:collapse;width:100%;font-size:13px">
-          <thead>
-            <tr style="background:#f9fafb">
-              <th style="padding:6px 10px;text-align:left">Cliente</th>
-              <th style="padding:6px 10px;text-align:left">Estado</th>
-              <th style="padding:6px 10px;text-align:right">Días de mora</th>
-              <th style="padding:6px 10px;text-align:right">Adeudo</th>
-            </tr>
-          </thead>
-          <tbody>${filas}</tbody>
-        </table>
-        <p style="color:#9ca3af;font-size:12px;margin-top:16px">
-          NexDMS — aviso automático a compras. Revisa el portal de administración
-          para el detalle.
-        </p>
-      </div>`;
+    const content = `
+      <p style="margin:0 0 16px;color:#64748b">Resumen al ${hoy} ·
+        ${panorama.enSoloLectura} en solo lectura ·
+        ${panorama.bloqueadosPorPago} bloqueados ·
+        adeudo total <strong>${mxn(panorama.adeudoTotal)}</strong></p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">
+        <thead>
+          <tr style="background:#f8fafc">
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Cliente</th>
+            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Estado</th>
+            <th style="padding:8px 10px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Días</th>
+            <th style="padding:8px 10px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Adeudo</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>`;
+    const html = wrapAdminEmail({
+      title: `${morosos.length} cliente(s) en mora`,
+      preheader: `Resumen de mora al ${hoy}`,
+      content,
+      logoUrl: this.config.get<string>(
+        'NEXUS_LOGO_URL',
+        'https://admin.nexusqsystem.com/nexus/logo.png',
+      ),
+    });
     const enviado = await this.email.enviar({
       subject: `NexDMS · ${morosos.length} cliente(s) en mora — ${hoy}`,
       html,
