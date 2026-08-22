@@ -26,7 +26,7 @@ import {
 } from './billing-status.service';
 import { ConektaService, CheckoutSalida } from './conekta.service';
 import { EmailjsService } from '../../common/email/emailjs.service';
-import { wrapAdminEmail } from '../../common/email/templates';
+import { statusPill, wrapAdminEmail } from '../../common/email/templates';
 
 export interface ResumenCobroCliente {
   tenantId: string;
@@ -79,38 +79,43 @@ export class SaasService {
       timeZone: 'America/Mexico_City',
     });
     const filas = morosos
-      .map(
-        (m) => `
-        <tr>
-          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7">${m.nombre}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7">${
-            m.estado === BillingBlockState.BLOQUEADO
-              ? 'Bloqueado'
-              : 'Solo lectura'
-          }${m.suspendidoManual ? ' (suspendido)' : ''}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7;text-align:right">${m.diasMora}</td>
-          <td style="padding:8px 10px;border-bottom:1px solid #eef2f7;text-align:right">${mxn(m.adeudo)}</td>
-        </tr>`,
-      )
+      .map((m, i) => {
+        const bg = i % 2 ? '#ffffff' : '#fbfcfe';
+        const pill =
+          m.estado === BillingBlockState.BLOQUEADO
+            ? statusPill('Bloqueado', 'danger')
+            : statusPill('Solo lectura', 'warning');
+        const susp = m.suspendidoManual
+          ? ` ${statusPill('Suspendido', 'neutral')}`
+          : '';
+        return `
+        <tr style="background:${bg}">
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;color:#0f172a">${m.nombre}</td>
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7">${pill}${susp}</td>
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;text-align:right;color:#475569">${m.diasMora}</td>
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;text-align:right;font-weight:700;color:#0f172a">${mxn(m.adeudo)}</td>
+        </tr>`;
+      })
       .join('');
     const content = `
-      <p style="margin:0 0 16px;color:#64748b">Resumen al ${hoy} ·
-        ${panorama.enSoloLectura} en solo lectura ·
-        ${panorama.bloqueadosPorPago} bloqueados ·
-        adeudo total <strong>${mxn(panorama.adeudoTotal)}</strong></p>
-      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:13px">
+      <p style="margin:0 0 20px;color:#475569">Resumen al <strong>${hoy}</strong>:
+        ${panorama.enSoloLectura} en solo lectura, ${panorama.bloqueadosPorPago} bloqueados,
+        con un adeudo total de <strong style="color:#0f172a">${mxn(panorama.adeudoTotal)}</strong>.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;border:1px solid #eef2f7;border-radius:10px;overflow:hidden">
         <thead>
-          <tr style="background:#f8fafc">
-            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Cliente</th>
-            <th style="padding:8px 10px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Estado</th>
-            <th style="padding:8px 10px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Días</th>
-            <th style="padding:8px 10px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.04em">Adeudo</th>
+          <tr style="background:#f1f5f9">
+            <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Cliente</th>
+            <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Estado</th>
+            <th style="padding:10px 12px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Días</th>
+            <th style="padding:10px 12px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Adeudo</th>
           </tr>
         </thead>
         <tbody>${filas}</tbody>
-      </table>`;
+      </table>
+      <p style="margin:20px 0 0;color:#94a3b8;font-size:13px">Revisa el portal de administración para el detalle y las acciones de cada cliente.</p>`;
     const html = wrapAdminEmail({
       title: `${morosos.length} cliente(s) en mora`,
+      eyebrow: 'Cobranza SaaS',
       preheader: `Resumen de mora al ${hoy}`,
       content,
       logoUrl: this.config.get<string>(
