@@ -25,6 +25,7 @@ import {
   BillingStatusService,
 } from './billing-status.service';
 import { ConektaService, CheckoutSalida } from './conekta.service';
+import { EmailjsService } from '../../common/email/emailjs.service';
 
 export interface ResumenCobroCliente {
   tenantId: string;
@@ -55,7 +56,71 @@ export class SaasService {
     private readonly config: ConfigService,
     private readonly billing: BillingStatusService,
     private readonly conekta: ConektaService,
+    private readonly email: EmailjsService,
   ) {}
+
+  /**
+   * Arma y envía a compras de Nexus el resumen de clientes en mora (aviso de
+   * #36 vía EmailJS). Devuelve cuántos morosos había y si se envió. No manda
+   * correo si no hay morosos.
+   */
+  async enviarResumenMora(): Promise<{ enviado: boolean; morosos: number }> {
+    const panorama = await this.panorama();
+    const morosos = panorama.morosos ?? [];
+    if (!morosos.length) return { enviado: false, morosos: 0 };
+
+    const mxn = (n: number) =>
+      Number(n || 0).toLocaleString('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+      });
+    const hoy = new Date().toLocaleDateString('es-MX', {
+      timeZone: 'America/Mexico_City',
+    });
+    const filas = morosos
+      .map(
+        (m) => `
+        <tr>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee">${m.nombre}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee">${
+            m.estado === BillingBlockState.BLOQUEADO
+              ? 'Bloqueado'
+              : 'Solo lectura'
+          }${m.suspendidoManual ? ' (suspendido)' : ''}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${m.diasMora}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #eee;text-align:right">${mxn(m.adeudo)}</td>
+        </tr>`,
+      )
+      .join('');
+    const html = `
+      <div style="font-family:Arial,sans-serif;color:#1f2937">
+        <h2 style="margin:0 0 4px">Clientes en mora del SaaS</h2>
+        <p style="color:#6b7280;margin:0 0 16px">Resumen al ${hoy} ·
+          ${panorama.enSoloLectura} en solo lectura ·
+          ${panorama.bloqueadosPorPago} bloqueados ·
+          adeudo total ${mxn(panorama.adeudoTotal)}</p>
+        <table style="border-collapse:collapse;width:100%;font-size:13px">
+          <thead>
+            <tr style="background:#f9fafb">
+              <th style="padding:6px 10px;text-align:left">Cliente</th>
+              <th style="padding:6px 10px;text-align:left">Estado</th>
+              <th style="padding:6px 10px;text-align:right">Días de mora</th>
+              <th style="padding:6px 10px;text-align:right">Adeudo</th>
+            </tr>
+          </thead>
+          <tbody>${filas}</tbody>
+        </table>
+        <p style="color:#9ca3af;font-size:12px;margin-top:16px">
+          NexDMS — aviso automático a compras. Revisa el portal de administración
+          para el detalle.
+        </p>
+      </div>`;
+    const enviado = await this.email.enviar({
+      subject: `NexDMS · ${morosos.length} cliente(s) en mora — ${hoy}`,
+      html,
+    });
+    return { enviado, morosos: morosos.length };
+  }
 
   // ─── Planes ─────────────────────────────────────────────────
 

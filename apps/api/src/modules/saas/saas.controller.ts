@@ -48,6 +48,12 @@ export class SaasController {
     return this.saas.resumenCobros();
   }
 
+  /** Envía ya el resumen de mora a compras (el mismo que corre a diario). */
+  @Post('overdue-summary/send')
+  enviarResumenMora() {
+    return this.saas.enviarResumenMora();
+  }
+
   @Get('plans')
   planes() {
     return this.saas.planes();

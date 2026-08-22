@@ -13,11 +13,13 @@ import {
   SaasPlan,
 } from './entities/saas.entities';
 import { StorageModule } from '../../common/storage/storage.module';
+import { EmailModule } from '../../common/email/email.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([SaasPlan, SaasModulePrice, SaasPayment, Tenant]),
     StorageModule,
+    EmailModule,
   ],
   controllers: [SaasController, MiCobroController, SaasWebhookController],
   providers: [SaasService, BillingStatusService, ConektaService],
