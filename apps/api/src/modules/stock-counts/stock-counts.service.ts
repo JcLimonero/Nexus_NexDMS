@@ -6,6 +6,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
+import {
   StockCount,
   StockCountStatusEnum,
 } from './entities/stock-count.entity';
@@ -100,13 +104,12 @@ export class StockCountsService {
     em: EntityManager,
     tenantId: string,
   ): Promise<string> {
-    const year = new Date().getFullYear();
-    const previos = await em
-      .createQueryBuilder(StockCount, 'c')
-      .where('c.tenant_id = :tenantId', { tenantId })
-      .andWhere('c.folio LIKE :like', { like: `CF-${year}-%` })
-      .getCount();
-    return `CF-${year}-${String(previos + 1).padStart(4, '0')}`;
+    const { codigo } = await siguienteCodigoDocumento(
+      em,
+      tenantId,
+      CODIGO_OBJETO.CONTEO_FISICO,
+    );
+    return codigo;
   }
 
   async findAll(user: UserPayload, branchId?: string): Promise<StockCount[]> {

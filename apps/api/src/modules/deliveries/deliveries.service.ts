@@ -2,6 +2,10 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
+import {
   ChecklistItem,
   Delivery,
   DeliveryKindEnum,
@@ -58,13 +62,12 @@ export class DeliveriesService {
   }
 
   private async generateFolio(tenantId: string): Promise<string> {
-    const year = new Date().getFullYear();
-    const previos = await this.repo
-      .createQueryBuilder('d')
-      .where('d.tenant_id = :tenantId', { tenantId })
-      .andWhere("to_char(d.created_at, 'YYYY') = :year", { year: String(year) })
-      .getCount();
-    return `ENT-${year}-${String(previos + 1).padStart(4, '0')}`;
+    const { codigo } = await siguienteCodigoDocumento(
+      this.repo.manager,
+      tenantId,
+      CODIGO_OBJETO.ENTREGA,
+    );
+    return codigo;
   }
 
   async create(user: UserPayload, dto: CreateDeliveryDto): Promise<Delivery> {

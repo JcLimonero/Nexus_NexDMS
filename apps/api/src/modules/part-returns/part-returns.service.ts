@@ -6,6 +6,10 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, In, Repository } from 'typeorm';
 import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
+import {
   PartReturn,
   RefundMethodEnum,
   ReturnKindEnum,
@@ -51,13 +55,12 @@ export class PartReturnsService {
   }
 
   private async generateFolio(tenantId: string): Promise<string> {
-    const year = new Date().getFullYear();
-    const previos = await this.repo
-      .createQueryBuilder('r')
-      .where('r.tenant_id = :tenantId', { tenantId })
-      .andWhere("to_char(r.created_at, 'YYYY') = :year", { year: String(year) })
-      .getCount();
-    return `DEV-${year}-${String(previos + 1).padStart(4, '0')}`;
+    const { codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      tenantId,
+      CODIGO_OBJETO.DEVOLUCION_REFACCION,
+    );
+    return codigo;
   }
 
   /**

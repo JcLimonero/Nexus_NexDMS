@@ -31,6 +31,10 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
+import {
   Client,
   ClientTypeEnum,
 } from '../clients/entities/client.entity';
@@ -62,6 +66,8 @@ export const LEAD_STATUSES: LeadStatus[] = [
 export class Lead {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Column({ name: 'tenant_id', type: 'uuid' }) tenantId: string;
+  @Column({ name: 'folio', type: 'varchar', length: 24, nullable: true })
+  folio: string | null;
   @Column({ name: 'branch_id', type: 'uuid', nullable: true })
   branchId: string | null;
   @Column({ name: 'name', type: 'varchar', length: 200 }) name: string;
@@ -126,13 +132,19 @@ export class LeadsService {
     return lead;
   }
 
-  create(
+  async create(
     user: UserPayload,
     dto: Partial<Lead> & { name: string },
   ): Promise<Lead> {
+    const { codigo } = await siguienteCodigoDocumento(
+      this.leadRepo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.OPORTUNIDAD,
+    );
     return this.leadRepo.save(
       this.leadRepo.create({
         tenantId: user.tenantId,
+        folio: codigo,
         branchId: dto.branchId ?? null,
         name: dto.name,
         phone: dto.phone ?? null,

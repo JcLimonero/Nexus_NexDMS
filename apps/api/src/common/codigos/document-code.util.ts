@@ -9,14 +9,34 @@
  * formado porque el prefijo de la empresa es inmutable una vez creada.
  */
 
-/** Códigos de objeto (1-3 letras) por tipo de documento. */
+/**
+ * Códigos de objeto (1-3 letras) por tipo de documento de proceso. Son
+ * permanentes: forman parte del código impreso/buscado de cada documento.
+ */
 export const CODIGO_OBJETO = {
   CLIENTE: 'C',
+  // Servicio
   ORDEN_SERVICIO: 'OS',
   COTIZACION: 'COT',
-  APARTADO: 'AP',
-  VENTA: 'V',
+  CITA_SERVICIO: 'CT',
+  ORDEN_HOJALATERIA: 'HP',
+  GARANTIA: 'GA',
+  // Refacciones
+  VENTA_MOSTRADOR: 'VM',
+  PEDIDO_PROVEEDOR: 'OC',
+  REQUISICION: 'RQ',
+  TRASPASO: 'TR',
+  DEVOLUCION_REFACCION: 'DV',
+  CONTEO_FISICO: 'CF',
+  ENTREGA: 'EN',
+  // Unidades (nuevos/usados)
   VENTA_UNIDAD: 'VU',
+  APARTADO_UNIDAD: 'AP',
+  RECOMPRA_UNIDAD: 'RC',
+  CITA_COMERCIAL: 'CV',
+  // CRM / Caja
+  OPORTUNIDAD: 'OP',
+  CORTE_CAJA: 'CC',
 } as const;
 
 const ANCHO_CONSECUTIVO = 8;
@@ -89,4 +109,37 @@ export function formarCodigoDocumento(
     codigoObjeto +
     String(consecutivo).padStart(ANCHO_CONSECUTIVO, '0')
   );
+}
+
+/** Algo que sabe ejecutar SQL: DataSource, EntityManager o QueryRunner. */
+export interface EjecutorSql {
+  query<T = unknown>(sql: string, params?: unknown[]): Promise<T>;
+}
+
+/**
+ * Reserva atómicamente el siguiente consecutivo del documento (empresa, objeto)
+ * y devuelve su código legible ya formado con el prefijo de la empresa. Es el
+ * único punto donde se generan códigos de documentos; funciona igual dentro o
+ * fuera de una transacción (pásale el EntityManager de la transacción).
+ */
+export async function siguienteCodigoDocumento(
+  ejecutor: EjecutorSql,
+  tenantId: string,
+  codigoObjeto: string,
+): Promise<{ consecutivo: number; codigo: string }> {
+  const seqRows = await ejecutor.query<{ last_value: number }[]>(
+    `INSERT INTO document_code_seq (tenant_id, object_code, last_value)
+     VALUES ($1, $2, 1)
+     ON CONFLICT (tenant_id, object_code) DO UPDATE
+       SET last_value = document_code_seq.last_value + 1
+     RETURNING last_value`,
+    [tenantId, codigoObjeto],
+  );
+  const consecutivo = seqRows[0]?.last_value ?? 1;
+  const prefRows = await ejecutor.query<{ code_prefix: string | null }[]>(
+    `SELECT code_prefix FROM tenants WHERE id = $1`,
+    [tenantId],
+  );
+  const prefijo = prefRows[0]?.code_prefix?.trim() || 'XXX';
+  return { consecutivo, codigo: formarCodigoDocumento(prefijo, codigoObjeto, consecutivo) };
 }

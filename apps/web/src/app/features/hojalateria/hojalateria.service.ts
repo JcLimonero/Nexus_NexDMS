@@ -14,7 +14,7 @@ export type BodyworkItemStatus = "PENDING" | "APPROVED" | "REJECTED";
 
 export interface OrdenLista {
   id: string;
-  folio: number;
+  folio: string;
   status: BodyworkStatus;
   clientName: string;
   clientPhone: string | null;

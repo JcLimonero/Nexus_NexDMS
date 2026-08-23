@@ -19,6 +19,10 @@ import { ScopeEnum } from '../users/entities/user.entity';
 import { BranchesService } from '../branches/branches.service';
 import { EmailjsService } from '../../common/email/emailjs.service';
 import { EmailComposer } from '../../common/email/email-composer.service';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class WarrantiesService {
@@ -132,8 +136,15 @@ export class WarrantiesService {
       );
     }
 
+    const { codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      user.tenantId,
+      CODIGO_OBJETO.GARANTIA,
+    );
+
     const warranty = this.warrantyRepo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       branchId: dto.branchId,
       unitSaleId: dto.unitSaleId ?? null,
       serviceOrderId: dto.serviceOrderId ?? null,

@@ -19,6 +19,10 @@ import { CreateUnitReservationDto } from './dto/create-unit-reservation.dto';
 import { FilterUnitReservationsDto } from './dto/filter-unit-reservations.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class UnitReservationsService {
@@ -169,6 +173,12 @@ export class UnitReservationsService {
         throw new NotFoundException('Cliente no encontrado');
       }
 
+      const { codigo } = await siguienteCodigoDocumento(
+        em,
+        user.tenantId,
+        CODIGO_OBJETO.APARTADO_UNIDAD,
+      );
+
       const reservation = em.create(UnitReservation, {
         catalogUnitId: dto.catalogUnitId,
         clientId: dto.clientId,
@@ -177,6 +187,7 @@ export class UnitReservationsService {
         status: UnitReservationStatusEnum.ACTIVE,
         notes: dto.notes ?? null,
         tenantId: user.tenantId,
+        folio: codigo,
       });
 
       const saved = await em.save(UnitReservation, reservation);

@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository, IsNull } from 'typeorm';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 import { StorageService } from '../../common/storage/storage.service';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { BodyworkPart } from './entities/bodywork-part.entity';
@@ -104,17 +108,13 @@ export class BodyworkService {
     return qb.getMany();
   }
 
-  private async siguienteFolio(tenantId: string): Promise<number> {
-    const year = new Date().getFullYear();
-    const r = await this.dataSource.query<{ last_value: number }[]>(
-      `INSERT INTO bodywork_folio_seq (tenant_id, year, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE
-         SET last_value = bodywork_folio_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, year],
+  private async siguienteFolio(tenantId: string): Promise<string> {
+    const { codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      tenantId,
+      CODIGO_OBJETO.ORDEN_HOJALATERIA,
     );
-    return r[0]?.last_value ?? 1;
+    return codigo;
   }
 
   async crear(user: UserPayload, dto: CrearOrdenDto): Promise<BodyworkOrder> {

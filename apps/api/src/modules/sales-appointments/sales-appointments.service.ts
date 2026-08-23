@@ -14,6 +14,10 @@ import {
   UpdateSalesAppointmentStatusDto,
 } from './dto/sales-appointment.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class SalesAppointmentsService {
@@ -53,8 +57,14 @@ export class SalesAppointmentsService {
     if (!branchId) {
       throw new BadRequestException('Se requiere sucursal para la cita');
     }
+    const { codigo } = await siguienteCodigoDocumento(
+      this.repo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.CITA_COMERCIAL,
+    );
     const cita = this.repo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       branchId,
       clientId: dto.clientId ?? null,
       clientName: dto.clientName,

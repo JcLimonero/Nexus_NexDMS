@@ -57,7 +57,7 @@ import { StorageService } from '../../common/storage/storage.service';
 import { Client } from '../clients/entities/client.entity';
 import {
   CODIGO_OBJETO,
-  formarCodigoDocumento,
+  siguienteCodigoDocumento,
 } from '../../common/codigos/document-code.util';
 import {
   OsEntregadaEvent,
@@ -202,25 +202,12 @@ export class ServiceOrdersService {
     tenantId: string,
     em?: EntityManager,
   ): Promise<string> {
-    const runner = em ?? this.dataSource.manager;
-    const result = await runner.query<{ last_value: number }[]>(
-      `INSERT INTO document_code_seq (tenant_id, object_code, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, object_code) DO UPDATE
-         SET last_value = document_code_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, CODIGO_OBJETO.ORDEN_SERVICIO],
-    );
-    const seq = result[0]?.last_value ?? 1;
-    const pref = await runner.query<{ code_prefix: string | null }[]>(
-      `SELECT code_prefix FROM tenants WHERE id = $1`,
-      [tenantId],
-    );
-    return formarCodigoDocumento(
-      pref[0]?.code_prefix?.trim() || 'XXX',
+    const { codigo } = await siguienteCodigoDocumento(
+      em ?? this.dataSource.manager,
+      tenantId,
       CODIGO_OBJETO.ORDEN_SERVICIO,
-      seq,
     );
+    return codigo;
   }
 
   async create(

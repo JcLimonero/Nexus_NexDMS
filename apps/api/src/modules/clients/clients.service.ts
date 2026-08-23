@@ -14,7 +14,7 @@ import {
 } from '../../shared/data-quality/data-quality.types';
 import {
   CODIGO_OBJETO,
-  formarCodigoDocumento,
+  siguienteCodigoDocumento,
 } from '../../common/codigos/document-code.util';
 
 const CLIENT_QUALITY_WEIGHTS: Record<string, number> = {
@@ -53,39 +53,6 @@ export class ClientsService {
     private readonly dataSource: DataSource,
   ) {}
 
-  /** Prefijo de 3 letras de la empresa (fijo). Fallback defensivo 'XXX'. */
-  private async prefijoEmpresa(tenantId: string): Promise<string> {
-    const r = await this.dataSource.query<{ code_prefix: string | null }[]>(
-      `SELECT code_prefix FROM tenants WHERE id = $1`,
-      [tenantId],
-    );
-    return r[0]?.code_prefix?.trim() || 'XXX';
-  }
-
-  /**
-   * Siguiente código legible del cliente: reserva el consecutivo del contador
-   * genérico (empresa, 'C') y lo arma con el prefijo de la empresa. Atómico.
-   */
-  private async generarCodigoCliente(
-    tenantId: string,
-  ): Promise<{ numero: number; codigo: string }> {
-    const r = await this.dataSource.query<{ last_value: number }[]>(
-      `INSERT INTO document_code_seq (tenant_id, object_code, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, object_code) DO UPDATE
-         SET last_value = document_code_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, CODIGO_OBJETO.CLIENTE],
-    );
-    const numero = r[0]?.last_value ?? 1;
-    const prefijo = await this.prefijoEmpresa(tenantId);
-    const codigo = formarCodigoDocumento(
-      prefijo,
-      CODIGO_OBJETO.CLIENTE,
-      numero,
-    );
-    return { numero, codigo };
-  }
 
   async findAll(
     user: UserPayload,
@@ -311,11 +278,15 @@ export class ClientsService {
   }
 
   async create(user: UserPayload, dto: CreateClientDto): Promise<Client> {
-    const { numero, codigo } = await this.generarCodigoCliente(user.tenantId);
+    const { consecutivo, codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      user.tenantId,
+      CODIGO_OBJETO.CLIENTE,
+    );
     const client = this.clientRepo.create({
       ...dto,
       tenantId: user.tenantId,
-      clientNumber: numero,
+      clientNumber: consecutivo,
       clientCode: codigo,
       isCompany: dto.isCompany ?? false,
       fixedDiscount: dto.fixedDiscount ?? 0,

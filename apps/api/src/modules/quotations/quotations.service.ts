@@ -6,6 +6,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 import { Quotation } from './entities/quotation.entity';
 import {
   QuotationStatusEnum,
@@ -145,17 +149,12 @@ export class QuotationsService {
     tenantId: string,
     em?: EntityManager,
   ): Promise<string> {
-    const year = new Date().getFullYear();
-    const runner = em ?? this.dataSource.manager;
-    const result = await runner.query<{ last_value: number }[]>(
-      `INSERT INTO quotation_folio_seq (tenant_id, year, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE SET last_value = quotation_folio_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, year],
+    const { codigo } = await siguienteCodigoDocumento(
+      em ?? this.dataSource.manager,
+      tenantId,
+      CODIGO_OBJETO.COTIZACION,
     );
-    const seq = result[0]?.last_value ?? 1;
-    return `COT-${year}-${String(seq).padStart(4, '0')}`;
+    return codigo;
   }
 
   private getPriceFromCatalogUnit(
