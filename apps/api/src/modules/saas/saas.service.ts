@@ -667,6 +667,7 @@ export class SaasService {
   async confirmarPagoConekta(orderId: string): Promise<void> {
     const r = await this.conekta.confirmarOrden(orderId);
     if (!r.pagada || !r.tenantId) return;
+    let monto = 0;
     for (const period of r.periodos) {
       const pago = await this.pagoRepo.findOne({
         where: { tenantId: r.tenantId, period },
@@ -677,8 +678,46 @@ export class SaasService {
       pago.method = 'conekta';
       pago.reference = r.referencia;
       await this.pagoRepo.save(pago);
+      monto += pago.amount;
     }
     this.billing.invalidar(r.tenantId);
+    // Aviso a Nexus del pago recibido.
+    void this.avisarPagoRecibido(r.tenantId, r.periodos, monto, r.referencia);
+  }
+
+  /** Correo a Nexus cuando un cliente paga su suscripción en línea. */
+  private async avisarPagoRecibido(
+    tenantId: string,
+    periodos: string[],
+    monto: number,
+    referencia: string,
+  ): Promise<void> {
+    try {
+      const t = await this.tenant(tenantId);
+      const mxn = Number(monto || 0).toLocaleString('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+      });
+      const html = wrapAdminEmail({
+        title: 'Pago de suscripción recibido',
+        eyebrow: 'Cobranza SaaS',
+        content:
+          `<p>El cliente <strong>${t.name}</strong> pagó su suscripción en línea.</p>` +
+          `<p>Monto: <strong>${mxn}</strong><br>` +
+          `Periodos: ${periodos.join(', ') || '—'}<br>` +
+          `Referencia: ${referencia || '—'}</p>`,
+        logoUrl: this.config.get<string>(
+          'NEXUS_LOGO_URL',
+          'https://admin.nexusqsystem.com/nexus/logo.png',
+        ),
+      });
+      await this.email.enviar({
+        subject: `NexDMS · Pago recibido — ${t.name}`,
+        html,
+      });
+    } catch {
+      // El aviso no debe tumbar la confirmación del pago.
+    }
   }
 
   /**
