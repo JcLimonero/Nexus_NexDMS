@@ -89,6 +89,7 @@ import { DocumentsModule } from './modules/documents/documents.module';
 import { UserAvailabilityModule } from './modules/user-availability/user-availability.module';
 import { ServiceTypesModule } from './modules/service-types/service-types.module';
 import { MasterCatalogsModule } from './modules/master-catalogs/master-catalogs.module';
+import { ProvisioningModule } from './modules/provisioning/provisioning.module';
 import { MechanicChecklistModule } from './modules/mechanic-checklist/mechanic-checklist.module';
 import { BranchRampsModule } from './modules/branch-ramps/branch-ramps.module';
 import { ServicePlanningModule } from './modules/service-planning/service-planning.module';
@@ -177,6 +178,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     UserAvailabilityModule,
     ServiceTypesModule,
     MasterCatalogsModule,
+    ProvisioningModule,
     MechanicChecklistModule,
     BranchRampsModule,
     ServicePlanningModule,
