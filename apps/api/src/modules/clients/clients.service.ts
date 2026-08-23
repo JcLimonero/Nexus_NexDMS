@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { Contact } from '../contacts/entities/contact.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
@@ -12,6 +12,10 @@ import {
   DataQualityScore,
   getLevelFromScore,
 } from '../../shared/data-quality/data-quality.types';
+import {
+  CODIGO_OBJETO,
+  formarCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 const CLIENT_QUALITY_WEIGHTS: Record<string, number> = {
   firstName: 10,
@@ -46,7 +50,42 @@ export class ClientsService {
     private readonly contactRepo: Repository<Contact>,
     @InjectRepository(CustomerVehicle)
     private readonly vehicleRepo: Repository<CustomerVehicle>,
+    private readonly dataSource: DataSource,
   ) {}
+
+  /** Prefijo de 3 letras de la empresa (fijo). Fallback defensivo 'XXX'. */
+  private async prefijoEmpresa(tenantId: string): Promise<string> {
+    const r = await this.dataSource.query<{ code_prefix: string | null }[]>(
+      `SELECT code_prefix FROM tenants WHERE id = $1`,
+      [tenantId],
+    );
+    return r[0]?.code_prefix?.trim() || 'XXX';
+  }
+
+  /**
+   * Siguiente código legible del cliente: reserva el consecutivo del contador
+   * genérico (empresa, 'C') y lo arma con el prefijo de la empresa. Atómico.
+   */
+  private async generarCodigoCliente(
+    tenantId: string,
+  ): Promise<{ numero: number; codigo: string }> {
+    const r = await this.dataSource.query<{ last_value: number }[]>(
+      `INSERT INTO document_code_seq (tenant_id, object_code, last_value)
+       VALUES ($1, $2, 1)
+       ON CONFLICT (tenant_id, object_code) DO UPDATE
+         SET last_value = document_code_seq.last_value + 1
+       RETURNING last_value`,
+      [tenantId, CODIGO_OBJETO.CLIENTE],
+    );
+    const numero = r[0]?.last_value ?? 1;
+    const prefijo = await this.prefijoEmpresa(tenantId);
+    const codigo = formarCodigoDocumento(
+      prefijo,
+      CODIGO_OBJETO.CLIENTE,
+      numero,
+    );
+    return { numero, codigo };
+  }
 
   async findAll(
     user: UserPayload,
@@ -77,14 +116,17 @@ export class ClientsService {
         'COALESCE(c.phone_alt, \'\') ILIKE :term',
         'c.email ILIKE :term',
         'c.rfc ILIKE :term',
+        'c.client_code ILIKE :term',
       ];
       const params: Record<string, string> = { term };
       if (digitsOnly) {
         conditions.push(
           "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
           "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+          'CAST(c.client_number AS text) = :numeroExacto',
         );
         params.termDigits = `%${digitsOnly}%`;
+        params.numeroExacto = digitsOnly;
       }
       qb.andWhere(`(${conditions.join(' OR ')})`, params);
     }
@@ -245,14 +287,17 @@ export class ClientsService {
       'COALESCE(c.phone_alt, \'\') ILIKE :term',
       'c.email ILIKE :term',
       'c.rfc ILIKE :term',
+      'c.client_code ILIKE :term',
     ];
     const params: Record<string, string> = { term };
     if (digitsOnly) {
       conditions.push(
         "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
         "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+        'CAST(c.client_number AS text) = :numeroExacto',
       );
       params.termDigits = `%${digitsOnly}%`;
+      params.numeroExacto = digitsOnly;
     }
     return this.clientRepo
       .createQueryBuilder('c')
@@ -266,9 +311,12 @@ export class ClientsService {
   }
 
   async create(user: UserPayload, dto: CreateClientDto): Promise<Client> {
+    const { numero, codigo } = await this.generarCodigoCliente(user.tenantId);
     const client = this.clientRepo.create({
       ...dto,
       tenantId: user.tenantId,
+      clientNumber: numero,
+      clientCode: codigo,
       isCompany: dto.isCompany ?? false,
       fixedDiscount: dto.fixedDiscount ?? 0,
     });

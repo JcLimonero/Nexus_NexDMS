@@ -25,6 +25,15 @@ export class Tenant {
   @Column({ name: 'slug', length: 100 })
   slug: string;
 
+  /**
+   * Prefijo de 3 letras de la empresa para los códigos legibles de sus
+   * documentos (clientes, órdenes, etc.): p. ej. "APG" → cliente APGC00000001.
+   * Se fija al dar de alta el cliente y NO se cambia después: cambiarlo
+   * obligaría a renombrar todos los códigos ya emitidos.
+   */
+  @Column({ name: 'code_prefix', type: 'char', length: 3, nullable: true })
+  codePrefix: string | null;
+
   @Column({ name: 'plan', type: 'enum', enum: TenantPlanEnum })
   plan: TenantPlanEnum;
 

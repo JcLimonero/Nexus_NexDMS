@@ -35,7 +35,12 @@
                   <tbody>
                     <tr>
                       <th class="text-muted" style="width: 35%">Cliente</th>
-                      <td>{{ getOwnerName(o) }}</td>
+                      <td>
+                        @if (o.owner?.clientCode) {
+                          <span class="badge bg-light text-secondary border me-1 font-monospace">{{ o.owner!.clientCode }}</span>
+                        }
+                        {{ getOwnerName(o) }}
+                      </td>
                     </tr>
                     <tr>
                       <th class="text-muted">Vehículo</th>

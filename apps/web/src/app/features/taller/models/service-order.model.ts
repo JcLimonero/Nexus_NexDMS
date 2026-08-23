@@ -57,7 +57,7 @@ export interface ServiceOrder {
   deliveredAt: string | null;
   createdAt: string;
   updatedAt: string;
-  owner?: { id: string; companyName: string | null; firstName: string | null; lastName: string | null; phone: string };
+  owner?: { id: string; clientCode: string | null; companyName: string | null; firstName: string | null; lastName: string | null; phone: string };
   vehicle?: ServiceOrderVehicle;
   mechanic?: { id: string; firstName: string; lastName: string };
   branch?: { id: string; name: string };

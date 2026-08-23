@@ -61,6 +61,7 @@
               <table class="table table-hover">
                 <thead>
                   <tr>
+                    <th class="text-nowrap">Código</th>
                     <th>Nombre / Razón social</th>
                     <th>Teléfono</th>
                     <th>Tipo</th>
@@ -72,6 +73,9 @@
                 <tbody>
                   @for (client of clients(); track client.id) {
                     <tr>
+                      <td class="text-nowrap fw-semibold text-secondary font-monospace">
+                        {{ client.clientCode || '—' }}
+                      </td>
                       <td>
                         <a [routerLink]="['/clients', client.id]">
                           {{ getDisplayName(client) }}
@@ -118,7 +122,7 @@
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="6" class="text-center text-muted py-4">
+                      <td colspan="7" class="text-center text-muted py-4">
                         No hay clientes. <a routerLink="/clients/nuevo">Crear el primero</a>
                       </td>
                     </tr>

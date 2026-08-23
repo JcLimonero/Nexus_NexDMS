@@ -25,6 +25,21 @@ export class Client {
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
 
+  /**
+   * Consecutivo crudo del cliente dentro del concesionario (1, 2, 3…). Alimenta
+   * el código legible; el que se muestra y se busca es `clientCode`.
+   */
+  @Column({ name: 'client_number', type: 'int', nullable: true })
+  clientNumber: number | null;
+
+  /**
+   * Código legible del cliente: prefijo de la empresa + "C" + consecutivo,
+   * p. ej. `APGC00000001`. Es lo que la gente usa en órdenes, pedidos y
+   * mostrador en vez del GUID. Único por tenant; se busca por aquí.
+   */
+  @Column({ name: 'client_code', type: 'varchar', length: 24, nullable: true })
+  clientCode: string | null;
+
   @Column({ name: 'client_type', type: 'enum', enum: ClientTypeEnum })
   clientType: ClientTypeEnum;
 

@@ -14,6 +14,8 @@ export interface Tenant {
   id: string;
   name: string;
   slug: string;
+  /** Prefijo de 3 letras para los códigos de documentos (APGC00000001). */
+  codePrefix?: string | null;
   plan: Plan;
   /** null = el tenant usa todo lo que su plan permite. */
   enabledModules: string[] | null;
@@ -26,6 +28,8 @@ export interface Tenant {
 export interface NuevoTenant {
   name: string;
   slug: string;
+  /** Opcional: si no se manda, el backend lo sugiere de las iniciales. */
+  codePrefix?: string;
   plan: Plan;
   isActive?: boolean;
 }

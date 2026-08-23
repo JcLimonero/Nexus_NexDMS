@@ -193,8 +193,18 @@ export class Tenants implements OnInit {
 
   // ─── Alta y edición ─────────────────────────────────────────
 
+  /** Marca si el admin ya tecleó el prefijo a mano (para no pisárselo). */
+  private prefijoTocado = false;
+
   nuevo(): void {
-    this.form = { name: "", slug: "", plan: "BASIC", isActive: true };
+    this.form = {
+      name: "",
+      slug: "",
+      codePrefix: "",
+      plan: "BASIC",
+      isActive: true,
+    };
+    this.prefijoTocado = false;
     this.planId = this.planesALaVenta()[0]?.id ?? "";
     this.formAbierto.set(true);
   }
@@ -203,7 +213,7 @@ export class Tenants implements OnInit {
     this.formAbierto.set(false);
   }
 
-  /** El identificador sale del nombre; se puede corregir a mano. */
+  /** El identificador y el prefijo salen del nombre; se pueden corregir. */
   alEscribirNombre(): void {
     this.form.slug = this.form.name
       .toLowerCase()
@@ -211,6 +221,48 @@ export class Tenants implements OnInit {
       .replace(/[̀-ͯ]/g, "")
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
+    if (!this.prefijoTocado) {
+      this.form.codePrefix = this.sugerirPrefijo(this.form.name);
+    }
+  }
+
+  /** El admin editó el prefijo: se respeta y se normaliza a 3 letras. */
+  alEscribirPrefijo(): void {
+    this.prefijoTocado = true;
+    this.form.codePrefix = (this.form.codePrefix ?? "")
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toUpperCase()
+      .replace(/[^A-Z]/g, "")
+      .slice(0, 3);
+  }
+
+  /**
+   * Sugiere el prefijo de 3 letras (misma regla que el backend): con 3+
+   * iniciales de palabras significativas se usan (Autos Premium Guadalajara →
+   * APG); si no, las primeras 3 letras del nombre (Total Dealer → TOT).
+   */
+  private sugerirPrefijo(nombre: string): string {
+    const limpio = (s: string) =>
+      s
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "");
+    const conectores = new Set([
+      "DE", "DEL", "LA", "LAS", "EL", "LOS", "Y",
+      "SA", "CV", "SAPI", "SC", "SRL",
+    ]);
+    const palabras = (nombre ?? "")
+      .split(/\s+/)
+      .map(limpio)
+      .filter((p) => p.length > 0);
+    const significativas = palabras.filter((p) => !conectores.has(p));
+    const iniciales = significativas.map((p) => p[0]).join("");
+    const letras = palabras.join("");
+    const base = iniciales.length >= 3 ? iniciales : letras;
+    const pref = base.slice(0, 3);
+    return pref.length ? pref.padEnd(3, "X") : "";
   }
 
   guardar(): void {

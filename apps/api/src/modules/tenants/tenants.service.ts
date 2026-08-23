@@ -12,6 +12,10 @@ import { UpdateTenantDto } from './dto/update-tenant.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { EmailjsService } from '../../common/email/emailjs.service';
 import { EmailComposer } from '../../common/email/email-composer.service';
+import {
+  normalizarPrefijo,
+  sugerirPrefijoEmpresa,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class TenantsService {
@@ -51,8 +55,14 @@ export class TenantsService {
   }
 
   async create(user: UserPayload, dto: CreateTenantDto): Promise<Tenant> {
+    // El prefijo se fija aquí y ya no cambia: si el admin no lo dictó, se toma
+    // de las iniciales del nombre.
+    const codePrefix = dto.codePrefix?.trim()
+      ? normalizarPrefijo(dto.codePrefix)
+      : sugerirPrefijoEmpresa(dto.name);
     const tenant = this.tenantRepo.create({
       ...dto,
+      codePrefix,
       isActive: dto.isActive ?? true,
     });
     const guardado = await this.tenantRepo.save(tenant);
@@ -71,7 +81,13 @@ export class TenantsService {
     dto: UpdateTenantDto,
   ): Promise<Tenant> {
     const tenant = await this.findOne(user, id);
-    Object.assign(tenant, dto);
+    // El prefijo es inmutable: cambiarlo dejaría huérfanos los códigos ya
+    // emitidos. Se ignora cualquier intento de modificarlo por update.
+    const { codePrefix: _ignora, ...resto } = dto as UpdateTenantDto & {
+      codePrefix?: string;
+    };
+    void _ignora;
+    Object.assign(tenant, resto);
     return this.tenantRepo.save(tenant);
   }
 
