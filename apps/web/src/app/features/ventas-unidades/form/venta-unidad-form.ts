@@ -20,6 +20,7 @@ import {
 } from "../models/unit-sale.model";
 import { InventarioUnidadesService } from "../../inventario-unidades/inventario-unidades.service";
 import { ClientesService } from "../../clientes/clientes.service";
+import { ClientSelector } from "../../clientes/client-selector/client-selector";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { CatalogUnit, CatalogUnitStatus } from "../../inventario-unidades/models/catalog-unit.model";
 import { ClientListItem } from "../../clientes/models/client.model";
@@ -31,7 +32,7 @@ import {
 @Component({
   selector: "app-venta-unidad-form",
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ClientSelector],
   templateUrl: "./venta-unidad-form.html",
   styleUrls: ["./venta-unidad-form.scss"],
 })
@@ -108,7 +109,7 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
     });
 
     this.loadUnits();
-    this.loadClients();
+    // El cliente se elige con búsqueda (client-selector), sin precargar 500.
 
     this.form
       .get("catalogUnitId")

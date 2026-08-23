@@ -13,6 +13,7 @@ import { ToastrService } from "ngx-toastr";
 import { AlmacenService } from "../../almacen.service";
 import { InventarioUnidadesService } from "../../../inventario-unidades/inventario-unidades.service";
 import { ClientesService } from "../../../clientes/clientes.service";
+import { ClientSelector } from "../../../clientes/client-selector/client-selector";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import { CreateUnitReservationDto } from "../../models/unit-reservation.model";
 import { CatalogUnit, CatalogUnitStatus } from "../../../inventario-unidades/models/catalog-unit.model";
@@ -21,7 +22,7 @@ import { ClientListItem } from "../../../clientes/models/client.model";
 @Component({
   selector: "app-apartado-form",
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ClientSelector],
   templateUrl: "./apartado-form.html",
   styleUrls: ["./apartado-form.scss"],
 })
@@ -57,7 +58,7 @@ export class ApartadoForm implements OnInit {
     });
 
     this.loadUnits();
-    this.loadClients();
+    // El cliente se elige con búsqueda (client-selector), sin precargar 500.
   }
 
   onBranchChange(branchId: string): void {

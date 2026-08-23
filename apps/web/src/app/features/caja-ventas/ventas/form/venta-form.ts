@@ -14,6 +14,7 @@ import { CajaVentasService } from "../../caja-ventas.service";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import { InventarioRefaccionesService } from "../../../inventario-refacciones/inventario-refacciones.service";
 import { ClientesService } from "../../../clientes/clientes.service";
+import { ClientSelector } from "../../../clientes/client-selector/client-selector";
 import {
   CreateSaleDto,
   CreateSaleLineDto,
@@ -30,7 +31,7 @@ import {
 @Component({
   selector: "app-venta-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClientSelector],
   templateUrl: "./venta-form.html",
   styleUrls: ["./venta-form.scss"],
 })
@@ -93,9 +94,7 @@ export class VentaForm implements OnInit {
       next: (res) =>
         this.branches.set(res.data.map((b) => ({ id: b.id, name: b.name }))),
     });
-    this.clientesService.getAll({ limit: 500 }).subscribe({
-      next: (res) => this.clients.set(res.data),
-    });
+    // cliente por búsqueda (client-selector), sin precargar 500
 
     this.form.get("branchId")?.valueChanges.subscribe((branchId) => {
       if (branchId) this.loadParts(branchId);

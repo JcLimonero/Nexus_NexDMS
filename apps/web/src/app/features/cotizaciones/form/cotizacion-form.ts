@@ -15,6 +15,7 @@ import { BranchesService } from "../../inventario-refacciones/services/branches.
 import { InventarioRefaccionesService } from "../../inventario-refacciones/inventario-refacciones.service";
 import { InventarioUnidadesService } from "../../inventario-unidades/inventario-unidades.service";
 import { ClientesService } from "../../clientes/clientes.service";
+import { ClientSelector } from "../../clientes/client-selector/client-selector";
 import {
   CreateQuotationDto,
   CreateQuotationItemDto,
@@ -29,7 +30,7 @@ import { ClientListItem } from "../../clientes/models/client.model";
 @Component({
   selector: "app-cotizacion-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClientSelector],
   templateUrl: "./cotizacion-form.html",
   styleUrls: ["./cotizacion-form.scss"],
 })
@@ -93,9 +94,7 @@ export class CotizacionForm implements OnInit {
       next: (res) =>
         this.branches.set(res.data.map((b) => ({ id: b.id, name: b.name }))),
     });
-    this.clientesService.getAll({ limit: 500 }).subscribe({
-      next: (res) => this.clients.set(res.data),
-    });
+    // cliente por búsqueda (client-selector), sin precargar 500
 
     this.form.get("type")?.valueChanges.subscribe((type) => {
       if (type === QuotationType.UNIT) {

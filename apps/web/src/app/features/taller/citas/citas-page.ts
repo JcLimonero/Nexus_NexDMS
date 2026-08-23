@@ -98,9 +98,7 @@ export class CitasPage implements OnInit {
         }
       },
     });
-    this.clientesService.getAll({ limit: 500 }).subscribe({
-      next: (res) => this.clients.set(res.data),
-    });
+    // El cliente se elige con búsqueda (client-selector), sin precargar 500.
   }
 
   loadDay(): void {
