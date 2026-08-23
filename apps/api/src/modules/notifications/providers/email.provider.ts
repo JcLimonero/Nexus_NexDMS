@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { fetchWithRetry } from '../../../common/http/retry.util';
+import { EmailjsService } from '../../../common/email/emailjs.service';
 
 export interface EmailSendParams {
   to: string;
@@ -15,13 +16,28 @@ export class EmailProvider {
   private readonly logger = new Logger(EmailProvider.name);
   private readonly apiKey: string | null;
 
-  constructor(private readonly config: ConfigService) {
+  constructor(
+    private readonly config: ConfigService,
+    private readonly emailjs: EmailjsService,
+  ) {
     this.apiKey = this.config.get<string>('RESEND_API_KEY') ?? null;
   }
 
   async send(
     params: EmailSendParams,
   ): Promise<{ success: boolean; id?: string }> {
+    // Transporte principal: EmailJS (Outlook de Nexus). Si trae adjuntos, se
+    // usa Resend, que sí los soporta.
+    if (this.emailjs.habilitado && !params.attachments?.length) {
+      const ok = await this.emailjs.enviar({
+        subject: params.subject,
+        html: params.html ?? params.text ?? '',
+        to: params.to,
+      });
+      if (ok) return { success: true, id: 'emailjs' };
+      // Si EmailJS falla, cae al resto (Resend/mock) para no perder el aviso.
+    }
+
     if (!this.apiKey || this.apiKey === 'CAMBIAR') {
       // Mock: sin credenciales, no fallar
       return { success: true, id: 'mock-' + Date.now() };

@@ -20,6 +20,7 @@ import {
   ServicioHallazgoCotizacionEvent,
 } from '../../../events/domain-events';
 import { NotificationChannelEnum } from '../entities/notification-log.entity';
+import { emailButton } from '../../../common/email/templates';
 import { UsersService } from '../../users/users.service';
 import { RoleEnum } from '../../users/entities/user.entity';
 import { StorageService } from '../../../common/storage/storage.service';
@@ -48,6 +49,22 @@ export class NotificationsListener {
         tenantId: event.tenantId,
         branchId: event.branchId,
         templateParams: { name: event.client.name ?? 'Cliente' },
+      });
+    }
+    if (event.client?.email) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'cita_confirmada',
+        referenceType: 'Appointment',
+        referenceId: event.appointmentId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: 'Tu cita quedó agendada',
+        html:
+          `<p>Hola ${event.client.name ?? ''},</p>` +
+          `<p>Tu cita quedó <strong>agendada</strong>. Te esperamos en la sucursal a la hora acordada.</p>` +
+          `<p>Si necesitas cambiarla, responde a este correo o llámanos.</p>`,
       });
     }
   }
@@ -110,49 +127,87 @@ export class NotificationsListener {
     clientToken: string;
     tenantId: string;
     branchId: string;
-    client?: { phone?: string };
+    client?: { phone?: string; email?: string };
   }): Promise<void> {
-    if (!event.client?.phone) return;
     const base = process.env.APP_PUBLIC_URL ?? 'http://localhost:4200';
-    await this.notificationsQueue.add('send', {
-      channel: NotificationChannelEnum.WHATSAPP,
-      templateKey: 'cotizacion_servicio',
-      referenceType: 'Quotation',
-      referenceId: event.quotationId,
-      recipient: event.client.phone,
-      tenantId: event.tenantId,
-      branchId: event.branchId,
-      templateParams: {
-        folio: event.folio,
-        total: event.total.toFixed(2),
-        url: `${base}/c/${event.clientToken}`,
-      },
-    });
+    const url = `${base}/c/${event.clientToken}`;
+    if (event.client?.phone) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.WHATSAPP,
+        templateKey: 'cotizacion_servicio',
+        referenceType: 'Quotation',
+        referenceId: event.quotationId,
+        recipient: event.client.phone,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        templateParams: {
+          folio: event.folio,
+          total: event.total.toFixed(2),
+          url,
+        },
+      });
+    }
+    if (event.client?.email) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'cotizacion_servicio',
+        referenceType: 'Quotation',
+        referenceId: event.quotationId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: `Tu cotización ${event.folio} está lista`,
+        html:
+          `<p>Preparamos la cotización de tu servicio por un total de ` +
+          `<strong>$${event.total.toFixed(2)}</strong>.</p>` +
+          `<p>Puedes revisarla y <strong>autorizarla en línea</strong> desde aquí:</p>` +
+          emailButton('Ver y autorizar', url),
+      });
+    }
   }
 
   @OnEvent('os.entregada')
   async onOsEntregada(event: OsEntregadaEvent): Promise<void> {
-    if (!event.client?.phone) return;
     const base = process.env.APP_PUBLIC_URL ?? 'http://localhost:4200';
-    await this.notificationsQueue.add('send', {
-      channel: NotificationChannelEnum.WHATSAPP,
-      templateKey: 'encuesta_servicio',
-      referenceType: 'ServiceOrder',
-      referenceId: event.serviceOrderId,
-      recipient: event.client.phone,
-      tenantId: event.tenantId,
-      branchId: event.branchId,
-      templateParams: {
-        folio: event.folio,
-        surveyUrl: `${base}/s/${event.surveyToken}`,
-        trackingUrl: `${base}/t/${event.trackingToken}`,
-      },
-    });
+    const surveyUrl = `${base}/s/${event.surveyToken}`;
+    const trackingUrl = `${base}/t/${event.trackingToken}`;
+    if (event.client?.phone) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.WHATSAPP,
+        templateKey: 'encuesta_servicio',
+        referenceType: 'ServiceOrder',
+        referenceId: event.serviceOrderId,
+        recipient: event.client.phone,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        templateParams: { folio: event.folio, surveyUrl, trackingUrl },
+      });
+    }
+    if (event.client?.email) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'encuesta_servicio',
+        referenceType: 'ServiceOrder',
+        referenceId: event.serviceOrderId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: `Entregamos tu unidad — orden ${event.folio}`,
+        html:
+          `<p>¡Gracias por tu preferencia! Entregamos tu unidad de la orden ` +
+          `<strong>${event.folio}</strong>.</p>` +
+          `<p>Nos ayudaría mucho tu opinión sobre el servicio:</p>` +
+          emailButton('Responder encuesta', surveyUrl) +
+          `<p style="margin-top:12px">También puedes consultar el detalle de tu servicio ` +
+          `<a href="${trackingUrl}">aquí</a>.</p>`,
+      });
+    }
   }
 
   @OnEvent('os.estatus_changed')
   async onOsEstatusChanged(event: OsEstatusChangedEvent): Promise<void> {
-    if (event.newStatus === 'READY' && event.client?.phone) {
+    if (event.newStatus !== 'READY') return;
+    if (event.client?.phone) {
       await this.notificationsQueue.add('send', {
         channel: NotificationChannelEnum.WHATSAPP,
         templateKey: 'os_lista_entrega',
@@ -161,6 +216,22 @@ export class NotificationsListener {
         recipient: event.client.phone,
         tenantId: event.tenantId,
         branchId: event.branchId,
+      });
+    }
+    if (event.client?.email) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'os_lista_entrega',
+        referenceType: 'ServiceOrder',
+        referenceId: event.serviceOrderId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: 'Tu unidad está lista para entrega',
+        html:
+          `<p>Buenas noticias: tu unidad terminó su servicio y ya está ` +
+          `<strong>lista para entrega</strong>.</p>` +
+          `<p>Pásate por ella en nuestro horario de atención. ¡Te esperamos!</p>`,
       });
     }
   }
@@ -177,6 +248,22 @@ export class NotificationsListener {
         tenantId: event.tenantId,
         branchId: event.branchId,
         templateParams: { total: String(event.total) },
+      });
+    }
+    if (event.client?.email) {
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'ticket_cobro',
+        referenceType: 'Sale',
+        referenceId: event.saleId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: 'Comprobante de tu compra',
+        html:
+          `<p>¡Gracias por tu compra!</p>` +
+          `<p>Registramos tu pago por un total de ` +
+          `<strong>$${Number(event.total).toFixed(2)}</strong>.</p>`,
       });
     }
   }
@@ -390,18 +477,6 @@ export class NotificationsListener {
         recipient: event.client.phone,
       });
     }
-    if (event.client?.phone) {
-      channels.push({
-        channel: NotificationChannelEnum.SMS,
-        recipient: event.client.phone,
-      });
-    }
-    if (event.client?.email && channels.length === 0) {
-      channels.push({
-        channel: NotificationChannelEnum.EMAIL,
-        recipient: event.client.email,
-      });
-    }
     for (const ch of channels) {
       await this.notificationsQueue.add('send', {
         channel: ch.channel,
@@ -412,6 +487,25 @@ export class NotificationsListener {
         tenantId: event.tenantId,
         branchId: event.branchId,
         text: `Tiene pagos vencidos. Por favor regularice su situación.`,
+      });
+    }
+    if (event.client?.email) {
+      const total = event.installments.reduce((a, i) => a + (i.amount || 0), 0);
+      await this.notificationsQueue.add('send', {
+        channel: NotificationChannelEnum.EMAIL,
+        templateKey: 'pago_vencido',
+        referenceType: 'PaymentPlanInstallment',
+        referenceId: event.installments[0]?.installmentId ?? event.clientId,
+        recipient: event.client.email,
+        tenantId: event.tenantId,
+        branchId: event.branchId,
+        subject: 'Tienes pagos vencidos',
+        html:
+          `<p>Hola ${event.client.name ?? ''},</p>` +
+          `<p>Nos aparece un adeudo vencido` +
+          (total > 0 ? ` por <strong>$${total.toFixed(2)}</strong>` : '') +
+          `. Te pedimos regularizarlo para mantener tu cuenta al corriente.</p>` +
+          `<p>Si ya realizaste el pago, ignora este mensaje.</p>`,
       });
     }
   }
