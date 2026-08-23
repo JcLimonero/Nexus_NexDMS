@@ -26,6 +26,7 @@ export interface UnitReservation {
   };
   client?: {
     id: string;
+    clientCode: string | null;
     companyName: string | null;
     firstName: string | null;
     lastName: string | null;

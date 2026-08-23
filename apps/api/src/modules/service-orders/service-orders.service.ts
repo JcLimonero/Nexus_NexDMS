@@ -56,6 +56,10 @@ import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
 import { Client } from '../clients/entities/client.entity';
 import {
+  CODIGO_OBJETO,
+  formarCodigoDocumento,
+} from '../../common/codigos/document-code.util';
+import {
   OsEntregadaEvent,
   ServicioHallazgoCotizacionEvent,
 } from '../../events/domain-events';
@@ -189,21 +193,34 @@ export class ServiceOrdersService {
     }
   }
 
+  /**
+   * Folio de la orden con el código legible de la empresa:
+   * `PREFIJO + OS + consecutivo(8)`, p. ej. `APGOS00000001`. Usa el contador
+   * genérico por (empresa, objeto), continuo (ya no se reinicia por año).
+   */
   private async generateFolio(
     tenantId: string,
     em?: EntityManager,
   ): Promise<string> {
-    const year = new Date().getFullYear();
     const runner = em ?? this.dataSource.manager;
     const result = await runner.query<{ last_value: number }[]>(
-      `INSERT INTO service_order_folio_seq (tenant_id, year, last_value)
+      `INSERT INTO document_code_seq (tenant_id, object_code, last_value)
        VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE SET last_value = service_order_folio_seq.last_value + 1
+       ON CONFLICT (tenant_id, object_code) DO UPDATE
+         SET last_value = document_code_seq.last_value + 1
        RETURNING last_value`,
-      [tenantId, year],
+      [tenantId, CODIGO_OBJETO.ORDEN_SERVICIO],
     );
     const seq = result[0]?.last_value ?? 1;
-    return `OS-${year}-${String(seq).padStart(4, '0')}`;
+    const pref = await runner.query<{ code_prefix: string | null }[]>(
+      `SELECT code_prefix FROM tenants WHERE id = $1`,
+      [tenantId],
+    );
+    return formarCodigoDocumento(
+      pref[0]?.code_prefix?.trim() || 'XXX',
+      CODIGO_OBJETO.ORDEN_SERVICIO,
+      seq,
+    );
   }
 
   async create(

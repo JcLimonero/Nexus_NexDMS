@@ -61,7 +61,12 @@
                     </tr>
                     <tr>
                       <th class="text-muted">Cliente</th>
-                      <td>{{ getClientName(a) }}</td>
+                      <td>
+                        @if (a.client?.clientCode) {
+                          <span class="badge bg-light text-secondary border me-1 font-monospace">{{ a.client!.clientCode }}</span>
+                        }
+                        {{ getClientName(a) }}
+                      </td>
                     </tr>
                     <tr>
                       <th class="text-muted">Estado</th>
