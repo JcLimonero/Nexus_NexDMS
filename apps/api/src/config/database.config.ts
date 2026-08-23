@@ -19,6 +19,21 @@ export const getDatabaseConfig = (
       ? { rejectUnauthorized: false }
       : false,
   logging: configService.get('NODE_ENV') === 'development',
+  // Pool explícito: sin esto node-postgres usa 10 por instancia y, al escalar
+  // la API horizontalmente, se agota el max_connections del Postgres. Con
+  // varias instancias conviene poner PgBouncer (modo transaction) delante y
+  // dejar este `max` acorde al reparto de conexiones por instancia.
+  extra: {
+    max: parseInt(configService.get<string>('DB_POOL_MAX') ?? '10', 10),
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+  },
+  // Registra en el log toda consulta que tarde más de este umbral (ms): la
+  // señal más barata para cazar N+1 y falta de índices en producción.
+  maxQueryExecutionTime: parseInt(
+    configService.get<string>('DB_SLOW_QUERY_MS') ?? '2000',
+    10,
+  ),
 });
 
 // Para TypeORM CLI (migration:run, migration:revert, migration:generate)

@@ -294,25 +294,33 @@ export class SaasService {
       this.planes(),
       this.precioRepo.find(),
     ]);
+    return this.calcCobro(t, planes, precios);
+  }
+
+  /**
+   * Cálculo puro del cobro mensual a partir de datos ya cargados (planes y
+   * precios de módulo). Se separa para poder calcular el ingreso de todos los
+   * clientes sin una consulta por cliente (ver {@link panorama}).
+   */
+  private calcCobro(
+    t: Tenant,
+    planes: SaasPlan[],
+    precios: SaasModulePrice[],
+  ): Cobro {
     // El paquete contratado manda sobre el nivel: dos clientes en el mismo
-    // nivel pueden pagar distinto porque compraron paquetes distintos. El
-    // nivel solo decide la tarifa de quien todavía no tiene paquete asignado.
+    // nivel pueden pagar distinto porque compraron paquetes distintos.
     const plan =
       planes.find((p) => p.id === t.saasPlanId) ??
       planes.find((p) => p.key === t.plan);
     const incluidos = new Set(modulesForPlan(t.plan));
     const porClave = new Map(precios.map((p) => [p.moduleKey, p.monthlyPrice]));
-
     const extras = (t.extraModules ?? [])
-      // Un módulo que el plan ya incluye no se cobra dos veces, aunque
-      // alguien lo haya marcado como extra por error.
       .filter((k) => !incluidos.has(k as never))
       .map((k) => ({
         key: k,
         name: MODULE_REGISTRY.find((m) => m.key === k)?.name ?? k,
         precio: porClave.get(k) ?? 0,
       }));
-
     const precioPlan = plan?.monthlyPrice ?? 0;
     return {
       plan: {
@@ -725,12 +733,18 @@ export class SaasService {
    * Es lo primero que quiere ver quien administra el SaaS.
    */
   async panorama() {
-    const tenants = await this.tenantRepo.find();
+    // Se precargan planes y precios una sola vez: el ingreso recurrente se
+    // calcula en memoria para todos los clientes, sin una consulta por cliente.
+    const [tenants, planes, precios] = await Promise.all([
+      this.tenantRepo.find(),
+      this.planes(),
+      this.precioRepo.find(),
+    ]);
     const activos = tenants.filter((t) => t.isActive);
-    let recurrente = 0;
-    for (const t of activos) {
-      recurrente += (await this.cobroMensual(t.id)).total;
-    }
+    const recurrente = activos.reduce(
+      (sum, t) => sum + this.calcCobro(t, planes, precios).total,
+      0,
+    );
     const vencidos = (
       await this.pagoRepo.find({
         where: [
@@ -786,15 +800,22 @@ export class SaasService {
    * `billingDay`.
    */
   async resumenCobros(): Promise<ResumenCobroCliente[]> {
-    const tenants = await this.tenantRepo.find();
-    const salida: ResumenCobroCliente[] = [];
-    for (const t of tenants) {
-      const pagos = await this.pagoRepo.find({
-        where: { tenantId: t.id },
-        order: { period: 'DESC' },
-      });
-      const ultimo = pagos[0] ?? null;
-      const pendientes = pagos
+    // Dos consultas en total (clientes y todos los pagos), no una por cliente:
+    // los pagos se agrupan por tenant en memoria.
+    const [tenants, pagos] = await Promise.all([
+      this.tenantRepo.find(),
+      this.pagoRepo.find({ order: { period: 'DESC' } }),
+    ]);
+    const porTenant = new Map<string, SaasPayment[]>();
+    for (const p of pagos) {
+      const arr = porTenant.get(p.tenantId);
+      if (arr) arr.push(p);
+      else porTenant.set(p.tenantId, [p]);
+    }
+    return tenants.map((t) => {
+      const lista = porTenant.get(t.id) ?? []; // ya vienen ordenados por period DESC
+      const ultimo = lista[0] ?? null;
+      const pendientes = lista
         .filter(
           (p) =>
             p.status === SaasPaymentStatusEnum.PENDIENTE ||
@@ -805,7 +826,7 @@ export class SaasService {
       const proximoCobro =
         pendientes[0]?.dueDate ??
         (t.billingDay ? this.proximoDiaCobro(t.billingDay) : null);
-      salida.push({
+      return {
         tenantId: t.id,
         ultimoPago: ultimo
           ? {
@@ -815,9 +836,8 @@ export class SaasService {
             }
           : null,
         proximoCobro,
-      });
-    }
-    return salida;
+      };
+    });
   }
 
   /** Siguiente fecha con día de mes = `dia`, hoy o en el futuro (AAAA-MM-DD). */
