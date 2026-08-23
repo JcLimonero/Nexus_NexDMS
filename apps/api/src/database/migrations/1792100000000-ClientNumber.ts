@@ -53,6 +53,22 @@ export class ClientNumber1792100000000 implements MigrationInterface {
       ) sub
       WHERE t.id = sub.id AND t.code_prefix IS NULL`);
 
+    // 1b) De-duplicación: dos empresas no pueden compartir prefijo (sus códigos
+    // se verían iguales). A la empresa más antigua se le respeta; a las demás
+    // que colisionan se les cambia el 3er carácter por un dígito (AUT→AU1, AU2…).
+    await q.query(`
+      WITH ranked AS (
+        SELECT id, code_prefix,
+          ROW_NUMBER() OVER (
+            PARTITION BY code_prefix ORDER BY created_at, id
+          ) AS rn
+        FROM "tenants" WHERE code_prefix IS NOT NULL
+      )
+      UPDATE "tenants" t
+      SET code_prefix = LEFT(r.code_prefix, 2) || (r.rn - 1)::text
+      FROM ranked r
+      WHERE t.id = r.id AND r.rn > 1`);
+
     // 2) Contador genérico por (empresa, tipo de objeto).
     await q.query(`
       CREATE TABLE IF NOT EXISTS "document_code_seq" (
