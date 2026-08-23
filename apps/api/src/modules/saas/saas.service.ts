@@ -736,7 +736,7 @@ export class SaasService {
     // Se precargan planes y precios una sola vez: el ingreso recurrente se
     // calcula en memoria para todos los clientes, sin una consulta por cliente.
     const [tenants, planes, precios] = await Promise.all([
-      this.tenantRepo.find(),
+      this.tenantRepo.find({ where: { isTemplate: false } }),
       this.planes(),
       this.precioRepo.find(),
     ]);
@@ -803,7 +803,7 @@ export class SaasService {
     // Dos consultas en total (clientes y todos los pagos), no una por cliente:
     // los pagos se agrupan por tenant en memoria.
     const [tenants, pagos] = await Promise.all([
-      this.tenantRepo.find(),
+      this.tenantRepo.find({ where: { isTemplate: false } }),
       this.pagoRepo.find({ order: { period: 'DESC' } }),
     ]);
     const porTenant = new Map<string, SaasPayment[]>();

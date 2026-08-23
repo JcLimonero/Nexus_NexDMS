@@ -34,6 +34,13 @@ export class Tenant {
   @Column({ name: 'code_prefix', type: 'char', length: 3, nullable: true })
   codePrefix: string | null;
 
+  /**
+   * Marca el tenant "maestro" de catálogos plantilla (no es un cliente real).
+   * Se excluye de los listados de clientes y del cobro.
+   */
+  @Column({ name: 'is_template', type: 'boolean', default: false })
+  isTemplate: boolean;
+
   @Column({ name: 'plan', type: 'enum', enum: TenantPlanEnum })
   plan: TenantPlanEnum;
 

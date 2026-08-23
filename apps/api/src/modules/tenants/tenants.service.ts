@@ -42,6 +42,7 @@ export class TenantsService {
 
   async findAll(_user: UserPayload): Promise<Tenant[]> {
     return this.tenantRepo.find({
+      where: { isTemplate: false },
       order: { name: 'ASC' },
     });
   }
