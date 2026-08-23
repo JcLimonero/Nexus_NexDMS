@@ -37,6 +37,7 @@ export const CODIGO_OBJETO = {
   // CRM / Caja
   OPORTUNIDAD: 'OP',
   CORTE_CAJA: 'CC',
+  CONVENIO_FLOTILLA: 'FL',
 } as const;
 
 const ANCHO_CONSECUTIVO = 8;

@@ -52,8 +52,12 @@
             }
           </div>
           <div class="fl-field">
-            <label>Número de convenio *</label>
-            <input [(ngModel)]="form().agreementNumber" />
+            <label>Número de convenio</label>
+            @if (esNuevo()) {
+              <input value="Se genera automáticamente" disabled />
+            } @else {
+              <input class="fl-mono" [value]="form().agreementNumber" disabled />
+            }
           </div>
           <div class="fl-field">
             <label>Nombre del convenio *</label>

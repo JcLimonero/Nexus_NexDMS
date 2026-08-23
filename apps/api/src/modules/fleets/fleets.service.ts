@@ -5,6 +5,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { In, Repository } from 'typeorm';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { Client } from '../clients/entities/client.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
@@ -19,7 +23,8 @@ import { FleetUnit } from './entities/fleet-unit.entity';
 
 export interface CrearConvenioDto {
   clientId: string;
-  agreementNumber: string;
+  /** Se ignora: el número de convenio se autogenera (código FL…). */
+  agreementNumber?: string;
   name: string;
   partsPriceListId?: string | null;
   partsDiscountPct?: number | null;
@@ -229,27 +234,24 @@ export class FleetsService {
     user: UserPayload,
     dto: CrearConvenioDto,
   ): Promise<FleetAgreement> {
-    if (!dto.agreementNumber?.trim() || !dto.name?.trim()) {
-      throw new BadRequestException('Faltan número de convenio y nombre.');
+    if (!dto.name?.trim()) {
+      throw new BadRequestException('Falta el nombre del convenio.');
     }
     const cliente = await this.clientRepo.findOne({
       where: { id: dto.clientId, tenantId: user.tenantId },
     });
     if (!cliente) throw new BadRequestException('El cliente no existe.');
-    const dup = await this.agreementRepo.findOne({
-      where: {
-        tenantId: user.tenantId,
-        agreementNumber: dto.agreementNumber.trim(),
-      },
-    });
-    if (dup) {
-      throw new BadRequestException('Ya existe un convenio con ese número.');
-    }
+    // El número de convenio se autogenera como código legible (FL…).
+    const { codigo } = await siguienteCodigoDocumento(
+      this.agreementRepo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.CONVENIO_FLOTILLA,
+    );
     return this.agreementRepo.save(
       this.agreementRepo.create({
         tenantId: user.tenantId,
         clientId: dto.clientId,
-        agreementNumber: dto.agreementNumber.trim(),
+        agreementNumber: codigo,
         name: dto.name.trim(),
         partsPriceListId: dto.partsPriceListId ?? null,
         partsDiscountPct: dto.partsDiscountPct ?? null,
@@ -297,17 +299,8 @@ export class FleetsService {
     dto: ActualizarConvenioDto,
   ): Promise<FleetAgreement> {
     const a = await this.convenio(user, id);
-    if (dto.agreementNumber && dto.agreementNumber.trim() !== a.agreementNumber) {
-      const dup = await this.agreementRepo.findOne({
-        where: {
-          tenantId: user.tenantId,
-          agreementNumber: dto.agreementNumber.trim(),
-        },
-      });
-      if (dup) throw new BadRequestException('Ya existe ese número de convenio.');
-    }
+    // El número de convenio es un código autogenerado e inmutable.
     Object.assign(a, {
-      agreementNumber: dto.agreementNumber?.trim() ?? a.agreementNumber,
       name: dto.name?.trim() ?? a.name,
       partsPriceListId:
         dto.partsPriceListId !== undefined

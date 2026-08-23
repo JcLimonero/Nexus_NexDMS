@@ -137,8 +137,8 @@ export class Detalle implements OnInit {
       this.toastr.warning("Elige la empresa del convenio");
       return;
     }
-    if (!f.agreementNumber?.trim() || !f.name?.trim()) {
-      this.toastr.warning("Falta número de convenio y nombre");
+    if (!f.name?.trim()) {
+      this.toastr.warning("Falta el nombre del convenio");
       return;
     }
     const payload: ConvenioPayload = {
