@@ -13,9 +13,11 @@ import { StockMinimumJob } from './jobs/stock-minimum.job';
 import { PaymentOverdueJob } from './jobs/payment-overdue.job';
 import { ServiceDueRemindersJob } from './jobs/service-due-reminders.job';
 import { SaasOverdueSummaryJob } from './jobs/saas-overdue-summary.job';
+import { ShopDailySummaryJob } from './jobs/shop-daily-summary.job';
 import { ServicePlanningModule } from '../service-planning/service-planning.module';
 import { ServiceDueNotification } from '../service-planning/entities/service-due-notification.entity';
 import { SaasModule } from '../saas/saas.module';
+import { EmailModule } from '../../common/email/email.module';
 
 @Module({
   imports: [
@@ -31,6 +33,7 @@ import { SaasModule } from '../saas/saas.module';
     ]),
     ServicePlanningModule,
     SaasModule,
+    EmailModule,
   ],
   providers: [
     AppointmentRemindersJob,
@@ -39,6 +42,7 @@ import { SaasModule } from '../saas/saas.module';
     PaymentOverdueJob,
     ServiceDueRemindersJob,
     SaasOverdueSummaryJob,
+    ShopDailySummaryJob,
   ],
 })
 export class CronModule {}
