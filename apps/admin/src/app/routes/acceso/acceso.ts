@@ -1,7 +1,7 @@
 import { Component, inject, isDevMode, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 import { AuthService } from "../../core/auth/auth.service";
 
 /**
@@ -15,7 +15,7 @@ import { AuthService } from "../../core/auth/auth.service";
 @Component({
   selector: "app-acceso",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, RouterModule],
   templateUrl: "./acceso.html",
   styleUrls: ["./acceso.scss"],
 })

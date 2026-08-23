@@ -8,6 +8,18 @@ export const routes: Routes = [
     title: "Acceso — Administración NexDMS",
   },
   {
+    path: "auth/forgot-password",
+    loadComponent: () =>
+      import("./routes/recuperar/recuperar").then((m) => m.Recuperar),
+    title: "Recuperar contraseña — NexDMS Admin",
+  },
+  {
+    path: "auth/reset-password",
+    loadComponent: () =>
+      import("./routes/restablecer/restablecer").then((m) => m.Restablecer),
+    title: "Nueva contraseña — NexDMS Admin",
+  },
+  {
     path: "tenants",
     canActivate: [authGuard],
     loadComponent: () =>

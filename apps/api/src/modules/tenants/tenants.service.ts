@@ -10,6 +10,8 @@ import { TenantStatusChange } from './entities/tenant-status-change.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { EmailComposer } from '../../common/email/email-composer.service';
 
 @Injectable()
 export class TenantsService {
@@ -18,7 +20,21 @@ export class TenantsService {
     private readonly tenantRepo: Repository<Tenant>,
     @InjectRepository(TenantStatusChange)
     private readonly statusRepo: Repository<TenantStatusChange>,
+    private readonly emailjs: EmailjsService,
+    private readonly composer: EmailComposer,
   ) {}
+
+  /** Aviso interno a Nexus (plantilla admin). No interrumpe la operación. */
+  private async avisarNexus(subject: string, contentHtml: string): Promise<void> {
+    try {
+      await this.emailjs.enviar({
+        subject,
+        html: this.composer.brandedAdmin(subject, contentHtml, 'Clientes SaaS'),
+      });
+    } catch {
+      /* el aviso no debe tumbar la operación */
+    }
+  }
 
   async findAll(_user: UserPayload): Promise<Tenant[]> {
     return this.tenantRepo.find({
@@ -39,7 +55,14 @@ export class TenantsService {
       ...dto,
       isActive: dto.isActive ?? true,
     });
-    return this.tenantRepo.save(tenant);
+    const guardado = await this.tenantRepo.save(tenant);
+    void this.avisarNexus(
+      `NexDMS · Nuevo cliente: ${guardado.name}`,
+      `<p>Se dio de alta un nuevo cliente en el SaaS.</p>` +
+        `<p>Nombre: <strong>${guardado.name}</strong><br>` +
+        `Identificador: ${guardado.slug}<br>Plan: ${guardado.plan}</p>`,
+    );
+    return guardado;
   }
 
   async update(
@@ -79,6 +102,12 @@ export class TenantsService {
         reason: motivo,
         changedBy: user.sub ?? null,
       }),
+    );
+    const accion = guardado.isActive ? 'reactivado' : 'suspendido';
+    void this.avisarNexus(
+      `NexDMS · Cliente ${accion}: ${guardado.name}`,
+      `<p>Se ${accion} al cliente <strong>${guardado.name}</strong>.</p>` +
+        `<p>Motivo: ${motivo}</p>`,
     );
     return guardado;
   }
