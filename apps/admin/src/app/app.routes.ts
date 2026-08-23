@@ -34,6 +34,15 @@ export const routes: Routes = [
     title: "Planes y precios — Administración NexDMS",
   },
   {
+    path: "catalogos-maestros",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./routes/catalogos-maestros/catalogos-maestros").then(
+        (m) => m.CatalogosMaestros,
+      ),
+    title: "Catálogos maestros — Administración NexDMS",
+  },
+  {
     path: "roles",
     canActivate: [authGuard],
     loadComponent: () => import("./routes/roles/roles").then((m) => m.Roles),

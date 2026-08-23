@@ -1,0 +1,101 @@
+<div class="cm-wrap">
+  <header class="cm-top">
+    <h1>Catálogos maestros</h1>
+    <p>Plantillas base que el wizard de alta copia a cada empresa nueva.</p>
+  </header>
+
+  @if (error()) {
+    <div class="cm-error" (click)="error.set(null)">{{ error() }}</div>
+  }
+
+  <div class="cm-cols">
+    <!-- Lista de catálogos -->
+    <aside class="cm-lista">
+      @for (c of catalogos(); track c.key) {
+        <button
+          class="cm-cat"
+          [class.activo]="c.key === seleccionKey()"
+          (click)="elegir(c.key)"
+        >
+          <span>{{ c.label }}</span>
+          <span class="cm-badge">{{ c.count }}</span>
+        </button>
+      }
+    </aside>
+
+    <!-- Entradas del catálogo elegido -->
+    <section class="cm-panel">
+      @if (catalogoActual(); as cat) {
+        <div class="cm-panel-top">
+          <h2>{{ cat.label }}</h2>
+          <button class="cm-btn" (click)="nueva()" [disabled]="editando()">
+            + Nueva entrada
+          </button>
+        </div>
+
+        <!-- Formulario alta/edición -->
+        @if (editando(); as modo) {
+          <div class="cm-form">
+            @for (f of cat.fields; track f.prop) {
+              <label class="cm-campo">
+                <span>{{ f.label }}@if (f.required) { * }</span>
+                @if (f.type === "boolean") {
+                  <input
+                    type="checkbox"
+                    [checked]="!!form()[f.prop]"
+                    (change)="setCampo(f.prop, $any($event.target).checked)"
+                  />
+                } @else {
+                  <input
+                    [type]="f.type === 'number' ? 'number' : 'text'"
+                    [ngModel]="form()[f.prop]"
+                    (ngModelChange)="setCampo(f.prop, $event)"
+                  />
+                }
+              </label>
+            }
+            <div class="cm-form-acc">
+              <button class="cm-btn" (click)="guardar()" [disabled]="cargando()">
+                {{ modo === "nueva" ? "Crear" : "Guardar" }}
+              </button>
+              <button class="cm-btn sec" (click)="cancelar()">Cancelar</button>
+            </div>
+          </div>
+        }
+
+        <!-- Tabla -->
+        <table class="cm-tabla">
+          <thead>
+            <tr>
+              @for (f of cat.fields; track f.prop) {
+                <th>{{ f.label }}</th>
+              }
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of entradas(); track e.id) {
+              <tr>
+                @for (f of cat.fields; track f.prop) {
+                  <td>{{ celda(e, f) }}</td>
+                }
+                <td class="cm-acc">
+                  <button class="cm-link" (click)="editar(e)">Editar</button>
+                  <button class="cm-link del" (click)="eliminar(e)">
+                    Eliminar
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td [attr.colspan]="cat.fields.length + 1" class="cm-vacio">
+                  Sin entradas. Agrega la primera plantilla.
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    </section>
+  </div>
+</div>
