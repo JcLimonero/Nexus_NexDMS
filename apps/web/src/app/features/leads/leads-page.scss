@@ -60,6 +60,20 @@
   box-shadow: var(--shadow-sm);
 }
 
+.lead-folio {
+  display: inline-block;
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
 .lead-name {
   font-weight: var(--font-semibold);
   font-size: var(--text-sm);

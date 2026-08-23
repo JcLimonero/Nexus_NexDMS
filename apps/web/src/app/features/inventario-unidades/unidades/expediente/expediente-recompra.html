@@ -19,8 +19,11 @@
       <div class="col-sm-12">
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-            <h5 class="mb-0">
+            <h5 class="mb-0 d-flex align-items-center flex-wrap gap-2">
               Expediente de recompra — {{ getDisplayLabel(u) }}
+              @if (returnEvent(); as ev) {
+                <span class="badge bg-dark font-monospace">Folio: {{ ev.folio || '—' }}</span>
+              }
             </h5>
             <div class="d-flex gap-2">
               <a
@@ -37,6 +40,9 @@
                 Recompra del {{ ev.date }}
                 @if (ev.clientName) {
                   — {{ ev.clientName }}
+                  @if (ev.clientCode) {
+                    <span class="badge bg-secondary font-monospace ms-1">{{ ev.clientCode }}</span>
+                  }
                 }
                 @if (ev.buybackPrice) {
                   · Precio recompra: {{ ev.buybackPrice | number:'1.2-2' }}

@@ -201,6 +201,7 @@
         <table class="table table-hover">
           <thead>
             <tr>
+              <th>Folio</th>
               <th>Hora</th>
               <th>Cliente</th>
               <th>Vehículo</th>
@@ -213,8 +214,16 @@
           <tbody>
             @for (c of citas(); track c.id) {
               <tr>
+                <td>
+                  <span class="code-badge">{{ c.folio || "—" }}</span>
+                </td>
                 <td class="fw-500">{{ hourLabel(c.scheduledAt) }}</td>
-                <td>{{ clientLabel(c) }}</td>
+                <td>
+                  {{ clientLabel(c) }}
+                  @if (c.client?.clientCode) {
+                    <span class="code-badge client-code">{{ c.client?.clientCode }}</span>
+                  }
+                </td>
                 <td>{{ vehicleLabel(c) }}</td>
                 <td>{{ c.serviceType }}</td>
                 <td>{{ mechanicLabel(c) }}</td>

@@ -5,6 +5,7 @@ export enum CashSessionStatus {
 
 export interface CashSession {
   id: string;
+  folio: string | null;
   tenantId: string;
   branchId: string;
   userId: string;

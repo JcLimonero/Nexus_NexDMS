@@ -3,7 +3,12 @@
     <div class="col-sm-12">
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <h5>Garantía</h5>
+          <h5 class="d-flex align-items-center gap-2 mb-0">
+            Garantía
+            @if (garantia(); as w) {
+              <span class="badge bg-light text-dark font-monospace">{{ w.folio || '—' }}</span>
+            }
+          </h5>
           <a class="btn btn-outline-secondary btn-sm" routerLink="/warranties">Volver</a>
         </div>
         <div class="card-body">
@@ -22,7 +27,12 @@
                   <tbody>
                     <tr>
                       <th class="text-muted" style="width: 35%">Cliente</th>
-                      <td>{{ getClientName(w) }}</td>
+                      <td>
+                        {{ getClientName(w) }}
+                        @if (w.client?.clientCode) {
+                          <span class="badge bg-light text-dark font-monospace ms-1">{{ w.client?.clientCode }}</span>
+                        }
+                      </td>
                     </tr>
                     <tr>
                       <th class="text-muted">Vehículo</th>

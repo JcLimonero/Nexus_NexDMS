@@ -36,10 +36,11 @@ export interface UnitHistoryEvent {
   id?: string;
   clientId?: string;
   clientName?: string;
+  clientCode?: string | null;
   finalPrice?: number;
   buybackPrice?: number;
   deliveryDate?: string;
-  folio?: string;
+  folio?: string | null;
   mileage?: number;
 }
 

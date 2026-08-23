@@ -23,6 +23,7 @@ export interface WarrantyVehicle {
 
 export interface Warranty {
   id: string;
+  folio: string | null;
   tenantId: string;
   branchId: string;
   unitSaleId: string | null;
@@ -39,7 +40,7 @@ export interface Warranty {
   endDate: string;
   createdAt: string;
   updatedAt: string;
-  client?: { id: string; companyName: string | null; firstName: string | null; lastName: string | null; phone: string };
+  client?: { id: string; clientCode: string | null; companyName: string | null; firstName: string | null; lastName: string | null; phone: string };
   vehicle?: WarrantyVehicle;
   branch?: { id: string; name: string };
   authorizer?: { id: string; firstName: string; lastName: string };
