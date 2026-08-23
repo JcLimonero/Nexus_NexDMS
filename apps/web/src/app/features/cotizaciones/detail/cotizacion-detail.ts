@@ -7,6 +7,7 @@ import { ToastrService } from "ngx-toastr";
 import { CotizacionesService } from "../cotizaciones.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { RelacionesService } from "../../clientes/relaciones/relaciones.service";
+import { PhaseTracker } from "../../../shared/components/phase-tracker/phase-tracker";
 import {
   Quotation,
   QuotationItem,
@@ -17,7 +18,7 @@ import {
 @Component({
   selector: "app-cotizacion-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PhaseTracker],
   templateUrl: "./cotizacion-detail.html",
   styleUrls: ["./cotizacion-detail.scss"],
 })
@@ -39,6 +40,17 @@ export class CotizacionDetail implements OnInit {
   converting = signal(false);
   rejectReason = signal("");
   readonly QT = QuotationType;
+
+  /** Fases del flujo de la cotización (claves = enum QuotationStatus). */
+  fases = [
+    { key: "DRAFT", label: "Borrador" },
+    { key: "PENDING_APPROVAL", label: "Por aprobar" },
+    { key: "APPROVED", label: "Aprobada" },
+    { key: "SENT", label: "Enviada" },
+    { key: "ACCEPTED", label: "Aceptada" },
+    { key: "CONVERTED", label: "Convertida" },
+  ];
+  cancelado = "REJECTED";
 
   /** Vuelve a la lista de su flujo (servicio o venta). */
   esServicio(): boolean {

@@ -9,11 +9,19 @@ import { UnitSale, UnitSaleStatus } from "../models/unit-sale.model";
 import { ExpedienteVenta } from "../documentos/expediente-venta";
 import { PagosVenta } from "../pagos/pagos-venta";
 import { AuthService } from "../../../auth/auth.service";
+import { PhaseTracker } from "../../../shared/components/phase-tracker/phase-tracker";
 
 @Component({
   selector: "app-venta-unidad-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule, ExpedienteVenta, PagosVenta],
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    ExpedienteVenta,
+    PagosVenta,
+    PhaseTracker,
+  ],
   templateUrl: "./venta-unidad-detail.html",
   styleUrls: ["./venta-unidad-detail.scss"],
 })
@@ -42,6 +50,13 @@ export class VentaUnidadDetail implements OnInit {
   guardandoEntrega = signal(false);
 
   readonly UnitSaleStatus = UnitSaleStatus;
+
+  /** Fases del proceso de venta para el seguimiento visual (stepper). */
+  fases = [
+    { key: "IN_PROGRESS", label: "En proceso" },
+    { key: "COMPLETED", label: "Completada" },
+  ];
+  cancelado = "CANCELLED";
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");

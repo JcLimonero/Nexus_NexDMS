@@ -18,6 +18,15 @@
       </div>
     </div>
 
+    <!-- Seguimiento de fases -->
+    @if (orden(); as o) {
+      <app-phase-tracker
+        [phases]="fases"
+        [current]="o.status"
+        [canceledKey]="cancelado"
+      />
+    }
+
     <!-- Flujo de estado -->
     @if (orden(); as o) {
       <div class="hp-card">

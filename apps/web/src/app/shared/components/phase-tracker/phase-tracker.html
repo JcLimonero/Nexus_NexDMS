@@ -1,0 +1,14 @@
+@if (cancelado()) {
+  <div class="pt-cancel">Cancelado — el documento salió del flujo.</div>
+} @else {
+  <div class="pt">
+    @for (p of phases(); track p.key; let i = $index) {
+      <div class="pt-step" [class.done]="estado(i) === 'done'" [class.now]="estado(i) === 'now'">
+        <div class="pt-bul">
+          @if (estado(i) === 'done') { ✓ } @else { {{ i + 1 }} }
+        </div>
+        <div class="pt-lbl">{{ p.label }}</div>
+      </div>
+    }
+  </div>
+}

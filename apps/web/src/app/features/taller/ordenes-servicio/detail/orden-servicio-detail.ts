@@ -17,6 +17,10 @@ import {
   ServiceOrderStatus,
   PromiseChange,
 } from "../../models/service-order.model";
+import {
+  PhaseTracker,
+  Phase,
+} from "../../../../shared/components/phase-tracker/phase-tracker";
 
 const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
   [ServiceOrderStatus.RECEIVED]: [ServiceOrderStatus.DIAGNOSIS, ServiceOrderStatus.CANCELLED],
@@ -39,6 +43,7 @@ const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
     RouterModule,
     PanelServicio,
     EvidenciaRecepcion,
+    PhaseTracker,
   ],
   templateUrl: "./orden-servicio-detail.html",
   styleUrls: ["./orden-servicio-detail.scss"],
@@ -51,6 +56,16 @@ export class OrdenServicioDetail implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+
+  readonly fasesOS: Phase[] = [
+    { key: ServiceOrderStatus.RECEIVED, label: "Recibido" },
+    { key: ServiceOrderStatus.DIAGNOSIS, label: "Diagnóstico" },
+    { key: ServiceOrderStatus.IN_PROGRESS, label: "En proceso" },
+    { key: ServiceOrderStatus.WAITING_PARTS, label: "Esperando refacción" },
+    { key: ServiceOrderStatus.READY, label: "Listo" },
+    { key: ServiceOrderStatus.DELIVERED, label: "Entregado" },
+  ];
+  readonly canceladoOS = ServiceOrderStatus.CANCELLED;
 
   orden = signal<ServiceOrder | null>(null);
   branches = signal<{ id: string; name: string }[]>([]);

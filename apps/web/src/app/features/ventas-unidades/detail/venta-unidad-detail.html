@@ -20,6 +20,14 @@
               </div>
             </div>
           } @else if (sale(); as s) {
+            <!-- Seguimiento visual del proceso de la venta. -->
+            <app-phase-tracker
+              class="d-block mb-4"
+              [phases]="fases"
+              [current]="s.status"
+              [canceledKey]="cancelado"
+            />
+
             <!-- La ficha en pestañas: los datos y el expediente son cosas
                  distintas y cada una crece; verlas juntas ensucia la lectura. -->
             <ul class="nav nav-tabs mb-4">
