@@ -20,4 +20,16 @@ export class AdminAuthController {
   login(@Body() dto: AdminLoginDto) {
     return this.service.login(dto);
   }
+
+  /** Solicita el correo de recuperación de contraseña del portal admin. */
+  @Post('forgot-password')
+  forgotPassword(@Body() dto: { email: string }) {
+    return this.service.forgotPassword(dto);
+  }
+
+  /** Fija la nueva contraseña del admin con el token del correo. */
+  @Post('reset-password')
+  resetPassword(@Body() dto: { token: string; newPassword: string }) {
+    return this.service.resetPassword(dto);
+  }
 }

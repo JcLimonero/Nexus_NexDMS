@@ -43,6 +43,22 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
+  /** Solicita el correo de recuperación de contraseña (público). */
+  @Post('forgot-password')
+  @HttpCode(200)
+  @Throttle(LIMITE_ACCESO)
+  forgotPassword(@Body() dto: { email: string; tenantId?: string }) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  /** Fija la nueva contraseña con el token del correo (público). */
+  @Post('reset-password')
+  @HttpCode(200)
+  @Throttle(LIMITE_ACCESO)
+  resetPassword(@Body() dto: { token: string; newPassword: string }) {
+    return this.authService.resetPassword(dto);
+  }
+
   /** Marca del cliente para vestir el acceso; pública, sin sesión. */
   @Get('branding/:slug')
   brandingPublico(@Param('slug') slug: string) {
