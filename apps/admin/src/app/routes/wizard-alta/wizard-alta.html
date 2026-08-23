@@ -177,8 +177,48 @@
         </div>
       }
 
-      <!-- Paso 5: Resumen -->
+      <!-- Paso 5: Catálogos base -->
       @if (paso() === 4) {
+        <p class="wz-nota">
+          Elige qué catálogos base copiar a la empresa nueva. Podrá editarlos
+          después; esto solo le da un punto de partida.
+        </p>
+        <div class="wz-cats">
+          @for (c of catalogos(); track c.key) {
+            <div class="wz-cat">
+              <div class="wz-cat-top">
+                <span class="wz-cat-nom">{{ c.label }} <small>({{ c.count }})</small></span>
+                <div class="wz-modos">
+                  <button [class.on]="modoCat(c.key) === 'ALL'" (click)="setModoCat(c.key, 'ALL')">Todo</button>
+                  <button [class.on]="modoCat(c.key) === 'SOME'" (click)="setModoCat(c.key, 'SOME')">Elegir</button>
+                  <button [class.on]="modoCat(c.key) === 'NONE'" (click)="setModoCat(c.key, 'NONE')">Ninguno</button>
+                </div>
+              </div>
+              @if (modoCat(c.key) === "SOME") {
+                <div class="wz-cat-entries">
+                  @for (e of catEntradas()[c.key]; track e.id) {
+                    <label class="wz-chip" [class.on]="entradaMarcada(c.key, e.id)">
+                      <input
+                        type="checkbox"
+                        [checked]="entradaMarcada(c.key, e.id)"
+                        (change)="toggleEntradaCat(c.key, e.id)"
+                      />
+                      {{ e["name"] || e["code"] || e.id }}
+                    </label>
+                  } @empty {
+                    <span class="wz-cat-vacio">Sin entradas en el maestro.</span>
+                  }
+                </div>
+              }
+            </div>
+          } @empty {
+            <p class="wz-cat-vacio">No hay catálogos maestros configurados.</p>
+          }
+        </div>
+      }
+
+      <!-- Paso 6: Resumen -->
+      @if (paso() === 5) {
         <div class="wz-resumen">
           <div><b>Empresa</b><span>{{ form().name }} ({{ form().slug }})</span></div>
           <div><b>Prefijo</b><span>{{ form().codePrefix }}</span></div>
@@ -188,6 +228,9 @@
           <div><b>RFC</b><span>{{ form().rfc || "—" }}</span></div>
           <div><b>Sucursal</b><span>{{ form().branchName }} · {{ form().branchCity }}, {{ form().branchState }}</span></div>
           <div><b>Admin</b><span>{{ form().adminFirstName }} {{ form().adminLastName }} · {{ form().adminEmail }}</span></div>
+          @for (c of catalogos(); track c.key) {
+            <div><b>{{ c.label }}</b><span>{{ resumenCat(c.key) }}</span></div>
+          }
         </div>
       }
     </div>

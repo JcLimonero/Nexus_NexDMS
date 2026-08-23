@@ -9,6 +9,13 @@ import {
   ResultadoProvisioning,
   WizardAltaService,
 } from "./wizard-alta.service";
+import {
+  CatalogoMaestro,
+  CatalogosMaestrosService,
+  EntradaCatalogo,
+} from "../catalogos-maestros/catalogos-maestros.service";
+
+type ModoCat = "ALL" | "SOME" | "NONE";
 
 /**
  * Wizard de alta de una empresa nueva (Fase 2). Recorre empresa, plan y módulos,
@@ -24,10 +31,24 @@ import {
 })
 export class WizardAlta implements OnInit {
   private srv = inject(WizardAltaService);
+  private catSrv = inject(CatalogosMaestrosService);
   private router = inject(Router);
 
   readonly paletas = PALETAS;
-  readonly pasos = ["Empresa", "Plan y módulos", "Fiscal y sucursal", "Usuario admin", "Resumen"];
+  readonly pasos = [
+    "Empresa",
+    "Plan y módulos",
+    "Fiscal y sucursal",
+    "Usuario admin",
+    "Catálogos",
+    "Resumen",
+  ];
+
+  // Catálogos maestros: selección por catálogo (todo / algunos / ninguno).
+  catalogos = signal<CatalogoMaestro[]>([]);
+  catModo = signal<Record<string, ModoCat>>({});
+  catIds = signal<Record<string, Set<string>>>({});
+  catEntradas = signal<Record<string, EntradaCatalogo[]>>({});
   paso = signal(0);
   guardando = signal(false);
   error = signal<string | null>(null);
@@ -68,6 +89,49 @@ export class WizardAlta implements OnInit {
       next: (r) => this.modulos.set(r.modules ?? []),
       error: () => undefined,
     });
+    this.catSrv.catalogos().subscribe({
+      next: (c) => {
+        this.catalogos.set(c);
+        // Por defecto se copia todo el catálogo base.
+        const modo: Record<string, ModoCat> = {};
+        for (const cat of c) modo[cat.key] = "ALL";
+        this.catModo.set(modo);
+      },
+      error: () => undefined,
+    });
+  }
+
+  modoCat(key: string): ModoCat {
+    return this.catModo()[key] ?? "ALL";
+  }
+
+  setModoCat(key: string, modo: ModoCat): void {
+    this.catModo.set({ ...this.catModo(), [key]: modo });
+    if (modo === "SOME" && !this.catEntradas()[key]) {
+      this.catSrv.entradas(key).subscribe({
+        next: (e) =>
+          this.catEntradas.set({ ...this.catEntradas(), [key]: e }),
+        error: () => undefined,
+      });
+    }
+  }
+
+  toggleEntradaCat(key: string, id: string): void {
+    const actual = new Set(this.catIds()[key] ?? []);
+    if (actual.has(id)) actual.delete(id);
+    else actual.add(id);
+    this.catIds.set({ ...this.catIds(), [key]: actual });
+  }
+
+  entradaMarcada(key: string, id: string): boolean {
+    return this.catIds()[key]?.has(id) ?? false;
+  }
+
+  resumenCat(key: string): string {
+    const modo = this.modoCat(key);
+    if (modo === "ALL") return "todo";
+    if (modo === "NONE") return "ninguno";
+    return `${this.catIds()[key]?.size ?? 0} elegidos`;
   }
 
   set<K extends keyof ProvisionTenantDto>(
@@ -171,11 +235,23 @@ export class WizardAlta implements OnInit {
   }
 
   crear(): void {
+    const catalogos: { key: string; all?: boolean; ids?: string[] }[] = [];
+    for (const c of this.catalogos()) {
+      const modo = this.modoCat(c.key);
+      if (modo === "ALL") {
+        catalogos.push({ key: c.key, all: true });
+      } else if (modo === "SOME") {
+        const ids = [...(this.catIds()[c.key] ?? [])];
+        if (ids.length) catalogos.push({ key: c.key, ids });
+      }
+    }
+
     const dto: ProvisionTenantDto = {
       ...this.form(),
       enabledModules: this.modulosSel().size
         ? [...this.modulosSel()]
         : null,
+      catalogos,
     };
     this.guardando.set(true);
     this.error.set(null);

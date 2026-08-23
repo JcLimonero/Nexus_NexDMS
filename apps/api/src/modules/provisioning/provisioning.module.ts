@@ -8,6 +8,7 @@ import { BranchesModule } from '../branches/branches.module';
 import { UsersModule } from '../users/users.module';
 import { PasswordResetModule } from '../password-reset/password-reset.module';
 import { EmailModule } from '../../common/email/email.module';
+import { MasterCatalogsModule } from '../master-catalogs/master-catalogs.module';
 import { ProvisioningController } from './provisioning.controller';
 import { ProvisioningService } from './provisioning.service';
 
@@ -20,6 +21,7 @@ import { ProvisioningService } from './provisioning.service';
     UsersModule,
     PasswordResetModule,
     EmailModule,
+    MasterCatalogsModule,
   ],
   controllers: [ProvisioningController],
   providers: [ProvisioningService],

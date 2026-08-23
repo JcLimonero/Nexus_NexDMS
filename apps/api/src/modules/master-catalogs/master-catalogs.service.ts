@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DataSource, EntityTarget, ObjectLiteral } from 'typeorm';
+import { DataSource, EntityTarget, In, ObjectLiteral } from 'typeorm';
 import { MASTER_TENANT_ID } from '../../common/tenancy/master-tenant.const';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import { PartCategory } from '../part-categories/entities/part-category.entity';
@@ -49,6 +49,12 @@ export class MasterCatalogsService {
       fields: [
         { prop: 'code', label: 'Código', type: 'string', required: true },
         { prop: 'name', label: 'Nombre', type: 'string', required: true },
+        {
+          prop: 'category',
+          label: 'Categoría (MAINTENANCE/REVISION/DIAGNOSIS/REPAIR/OTHER)',
+          type: 'string',
+          required: true,
+        },
         { prop: 'description', label: 'Descripción', type: 'string' },
         { prop: 'durationMin', label: 'Duración (min)', type: 'number' },
         { prop: 'isActive', label: 'Activo', type: 'boolean' },
@@ -173,6 +179,45 @@ export class MasterCatalogsService {
     if (!actual) throw new NotFoundException('Entrada no encontrada');
     Object.assign(actual, this.saneados(d, body));
     return repo.save(actual);
+  }
+
+  /**
+   * Copia entradas del catálogo maestro a otra empresa (usado por el wizard de
+   * alta). Por catálogo: `all` copia todo; si no, copia las de `ids`. Clona cada
+   * fila con id nuevo y el tenant destino; los catálogos con sucursal se copian
+   * a nivel empresa (sin sucursal).
+   */
+  async copiar(
+    destTenantId: string,
+    seleccion: { key: string; all?: boolean; ids?: string[] }[],
+  ): Promise<{ key: string; copiadas: number }[]> {
+    const resultado: { key: string; copiadas: number }[] = [];
+    for (const sel of seleccion) {
+      const d = this.def(sel.key);
+      const repo = this.dataSource.getRepository(d.entity);
+      const where: Record<string, unknown> = { tenantId: MASTER_TENANT_ID };
+      if (!sel.all) {
+        const ids = sel.ids ?? [];
+        if (ids.length === 0) {
+          resultado.push({ key: sel.key, copiadas: 0 });
+          continue;
+        }
+        where.id = In(ids);
+      }
+      const filas = await repo.find({ where: where as never });
+      const nuevas = filas.map((fila) => {
+        const plano = { ...(fila as Record<string, unknown>) };
+        delete plano.id;
+        delete plano.createdAt;
+        delete plano.updatedAt;
+        plano.tenantId = destTenantId;
+        if (d.branchScoped) plano.branchId = null;
+        return repo.create(plano as never);
+      });
+      if (nuevas.length) await repo.save(nuevas);
+      resultado.push({ key: sel.key, copiadas: nuevas.length });
+    }
+    return resultado;
   }
 
   async eliminar(key: string, id: string): Promise<void> {

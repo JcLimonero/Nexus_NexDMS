@@ -24,6 +24,7 @@ export interface ProvisionTenantDto {
   adminFirstName: string;
   adminLastName: string;
   adminEmail: string;
+  catalogos?: { key: string; all?: boolean; ids?: string[] }[];
 }
 
 export interface ResultadoProvisioning {

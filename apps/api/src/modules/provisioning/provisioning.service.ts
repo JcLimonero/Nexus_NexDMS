@@ -16,6 +16,7 @@ import { ResetUserType } from '../password-reset/password-reset-token.entity';
 import { EmailComposer } from '../../common/email/email-composer.service';
 import { EmailjsService } from '../../common/email/emailjs.service';
 import { emailButton } from '../../common/email/templates';
+import { MasterCatalogsService } from '../master-catalogs/master-catalogs.service';
 import { ProvisionTenantDto } from './dto/provision-tenant.dto';
 
 export interface ResultadoProvisioning {
@@ -53,6 +54,7 @@ export class ProvisioningService {
     private readonly config: ConfigService,
     private readonly composer: EmailComposer,
     private readonly emailjs: EmailjsService,
+    private readonly masterCatalogs: MasterCatalogsService,
   ) {}
 
   async provision(
@@ -125,7 +127,12 @@ export class ProvisioningService {
         branchIds: [branch.id],
       });
 
-      // 5) Liga de invitación para que defina su contraseña.
+      // 5) Copia de catálogos base elegidos del maestro.
+      if (dto.catalogos?.length) {
+        await this.masterCatalogs.copiar(tenant.id, dto.catalogos);
+      }
+
+      // 6) Liga de invitación para que defina su contraseña.
       const inviteUrl = await this.enviarInvitacion(
         tenant.id,
         tenant.slug,

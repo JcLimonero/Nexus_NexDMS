@@ -1,14 +1,24 @@
 import {
   IsArray,
+  IsBoolean,
   IsEmail,
   IsEnum,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 import { TenantPlanEnum } from '../../tenants/entities/tenant.entity';
 import { LegalEntityTypeEnum } from '../../legal-entities/entities/legal-entity.entity';
+
+/** Selección de un catálogo maestro a copiar: todo, o ciertas entradas. */
+export class SeleccionCatalogoDto {
+  @IsString() key: string;
+  @IsOptional() @IsBoolean() all?: boolean;
+  @IsOptional() @IsArray() @IsUUID('all', { each: true }) ids?: string[];
+}
 
 /**
  * Datos del wizard de alta (Fase 2). Plano a propósito, para validar fácil y
@@ -46,4 +56,11 @@ export class ProvisionTenantDto {
   @IsString() adminFirstName: string;
   @IsString() adminLastName: string;
   @IsEmail() adminEmail: string;
+
+  // Paso 5 · Catálogos base a copiar del maestro
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SeleccionCatalogoDto)
+  catalogos?: SeleccionCatalogoDto[];
 }
