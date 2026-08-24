@@ -128,6 +128,19 @@ describe('GeminiClient', () => {
 
       expect(fetchMock.mock.calls[1][0]).toContain('southamerica-east1');
     });
+
+    it('con `global` no le pone prefijo de región al host', async () => {
+      const fetchMock = mockFetch({ candidates: [] });
+
+      await clientWith({ ...CONFIG, GCP_LOCATION: 'global' }).generate(
+        params(),
+      );
+
+      const url = fetchMock.mock.calls[1][0] as string;
+      expect(url).toContain('https://aiplatform.googleapis.com/');
+      expect(url).not.toContain('global-aiplatform.googleapis.com');
+      expect(url).toContain('/locations/global/');
+    });
   });
 
   describe('respuesta', () => {

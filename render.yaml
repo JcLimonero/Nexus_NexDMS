@@ -122,10 +122,14 @@ services:
       # deploy, pero tampoco hace nada hasta que se configuren.
       # ⚠️ GCP_LOCATION pendiente de decisión legal: en qué país se procesan
       # los datos de los clientes del taller. Resolver antes de producción.
+      # `gemini-3.7-flash` sólo responde hoy en el endpoint `global` (404 en
+      # `us-central1` para este modelo específico); `global` renuncia a la
+      # garantía de residencia regional. Cambiar a una región concreta si eso
+      # importa más que usar este modelo en particular.
       - key: GCP_PROJECT_ID
         sync: false
       - key: GCP_LOCATION
-        value: us-central1
+        value: global
       - key: GCP_SA_EMAIL
         sync: false
       - key: GCP_SA_PRIVATE_KEY

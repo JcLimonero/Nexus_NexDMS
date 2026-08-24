@@ -105,9 +105,8 @@ export class GeminiClient {
     try {
       const token = await this.accessToken();
       const url =
-        `https://${this.location}-aiplatform.googleapis.com/v1/projects/` +
-        `${this.projectId}/locations/${this.location}/publishers/google/` +
-        `models/${this.model}:generateContent`;
+        `https://${this.host()}/v1/projects/${this.projectId}/locations/` +
+        `${this.location}/publishers/google/models/${this.model}:generateContent`;
 
       const response = await fetchWithRetry(url, {
         method: 'POST',
@@ -131,6 +130,23 @@ export class GeminiClient {
       this.logger.error('Error llamando a Gemini', e);
       return null;
     }
+  }
+
+  /**
+   * `global` es la excepción: no lleva prefijo de región en el host. Modelos
+   * nuevos (como `gemini-3.7-flash`) a veces sólo están disponibles ahí antes
+   * de llegar a regiones específicas — probado a mano contra la API: la
+   * misma llamada en `us-central1-aiplatform.googleapis.com` da 404, y
+   * `global-aiplatform.googleapis.com` ni siquiera existe como host.
+   *
+   * Usar `global` renuncia a la garantía de residencia regional de los datos
+   * (ver el aviso legal pendiente arriba): la petición puede procesarse en
+   * cualquier región donde Vertex AI opere, no sólo en `location`.
+   */
+  private host(): string {
+    return this.location === 'global'
+      ? 'aiplatform.googleapis.com'
+      : `${this.location}-aiplatform.googleapis.com`;
   }
 
   private buildBody(params: GenerateParams): Record<string, unknown> {
