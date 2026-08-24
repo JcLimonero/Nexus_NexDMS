@@ -904,9 +904,25 @@ export class ReceptionService {
     );
   }
 
-  async removeMark(id: string) {
+  async removeMark(id: string, tenantId: string) {
     const mark = await this.markRepo.findOne({ where: { id } });
     if (!mark) throw new NotFoundException('Marcador no encontrado');
+    // El marcador no lleva tenant; se valida subiendo por foto → checklist →
+    // orden, y comprobando que la orden sea del tenant que pide el borrado.
+    const foto = await this.photoRepo.findOne({
+      where: { id: mark.receptionPhotoId },
+    });
+    const checklist = foto
+      ? await this.checklistRepo.findOne({
+          where: { id: foto.receptionChecklistId },
+        })
+      : null;
+    const orden = checklist
+      ? await this.soRepo.findOne({
+          where: { id: checklist.serviceOrderId, tenantId },
+        })
+      : null;
+    if (!orden) throw new NotFoundException('Marcador no encontrado');
     await this.markRepo.remove(mark);
     return { ok: true };
   }

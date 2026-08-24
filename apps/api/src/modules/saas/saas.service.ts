@@ -19,6 +19,7 @@ import {
 } from './entities/saas.entities';
 import { PALETAS, paletaPorId } from '../tenants/branding.paletas';
 import { StorageService } from '../../common/storage/storage.service';
+import { validateLogoFile } from '../../common/validators/file.validator';
 import { ConfigService } from '@nestjs/config';
 import {
   BillingBlockState,
@@ -405,10 +406,8 @@ export class SaasService {
     file: Express.Multer.File,
     tipo: 'logo' | 'icon',
   ): Promise<string> {
-    if (!file) throw new BadRequestException('Archivo requerido');
-    if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException('El archivo debe ser una imagen');
-    }
+    // Reutiliza el validador de imágenes: tipos jpeg/png/webp y máx 2MB.
+    validateLogoFile(file);
     return this.storage.upload(
       file.buffer,
       `branding/${tenantId}/${tipo}-${Date.now()}`,

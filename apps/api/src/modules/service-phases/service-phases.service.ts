@@ -175,13 +175,27 @@ export class ServicePhasesService {
    * ellas, y dejarlas a captura manual convertiría el semáforo en una
    * opinión.
    */
-  async cambiarEstado(
+  /** La fase no lleva tenant; se valida contra la orden a la que pertenece. */
+  private async faseDelTenant(
     id: string,
-    status: PhaseStatusEnum,
-    assignedUserId?: string | null,
+    tenantId: string,
   ): Promise<ServiceOrderPhase> {
     const fase = await this.phaseRepo.findOne({ where: { id } });
     if (!fase) throw new NotFoundException('Fase no encontrada');
+    const orden = await this.orderRepo.findOne({
+      where: { id: fase.serviceOrderId, tenantId },
+    });
+    if (!orden) throw new NotFoundException('Fase no encontrada');
+    return fase;
+  }
+
+  async cambiarEstado(
+    id: string,
+    status: PhaseStatusEnum,
+    assignedUserId: string | null | undefined,
+    tenantId: string,
+  ): Promise<ServiceOrderPhase> {
+    const fase = await this.faseDelTenant(id, tenantId);
 
     if (status === PhaseStatusEnum.EN_CURSO && !fase.startedAt) {
       fase.startedAt = new Date();
@@ -201,9 +215,12 @@ export class ServicePhasesService {
     return this.phaseRepo.save(fase);
   }
 
-  async asignar(id: string, userId: string | null): Promise<ServiceOrderPhase> {
-    const fase = await this.phaseRepo.findOne({ where: { id } });
-    if (!fase) throw new NotFoundException('Fase no encontrada');
+  async asignar(
+    id: string,
+    userId: string | null,
+    tenantId: string,
+  ): Promise<ServiceOrderPhase> {
+    const fase = await this.faseDelTenant(id, tenantId);
     fase.assignedUserId = userId;
     return this.phaseRepo.save(fase);
   }

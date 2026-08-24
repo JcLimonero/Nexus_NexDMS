@@ -8,6 +8,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { Exclude } from 'class-transformer';
 import { UserRole } from './user-role.entity';
 
 export enum RoleEnum {
@@ -59,6 +60,7 @@ export class User {
   @Column({ name: 'email', length: 300 })
   email: string;
 
+  @Exclude()
   @Column({ name: 'password_hash', length: 500 })
   passwordHash: string;
 
@@ -77,6 +79,7 @@ export class User {
   @Column({ name: 'totp_enabled', type: 'boolean', default: false })
   totpEnabled: boolean;
 
+  @Exclude()
   @Column({ name: 'totp_secret', type: 'text', nullable: true })
   totpSecret: string | null;
 

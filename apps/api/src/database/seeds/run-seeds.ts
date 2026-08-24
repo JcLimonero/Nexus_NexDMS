@@ -143,7 +143,7 @@ async function runSeeds() {
     console.log('  - Tenant: demo');
     console.log('  - Legal Entity: Demo');
     console.log('  - Branch: Sucursal Central');
-    console.log('  - Usuario: admin@demo.local / ' + DEMO_PASSWORD);
+    console.log('  - Usuario: admin@demo.local');
   }
 
   // Usuario de recepción: opera solo el módulo de recepción de unidades.
@@ -181,9 +181,7 @@ async function runSeeds() {
           isDefault: true,
         }),
       );
-      console.log(
-        '  - Usuario recepción: ' + RECEP_EMAIL + ' / ' + RECEP_PASSWORD,
-      );
+      console.log('  - Usuario recepción: ' + RECEP_EMAIL);
     }
   }
 
@@ -225,13 +223,7 @@ async function runSeeds() {
           isDefault: true,
         }),
       );
-      console.log(
-        '  - Usuario pruebas: ' +
-          NEXUS_EMAIL +
-          ' / ' +
-          NEXUS_PASSWORD +
-          ' (SUPERADMIN)',
-      );
+      console.log('  - Usuario pruebas: ' + NEXUS_EMAIL + ' (SUPERADMIN)');
     }
   }
 
@@ -305,8 +297,7 @@ async function runSeeds() {
       }
       if (creados)
         console.log(
-          `  - Equipo demo: ${creados} usuarios (asesor2/3 + mecanico1/2/3) @demo.local / ` +
-            DEMO_PASSWORD,
+          `  - Equipo demo: ${creados} usuarios (asesor2/3 + mecanico1/2/3) @demo.local`,
         );
     }
   }

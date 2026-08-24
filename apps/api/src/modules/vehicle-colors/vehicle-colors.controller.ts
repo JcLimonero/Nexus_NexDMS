@@ -49,7 +49,7 @@ export class VehicleColorsController {
   @Post()
   @UseGuards(AuthGuard, RolesGuard)
   @ApiBearerAuth()
-  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  @Roles('SUPERADMIN')
   create(@CurrentUser() user: UserPayload, @Body() dto: CreateVehicleColorDto) {
     return this.service.create(user, dto);
   }

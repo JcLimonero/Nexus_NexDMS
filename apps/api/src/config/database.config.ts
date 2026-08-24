@@ -4,6 +4,21 @@ import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
 import { TypeOrmModuleOptions } from '@nestjs/typeorm';
 
+/**
+ * SSL de la conexión. Si se define `DB_SSL_CA` (certificado del proveedor en
+ * PEM) se valida el certificado del servidor (rejectUnauthorized:true) — lo
+ * ideal contra MITM. Si no hay CA, se mantiene el comportamiento actual para no
+ * romper el despliegue (Render usa una cadena interna). Fuera de producción, sin
+ * SSL.
+ */
+const sslDesde = (get: (k: string) => string | undefined) => {
+  if (get('NODE_ENV') !== 'production') return false as const;
+  const ca = get('DB_SSL_CA');
+  if (ca) return { ca, rejectUnauthorized: true };
+  const reject = get('DB_SSL_REJECT_UNAUTHORIZED') === 'true';
+  return { rejectUnauthorized: reject };
+};
+
 export const getDatabaseConfig = (
   configService: ConfigService,
 ): TypeOrmModuleOptions => ({
@@ -14,10 +29,7 @@ export const getDatabaseConfig = (
   migrations: [__dirname + '/../database/migrations/**/*.js'],
   migrationsRun: false,
   subscribers: [__dirname + '/../database/subscribers/**/*.js'],
-  ssl:
-    configService.get('NODE_ENV') === 'production'
-      ? { rejectUnauthorized: false }
-      : false,
+  ssl: sslDesde((k) => configService.get<string>(k)),
   logging: configService.get('NODE_ENV') === 'development',
   // Pool explícito: sin esto node-postgres usa 10 por instancia y, al escalar
   // la API horizontalmente, se agota el max_connections del Postgres. Con

@@ -12,6 +12,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PlatformAdminGuard } from '../../common/guards/platform-admin.guard';
 import { MasterCatalogsService } from './master-catalogs.service';
 
 /**
@@ -20,7 +21,7 @@ import { MasterCatalogsService } from './master-catalogs.service';
  */
 @ApiTags('master-catalogs')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, PlatformAdminGuard, RolesGuard)
 @Controller('master-catalogs')
 export class MasterCatalogsController {
   constructor(private readonly service: MasterCatalogsService) {}

@@ -17,6 +17,7 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
+import { PlatformAdminGuard } from '../../common/guards/platform-admin.guard';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { SaasService } from './saas.service';
 import { PALETAS } from '../tenants/branding.paletas';
@@ -30,7 +31,7 @@ import { SaasPayment, SaasPlan } from './entities/saas.entities';
  */
 @ApiTags('Administración SaaS')
 @ApiBearerAuth()
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, PlatformAdminGuard, RolesGuard)
 @Roles('SUPERADMIN')
 @Controller('saas')
 export class SaasController {

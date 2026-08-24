@@ -21,6 +21,7 @@ import { Repository } from 'typeorm';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { User } from '../users/entities/user.entity';
 import { StorageService } from '../../common/storage/storage.service';
+import { validateLogoFile } from '../../common/validators/file.validator';
 import { PALETA_POR_OMISION, paletaPorId } from '../tenants/branding.paletas';
 import { EmailjsService } from '../../common/email/emailjs.service';
 import { EmailComposer } from '../../common/email/email-composer.service';
@@ -530,10 +531,8 @@ export class AuthService {
 
   /** Sube (cambia) la foto de perfil del usuario y devuelve su ficha. */
   async subirAvatar(user: UserPayload, file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('Archivo requerido');
-    if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException('La foto debe ser una imagen');
-    }
+    // Reutiliza el validador de imágenes: tipos jpeg/png/webp y máx 2MB.
+    validateLogoFile(file);
     const key = await this.storage.upload(
       file.buffer,
       `avatars/${user.sub}/foto-${Date.now()}`,

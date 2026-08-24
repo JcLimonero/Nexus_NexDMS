@@ -22,7 +22,9 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SwitchBranchDto } from './dto/switch-branch.dto';
 import { SwitchLegalEntityDto } from './dto/switch-legal-entity.dto';
 import type { UserPayload } from './strategies/jwt.strategy';
@@ -47,7 +49,7 @@ export class AuthController {
   @Post('forgot-password')
   @HttpCode(200)
   @Throttle(LIMITE_ACCESO)
-  forgotPassword(@Body() dto: { email: string; tenantId?: string }) {
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
     return this.authService.forgotPassword(dto);
   }
 
@@ -55,7 +57,7 @@ export class AuthController {
   @Post('reset-password')
   @HttpCode(200)
   @Throttle(LIMITE_ACCESO)
-  resetPassword(@Body() dto: { token: string; newPassword: string }) {
+  resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
   }
 

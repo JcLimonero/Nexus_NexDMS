@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -44,6 +45,19 @@ export class UsersService {
     private readonly composer: EmailComposer,
   ) {}
 
+  /**
+   * SUPERADMIN es un rol de PLATAFORMA (tabla admin_users), no un rol asignable
+   * a usuarios de un concesionario. Bloquear esto cierra la escalada por la que
+   * un ADMIN de tenant podía volverse superadmin del SaaS.
+   */
+  private rechazarSuperadmin(roles: RoleEnum[]): void {
+    if (roles?.includes(RoleEnum.SUPERADMIN)) {
+      throw new ForbiddenException(
+        'El rol SUPERADMIN no puede asignarse a usuarios de un concesionario',
+      );
+    }
+  }
+
   async create(tenantId: string, dto: CreateUserDto): Promise<User> {
     const existing = await this.findByEmail(tenantId, dto.email);
     if (existing) {
@@ -77,6 +91,7 @@ export class UsersService {
       specialty: dto.specialty ?? null,
       isActive: true,
     });
+    this.rechazarSuperadmin(dto.roles);
     const saved = await this.userRepo.save(user);
     for (const role of dto.roles) {
       await this.userRoleRepo.save(
@@ -427,6 +442,7 @@ export class UsersService {
           'No puedes quitarte a ti mismo el rol de administrador',
         );
       }
+      this.rechazarSuperadmin(dto.roles);
       await this.userRoleRepo.delete({ userId: id });
       await this.userRoleRepo.save(
         dto.roles.map((role) => this.userRoleRepo.create({ userId: id, role })),
