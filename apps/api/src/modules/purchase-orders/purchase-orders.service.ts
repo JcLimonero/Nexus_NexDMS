@@ -193,8 +193,22 @@ export class PurchaseOrdersService {
       .take(limit)
       .getManyAndCount();
 
+    // Adjunta el nombre del proveedor (la entidad solo trae supplier_id).
+    const supplierIds = [...new Set(data.map((o) => o.supplierId))];
+    const suppliers = supplierIds.length
+      ? await this.supplierRepo.find({
+          where: { id: In(supplierIds) },
+          select: ['id', 'name'],
+        })
+      : [];
+    const nombrePorId = new Map(suppliers.map((s) => [s.id, s.name]));
+    const conProveedor = data.map((o) => ({
+      ...o,
+      supplierName: nombrePorId.get(o.supplierId) ?? null,
+    }));
+
     return {
-      data,
+      data: conProveedor,
       meta: {
         total,
         page,

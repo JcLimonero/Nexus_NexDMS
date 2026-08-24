@@ -126,8 +126,8 @@ export class SeguimientoPage implements OnInit {
   }
 
   private nombre(it: Record<string, unknown>): string {
-    if (typeof it["clientName"] === "string" && it["clientName"]) {
-      return it["clientName"] as string;
+    for (const campo of ["clientName", "supplierName"]) {
+      if (typeof it[campo] === "string" && it[campo]) return it[campo] as string;
     }
     const o = (it["client"] ?? it["owner"]) as Record<string, unknown> | undefined;
     if (o) {
