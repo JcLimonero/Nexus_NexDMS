@@ -1,41 +1,42 @@
+// Tablero por fase (kanban) — usa los tokens del sistema de diseño.
 .pb {
   display: flex;
-  gap: 12px;
+  gap: var(--space-12);
   overflow-x: auto;
-  padding-bottom: 8px;
+  padding-bottom: var(--space-8);
   align-items: flex-start;
 }
 .pb-col {
   flex: 1 0 200px;
   max-width: 280px;
-  background: #f1f5f9;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8) var(--space-8) var(--space-12);
 }
 .pb-col-h {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 12.5px;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 10px;
+  font-size: var(--text-overline);
+  font-weight: var(--text-overline-weight);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-8);
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--text-overline-tracking);
 }
 .pb-n {
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
   padding: 0 8px;
-  font-size: 11px;
-  color: #64748b;
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 .pb-col-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-8);
   min-height: 24px;
 }
 .pb-card {
@@ -44,64 +45,65 @@
   gap: 2px;
   text-align: left;
   width: 100%;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 9px;
-  padding: 9px 11px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-8) var(--space-12);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 .pb-card:hover {
-  border-color: #2563eb;
+  border-color: var(--primary);
+  box-shadow: var(--shadow-sm);
 }
 .pb-code {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 11.5px;
-  color: #64748b;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
 }
 .pb-title {
-  font-size: 13.5px;
-  font-weight: 500;
-  color: #0f172a;
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
+  color: var(--text-primary);
 }
 .pb-sub {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 .pb-empty {
-  color: #cbd5e1;
+  color: var(--text-muted);
   text-align: center;
-  font-size: 13px;
-  padding: 6px 0;
+  font-size: var(--text-sm);
+  padding: var(--space-8) 0;
 }
 .pb-load {
-  padding: 30px;
+  padding: var(--space-32);
   text-align: center;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 .pb-fuera {
-  margin-top: 14px;
-  padding-top: 12px;
-  border-top: 1px dashed #e2e8f0;
+  margin-top: var(--space-12);
+  padding-top: var(--space-12);
+  border-top: 1px dashed var(--border);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-8);
   align-items: center;
 }
 .pb-fuera-h {
-  font-size: 12.5px;
-  color: #64748b;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
 }
 .pb-chip {
-  font-family: "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 11.5px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
   padding: 3px 10px;
   cursor: pointer;
-  color: #64748b;
+  color: var(--text-secondary);
 }
 .pb-chip:hover {
-  border-color: #94a3b8;
+  border-color: var(--border-strong);
 }
