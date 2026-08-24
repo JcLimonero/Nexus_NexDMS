@@ -640,6 +640,24 @@ export class WhatsappConversationsService {
     await this.conversationRepo.save(conversation);
   }
 
+  /**
+   * Los últimos mensajes de una conversación, para dárselos de contexto al
+   * asistente (F7). A diferencia de `findOne()`, no pide `UserPayload` ni
+   * aplica scope: quien llama es el propio bot leyendo su conversación, no un
+   * asesor pidiendo ver la de alguien más.
+   */
+  async getRecentMessagesForAssistant(
+    conversationId: string,
+    limit = 30,
+  ): Promise<WhatsappMessage[]> {
+    const rows = await this.messageRepo.find({
+      where: { conversationId },
+      order: { createdAt: 'DESC' },
+      take: limit,
+    });
+    return rows.reverse();
+  }
+
   /** La conversación abierta de ese teléfono en esa sucursal, si la hay. */
   async findOpen(
     branchId: string,

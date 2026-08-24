@@ -347,15 +347,42 @@ datos reales, y se puede contestar "¿cuántas citas trae WhatsApp?".
 **Pendiente:** F7 (el asistente multimodal) puede ahora leer estas fotos como
 entrada del modelo, tal como preveía D6.
 
-### F7 · El asistente de verdad — Gemini 2.5 Flash Lite en Vertex AI
+### F7 · El asistente de verdad — Gemini 3.7 Flash en Vertex AI
 
-Es lo que cierra la distancia entre la pantalla y el producto: el mock dibuja un
-asistente que entiende cómo habla la gente y lee fotos; el que corre hoy manda
-menús numerados y sólo entiende dígitos y `AAAA-MM-DD`.
+**Conexión al flujo del bot: ✅ hecha.** `WhatsappAssistantService`
+(`whatsapp-ai`) arma el contexto de F1, llama a `GeminiClient` con
+`WORKSHOP_TOOLS` y ejecuta las herramientas contra los servicios reales
+(`ServiceType` repo, `UserAvailabilityService`, `AppointmentsService`,
+`WhatsappConversationsService.escalate`), en un ciclo de hasta cuatro vueltas
+por mensaje. `WhatsappBotService` lo usa cuando no hay sesión de menú en
+curso: si Vertex AI no está configurado, o su primer intento no da nada útil,
+cae al flujo de menús de siempre — nunca deja al cliente sin respuesta por
+falta de credenciales o un error transitorio. Si el modelo falla **después**
+de ya haber ejecutado una herramienta con efectos reales (una cita agendada),
+no finge que no pasó nada: avisa y escala a `BOT_WAS_WRONG`.
 
-**Lo que se tira:** la máquina de estados de `whatsapp-bot.service.ts`
-(`SERVICE→DATE→SLOT→NAME→CONFIRM`) y su sesión en Redis. Eso se sostenía porque
-no había memoria; ahora la hay.
+**Alcance de esta primera versión — decisiones tomadas al conectar:**
+
+- **Fotos: el modelo sólo ve las ya descargadas de mensajes anteriores**, no
+  la que acaba de llegar en el mensaje que se está procesando. F5 las baja en
+  segundo plano por una cola; el webhook no puede esperar esa descarga sin
+  arriesgar el timeout de Meta. Cuando el cliente manda una foto y sigue
+  escribiendo, el asistente ya puede "verla" un turno o dos después.
+- **`GeminiClient.generate()` no cambió**: el ciclo de herramientas reusa tal
+  cual el contrato que ya tenía (`toolResults` como una vuelta más con las
+  mismas `turns`), que es justo para lo que estaba pensado.
+- Pendiente, no bloqueante: analizar la foto en el mismo mensaje en que llega
+  (hoy sólo se acusa recibo, como antes de F7).
+
+**Sigue pendiente antes de producción** — nada de esto cambió con la
+conexión:
+
+**Lo que NO se tiró:** la máquina de estados de `whatsapp-bot.service.ts`
+(`SERVICE→DATE→SLOT→NAME→CONFIRM`) y su sesión en Redis siguen ahí a
+propósito, como respaldo — es lo que atiende al cliente cuando Vertex AI no
+está configurado o el primer intento del modelo falla. Tirarla es un paso
+aparte, para cuando el asistente ya esté probado en producción y el respaldo
+deje de hacer falta.
 
 **Lo que ya quedó listo sin buscarlo:** la transcripción de F1 es el contexto
 del modelo. `whatsapp_messages` deja de ser sólo lo que lee el asesor y pasa a

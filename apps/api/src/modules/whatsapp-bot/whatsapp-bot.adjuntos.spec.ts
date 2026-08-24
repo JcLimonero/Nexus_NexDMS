@@ -13,6 +13,7 @@ import {
 } from '../whatsapp-core/whatsapp-routing.service';
 import { WhatsappConversationsService } from '../whatsapp-conversations/whatsapp-conversations.service';
 import { WhatsappConversationStateEnum } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
+import { WhatsappAssistantService } from '../whatsapp-ai/whatsapp-assistant.service';
 import {
   WhatsappBotService,
   type IncomingMessage,
@@ -75,6 +76,10 @@ describe('WhatsappBotService · adjuntos', () => {
         { provide: WhatsAppProvider, useValue: whatsapp },
         { provide: WhatsappRoutingService, useValue: routing },
         { provide: WhatsappConversationsService, useValue: conversations },
+        {
+          provide: WhatsappAssistantService,
+          useValue: { isConfigured: false, respond: jest.fn() },
+        },
       ],
     }).compile();
 

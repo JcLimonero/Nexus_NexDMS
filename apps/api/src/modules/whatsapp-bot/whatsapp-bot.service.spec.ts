@@ -11,6 +11,7 @@ import {
   WhatsappConversationStateEnum,
   WhatsappEscalationReasonEnum,
 } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
+import { WhatsappAssistantService } from '../whatsapp-ai/whatsapp-assistant.service';
 import {
   WhatsappBotService,
   type IncomingMessage,
@@ -120,6 +121,13 @@ describe('WhatsappBotService', () => {
         { provide: WhatsAppProvider, useValue: whatsapp },
         { provide: WhatsappRoutingService, useValue: routing },
         { provide: WhatsappConversationsService, useValue: conversations },
+        // Sin Vertex AI configurado en estas pruebas: el flujo de menús es
+        // el que se está probando aquí (ver whatsapp-assistant.service.spec.ts
+        // para el asistente).
+        {
+          provide: WhatsappAssistantService,
+          useValue: { isConfigured: false, respond: jest.fn() },
+        },
       ],
     }).compile();
 

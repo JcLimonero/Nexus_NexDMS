@@ -17,6 +17,7 @@ import {
   WhatsappEscalationReasonEnum,
 } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
 import { WhatsappMessageAuthorEnum } from '../whatsapp-conversations/entities/whatsapp-message.entity';
+import { WhatsappAssistantService } from '../whatsapp-ai/whatsapp-assistant.service';
 
 /**
  * Todo lo que un paso del flujo necesita saber: de qué sucursal es el chat y
@@ -125,6 +126,7 @@ export class WhatsappBotService {
     private readonly whatsapp: WhatsAppProvider,
     private readonly routing: WhatsappRoutingService,
     private readonly conversations: WhatsappConversationsService,
+    private readonly assistant: WhatsappAssistantService,
   ) {}
 
   /**
@@ -210,6 +212,29 @@ export class WhatsappBotService {
 
     const session = await this.getSession(route, from);
     if (!session) {
+      // Sin sesión de menú en curso: es el punto de entrada del asistente
+      // (F7). Si Vertex AI no está configurado, o su primer intento no dio
+      // nada útil, se cae al flujo de menús de siempre — el cliente nunca se
+      // queda sin respuesta por falta de credenciales o un error transitorio.
+      if (this.assistant.isConfigured) {
+        const result = await this.assistant.respond({
+          branchId: route.branchId,
+          branchSlug: route.branchSlug,
+          conversationId: conversation.id,
+          phone: from,
+        });
+        if (result) {
+          const salida = await this.reply(ctx, from, result.replies);
+          if (result.appointmentId) {
+            await this.conversations.close(
+              ctx.conversationId,
+              WhatsappConversationStateEnum.BOOKED,
+              result.appointmentId,
+            );
+          }
+          return salida;
+        }
+      }
       return this.startFlow(ctx, from);
     }
 

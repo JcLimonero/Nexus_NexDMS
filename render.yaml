@@ -116,3 +116,19 @@ services:
         sync: false
       - key: WHATSAPP_APP_SECRET
         sync: false
+      # Asistente de WhatsApp (Gemini en Vertex AI, F7). Un solo proyecto de
+      # GCP para todos los tenants. Sin estas variables el asistente no se
+      # llama y el bot sigue con su flujo de menús numerados — no bloquea el
+      # deploy, pero tampoco hace nada hasta que se configuren.
+      # ⚠️ GCP_LOCATION pendiente de decisión legal: en qué país se procesan
+      # los datos de los clientes del taller. Resolver antes de producción.
+      - key: GCP_PROJECT_ID
+        sync: false
+      - key: GCP_LOCATION
+        value: us-central1
+      - key: GCP_SA_EMAIL
+        sync: false
+      - key: GCP_SA_PRIVATE_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.7-flash

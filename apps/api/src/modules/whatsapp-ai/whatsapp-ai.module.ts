@@ -1,25 +1,20 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { WhatsappBotController } from './whatsapp-bot.controller';
-import { WhatsappBotService } from './whatsapp-bot.service';
-import { WhatsappSignatureGuard } from './whatsapp-signature.guard';
+import { GeminiClient } from './gemini.client';
+import { WhatsappAssistantService } from './whatsapp-assistant.service';
 import { ServiceType } from '../service-types/entities/service-type.entity';
 import { AppointmentsModule } from '../appointments/appointments.module';
 import { UserAvailabilityModule } from '../user-availability/user-availability.module';
-import { WhatsappCoreModule } from '../whatsapp-core/whatsapp-core.module';
 import { WhatsappConversationsModule } from '../whatsapp-conversations/whatsapp-conversations.module';
-import { WhatsappAiModule } from '../whatsapp-ai/whatsapp-ai.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([ServiceType]),
     AppointmentsModule,
     UserAvailabilityModule,
-    WhatsappCoreModule,
     WhatsappConversationsModule,
-    WhatsappAiModule,
   ],
-  controllers: [WhatsappBotController],
-  providers: [WhatsappBotService, WhatsappSignatureGuard],
+  providers: [GeminiClient, WhatsappAssistantService],
+  exports: [GeminiClient, WhatsappAssistantService],
 })
-export class WhatsappBotModule {}
+export class WhatsappAiModule {}
