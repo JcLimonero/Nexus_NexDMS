@@ -15,12 +15,12 @@
     font-size: 20px;
     font-weight: 700;
     margin: 0;
-    color: #1f2937;
+    color: var(--text-primary);
   }
 }
 .fl-sub {
   margin: 2px 0 0;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 13px;
 }
 .fl-head-acc {
@@ -31,7 +31,7 @@
 
 .fl-btn {
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   padding: 9px 16px;
   font-size: 13px;
   font-weight: 600;
@@ -42,23 +42,23 @@
   gap: 6px;
 }
 .fl-btn--primary {
-  background: #2563eb;
-  color: #fff;
+  background: var(--primary);
+  color: var(--text-on-brand);
 }
 .fl-btn--primary:hover {
-  background: #1d4ed8;
-  color: #fff;
+  background: var(--primary-hover);
+  color: var(--text-on-brand);
 }
 .fl-btn--ghost {
-  background: #eef1f4;
-  color: #374151;
+  background: var(--bg);
+  color: var(--text-secondary);
 }
 .fl-btn--ghost:hover {
-  background: #e2e6ea;
+  background: var(--border);
 }
 .fl-btn--danger {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--danger-bg);
+  color: var(--danger);
 }
 .fl-btn:disabled {
   opacity: 0.55;
@@ -66,7 +66,7 @@
 }
 
 .fl-vacio {
-  color: #6b7280;
+  color: var(--text-secondary);
   padding: 28px 0;
   text-align: center;
 }
@@ -74,8 +74,8 @@
 .fl-tabla {
   width: 100%;
   border-collapse: collapse;
-  background: #fff;
-  border-radius: 10px;
+  background: var(--card);
+  border-radius: 10px; // TODO token
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
@@ -84,12 +84,12 @@
     padding: 11px 14px;
     text-align: left;
     font-size: 13px;
-    border-bottom: 1px solid #f0f1f3;
+    border-bottom: 1px solid var(--border);
     vertical-align: top;
   }
   th {
-    background: #f9fafb;
-    color: #6b7280;
+    background: var(--bg);
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 12px;
     text-transform: uppercase;
@@ -103,31 +103,31 @@
 .fl-mono {
   display: block;
   font-family: ui-monospace, monospace;
-  color: #6b7280;
+  color: var(--text-secondary);
   font-size: 11px;
   margin-top: 2px;
 }
 .fl-muted {
-  color: #6b7280;
+  color: var(--text-secondary);
 }
 .fl-fila {
   cursor: pointer;
 }
 .fl-fila:hover td {
-  background: #f7f9fc;
+  background: var(--bg);
 }
 .fl-estado {
   display: inline-block;
   padding: 2px 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 700;
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--bg);
+  color: var(--text-secondary);
 
   &[data-activo="true"] {
-    background: #ecfdf5;
-    color: #047857;
+    background: var(--success-bg);
+    color: var(--success);
   }
 }
 
@@ -137,8 +137,8 @@
   gap: 16px;
 }
 .fl-card {
-  background: #fff;
-  border-radius: 12px;
+  background: var(--card);
+  border-radius: var(--radius-lg);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   padding: 18px;
 
@@ -146,7 +146,7 @@
     font-size: 15px;
     font-weight: 700;
     margin: 0 0 14px;
-    color: #1f2937;
+    color: var(--text-primary);
   }
 }
 .fl-grid {
@@ -162,13 +162,13 @@
   label {
     font-size: 12px;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--text-secondary);
   }
   input,
   select,
   textarea {
-    border: 1px solid #d1d5db;
-    border-radius: 7px;
+    border: 1px solid var(--border-hover);
+    border-radius: 7px; // TODO token
     padding: 8px 10px;
     font-size: 13px;
     font-family: inherit;
@@ -177,11 +177,11 @@
   select:focus,
   textarea:focus {
     outline: none;
-    border-color: #2563eb;
+    border-color: var(--primary);
   }
   .fl-hint {
     font-size: 11px;
-    color: #9ca3af;
+    color: var(--text-muted);
   }
 }
 .fl-field--full {
@@ -205,9 +205,9 @@
   top: 100%;
   left: 0;
   right: 0;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
   margin-top: 2px;
   max-height: 220px;
@@ -219,7 +219,7 @@
   cursor: pointer;
 }
 .fl-sugerencia:hover {
-  background: #f1f5f9;
+  background: var(--bg);
 }
 
 .fl-unidades {
@@ -230,11 +230,11 @@
   td {
     padding: 8px;
     font-size: 12.5px;
-    border-bottom: 1px solid #f0f1f3;
+    border-bottom: 1px solid var(--border);
     text-align: left;
   }
   th {
-    color: #6b7280;
+    color: var(--text-secondary);
     font-weight: 600;
     font-size: 11px;
     text-transform: uppercase;

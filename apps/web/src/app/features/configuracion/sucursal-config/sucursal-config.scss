@@ -7,7 +7,7 @@
 
   .config-section {
     padding: 1rem 0;
-    border-bottom: 1px solid var(--theme-border, #dee2e6);
+    border-bottom: 1px solid var(--theme-border, var(--border));
 
     &:last-of-type {
       border-bottom: none;
@@ -17,6 +17,6 @@
   .section-title {
     margin-bottom: 1rem;
     font-weight: 600;
-    color: var(--theme-body-color, #212529);
+    color: var(--theme-body-color, var(--text-primary));
   }
 }
