@@ -47,6 +47,12 @@ export class NavService {
       active: true,
     },
     {
+      path: "/seguimiento",
+      title: "Seguimiento",
+      icon: "activity",
+      type: "link",
+    },
+    {
       title: "CRM",
       icon: "users",
       type: "sub",

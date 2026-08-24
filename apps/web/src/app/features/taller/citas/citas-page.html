@@ -213,7 +213,7 @@
           </thead>
           <tbody>
             @for (c of citas(); track c.id) {
-              <tr>
+              <tr (click)="toggle(c.id)" style="cursor:pointer">
                 <td>
                   <span class="code-badge">{{ c.folio || "—" }}</span>
                 </td>
@@ -238,7 +238,7 @@
                       <button
                         class="table-action-btn"
                         title="Confirmar"
-                        (click)="confirm(c)"
+                        (click)="confirm(c); $event.stopPropagation()"
                       >
                         <app-feather-icons [icon]="'check'" />
                       </button>
@@ -247,7 +247,7 @@
                       <button
                         class="table-action-btn"
                         title="Completar"
-                        (click)="complete(c)"
+                        (click)="complete(c); $event.stopPropagation()"
                       >
                         <app-feather-icons [icon]="'check-circle'" />
                       </button>
@@ -256,7 +256,7 @@
                       <button
                         class="table-action-btn table-action-btn-danger"
                         title="Cancelar"
-                        (click)="cancel(c)"
+                        (click)="cancel(c); $event.stopPropagation()"
                       >
                         <app-feather-icons [icon]="'x'" />
                       </button>
@@ -264,6 +264,17 @@
                   </div>
                 </td>
               </tr>
+              @if (expandida() === c.id) {
+                <tr>
+                  <td [attr.colspan]="8">
+                    <app-phase-tracker
+                      [phases]="fasesCita"
+                      [current]="c.status"
+                      [canceledKey]="canceladoCita"
+                    />
+                  </td>
+                </tr>
+              }
             }
           </tbody>
         </table>

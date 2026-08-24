@@ -10,11 +10,12 @@ import {
   SalesApptStatus,
 } from "./citas-ventas.service";
 import { BranchesService } from "../inventario-refacciones/services/branches.service";
+import { PhaseTracker } from "../../shared/components/phase-tracker/phase-tracker";
 
 @Component({
   selector: "app-citas-ventas",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, PhaseTracker],
   templateUrl: "./citas-ventas.html",
 })
 export class CitasVentas implements OnInit {
@@ -26,6 +27,17 @@ export class CitasVentas implements OnInit {
   guardando = signal(false);
   citas = signal<SalesAppointment[]>([]);
   branches = signal<{ id: string; name: string }[]>([]);
+
+  fasesCita = [
+    { key: "SCHEDULED", label: "Agendada" },
+    { key: "CONFIRMED", label: "Confirmada" },
+    { key: "DONE", label: "Realizada" },
+  ];
+  canceladoCita = "CANCELLED";
+  expandida = signal<string | null>(null);
+  toggle(id: string): void {
+    this.expandida.set(this.expandida() === id ? null : id);
+  }
 
   form = {
     branchId: "",

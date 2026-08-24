@@ -71,7 +71,7 @@
             </thead>
             <tbody>
               @for (c of citas(); track c.id) {
-                <tr>
+                <tr (click)="toggle(c.id)" style="cursor:pointer">
                   <td><span class="badge bg-light text-dark font-monospace">{{ c.folio || "—" }}</span></td>
                   <td>{{ c.scheduledAt | date: "dd/MM/yy HH:mm" }}</td>
                   <td>{{ purposeLabel(c.purpose) }}</td>
@@ -81,7 +81,7 @@
                   </td>
                   <td>{{ c.unitLabel || "—" }}</td>
                   <td><span class="badge bg-light text-dark">{{ statusLabel(c.status) }}</span></td>
-                  <td>
+                  <td (click)="$event.stopPropagation()">
                     @if (c.status === "SCHEDULED") {
                       <button class="btn btn-sm btn-outline-success me-1" (click)="cambiarEstado(c, 'CONFIRMED')">Confirmar</button>
                     }
@@ -91,6 +91,13 @@
                     }
                   </td>
                 </tr>
+                @if (expandida() === c.id) {
+                  <tr>
+                    <td [attr.colspan]="7">
+                      <app-phase-tracker [phases]="fasesCita" [current]="c.status" [canceledKey]="canceladoCita" />
+                    </td>
+                  </tr>
+                }
               }
             </tbody>
           </table>

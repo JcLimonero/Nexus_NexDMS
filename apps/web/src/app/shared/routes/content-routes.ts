@@ -3,6 +3,14 @@ import { moduleGuard } from "../guard/module.guard";
 
 export const content: Routes = [
   {
+    path: "seguimiento",
+    data: { breadcrumb: "Seguimiento" },
+    loadComponent: () =>
+      import("../../../app/features/seguimiento/seguimiento-page").then(
+        (c) => c.SeguimientoPage,
+      ),
+  },
+  {
     path: "dashboard",
     data: { breadcrumb: "Inicio" },
     loadChildren: () =>

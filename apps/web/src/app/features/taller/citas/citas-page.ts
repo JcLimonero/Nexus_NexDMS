@@ -18,6 +18,7 @@ import {
   SlotSelection,
 } from "./capacity-matrix/capacity-matrix";
 import { FeatherIcons } from "../../../shared/components/feather-icons/feather-icons";
+import { PhaseTracker } from "../../../shared/components/phase-tracker/phase-tracker";
 
 @Component({
   selector: "app-citas-page",
@@ -28,6 +29,7 @@ import { FeatherIcons } from "../../../shared/components/feather-icons/feather-i
     FeatherIcons,
     ClientSelector,
     CapacityMatrix,
+    PhaseTracker,
   ],
   templateUrl: "./citas-page.html",
   styleUrls: ["./citas-page.scss"],
@@ -48,6 +50,20 @@ export class CitasPage implements OnInit {
   citas = signal<Appointment[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+
+  // ─── Stepper de fase por cita (fila expandible) ───
+  fasesCita = [
+    { key: "PENDING_CONFIRMATION", label: "Por confirmar" },
+    { key: "SCHEDULED", label: "Agendada" },
+    { key: "CONFIRMED", label: "Confirmada" },
+    { key: "COMPLETED", label: "Atendida" },
+  ];
+  canceladoCita = "CANCELLED";
+  expandida = signal<string | null>(null);
+
+  toggle(id: string): void {
+    this.expandida.set(this.expandida() === id ? null : id);
+  }
 
   // ─── Nueva cita ───
   showForm = signal(false);

@@ -1,0 +1,33 @@
+@if (loading()) {
+  <div class="pb-load">Cargando…</div>
+} @else {
+  <div class="pb">
+    @for (col of columnas(); track col.phase.key) {
+      <div class="pb-col">
+        <div class="pb-col-h">
+          <span>{{ col.phase.label }}</span>
+          <span class="pb-n">{{ col.items.length }}</span>
+        </div>
+        <div class="pb-col-body">
+          @for (it of col.items; track it.id) {
+            <button class="pb-card" (click)="abrir.emit(it.id)">
+              <span class="pb-code">{{ it.code }}</span>
+              <span class="pb-title">{{ it.title }}</span>
+              @if (it.subtitle) { <span class="pb-sub">{{ it.subtitle }}</span> }
+            </button>
+          } @empty {
+            <div class="pb-empty">—</div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+  @if (fuera().length) {
+    <div class="pb-fuera">
+      <span class="pb-fuera-h">Fuera del flujo (cancelados / cerrados):</span>
+      @for (it of fuera(); track it.id) {
+        <button class="pb-chip" (click)="abrir.emit(it.id)">{{ it.code }}</button>
+      }
+    </div>
+  }
+}
