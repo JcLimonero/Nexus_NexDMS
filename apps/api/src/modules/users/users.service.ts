@@ -59,6 +59,7 @@ export class UsersService {
   }
 
   async create(tenantId: string, dto: CreateUserDto): Promise<User> {
+    this.rechazarSuperadmin(dto.roles);
     const existing = await this.findByEmail(tenantId, dto.email);
     if (existing) {
       throw new ConflictException('El email ya está registrado');
@@ -91,7 +92,6 @@ export class UsersService {
       specialty: dto.specialty ?? null,
       isActive: true,
     });
-    this.rechazarSuperadmin(dto.roles);
     const saved = await this.userRepo.save(user);
     for (const role of dto.roles) {
       await this.userRoleRepo.save(
@@ -425,6 +425,7 @@ export class UsersService {
     },
     quienEdita?: string,
   ) {
+    if (dto.roles) this.rechazarSuperadmin(dto.roles);
     const u = await this.delTenant(tenantId, id);
 
     if (dto.roles) {
@@ -442,7 +443,6 @@ export class UsersService {
           'No puedes quitarte a ti mismo el rol de administrador',
         );
       }
-      this.rechazarSuperadmin(dto.roles);
       await this.userRoleRepo.delete({ userId: id });
       await this.userRoleRepo.save(
         dto.roles.map((role) => this.userRoleRepo.create({ userId: id, role })),
