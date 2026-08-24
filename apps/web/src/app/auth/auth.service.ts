@@ -67,6 +67,22 @@ export class AuthService {
       );
   }
 
+  /** Solicita el correo de recuperación de contraseña. */
+  forgotPassword(email: string, tenantId?: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(`${API_URL}/forgot-password`, {
+      email,
+      tenantId,
+    });
+  }
+
+  /** Fija la nueva contraseña con el token del correo. */
+  resetPassword(token: string, newPassword: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(`${API_URL}/reset-password`, {
+      token,
+      newPassword,
+    });
+  }
+
   /** Usuarios de demostración del cliente (por slug), para el panel de acceso. */
   demoUsersPorSlug(
     slug: string,

@@ -9,11 +9,12 @@ import {
   UnitReservation,
   UnitReservationStatus,
 } from "../../models/unit-reservation.model";
+import { PhaseTracker } from "../../../../shared/components/phase-tracker/phase-tracker";
 
 @Component({
   selector: "app-apartado-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PhaseTracker],
   templateUrl: "./apartado-detail.html",
   styleUrls: ["./apartado-detail.scss"],
 })
@@ -28,6 +29,12 @@ export class ApartadoDetail implements OnInit {
   error = signal<string | null>(null);
   releasing = signal(false);
   releaseReason = signal("");
+
+  fases = [
+    { key: "ACTIVE", label: "Activo" },
+    { key: "CONVERTED", label: "Convertido" },
+  ];
+  cancelado = "RELEASED";
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");

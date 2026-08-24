@@ -33,6 +33,9 @@ export class SalesAppointment {
   @Column({ name: 'tenant_id', type: 'uuid' })
   tenantId: string;
 
+  @Column({ name: 'folio', type: 'varchar', length: 24, nullable: true })
+  folio: string | null;
+
   @Column({ name: 'branch_id', type: 'uuid' })
   branchId: string;
 

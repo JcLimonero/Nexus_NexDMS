@@ -8,6 +8,18 @@ export const routes: Routes = [
     title: "Acceso — Administración NexDMS",
   },
   {
+    path: "auth/forgot-password",
+    loadComponent: () =>
+      import("./routes/recuperar/recuperar").then((m) => m.Recuperar),
+    title: "Recuperar contraseña — NexDMS Admin",
+  },
+  {
+    path: "auth/reset-password",
+    loadComponent: () =>
+      import("./routes/restablecer/restablecer").then((m) => m.Restablecer),
+    title: "Nueva contraseña — NexDMS Admin",
+  },
+  {
     path: "tenants",
     canActivate: [authGuard],
     loadComponent: () =>
@@ -20,6 +32,22 @@ export const routes: Routes = [
     loadComponent: () =>
       import("./routes/precios/precios").then((m) => m.Precios),
     title: "Planes y precios — Administración NexDMS",
+  },
+  {
+    path: "alta-empresa",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./routes/wizard-alta/wizard-alta").then((m) => m.WizardAlta),
+    title: "Alta de empresa — Administración NexDMS",
+  },
+  {
+    path: "catalogos-maestros",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./routes/catalogos-maestros/catalogos-maestros").then(
+        (m) => m.CatalogosMaestros,
+      ),
+    title: "Catálogos maestros — Administración NexDMS",
   },
   {
     path: "roles",

@@ -12,6 +12,7 @@ export type SalesApptStatus =
 
 export interface SalesAppointment {
   id: string;
+  folio: string | null;
   clientId: string | null;
   clientName: string;
   clientPhone: string | null;

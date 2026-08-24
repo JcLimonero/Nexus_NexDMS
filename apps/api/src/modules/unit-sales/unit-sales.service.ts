@@ -43,6 +43,10 @@ import { hasModule } from '../modules/module-registry';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { SaleDocumentsService } from '../sale-documents/sale-documents.service';
 import { SaleSurveysService } from '../sale-surveys/sale-surveys.service';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class UnitSalesService {
@@ -77,17 +81,12 @@ export class UnitSalesService {
     tenantId: string,
     em?: EntityManager,
   ): Promise<string> {
-    const year = new Date().getFullYear();
-    const runner = em ?? this.dataSource.manager;
-    const result = await runner.query<{ last_value: number }[]>(
-      `INSERT INTO unit_sale_folio_seq (tenant_id, year, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE SET last_value = unit_sale_folio_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, year],
+    const { codigo } = await siguienteCodigoDocumento(
+      em ?? this.dataSource.manager,
+      tenantId,
+      CODIGO_OBJETO.VENTA_UNIDAD,
     );
-    const seq = result[0]?.last_value ?? 1;
-    return `VU-${year}-${String(seq).padStart(4, '0')}`;
+    return codigo;
   }
 
   private applyScope(

@@ -10,6 +10,7 @@ import {
 import { WhatsAppProvider } from '../providers/whatsapp.provider';
 import { EmailProvider } from '../providers/email.provider';
 import { SmsProvider } from '../providers/sms.provider';
+import { EmailComposer } from '../../../common/email/email-composer.service';
 
 export interface NotificationJobPayload {
   channel: NotificationChannelEnum;
@@ -34,6 +35,7 @@ export class NotificationsProcessor extends WorkerHost {
     private readonly whatsapp: WhatsAppProvider,
     private readonly email: EmailProvider,
     private readonly sms: SmsProvider,
+    private readonly composer: EmailComposer,
   ) {
     super();
   }
@@ -60,11 +62,23 @@ export class NotificationsProcessor extends WorkerHost {
           templateParams: payload.templateParams,
         });
       } else if (payload.channel === NotificationChannelEnum.EMAIL) {
+        // El cuerpo del correo se envuelve en la plantilla con la marca del
+        // concesionario, salvo que ya venga como documento completo.
+        const raw =
+          payload.html ?? (payload.text ? `<p>${payload.text}</p>` : '');
+        const subject = payload.subject ?? payload.templateKey;
+        const yaCompleto = raw.trim().toLowerCase().startsWith('<!doctype');
+        const finalHtml = yaCompleto
+          ? raw
+          : await this.composer.brandedClient(
+              payload.tenantId,
+              subject,
+              raw || '<p>Tienes una notificación de tu concesionario.</p>',
+            );
         await this.email.send({
           to: payload.recipient,
-          subject: payload.subject ?? payload.templateKey,
-          html: payload.html,
-          text: payload.text,
+          subject,
+          html: finalHtml,
           attachments: payload.attachments?.map((a) => ({
             filename: a.filename,
             content: Buffer.from(a.content, 'base64'),

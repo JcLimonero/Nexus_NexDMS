@@ -14,6 +14,7 @@ import {
   Pieza,
 } from "../hojalateria.service";
 import { ESTADOS, FLUJO, ITEM_ESTADOS, OPERACIONES } from "../estados";
+import { PhaseTracker } from "../../../shared/components/phase-tracker/phase-tracker";
 
 /**
  * Recepción + orden de una unidad de carrocería: los datos y el daño, el
@@ -22,7 +23,7 @@ import { ESTADOS, FLUJO, ITEM_ESTADOS, OPERACIONES } from "../estados";
 @Component({
   selector: "app-hojalateria-detalle",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PhaseTracker],
   templateUrl: "./detalle.html",
   styleUrls: ["../hojalateria.scss"],
 })
@@ -36,6 +37,14 @@ export class Detalle implements OnInit {
   readonly flujo = FLUJO;
   readonly operaciones = OPERACIONES;
   readonly itemEstados = ITEM_ESTADOS;
+
+  fases = [
+    { key: "RECEIVED", label: "Recibido" },
+    { key: "IN_PROGRESS", label: "En proceso" },
+    { key: "READY", label: "Listo" },
+    { key: "DELIVERED", label: "Entregado" },
+  ];
+  cancelado = "CANCELLED";
 
   cargando = signal(true);
   guardando = signal(false);

@@ -268,8 +268,11 @@ export class ReceptionController {
 
   @Delete('marks/:id')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
-  removeMark(@Param('id', ParseUUIDPipe) id: string) {
-    return this.reception.removeMark(id);
+  removeMark(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.reception.removeMark(id, user.tenantId);
   }
 
   /** Genera la cotización de la recepción y avisa al cliente. */

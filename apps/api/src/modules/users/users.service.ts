@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -12,7 +13,14 @@ import { UserRole } from './entities/user-role.entity';
 import { UserBranch } from '../legal-entities/entities/user-branch.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ConfigService } from '@nestjs/config';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { EmailComposer } from '../../common/email/email-composer.service';
+import { emailButton } from '../../common/email/templates';
+import { PasswordResetService } from '../password-reset/password-reset.service';
+import { ResetUserType } from '../password-reset/password-reset-token.entity';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -29,9 +37,29 @@ export class UsersService {
     private readonly branchRepo: Repository<Branch>,
     @InjectRepository(LegalEntity)
     private readonly legalEntityRepo: Repository<LegalEntity>,
+    @InjectRepository(Tenant)
+    private readonly tenantRepo: Repository<Tenant>,
+    private readonly config: ConfigService,
+    private readonly reset: PasswordResetService,
+    private readonly emailjs: EmailjsService,
+    private readonly composer: EmailComposer,
   ) {}
 
+  /**
+   * SUPERADMIN es un rol de PLATAFORMA (tabla admin_users), no un rol asignable
+   * a usuarios de un concesionario. Bloquear esto cierra la escalada por la que
+   * un ADMIN de tenant podía volverse superadmin del SaaS.
+   */
+  private rechazarSuperadmin(roles: RoleEnum[]): void {
+    if (roles?.includes(RoleEnum.SUPERADMIN)) {
+      throw new ForbiddenException(
+        'El rol SUPERADMIN no puede asignarse a usuarios de un concesionario',
+      );
+    }
+  }
+
   async create(tenantId: string, dto: CreateUserDto): Promise<User> {
+    this.rechazarSuperadmin(dto.roles);
     const existing = await this.findByEmail(tenantId, dto.email);
     if (existing) {
       throw new ConflictException('El email ya está registrado');
@@ -80,8 +108,52 @@ export class UsersService {
       );
     }
     const created = await this.findOneOrFail(saved.id, tenantId);
+    void this.enviarBienvenida(saved.id, tenantId, dto.email, dto.firstName);
     const { passwordHash: _, ...userWithoutPassword } = created;
     return userWithoutPassword as User;
+  }
+
+  /**
+   * Correo de bienvenida al usuario nuevo, con un enlace para que él mismo fije
+   * su contraseña (reusa el token de recuperación). No interrumpe el alta si
+   * falla el envío.
+   */
+  private async enviarBienvenida(
+    userId: string,
+    tenantId: string,
+    email: string,
+    nombre?: string,
+  ): Promise<void> {
+    try {
+      const token = await this.reset.crear(ResetUserType.TENANT, userId);
+      const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+      const base = this.config.get<string>(
+        'WEB_APP_URL',
+        'https://app.nexusqsystem.com',
+      );
+      const url = tenant?.slug
+        ? `${base}/${tenant.slug}/auth/reset-password?token=${token}`
+        : `${base}/auth/reset-password?token=${token}`;
+      const body =
+        `<p>Hola ${nombre ?? ''},</p>` +
+        `<p>Se creó tu cuenta en <strong>${tenant?.name ?? 'NexDMS'}</strong>. ` +
+        `Para entrar, primero crea tu contraseña:</p>` +
+        emailButton('Crear mi contraseña', url) +
+        `<p style="color:#94a3b8">Tu usuario es <strong>${email}</strong>. El enlace vence en 1 hora; si expira, usa "¿Olvidaste tu contraseña?" en el acceso.</p>`;
+      const html = await this.composer.brandedClient(
+        tenantId,
+        'Bienvenido a NexDMS',
+        body,
+        'Tu cuenta',
+      );
+      await this.emailjs.enviar({
+        subject: 'Crea tu contraseña de acceso',
+        html,
+        to: email,
+      });
+    } catch {
+      // El alta del usuario no depende del correo.
+    }
   }
 
   async findByEmail(tenantId: string, email: string): Promise<User | null> {
@@ -353,6 +425,7 @@ export class UsersService {
     },
     quienEdita?: string,
   ) {
+    if (dto.roles) this.rechazarSuperadmin(dto.roles);
     const u = await this.delTenant(tenantId, id);
 
     if (dto.roles) {

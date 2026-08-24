@@ -9,7 +9,10 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { User } from '../users/entities/user.entity';
 import { StorageModule } from '../../common/storage/storage.module';
+import { EmailModule } from '../../common/email/email.module';
+import { PasswordResetModule } from '../password-reset/password-reset.module';
 
 @Module({
   imports: [
@@ -20,8 +23,10 @@ import { StorageModule } from '../../common/storage/storage.module';
       useFactory: getJwtConfig,
     }),
     forwardRef(() => UsersModule),
-    TypeOrmModule.forFeature([Tenant]),
+    TypeOrmModule.forFeature([Tenant, User]),
     StorageModule,
+    EmailModule,
+    PasswordResetModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],

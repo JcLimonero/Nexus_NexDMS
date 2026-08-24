@@ -8,6 +8,10 @@ import { ClientTypesService } from "../client-types.service";
 import { ClientTypeOption } from "../models/client-type.model";
 import { ClientDetail } from "../models/client.model";
 import { EvidenciaRecepcion } from "../../../shared/components/evidencia-recepcion/evidencia-recepcion";
+import {
+  ConvenioResumen,
+  FlotillasService,
+} from "../../flotillas/flotillas.service";
 
 @Component({
   selector: "app-cliente-detail",
@@ -21,12 +25,15 @@ export class ClienteDetail implements OnInit {
   private router = inject(Router);
   private clientesService = inject(ClientesService);
   private clientTypesService = inject(ClientTypesService);
+  private flotillasService = inject(FlotillasService);
   private toastr = inject(ToastrService);
 
   client = signal<ClientDetail | null>(null);
   clientTypes = signal<ClientTypeOption[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);
+  /** Convenio de flotilla del cliente, si tiene (distintivo en el encabezado). */
+  convenio = signal<ConvenioResumen | null>(null);
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
@@ -34,6 +41,11 @@ export class ClienteDetail implements OnInit {
       this.router.navigate(["/clientes"]);
       return;
     }
+
+    this.flotillasService.forClient(id).subscribe({
+      next: (cv) => this.convenio.set(cv),
+      error: () => this.convenio.set(null),
+    });
 
     this.clientesService.getById(id).subscribe({
       next: (c) => {

@@ -62,6 +62,7 @@ import { Supplier } from "../models/supplier.model";
                 <thead>
                   <tr>
                     <th style="width: 40px"></th>
+                    <th style="width: 150px">Código</th>
                     <th>Refacción</th>
                     <th style="width: 110px">Cantidad</th>
                     <th style="width: 130px">Origen</th>
@@ -78,6 +79,9 @@ import { Supplier } from "../models/supplier.model";
                           [checked]="sel[r.id]"
                           (change)="toggle(r.id)"
                         />
+                      </td>
+                      <td>
+                        <span class="font-monospace">{{ r.folio || "—" }}</span>
                       </td>
                       <td>
                         <strong>{{ r.partSku || "—" }}</strong>

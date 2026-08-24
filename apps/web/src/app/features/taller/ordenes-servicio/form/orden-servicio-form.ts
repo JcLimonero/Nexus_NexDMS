@@ -13,6 +13,7 @@ import { ToastrService } from "ngx-toastr";
 import { TallerService } from "../../taller.service";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import { ClientesService } from "../../../clientes/clientes.service";
+import { ClientSelector } from "../../../clientes/client-selector/client-selector";
 import { CreateServiceOrderDto } from "../../models/service-order.model";
 import {
   ClientListItem,
@@ -25,7 +26,7 @@ import { VehiculoQuickDialog } from "../dialogs/vehiculo-quick-dialog/vehiculo-q
 @Component({
   selector: "app-orden-servicio-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, NgbModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, NgbModule, ClientSelector],
   templateUrl: "./orden-servicio-form.html",
   styleUrls: ["./orden-servicio-form.scss"],
 })
@@ -63,9 +64,7 @@ export class OrdenServicioForm implements OnInit {
       next: (res) =>
         this.branches.set(res.data.map((b) => ({ id: b.id, name: b.name }))),
     });
-    this.clientesService.getAll({ limit: 500 }).subscribe({
-      next: (res) => this.clients.set(res.data),
-    });
+    // El cliente se elige con búsqueda (client-selector), sin precargar 500.
 
     this.form.get("ownerId")?.valueChanges.subscribe((clientId) => {
       this.form.patchValue({ vehicleId: "" });

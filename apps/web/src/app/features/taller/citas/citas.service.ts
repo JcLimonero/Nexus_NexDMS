@@ -15,6 +15,7 @@ export type AppointmentStatus =
 
 export interface Appointment {
   id: string;
+  folio: string | null;
   branchId: string;
   clientId?: string;
   vehicleId?: string;
@@ -28,7 +29,13 @@ export interface Appointment {
   notes?: string;
   scheduledAt: string;
   durationMin: number;
-  client?: { id: string; firstName?: string; lastName?: string; companyName?: string };
+  client?: {
+    id: string;
+    clientCode?: string | null;
+    firstName?: string;
+    lastName?: string;
+    companyName?: string;
+  };
   vehicle?: { id: string; brand?: string; model?: string; plate?: string };
   mechanic?: { id: string; firstName: string; lastName: string };
 }

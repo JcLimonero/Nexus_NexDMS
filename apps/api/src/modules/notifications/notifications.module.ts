@@ -11,12 +11,14 @@ import { WhatsAppProvider } from './providers/whatsapp.provider';
 import { EmailProvider } from './providers/email.provider';
 import { SmsProvider } from './providers/sms.provider';
 import { UsersModule } from '../users/users.module';
+import { EmailModule } from '../../common/email/email.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([NotificationLog, ServiceOrderFinding]),
     BullModule.registerQueue({ name: 'notifications' }),
     UsersModule,
+    EmailModule,
   ],
   controllers: [NotificationsController],
   providers: [

@@ -14,6 +14,7 @@ import { CotizacionesService } from "../cotizaciones.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { InventarioRefaccionesService } from "../../inventario-refacciones/inventario-refacciones.service";
 import { ClientesService } from "../../clientes/clientes.service";
+import { ClientSelector } from "../../clientes/client-selector/client-selector";
 import {
   CreateQuotationDto,
   Quotation,
@@ -32,7 +33,7 @@ import { ClientListItem } from "../../clientes/models/client.model";
 @Component({
   selector: "app-presupuesto-servicio-form",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, RouterModule, ClientSelector],
   templateUrl: "./presupuesto-servicio-form.html",
   styles: [
     `
@@ -113,9 +114,7 @@ export class PresupuestoServicioForm implements OnInit {
       next: (res) =>
         this.branches.set(res.data.map((b) => ({ id: b.id, name: b.name }))),
     });
-    this.clientesService.getAll({ limit: 500 }).subscribe({
-      next: (res) => this.clients.set(res.data),
-    });
+    // cliente por búsqueda (client-selector), sin precargar 500
     this.form.get("branchId")?.valueChanges.subscribe((b) => {
       if (b) this.loadParts(b);
       else this.parts.set([]);

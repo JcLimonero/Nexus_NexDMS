@@ -69,7 +69,12 @@
                   @for (a of apartados(); track a.id) {
                     <tr>
                       <td>{{ getUnitLabel(a) }}</td>
-                      <td>{{ getClientName(a) }}</td>
+                      <td>
+                        @if (a.client?.clientCode) {
+                          <span class="badge bg-light text-secondary border me-1 font-monospace">{{ a.client!.clientCode }}</span>
+                        }
+                        {{ getClientName(a) }}
+                      </td>
                       <td class="text-end">{{ a.advanceAmount | number:'1.2-2' }}</td>
                       <td>{{ a.createdAt | date:'shortDate' }}</td>
                       <td class="text-center">

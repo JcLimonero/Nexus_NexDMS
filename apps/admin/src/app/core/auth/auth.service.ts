@@ -64,6 +64,20 @@ export class AuthService {
       );
   }
 
+  forgotPassword(email: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(
+      "/api/v1/admin-auth/forgot-password",
+      { email },
+    );
+  }
+
+  resetPassword(token: string, newPassword: string): Observable<{ ok: true }> {
+    return this.http.post<{ ok: true }>(
+      "/api/v1/admin-auth/reset-password",
+      { token, newPassword },
+    );
+  }
+
   /** Este portal es solo para quien administra el SaaS. */
   esSuperadmin(): boolean {
     return this.usuario()?.roles?.includes("SUPERADMIN") ?? false;

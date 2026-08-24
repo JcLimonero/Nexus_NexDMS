@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { Contact } from '../contacts/entities/contact.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
@@ -12,6 +12,10 @@ import {
   DataQualityScore,
   getLevelFromScore,
 } from '../../shared/data-quality/data-quality.types';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 const CLIENT_QUALITY_WEIGHTS: Record<string, number> = {
   firstName: 10,
@@ -46,7 +50,9 @@ export class ClientsService {
     private readonly contactRepo: Repository<Contact>,
     @InjectRepository(CustomerVehicle)
     private readonly vehicleRepo: Repository<CustomerVehicle>,
+    private readonly dataSource: DataSource,
   ) {}
+
 
   async findAll(
     user: UserPayload,
@@ -77,14 +83,17 @@ export class ClientsService {
         'COALESCE(c.phone_alt, \'\') ILIKE :term',
         'c.email ILIKE :term',
         'c.rfc ILIKE :term',
+        'c.client_code ILIKE :term',
       ];
       const params: Record<string, string> = { term };
       if (digitsOnly) {
         conditions.push(
           "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
           "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+          'CAST(c.client_number AS text) = :numeroExacto',
         );
         params.termDigits = `%${digitsOnly}%`;
+        params.numeroExacto = digitsOnly;
       }
       qb.andWhere(`(${conditions.join(' OR ')})`, params);
     }
@@ -245,14 +254,17 @@ export class ClientsService {
       'COALESCE(c.phone_alt, \'\') ILIKE :term',
       'c.email ILIKE :term',
       'c.rfc ILIKE :term',
+      'c.client_code ILIKE :term',
     ];
     const params: Record<string, string> = { term };
     if (digitsOnly) {
       conditions.push(
         "REGEXP_REPLACE(c.phone, '[^0-9]', '', 'g') ILIKE :termDigits",
         "REGEXP_REPLACE(COALESCE(c.phone_alt, ''), '[^0-9]', '', 'g') ILIKE :termDigits",
+        'CAST(c.client_number AS text) = :numeroExacto',
       );
       params.termDigits = `%${digitsOnly}%`;
+      params.numeroExacto = digitsOnly;
     }
     return this.clientRepo
       .createQueryBuilder('c')
@@ -266,9 +278,16 @@ export class ClientsService {
   }
 
   async create(user: UserPayload, dto: CreateClientDto): Promise<Client> {
+    const { consecutivo, codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      user.tenantId,
+      CODIGO_OBJETO.CLIENTE,
+    );
     const client = this.clientRepo.create({
       ...dto,
       tenantId: user.tenantId,
+      clientNumber: consecutivo,
+      clientCode: codigo,
       isCompany: dto.isCompany ?? false,
       fixedDiscount: dto.fixedDiscount ?? 0,
     });

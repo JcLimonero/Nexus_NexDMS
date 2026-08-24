@@ -226,6 +226,12 @@
                       <div class="flex-grow-1">
                         <div class="fw-medium">
                           {{ getHistoryEventLabel(event) }}
+                          @if (event.type === 'RETURN') {
+                            <span class="badge bg-dark font-monospace ms-2">{{ event.folio || '—' }}</span>
+                          }
+                          @if (event.clientCode) {
+                            <span class="badge bg-secondary font-monospace ms-1">{{ event.clientCode }}</span>
+                          }
                           @if (event.type === 'RETURN' && event.id) {
                             <a
                               class="btn btn-link btn-sm p-0 ms-2"
@@ -242,9 +248,6 @@
                             }
                             @if (event.buybackPrice) {
                               <span>Precio recompra: {{ event.buybackPrice | number:'1.2-2' }}</span>
-                            }
-                            @if (event.folio) {
-                              <span> · Folio: {{ event.folio }}</span>
                             }
                             @if (event.deliveryDate) {
                               <span> · Entregada: {{ event.deliveryDate }}</span>

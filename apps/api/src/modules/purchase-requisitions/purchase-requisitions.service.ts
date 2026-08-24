@@ -16,6 +16,10 @@ import {
 import { Part } from '../parts/entities/part.entity';
 import { PurchaseOrdersService } from '../purchase-orders/purchase-orders.service';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class PurchaseRequisitionsService {
@@ -66,8 +70,14 @@ export class PurchaseRequisitionsService {
     if (!part) {
       throw new NotFoundException(`Parte ${dto.partId} no encontrada`);
     }
+    const { codigo } = await siguienteCodigoDocumento(
+      this.repo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.REQUISICION,
+    );
     const req = this.repo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       branchId,
       partId: dto.partId,
       quantity: dto.quantity,

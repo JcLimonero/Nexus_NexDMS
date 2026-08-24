@@ -20,14 +20,19 @@ import {
 } from "../models/unit-sale.model";
 import { InventarioUnidadesService } from "../../inventario-unidades/inventario-unidades.service";
 import { ClientesService } from "../../clientes/clientes.service";
+import { ClientSelector } from "../../clientes/client-selector/client-selector";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { CatalogUnit, CatalogUnitStatus } from "../../inventario-unidades/models/catalog-unit.model";
 import { ClientListItem } from "../../clientes/models/client.model";
+import {
+  ConvenioResumen,
+  FlotillasService,
+} from "../../flotillas/flotillas.service";
 
 @Component({
   selector: "app-venta-unidad-form",
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, RouterModule, ClientSelector],
   templateUrl: "./venta-unidad-form.html",
   styleUrls: ["./venta-unidad-form.scss"],
 })
@@ -38,6 +43,7 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
   private inventarioService = inject(InventarioUnidadesService);
   private clientesService = inject(ClientesService);
   private branchesService = inject(BranchesService);
+  private flotillasService = inject(FlotillasService);
   private toastr = inject(ToastrService);
 
   form!: FormGroup;
@@ -51,6 +57,8 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
   accessoriesLoading = signal(false);
   saving = signal(false);
   branchFilter = signal<string>("");
+  /** Convenio de flotilla del cliente elegido; aplica % sobre la unidad. */
+  convenio = signal<ConvenioResumen | null>(null);
   private destroy$ = new Subject<void>();
   private accessoriesDirty = signal(0);
 
@@ -101,12 +109,38 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
     });
 
     this.loadUnits();
-    this.loadClients();
+    // El cliente se elige con búsqueda (client-selector), sin precargar 500.
 
     this.form
       .get("catalogUnitId")
       ?.valueChanges.pipe(takeUntil(this.destroy$))
       .subscribe((id) => this.onUnitChange(id ?? ""));
+
+    // Al elegir cliente, si tiene convenio de flotilla se aplica su % de
+    // descuento sobre la unidad; al quitarlo, vuelve al precio de lista.
+    this.form
+      .get("clientId")
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe((clientId: string) => {
+        if (!clientId) {
+          this.convenio.set(null);
+          this.syncFinalPrice();
+          return;
+        }
+        this.flotillasService.forClient(clientId).subscribe({
+          next: (c) => {
+            this.convenio.set(c);
+            this.syncFinalPrice();
+          },
+          error: () => this.convenio.set(null),
+        });
+      });
+  }
+
+  /** Precio de la unidad con el descuento de flotilla aplicado (si hay). */
+  precioConDescuento(): number {
+    const pct = this.convenio()?.unitSaleDiscountPct ?? 0;
+    return Math.round(this.totalPrice() * (1 - pct / 100) * 100) / 100;
   }
 
   ngOnDestroy(): void {
@@ -131,7 +165,7 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
 
     if (unit) {
       this.form.patchValue({
-        finalPrice: Number(unit.listPrice),
+        finalPrice: this.precioConDescuento(),
         downPayment: 0,
       });
       this.loadCompatibleAccessories(unitId);
@@ -237,7 +271,7 @@ export class VentaUnidadForm implements OnInit, OnDestroy {
 
   syncFinalPrice(): void {
     this.accessoriesDirty.update((n) => n + 1);
-    this.form.patchValue({ finalPrice: this.totalPrice() });
+    this.form.patchValue({ finalPrice: this.precioConDescuento() });
   }
 
   getUnitLabel(u: CatalogUnit): string {

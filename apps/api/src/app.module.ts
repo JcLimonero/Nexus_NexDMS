@@ -58,6 +58,7 @@ import { ClientPortalModule } from './modules/client-portal/client-portal.module
 import { ExportModule } from './modules/export/export.module';
 import { WarrantiesModule } from './modules/warranties/warranties.module';
 import { BodyworkModule } from './modules/bodywork/bodywork.module';
+import { FleetsModule } from './modules/fleets/fleets.module';
 import { CommissionsModule } from './modules/commissions/commissions.module';
 import { BranchPrintersModule } from './modules/branch-printers/branch-printers.module';
 import { CfdiLogModule } from './modules/cfdi-log/cfdi-log.module';
@@ -87,6 +88,8 @@ import { HealthModule } from './modules/health/health.module';
 import { DocumentsModule } from './modules/documents/documents.module';
 import { UserAvailabilityModule } from './modules/user-availability/user-availability.module';
 import { ServiceTypesModule } from './modules/service-types/service-types.module';
+import { MasterCatalogsModule } from './modules/master-catalogs/master-catalogs.module';
+import { ProvisioningModule } from './modules/provisioning/provisioning.module';
 import { MechanicChecklistModule } from './modules/mechanic-checklist/mechanic-checklist.module';
 import { BranchRampsModule } from './modules/branch-ramps/branch-ramps.module';
 import { ServicePlanningModule } from './modules/service-planning/service-planning.module';
@@ -175,6 +178,8 @@ import { WhatsappConversationsModule } from './modules/whatsapp-conversations/wh
     AppointmentsModule,
     UserAvailabilityModule,
     ServiceTypesModule,
+    MasterCatalogsModule,
+    ProvisioningModule,
     MechanicChecklistModule,
     BranchRampsModule,
     ServicePlanningModule,
@@ -184,6 +189,7 @@ import { WhatsappConversationsModule } from './modules/whatsapp-conversations/wh
     UnitReturnDocumentsModule,
     ServiceOrdersModule,
     BodyworkModule,
+    FleetsModule,
     SaleDocumentsModule,
     ServiceKitsModule,
     SignaturesModule,

@@ -32,7 +32,12 @@ export class ClientSelector {
   private clientesService = inject(ClientesService);
   private destroyRef = inject(DestroyRef);
 
-  clients = input.required<ClientListItem[]>();
+  /**
+   * Lista opcional de clientes ya cargados. Ya NO es obligatoria: el selector
+   * busca en el servidor (typeahead), así que los formularios no necesitan
+   * precargar cientos de clientes para usarlo.
+   */
+  clients = input<ClientListItem[]>([]);
   selectedId = input<string>("");
 
   selectedIdChange = output<string>();
@@ -42,6 +47,8 @@ export class ClientSelector {
   showDropdown = signal(false);
   searchResults = signal<ClientListItem[]>([]);
   searchLoading = signal(false);
+  /** Cliente elegido/resuelto, para mostrar su nombre sin tener toda la lista. */
+  private selectedCache = signal<ClientListItem | null>(null);
 
   private searchSubject = new Subject<string>();
 
@@ -56,7 +63,10 @@ export class ClientSelector {
   selectedClient = computed(() => {
     const id = this.selectedId();
     if (!id) return null;
-    return this.clients().find((c) => c.id === id) ?? null;
+    const enLista = this.clients().find((c) => c.id === id);
+    if (enLista) return enLista;
+    const cache = this.selectedCache();
+    return cache && cache.id === id ? cache : null;
   });
 
   displayValue = computed(() => {
@@ -68,12 +78,22 @@ export class ClientSelector {
   constructor() {
     effect(() => {
       const id = this.selectedId();
-      if (id) {
-        const c = this.clients().find((x) => x.id === id);
-        if (c) {
-          this.searchTerm.set(this.clientesService.getDisplayName(c));
-        }
+      if (!id) return;
+      const c = this.clients().find((x) => x.id === id) ?? this.selectedCache();
+      if (c && c.id === id) {
+        this.searchTerm.set(this.clientesService.getDisplayName(c));
+        return;
       }
+      // No está en la lista precargada (o no se precargó ninguna): se resuelve
+      // el nombre por id, sin traer todos los clientes.
+      this.clientesService.getById(id).subscribe({
+        next: (det) => {
+          const item = det as unknown as ClientListItem;
+          this.selectedCache.set(item);
+          this.searchTerm.set(this.clientesService.getDisplayName(item));
+        },
+        error: () => undefined,
+      });
     });
 
     this.searchSubject
@@ -111,6 +131,7 @@ export class ClientSelector {
   }
 
   selectClient(client: ClientListItem): void {
+    this.selectedCache.set(client);
     this.selectedIdChange.emit(client.id);
     this.searchTerm.set(this.clientesService.getDisplayName(client));
     this.showDropdown.set(false);

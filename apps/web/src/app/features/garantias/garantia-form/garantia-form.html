@@ -11,12 +11,10 @@
             <div class="row">
               <div class="col-md-4 mb-3">
                 <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                <select class="form-select" formControlName="clientId">
-                  <option value="">Seleccionar cliente</option>
-                  @for (c of clients(); track c.id) {
-                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
-                  }
-                </select>
+                <app-client-selector
+                  [selectedId]="form.get('clientId')?.value || ''"
+                  (selectedIdChange)="form.get('clientId')?.setValue($event)"
+                />
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Vehículo <span class="text-danger">*</span></label>

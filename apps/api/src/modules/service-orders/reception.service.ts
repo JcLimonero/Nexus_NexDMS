@@ -48,6 +48,10 @@ import {
   ClientTypeEnum,
 } from '../clients/entities/client.entity';
 import { StorageService } from '../../common/storage/storage.service';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 export interface ReceptionServiceLine {
   serviceTypeId?: string;
@@ -356,19 +360,13 @@ export class ReceptionService {
       await this.apptRepo.update(cita.id, { clientId, vehicleId });
     }
 
-    const folio = await this.dataSource
-      .query<{ last_value: number }[]>(
-        `INSERT INTO service_order_folio_seq (tenant_id, year, last_value)
-         VALUES ($1, $2, 1)
-         ON CONFLICT (tenant_id, year) DO UPDATE
-           SET last_value = service_order_folio_seq.last_value + 1
-         RETURNING last_value`,
-        [user.tenantId, new Date().getFullYear()],
+    const folio = (
+      await siguienteCodigoDocumento(
+        this.dataSource,
+        user.tenantId,
+        CODIGO_OBJETO.ORDEN_SERVICIO,
       )
-      .then(
-        (r) =>
-          `OS-${new Date().getFullYear()}-${String(r[0]?.last_value ?? 1).padStart(4, '0')}`,
-      );
+    ).codigo;
 
     const orden = await this.soRepo.save(
       this.soRepo.create({
@@ -477,19 +475,13 @@ export class ReceptionService {
       vehicleId = (nueva as unknown as { id: string }).id;
     }
 
-    const folio = await this.dataSource
-      .query<{ last_value: number }[]>(
-        `INSERT INTO service_order_folio_seq (tenant_id, year, last_value)
-         VALUES ($1, $2, 1)
-         ON CONFLICT (tenant_id, year) DO UPDATE
-           SET last_value = service_order_folio_seq.last_value + 1
-         RETURNING last_value`,
-        [user.tenantId, new Date().getFullYear()],
+    const folio = (
+      await siguienteCodigoDocumento(
+        this.dataSource,
+        user.tenantId,
+        CODIGO_OBJETO.ORDEN_SERVICIO,
       )
-      .then(
-        (r) =>
-          `OS-${new Date().getFullYear()}-${String(r[0]?.last_value ?? 1).padStart(4, '0')}`,
-      );
+    ).codigo;
 
     return this.soRepo.save(
       this.soRepo.create({
@@ -912,9 +904,25 @@ export class ReceptionService {
     );
   }
 
-  async removeMark(id: string) {
+  async removeMark(id: string, tenantId: string) {
     const mark = await this.markRepo.findOne({ where: { id } });
     if (!mark) throw new NotFoundException('Marcador no encontrado');
+    // El marcador no lleva tenant; se valida subiendo por foto → checklist →
+    // orden, y comprobando que la orden sea del tenant que pide el borrado.
+    const foto = await this.photoRepo.findOne({
+      where: { id: mark.receptionPhotoId },
+    });
+    const checklist = foto
+      ? await this.checklistRepo.findOne({
+          where: { id: foto.receptionChecklistId },
+        })
+      : null;
+    const orden = checklist
+      ? await this.soRepo.findOne({
+          where: { id: checklist.serviceOrderId, tenantId },
+        })
+      : null;
+    if (!orden) throw new NotFoundException('Marcador no encontrado');
     await this.markRepo.remove(mark);
     return { ok: true };
   }
@@ -937,16 +945,12 @@ export class ReceptionService {
   }
 
   private async folioCotizacion(tenantId: string): Promise<string> {
-    const year = new Date().getFullYear();
-    const r = await this.dataSource.query<{ last_value: number }[]>(
-      `INSERT INTO quotation_folio_seq (tenant_id, year, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE
-         SET last_value = quotation_folio_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, year],
+    const { codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      tenantId,
+      CODIGO_OBJETO.COTIZACION,
     );
-    return `COT-${year}-${String(r[0]?.last_value ?? 1).padStart(4, '0')}`;
+    return codigo;
   }
 
   /**

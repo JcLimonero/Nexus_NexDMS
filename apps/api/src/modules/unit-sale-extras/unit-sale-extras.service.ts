@@ -67,14 +67,27 @@ export class UnitSaleExtrasService {
     return this.extraRepo.save(extra);
   }
 
+  /** Carga el extra y verifica que pertenezca a la venta ya validada por tenant. */
+  private async findOneEnVenta(
+    id: string,
+    unitSaleId: string,
+  ): Promise<UnitSaleExtra> {
+    const extra = await this.findOne(id);
+    if (extra.unitSaleId !== unitSaleId) {
+      throw new NotFoundException(`Trámite extra ${id} no encontrado`);
+    }
+    return extra;
+  }
+
   async update(
     user: UserPayload,
     id: string,
+    unitSaleId: string,
     saleStatus: UnitSaleStatusEnum,
     dto: UpdateUnitSaleExtraDto,
   ): Promise<UnitSaleExtra> {
     this.assertCanWrite(user);
-    await this.findOne(id);
+    await this.findOneEnVenta(id, unitSaleId);
     if (saleStatus !== UnitSaleStatusEnum.IN_PROGRESS) {
       throw new BadRequestException(
         'Solo se pueden editar extras de ventas en proceso',
@@ -97,10 +110,11 @@ export class UnitSaleExtrasService {
   async delete(
     user: UserPayload,
     id: string,
+    unitSaleId: string,
     saleStatus: UnitSaleStatusEnum,
   ): Promise<void> {
     this.assertCanWrite(user);
-    await this.findOne(id);
+    await this.findOneEnVenta(id, unitSaleId);
     if (saleStatus !== UnitSaleStatusEnum.IN_PROGRESS) {
       throw new BadRequestException(
         'Solo se pueden eliminar extras de ventas en proceso',

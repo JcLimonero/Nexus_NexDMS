@@ -12,10 +12,15 @@ import { AppointmentNoShowJob } from './jobs/appointment-no-show.job';
 import { StockMinimumJob } from './jobs/stock-minimum.job';
 import { PaymentOverdueJob } from './jobs/payment-overdue.job';
 import { ServiceDueRemindersJob } from './jobs/service-due-reminders.job';
+import { SaasOverdueSummaryJob } from './jobs/saas-overdue-summary.job';
+import { ShopDailySummaryJob } from './jobs/shop-daily-summary.job';
+import { DataRetentionJob } from './jobs/data-retention.job';
 import { ServicePlanningModule } from '../service-planning/service-planning.module';
 import { ServiceDueNotification } from '../service-planning/entities/service-due-notification.entity';
 import { WhatsappConversationExpiryJob } from './jobs/whatsapp-conversation-expiry.job';
 import { WhatsappConversation } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
+import { SaasModule } from '../saas/saas.module';
+import { EmailModule } from '../../common/email/email.module';
 
 @Module({
   imports: [
@@ -31,6 +36,8 @@ import { WhatsappConversation } from '../whatsapp-conversations/entities/whatsap
       WhatsappConversation,
     ]),
     ServicePlanningModule,
+    SaasModule,
+    EmailModule,
   ],
   providers: [
     AppointmentRemindersJob,
@@ -39,6 +46,9 @@ import { WhatsappConversation } from '../whatsapp-conversations/entities/whatsap
     PaymentOverdueJob,
     ServiceDueRemindersJob,
     WhatsappConversationExpiryJob,
+    SaasOverdueSummaryJob,
+    ShopDailySummaryJob,
+    DataRetentionJob,
   ],
 })
 export class CronModule {}

@@ -1,0 +1,23 @@
+<div class="sg">
+  <header class="sg-top">
+    <h1>Seguimiento</h1>
+    <p>Tablero por fase: en qué etapa está cada documento de cada proceso.</p>
+  </header>
+
+  <div class="sg-tabs">
+    @for (p of procesos; track p.key) {
+      <button class="sg-tab" [class.on]="p.key === activo()" (click)="elegir(p.key)">
+        {{ p.label }}
+      </button>
+    }
+  </div>
+
+  <div class="sg-board">
+    <app-phase-board
+      [phases]="cfg().phases"
+      [items]="items()"
+      [loading]="loading()"
+      (abrir)="abrir($event)"
+    />
+  </div>
+</div>

@@ -38,12 +38,10 @@
               }
               <div class="col-md-2 mb-3">
                 <label class="form-label">Cliente</label>
-                <select class="form-select" formControlName="clientId">
-                  <option value="">Sin cliente</option>
-                  @for (c of clients(); track c.id) {
-                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
-                  }
-                </select>
+                <app-client-selector
+                  [selectedId]="form.get('clientId')?.value || ''"
+                  (selectedIdChange)="form.get('clientId')?.setValue($event)"
+                />
               </div>
               <div class="col-md-2 mb-3">
                 <label class="form-label">Desc. %</label>

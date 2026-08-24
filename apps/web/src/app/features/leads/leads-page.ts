@@ -6,6 +6,7 @@ import { ToastrService } from "ngx-toastr";
 
 interface Lead {
   id: string;
+  folio: string | null;
   name: string;
   phone: string | null;
   email: string | null;

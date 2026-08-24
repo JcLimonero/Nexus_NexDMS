@@ -3,6 +3,14 @@ import { moduleGuard } from "../guard/module.guard";
 
 export const content: Routes = [
   {
+    path: "seguimiento",
+    data: { breadcrumb: "Seguimiento" },
+    loadComponent: () =>
+      import("../../../app/features/seguimiento/seguimiento-page").then(
+        (c) => c.SeguimientoPage,
+      ),
+  },
+  {
     path: "dashboard",
     data: { breadcrumb: "Inicio" },
     loadChildren: () =>
@@ -147,6 +155,16 @@ export const content: Routes = [
     loadChildren: () =>
       import("../../../app/features/taller/taller.routes").then(
         (r) => r.workshopRoutes,
+      ),
+  },
+  {
+    // Flotillas: convenios de empresa con varias unidades y precios preferenciales.
+    path: "fleets",
+    canActivate: [moduleGuard],
+    data: { breadcrumb: "Flotillas", module: "fleets" },
+    loadChildren: () =>
+      import("../../../app/features/flotillas/flotillas.routes").then(
+        (r) => r.fleetsRoutes,
       ),
   },
   {

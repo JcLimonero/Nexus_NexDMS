@@ -1,0 +1,39 @@
+.sg {
+  padding: 20px;
+}
+.sg-top {
+  margin-bottom: 16px;
+}
+.sg-top h1 {
+  font-size: 22px;
+  margin: 0 0 4px;
+}
+.sg-top p {
+  margin: 0;
+  color: #64748b;
+  font-size: 14px;
+}
+.sg-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 18px;
+}
+.sg-tab {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #0f172a;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-weight: 500;
+}
+.sg-tab:hover {
+  border-color: #94a3b8;
+}
+.sg-tab.on {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}

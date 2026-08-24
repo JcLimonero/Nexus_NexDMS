@@ -15,6 +15,10 @@ import {
 } from '../catalog-units/entities/catalog-unit.entity';
 import { BranchesService } from '../branches/branches.service';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class UnitReturnsService {
@@ -67,8 +71,15 @@ export class UnitReturnsService {
 
     await this.branchesService.assertBranchInScope(user, unit.branchId);
 
+    const { codigo } = await siguienteCodigoDocumento(
+      this.returnRepo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.RECOMPRA_UNIDAD,
+    );
+
     const unitReturn = this.returnRepo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       catalogUnitId: dto.catalogUnitId,
       clientId: dto.clientId,
       unitSaleId: dto.unitSaleId ?? null,

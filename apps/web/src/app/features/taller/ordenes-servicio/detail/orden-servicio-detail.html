@@ -29,13 +29,25 @@
               <div class="spinner-border text-primary" role="status"></div>
             </div>
           } @else if (orden(); as o) {
+            <div class="mb-4">
+              <app-phase-tracker
+                [phases]="fasesOS"
+                [current]="o.status"
+                [canceledKey]="canceladoOS"
+              />
+            </div>
             <div class="row mb-4">
               <div class="col-md-6">
                 <table class="table table-sm">
                   <tbody>
                     <tr>
                       <th class="text-muted" style="width: 35%">Cliente</th>
-                      <td>{{ getOwnerName(o) }}</td>
+                      <td>
+                        @if (o.owner?.clientCode) {
+                          <span class="badge bg-light text-secondary border me-1 font-monospace">{{ o.owner!.clientCode }}</span>
+                        }
+                        {{ getOwnerName(o) }}
+                      </td>
                     </tr>
                     <tr>
                       <th class="text-muted">Vehículo</th>

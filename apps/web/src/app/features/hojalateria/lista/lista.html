@@ -48,7 +48,7 @@
       <tbody>
         @for (o of ordenes(); track o.id) {
           <tr [routerLink]="[o.id]" class="hp-fila">
-            <td class="hp-mono">#{{ o.folio }}</td>
+            <td class="hp-mono">{{ o.folio }}</td>
             <td>{{ o.clientName }}</td>
             <td class="hp-muted">{{ vehiculo(o) || "—" }}</td>
             <td>

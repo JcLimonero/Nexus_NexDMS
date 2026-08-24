@@ -25,6 +25,7 @@ import { Supplier } from '../suppliers/entities/supplier.entity';
 import { StockMovement } from '../stock-movements/entities/stock-movement.entity';
 import { StockMovementTypeEnum } from '../stock-movements/entities/stock-movement.entity';
 import { BranchesService } from '../branches/branches.service';
+import { CODIGO_OBJETO, siguienteCodigoDocumento } from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class PurchaseOrdersService {
@@ -192,8 +193,22 @@ export class PurchaseOrdersService {
       .take(limit)
       .getManyAndCount();
 
+    // Adjunta el nombre del proveedor (la entidad solo trae supplier_id).
+    const supplierIds = [...new Set(data.map((o) => o.supplierId))];
+    const suppliers = supplierIds.length
+      ? await this.supplierRepo.find({
+          where: { id: In(supplierIds) },
+          select: ['id', 'name'],
+        })
+      : [];
+    const nombrePorId = new Map(suppliers.map((s) => [s.id, s.name]));
+    const conProveedor = data.map((o) => ({
+      ...o,
+      supplierName: nombrePorId.get(o.supplierId) ?? null,
+    }));
+
     return {
-      data,
+      data: conProveedor,
       meta: {
         total,
         page,
@@ -258,17 +273,12 @@ export class PurchaseOrdersService {
     tenantId: string,
     em?: EntityManager,
   ): Promise<string> {
-    const year = new Date().getFullYear();
-    const runner = em ?? this.dataSource.manager;
-    const result = await runner.query<{ last_value: number }[]>(
-      `INSERT INTO purchase_order_folio_seq (tenant_id, year, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE SET last_value = purchase_order_folio_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, year],
+    const { codigo } = await siguienteCodigoDocumento(
+      em ?? this.dataSource.manager,
+      tenantId,
+      CODIGO_OBJETO.PEDIDO_PROVEEDOR,
     );
-    const seq = result[0]?.last_value ?? 1;
-    return `OC-${year}-${String(seq).padStart(4, '0')}`;
+    return codigo;
   }
 
   async create(

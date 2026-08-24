@@ -66,7 +66,7 @@ export class UnitSaleExtrasController {
     return this.unitSalesService
       .findOne(user, saleId)
       .then((sale) =>
-        this.unitSaleExtrasService.update(user, id, sale.status, dto),
+        this.unitSaleExtrasService.update(user, id, sale.id, sale.status, dto),
       );
   }
 
@@ -79,6 +79,8 @@ export class UnitSaleExtrasController {
   ) {
     return this.unitSalesService
       .findOne(user, saleId)
-      .then((sale) => this.unitSaleExtrasService.delete(user, id, sale.status));
+      .then((sale) =>
+        this.unitSaleExtrasService.delete(user, id, sale.id, sale.status),
+      );
   }
 }

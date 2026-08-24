@@ -42,6 +42,7 @@
           </div>
           @for (l of byStatus()[col.key]; track l.id) {
             <div class="lead-card">
+              <div class="lead-folio">{{ l.folio || '—' }}</div>
               <div class="lead-name">{{ l.name }}</div>
               @if (l.interest) { <div class="lead-interest">{{ l.interest }}</div> }
               <div class="lead-meta">

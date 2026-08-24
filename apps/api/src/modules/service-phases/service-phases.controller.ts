@@ -123,18 +123,25 @@ export class ServicePhasesController {
     'MECHANIC',
   )
   cambiarEstado(
+    @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: { status: PhaseStatusEnum; assignedUserId?: string | null },
   ) {
-    return this.fases.cambiarEstado(id, dto.status, dto.assignedUserId);
+    return this.fases.cambiarEstado(
+      id,
+      dto.status,
+      dto.assignedUserId,
+      user.tenantId,
+    );
   }
 
   @Patch(':id/asignar')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
   asignar(
+    @CurrentUser() user: UserPayload,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: { userId: string | null },
   ) {
-    return this.fases.asignar(id, dto.userId);
+    return this.fases.asignar(id, dto.userId, user.tenantId);
   }
 }

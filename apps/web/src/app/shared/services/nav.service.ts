@@ -46,12 +46,19 @@ export class NavService {
       active: true,
     },
     {
+      path: "/seguimiento",
+      title: "Seguimiento",
+      icon: "activity",
+      type: "link",
+    },
+    {
       title: "CRM",
       icon: "users",
       type: "sub",
       active: false,
       children: [
         { path: "/clients", title: "Clientes", type: "link" },
+        { path: "/fleets", title: "Flotillas", type: "link" },
         { path: "/leads", title: "Leads", type: "link" },
       ],
     },

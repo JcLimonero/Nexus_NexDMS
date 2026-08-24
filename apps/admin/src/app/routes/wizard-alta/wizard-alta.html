@@ -1,0 +1,252 @@
+<div class="wz">
+  <header class="wz-top">
+    <h1>Alta de empresa</h1>
+    <p>Crea una empresa nueva, su sucursal y su administrador en un solo flujo.</p>
+  </header>
+
+  @if (resultado(); as r) {
+    <!-- Éxito -->
+    <div class="wz-ok">
+      <h2>✓ Empresa creada</h2>
+      <p>
+        <strong>{{ form().name }}</strong> quedó dada de alta. Comparte esta liga
+        con el administrador para que defina su contraseña (vence en 1 hora):
+      </p>
+      <div class="wz-liga">
+        <input readonly [value]="r.inviteUrl" />
+        <button class="wz-btn" (click)="copiarLiga()">Copiar</button>
+      </div>
+      <div class="wz-ok-acc">
+        <button class="wz-btn" (click)="irATenants()">Ir a Clientes</button>
+      </div>
+    </div>
+  } @else {
+    <!-- Pasos -->
+    <ol class="wz-steps">
+      @for (p of pasos; track p; let i = $index) {
+        <li [class.activo]="i === paso()" [class.hecho]="i < paso()">
+          <span class="n">{{ i + 1 }}</span>{{ p }}
+        </li>
+      }
+    </ol>
+
+    @if (error()) {
+      <div class="wz-error" (click)="error.set(null)">{{ error() }}</div>
+    }
+
+    <div class="wz-card">
+      <!-- Paso 1: Empresa -->
+      @if (paso() === 0) {
+        <div class="wz-grid">
+          <label class="c">
+            <span>Nombre de la empresa *</span>
+            <input [ngModel]="form().name" (ngModelChange)="alEscribirNombre($event)" />
+          </label>
+          <label class="c">
+            <span>Identificador *</span>
+            <input [ngModel]="form().slug" (ngModelChange)="set('slug', $event)" />
+          </label>
+          <label class="c">
+            <span>Prefijo de códigos *</span>
+            <input
+              [ngModel]="form().codePrefix"
+              (ngModelChange)="alEscribirPrefijo($event)"
+              maxlength="3"
+              style="text-transform: uppercase"
+            />
+            <small>3 letras, fijo. Ej. cliente {{ (form().codePrefix || "APG") }}C00000001</small>
+          </label>
+          <label class="c">
+            <span>Giro</span>
+            <select [ngModel]="form().giro" (ngModelChange)="set('giro', $event)">
+              <option value="AUTO">Autos</option>
+              <option value="MOTO">Motos</option>
+              <option value="BOTH">Autos y motos</option>
+            </select>
+          </label>
+        </div>
+      }
+
+      <!-- Paso 2: Plan y módulos -->
+      @if (paso() === 1) {
+        <div class="wz-grid">
+          <label class="c">
+            <span>Plan</span>
+            <select [ngModel]="form().plan" (ngModelChange)="set('plan', $event)">
+              <option value="BASIC">Básico</option>
+              <option value="PRO">Pro</option>
+              <option value="ENTERPRISE">Empresarial</option>
+            </select>
+          </label>
+          <label class="c">
+            <span>Paleta de marca</span>
+            <select [ngModel]="form().palette" (ngModelChange)="set('palette', $event)">
+              @for (p of paletas; track p.id) {
+                <option [value]="p.id">{{ p.nombre }}</option>
+              }
+            </select>
+          </label>
+        </div>
+        <div class="wz-mods">
+          <span class="wz-mods-tit">Módulos habilitados
+            <small>(vacío = los que incluya el plan)</small></span>
+          <div class="wz-mods-grid">
+            @for (m of modulos(); track m.key) {
+              <label class="wz-chip" [class.on]="modulosSel().has(m.key)">
+                <input
+                  type="checkbox"
+                  [checked]="modulosSel().has(m.key)"
+                  (change)="toggleModulo(m.key)"
+                />
+                {{ m.name }}
+              </label>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Paso 3: Fiscal y sucursal -->
+      @if (paso() === 2) {
+        <h3 class="wz-sub">Datos fiscales (entidad legal)</h3>
+        <div class="wz-grid">
+          <label class="c">
+            <span>Razón social</span>
+            <input [ngModel]="form().razonSocial" (ngModelChange)="set('razonSocial', $event)" />
+          </label>
+          <label class="c">
+            <span>RFC</span>
+            <input [ngModel]="form().rfc" (ngModelChange)="set('rfc', $event)" maxlength="13" />
+          </label>
+          <label class="c">
+            <span>Régimen fiscal</span>
+            <input [ngModel]="form().taxRegime" (ngModelChange)="set('taxRegime', $event)" maxlength="10" />
+          </label>
+          <label class="c">
+            <span>CP fiscal</span>
+            <input [ngModel]="form().taxPostalCode" (ngModelChange)="set('taxPostalCode', $event)" maxlength="10" />
+          </label>
+        </div>
+        <h3 class="wz-sub">Sucursal inicial</h3>
+        <div class="wz-grid">
+          <label class="c">
+            <span>Nombre *</span>
+            <input [ngModel]="form().branchName" (ngModelChange)="set('branchName', $event)" />
+          </label>
+          <label class="c">
+            <span>Teléfono *</span>
+            <input [ngModel]="form().branchPhone" (ngModelChange)="set('branchPhone', $event)" />
+          </label>
+          <label class="c wz-ancho">
+            <span>Dirección *</span>
+            <input [ngModel]="form().branchAddress" (ngModelChange)="set('branchAddress', $event)" />
+          </label>
+          <label class="c">
+            <span>Ciudad *</span>
+            <input [ngModel]="form().branchCity" (ngModelChange)="set('branchCity', $event)" />
+          </label>
+          <label class="c">
+            <span>Estado *</span>
+            <input [ngModel]="form().branchState" (ngModelChange)="set('branchState', $event)" />
+          </label>
+          <label class="c">
+            <span>Correo *</span>
+            <input [ngModel]="form().branchEmail" (ngModelChange)="set('branchEmail', $event)" />
+          </label>
+        </div>
+      }
+
+      <!-- Paso 4: Usuario admin -->
+      @if (paso() === 3) {
+        <p class="wz-nota">
+          Se creará el primer usuario administrador y se le enviará una liga de
+          invitación para que ponga su propia contraseña.
+        </p>
+        <div class="wz-grid">
+          <label class="c">
+            <span>Nombre(s) *</span>
+            <input [ngModel]="form().adminFirstName" (ngModelChange)="set('adminFirstName', $event)" />
+          </label>
+          <label class="c">
+            <span>Apellidos *</span>
+            <input [ngModel]="form().adminLastName" (ngModelChange)="set('adminLastName', $event)" />
+          </label>
+          <label class="c wz-ancho">
+            <span>Correo *</span>
+            <input [ngModel]="form().adminEmail" (ngModelChange)="set('adminEmail', $event)" />
+          </label>
+        </div>
+      }
+
+      <!-- Paso 5: Catálogos base -->
+      @if (paso() === 4) {
+        <p class="wz-nota">
+          Elige qué catálogos base copiar a la empresa nueva. Podrá editarlos
+          después; esto solo le da un punto de partida.
+        </p>
+        <div class="wz-cats">
+          @for (c of catalogos(); track c.key) {
+            <div class="wz-cat">
+              <div class="wz-cat-top">
+                <span class="wz-cat-nom">{{ c.label }} <small>({{ c.count }})</small></span>
+                <div class="wz-modos">
+                  <button [class.on]="modoCat(c.key) === 'ALL'" (click)="setModoCat(c.key, 'ALL')">Todo</button>
+                  <button [class.on]="modoCat(c.key) === 'SOME'" (click)="setModoCat(c.key, 'SOME')">Elegir</button>
+                  <button [class.on]="modoCat(c.key) === 'NONE'" (click)="setModoCat(c.key, 'NONE')">Ninguno</button>
+                </div>
+              </div>
+              @if (modoCat(c.key) === "SOME") {
+                <div class="wz-cat-entries">
+                  @for (e of catEntradas()[c.key]; track e.id) {
+                    <label class="wz-chip" [class.on]="entradaMarcada(c.key, e.id)">
+                      <input
+                        type="checkbox"
+                        [checked]="entradaMarcada(c.key, e.id)"
+                        (change)="toggleEntradaCat(c.key, e.id)"
+                      />
+                      {{ e["name"] || e["code"] || e.id }}
+                    </label>
+                  } @empty {
+                    <span class="wz-cat-vacio">Sin entradas en el maestro.</span>
+                  }
+                </div>
+              }
+            </div>
+          } @empty {
+            <p class="wz-cat-vacio">No hay catálogos maestros configurados.</p>
+          }
+        </div>
+      }
+
+      <!-- Paso 6: Resumen -->
+      @if (paso() === 5) {
+        <div class="wz-resumen">
+          <div><b>Empresa</b><span>{{ form().name }} ({{ form().slug }})</span></div>
+          <div><b>Prefijo</b><span>{{ form().codePrefix }}</span></div>
+          <div><b>Plan</b><span>{{ form().plan }}</span></div>
+          <div><b>Módulos</b><span>{{ modulosSel().size || "los del plan" }}</span></div>
+          <div><b>Giro</b><span>{{ form().giro }}</span></div>
+          <div><b>RFC</b><span>{{ form().rfc || "—" }}</span></div>
+          <div><b>Sucursal</b><span>{{ form().branchName }} · {{ form().branchCity }}, {{ form().branchState }}</span></div>
+          <div><b>Admin</b><span>{{ form().adminFirstName }} {{ form().adminLastName }} · {{ form().adminEmail }}</span></div>
+          @for (c of catalogos(); track c.key) {
+            <div><b>{{ c.label }}</b><span>{{ resumenCat(c.key) }}</span></div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Navegación -->
+    <div class="wz-nav">
+      <button class="wz-btn sec" (click)="atras()" [disabled]="paso() === 0 || guardando()">
+        Atrás
+      </button>
+      @if (!esUltimo()) {
+        <button class="wz-btn" (click)="siguiente()">Siguiente</button>
+      } @else {
+        <button class="wz-btn" (click)="crear()" [disabled]="guardando()">
+          {{ guardando() ? "Creando…" : "Crear empresa" }}
+        </button>
+      }
+    </div>
+  }
+</div>

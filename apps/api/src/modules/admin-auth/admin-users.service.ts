@@ -6,9 +6,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { IsNull, Not, Repository } from 'typeorm';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
 import { AdminUser } from './entities/admin-user.entity';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { EmailComposer } from '../../common/email/email-composer.service';
+import { emailButton } from '../../common/email/templates';
+import { PasswordResetService } from '../password-reset/password-reset.service';
+import { ResetUserType } from '../password-reset/password-reset-token.entity';
 
 const BCRYPT_ROUNDS = 12;
 
@@ -18,6 +24,10 @@ export class AdminUsersService {
   constructor(
     @InjectRepository(AdminUser)
     private readonly repo: Repository<AdminUser>,
+    private readonly config: ConfigService,
+    private readonly reset: PasswordResetService,
+    private readonly emailjs: EmailjsService,
+    private readonly composer: EmailComposer,
   ) {}
 
   async list(): Promise<Omit<AdminUser, 'passwordHash'>[]> {
@@ -51,8 +61,41 @@ export class AdminUsersService {
         isActive: true,
       }),
     );
+    void this.enviarInvitacion(user.id, user.email, user.firstName);
     const { passwordHash: _omit, ...rest } = user;
     return rest;
+  }
+
+  /** Invitación al portal admin con enlace para que fije su contraseña. */
+  private async enviarInvitacion(
+    userId: string,
+    email: string,
+    nombre?: string,
+  ): Promise<void> {
+    try {
+      const token = await this.reset.crear(ResetUserType.ADMIN, userId);
+      const base = this.config.get<string>(
+        'ADMIN_APP_URL',
+        'https://admin.nexusqsystem.com',
+      );
+      const url = `${base}/auth/reset-password?token=${token}`;
+      const html = this.composer.brandedAdmin(
+        'Acceso al portal de administración',
+        `<p>Hola ${nombre ?? ''},</p>` +
+          `<p>Se creó tu cuenta en el portal de administración de NexDMS. ` +
+          `Crea tu contraseña para entrar:</p>` +
+          emailButton('Crear mi contraseña', url) +
+          `<p style="color:#94a3b8">Tu usuario es <strong>${email}</strong>. El enlace vence en 1 hora.</p>`,
+        'Bienvenido',
+      );
+      await this.emailjs.enviar({
+        subject: 'Tu acceso al portal admin de NexDMS',
+        html,
+        to: email,
+      });
+    } catch {
+      // El alta no depende del correo.
+    }
   }
 
   private async porId(id: string): Promise<AdminUser> {

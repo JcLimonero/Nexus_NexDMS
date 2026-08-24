@@ -22,7 +22,9 @@ import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { AuthService } from './auth.service';
 import { ChangePasswordDto } from './dto/change-password.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { LoginDto } from './dto/login.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { SwitchBranchDto } from './dto/switch-branch.dto';
 import { SwitchLegalEntityDto } from './dto/switch-legal-entity.dto';
 import type { UserPayload } from './strategies/jwt.strategy';
@@ -41,6 +43,22 @@ export class AuthController {
   @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  /** Solicita el correo de recuperación de contraseña (público). */
+  @Post('forgot-password')
+  @HttpCode(200)
+  @Throttle(LIMITE_ACCESO)
+  forgotPassword(@Body() dto: ForgotPasswordDto) {
+    return this.authService.forgotPassword(dto);
+  }
+
+  /** Fija la nueva contraseña con el token del correo (público). */
+  @Post('reset-password')
+  @HttpCode(200)
+  @Throttle(LIMITE_ACCESO)
+  resetPassword(@Body() dto: ResetPasswordDto) {
+    return this.authService.resetPassword(dto);
   }
 
   /** Marca del cliente para vestir el acceso; pública, sin sesión. */

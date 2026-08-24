@@ -94,6 +94,8 @@ export interface ReceivePurchaseOrderDto {
 
 export interface PurchaseRequisition {
   id: string;
+  /** Código legible de la requisición (ej. "APGRQ00000001"). */
+  folio: string | null;
   tenantId: string;
   branchId: string;
   partId: string;

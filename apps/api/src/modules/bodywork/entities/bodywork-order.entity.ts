@@ -53,8 +53,8 @@ export class BodyworkOrder {
   @Column({ name: 'branch_id', type: 'uuid', nullable: true })
   branchId: string | null;
 
-  @Column({ name: 'folio', type: 'int' })
-  folio: number;
+  @Column({ name: 'folio', type: 'varchar', length: 24 })
+  folio: string;
 
   @Column({
     name: 'status',

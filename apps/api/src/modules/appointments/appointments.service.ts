@@ -26,6 +26,10 @@ import { UserAvailabilityService } from '../user-availability/user-availability.
 import { ServiceTypesService } from '../service-types/service-types.service';
 import { ServiceTypeCategoryEnum } from '../service-types/entities/service-type.entity';
 import { MantenimientoSinRefaccionesEvent } from '../../events/domain-events';
+import {
+  siguienteCodigoDocumento,
+  CODIGO_OBJETO,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class AppointmentsService {
@@ -125,8 +129,15 @@ export class AppointmentsService {
       }
     }
 
+    const { codigo } = await siguienteCodigoDocumento(
+      this.appointmentRepo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.CITA_SERVICIO,
+    );
+
     const appointment = this.appointmentRepo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       branchId: dto.branchId,
       clientId: dto.clientId ?? null,
       vehicleId: dto.vehicleId ?? null,
@@ -336,8 +347,15 @@ export class AppointmentsService {
       throw new BadRequestException('Fecha/hora inválida');
     }
 
+    const { codigo } = await siguienteCodigoDocumento(
+      this.appointmentRepo.manager,
+      branch.tenantId,
+      CODIGO_OBJETO.CITA_SERVICIO,
+    );
+
     const appointment = this.appointmentRepo.create({
       tenantId: branch.tenantId,
+      folio: codigo,
       branchId: branch.id,
       clientId: null,
       vehicleId: null,

@@ -7,6 +7,10 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, EntityManager, In, Repository } from 'typeorm';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 import { Sale } from './entities/sale.entity';
 import {
   SaleStatusEnum,
@@ -87,17 +91,12 @@ export class SalesService {
     tenantId: string,
     em?: EntityManager,
   ): Promise<string> {
-    const year = new Date().getFullYear();
-    const runner = em ?? this.dataSource.manager;
-    const result = await runner.query<{ last_value: number }[]>(
-      `INSERT INTO sale_ticket_seq (tenant_id, year, last_value)
-       VALUES ($1, $2, 1)
-       ON CONFLICT (tenant_id, year) DO UPDATE SET last_value = sale_ticket_seq.last_value + 1
-       RETURNING last_value`,
-      [tenantId, year],
+    const { codigo } = await siguienteCodigoDocumento(
+      em ?? this.dataSource.manager,
+      tenantId,
+      CODIGO_OBJETO.VENTA_MOSTRADOR,
     );
-    const seq = result[0]?.last_value ?? 1;
-    return `TK-${year}-${String(seq).padStart(4, '0')}`;
+    return codigo;
   }
 
   async create(user: UserPayload, dto: CreateSaleDto): Promise<Sale> {

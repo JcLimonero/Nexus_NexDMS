@@ -64,29 +64,54 @@ export class PricingService {
     fallbackTier: BasePriceTier,
   ): Promise<PartPriceResolver> {
     let fixedDiscount = 0;
-    let activeList: PriceList | null = null;
-    const itemsMap = new Map<string, number>();
-
+    let priceListId: string | null = null;
     if (clientId) {
       const client = await this.clientRepo.findOne({
         where: { id: clientId, tenantId },
       });
       if (client) {
         fixedDiscount = Number(client.fixedDiscount) || 0;
-        if (client.priceListId) {
-          const pl = await this.plRepo.findOne({
-            where: { id: client.priceListId, tenantId },
-          });
-          if (pl && pl.isActive && this.vigente(pl)) {
-            activeList = pl;
-            const items = await this.pliRepo.find({
-              where: { priceListId: pl.id },
-            });
-            for (const it of items) itemsMap.set(it.partId, Number(it.price));
-          }
-        }
+        priceListId = client.priceListId ?? null;
       }
     }
+    return this.buildResolver(tenantId, {
+      priceListId,
+      discountPct: fixedDiscount,
+      fallbackTier,
+    });
+  }
+
+  /**
+   * Resolvedor de precios a partir de una lista y/o un descuento explícitos.
+   * Base común de precios preferenciales: la usan tanto el descuento del
+   * cliente como el convenio de flotilla, para que ambos calculen igual.
+   *
+   * Con lista vigente manda la lista (override por pieza o su % sobre el
+   * público). Sin lista, precio por nivel menos el descuento indicado.
+   */
+  async buildResolver(
+    tenantId: string,
+    opts: {
+      priceListId: string | null;
+      discountPct: number;
+      fallbackTier: BasePriceTier;
+    },
+  ): Promise<PartPriceResolver> {
+    let activeList: PriceList | null = null;
+    const itemsMap = new Map<string, number>();
+    if (opts.priceListId) {
+      const pl = await this.plRepo.findOne({
+        where: { id: opts.priceListId, tenantId },
+      });
+      if (pl && pl.isActive && this.vigente(pl)) {
+        activeList = pl;
+        const items = await this.pliRepo.find({
+          where: { priceListId: pl.id },
+        });
+        for (const it of items) itemsMap.set(it.partId, Number(it.price));
+      }
+    }
+    const discount = Number(opts.discountPct) || 0;
 
     return (part: Part): number => {
       if (activeList) {
@@ -95,10 +120,8 @@ export class PricingService {
         const disc = Number(activeList.discountPct) || 0;
         return this.round2(Number(part.publicPrice) * (1 - disc / 100));
       }
-      const base = this.basePrice(part, fallbackTier);
-      return fixedDiscount > 0
-        ? this.round2(base * (1 - fixedDiscount / 100))
-        : base;
+      const base = this.basePrice(part, opts.fallbackTier);
+      return discount > 0 ? this.round2(base * (1 - discount / 100)) : base;
     };
   }
 }

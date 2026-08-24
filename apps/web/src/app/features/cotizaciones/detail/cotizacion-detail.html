@@ -26,6 +26,12 @@
               <div class="spinner-border text-primary" role="status"></div>
             </div>
           } @else if (cotizacion(); as q) {
+            <app-phase-tracker
+              [phases]="fases"
+              [current]="q.status"
+              [canceledKey]="cancelado"
+            />
+
             <div class="row mb-4">
               <div class="col-md-6">
                 <table class="table table-sm">

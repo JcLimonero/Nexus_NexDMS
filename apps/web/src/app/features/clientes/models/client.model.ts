@@ -6,6 +6,10 @@ export enum ClientType {
 export interface Client {
   id: string;
   tenantId: string;
+  /** Consecutivo crudo del cliente dentro de la empresa (1, 2, 3…). */
+  clientNumber: number | null;
+  /** Código legible del cliente: prefijo + C + consecutivo (APGC00000001). */
+  clientCode: string | null;
   clientType: ClientType;
   isCompany: boolean;
   firstName: string | null;

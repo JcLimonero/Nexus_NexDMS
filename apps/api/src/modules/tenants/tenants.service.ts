@@ -10,6 +10,12 @@ import { TenantStatusChange } from './entities/tenant-status-change.entity';
 import { CreateTenantDto } from './dto/create-tenant.dto';
 import { UpdateTenantDto } from './dto/update-tenant.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { EmailComposer } from '../../common/email/email-composer.service';
+import {
+  normalizarPrefijo,
+  sugerirPrefijoEmpresa,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class TenantsService {
@@ -18,10 +24,25 @@ export class TenantsService {
     private readonly tenantRepo: Repository<Tenant>,
     @InjectRepository(TenantStatusChange)
     private readonly statusRepo: Repository<TenantStatusChange>,
+    private readonly emailjs: EmailjsService,
+    private readonly composer: EmailComposer,
   ) {}
+
+  /** Aviso interno a Nexus (plantilla admin). No interrumpe la operación. */
+  private async avisarNexus(subject: string, contentHtml: string): Promise<void> {
+    try {
+      await this.emailjs.enviar({
+        subject,
+        html: this.composer.brandedAdmin(subject, contentHtml, 'Clientes SaaS'),
+      });
+    } catch {
+      /* el aviso no debe tumbar la operación */
+    }
+  }
 
   async findAll(_user: UserPayload): Promise<Tenant[]> {
     return this.tenantRepo.find({
+      where: { isTemplate: false },
       order: { name: 'ASC' },
     });
   }
@@ -35,11 +56,24 @@ export class TenantsService {
   }
 
   async create(user: UserPayload, dto: CreateTenantDto): Promise<Tenant> {
+    // El prefijo se fija aquí y ya no cambia: si el admin no lo dictó, se toma
+    // de las iniciales del nombre.
+    const codePrefix = dto.codePrefix?.trim()
+      ? normalizarPrefijo(dto.codePrefix)
+      : sugerirPrefijoEmpresa(dto.name);
     const tenant = this.tenantRepo.create({
       ...dto,
+      codePrefix,
       isActive: dto.isActive ?? true,
     });
-    return this.tenantRepo.save(tenant);
+    const guardado = await this.tenantRepo.save(tenant);
+    void this.avisarNexus(
+      `NexDMS · Nuevo cliente: ${guardado.name}`,
+      `<p>Se dio de alta un nuevo cliente en el SaaS.</p>` +
+        `<p>Nombre: <strong>${guardado.name}</strong><br>` +
+        `Identificador: ${guardado.slug}<br>Plan: ${guardado.plan}</p>`,
+    );
+    return guardado;
   }
 
   async update(
@@ -48,7 +82,13 @@ export class TenantsService {
     dto: UpdateTenantDto,
   ): Promise<Tenant> {
     const tenant = await this.findOne(user, id);
-    Object.assign(tenant, dto);
+    // El prefijo es inmutable: cambiarlo dejaría huérfanos los códigos ya
+    // emitidos. Se ignora cualquier intento de modificarlo por update.
+    const { codePrefix: _ignora, ...resto } = dto as UpdateTenantDto & {
+      codePrefix?: string;
+    };
+    void _ignora;
+    Object.assign(tenant, resto);
     return this.tenantRepo.save(tenant);
   }
 
@@ -79,6 +119,12 @@ export class TenantsService {
         reason: motivo,
         changedBy: user.sub ?? null,
       }),
+    );
+    const accion = guardado.isActive ? 'reactivado' : 'suspendido';
+    void this.avisarNexus(
+      `NexDMS · Cliente ${accion}: ${guardado.name}`,
+      `<p>Se ${accion} al cliente <strong>${guardado.name}</strong>.</p>` +
+        `<p>Motivo: ${motivo}</p>`,
     );
     return guardado;
   }

@@ -7,11 +7,12 @@ import { ToastrService } from "ngx-toastr";
 import { GarantiasService } from "../garantias.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { Warranty, WarrantyStatus } from "../models/warranty.model";
+import { PhaseTracker } from "../../../shared/components/phase-tracker/phase-tracker";
 
 @Component({
   selector: "app-garantia-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PhaseTracker],
   templateUrl: "./garantia-detail.html",
   styleUrls: ["./garantia-detail.scss"],
 })
@@ -23,6 +24,12 @@ export class GarantiaDetail implements OnInit {
   private toastr = inject(ToastrService);
 
   garantia = signal<Warranty | null>(null);
+  fases = [
+    { key: "OPEN", label: "Abierta" },
+    { key: "IN_PROGRESS", label: "En proceso" },
+    { key: "RESOLVED", label: "Resuelta" },
+  ];
+  cancelado = "REJECTED";
   branches = signal<{ id: string; name: string }[]>([]);
   loading = signal(true);
   error = signal<string | null>(null);

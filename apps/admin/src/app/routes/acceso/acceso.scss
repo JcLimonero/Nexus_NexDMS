@@ -133,3 +133,13 @@ button {
   font-family: var(--font-mono);
   color: var(--text-secondary);
 }
+
+.olvide {
+  display: block;
+  text-align: center;
+  margin-top: 14px;
+  color: #2563eb;
+  font-size: 13px;
+  text-decoration: none;
+}
+.olvide:hover { text-decoration: underline; }

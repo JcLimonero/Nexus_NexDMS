@@ -19,8 +19,15 @@ import { UsersService } from '../users/users.service';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { User } from '../users/entities/user.entity';
 import { StorageService } from '../../common/storage/storage.service';
+import { validateLogoFile } from '../../common/validators/file.validator';
 import { PALETA_POR_OMISION, paletaPorId } from '../tenants/branding.paletas';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { EmailComposer } from '../../common/email/email-composer.service';
+import { emailButton } from '../../common/email/templates';
+import { PasswordResetService } from '../password-reset/password-reset.service';
+import { ResetUserType } from '../password-reset/password-reset-token.entity';
 
 const REFRESH_KEY_PREFIX = 'refresh:';
 const REFRESH_TTL_SECONDS = 7 * 24 * 60 * 60; // 7 days
@@ -36,8 +43,94 @@ export class AuthService {
     @Inject('REDIS_CLIENT') private readonly redis: Redis,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
     private readonly storage: StorageService,
+    private readonly reset: PasswordResetService,
+    private readonly emailjs: EmailjsService,
+    private readonly composer: EmailComposer,
   ) {}
+
+  /**
+   * Solicita recuperar contraseña: si el correo existe (en ese tenant), manda
+   * un enlace con token temporal. Siempre responde igual, para no revelar si un
+   * correo está o no registrado.
+   */
+  async forgotPassword(dto: {
+    email: string;
+    tenantId?: string;
+  }): Promise<{ ok: true }> {
+    const user = await this.usersService.findByEmail(
+      dto.tenantId ?? '',
+      dto.email,
+    );
+    if (user && user.isActive) {
+      const token = await this.reset.crear(ResetUserType.TENANT, user.id);
+      const tenant = await this.tenantRepo.findOne({
+        where: { id: user.tenantId },
+      });
+      const base = this.config.get<string>(
+        'WEB_APP_URL',
+        'https://app.nexusqsystem.com',
+      );
+      const url = tenant?.slug
+        ? `${base}/${tenant.slug}/auth/reset-password?token=${token}`
+        : `${base}/auth/reset-password?token=${token}`;
+      const body =
+        `<p>Recibimos una solicitud para restablecer tu contraseña.</p>` +
+        `<p>Crea una nueva desde aquí. El enlace vence en 1 hora:</p>` +
+        emailButton('Restablecer contraseña', url) +
+        `<p style="color:#94a3b8">Si no fuiste tú, ignora este correo; tu contraseña no cambia.</p>`;
+      const html = await this.composer.brandedClient(
+        user.tenantId,
+        'Restablece tu contraseña',
+        body,
+        'Seguridad',
+      );
+      await this.emailjs.enviar({
+        subject: 'Restablece tu contraseña',
+        html,
+        to: user.email,
+      });
+    }
+    return { ok: true };
+  }
+
+  /** Fija la nueva contraseña a partir de un token válido y avisa del cambio. */
+  async resetPassword(dto: {
+    token: string;
+    newPassword: string;
+  }): Promise<{ ok: true }> {
+    if (!dto.newPassword || dto.newPassword.length < 8) {
+      throw new BadRequestException(
+        'La contraseña debe tener al menos 8 caracteres.',
+      );
+    }
+    const r = await this.reset.consumir(dto.token);
+    if (!r || r.userType !== ResetUserType.TENANT) {
+      throw new BadRequestException('El enlace no es válido o ya venció.');
+    }
+    const user = await this.userRepo.findOne({ where: { id: r.userId } });
+    if (!user) {
+      throw new BadRequestException('El enlace no es válido o ya venció.');
+    }
+    user.passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
+    user.passwordChangedAt = new Date();
+    await this.userRepo.save(user);
+    const body =
+      `<p>Tu contraseña se actualizó correctamente.</p>` +
+      `<p style="color:#94a3b8">Si no reconoces este cambio, contacta a tu administrador de inmediato.</p>`;
+    const html = await this.composer.brandedClient(
+      user.tenantId,
+      'Tu contraseña cambió',
+      body,
+      'Seguridad',
+    );
+    await this.emailjs
+      .enviar({ subject: 'Tu contraseña cambió', html, to: user.email })
+      .catch(() => undefined);
+    return { ok: true };
+  }
 
   /**
    * Datos de contacto de Nexus (dueño del producto) que se muestran cuando un
@@ -438,10 +531,8 @@ export class AuthService {
 
   /** Sube (cambia) la foto de perfil del usuario y devuelve su ficha. */
   async subirAvatar(user: UserPayload, file: Express.Multer.File) {
-    if (!file) throw new BadRequestException('Archivo requerido');
-    if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException('La foto debe ser una imagen');
-    }
+    // Reutiliza el validador de imágenes: tipos jpeg/png/webp y máx 2MB.
+    validateLogoFile(file);
     const key = await this.storage.upload(
       file.buffer,
       `avatars/${user.sub}/foto-${Date.now()}`,

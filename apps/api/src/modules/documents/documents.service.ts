@@ -12,6 +12,12 @@ import {
 import { Client } from '../clients/entities/client.entity';
 import { User } from '../users/entities/user.entity';
 import { StorageService } from '../../common/storage/storage.service';
+import {
+  DOCUMENT_MIME_TYPES,
+  MAX_DOCUMENT_SIZE_BYTES,
+  sanitizeFilename,
+  validateUploadedFile,
+} from '../../common/validators/file.validator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 
 @Injectable()
@@ -68,7 +74,15 @@ export class DocumentsService {
     if (!buffer) {
       throw new BadRequestException('No se pudo leer el archivo');
     }
-    const key = `clients/${clientId}/documents/${Date.now()}-${file.originalname}`;
+    // Valida tipo (pdf/imagen) y tamaño (máx 10MB) reutilizando el validador común.
+    validateUploadedFile(file, {
+      allowedMimes: DOCUMENT_MIME_TYPES,
+      maxSizeBytes: MAX_DOCUMENT_SIZE_BYTES,
+      sizeBytes: buffer.length,
+    });
+    // Sanea el nombre original antes de usarlo en la clave de almacenamiento.
+    const safeName = sanitizeFilename(file.originalname);
+    const key = `clients/${clientId}/documents/${Date.now()}-${safeName}`;
     await this.storageService.upload(buffer, key, file.mimetype);
     const doc = this.docRepo.create({
       tenantId: user.tenantId,

@@ -13,11 +13,12 @@ import {
   ReceiveLineDto,
 } from "../../models/purchase-order.model";
 import { Supplier } from "../../models/supplier.model";
+import { PhaseTracker } from "../../../../shared/components/phase-tracker/phase-tracker";
 
 @Component({
   selector: "app-orden-compra-detail",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterModule],
+  imports: [CommonModule, FormsModule, RouterModule, PhaseTracker],
   templateUrl: "./orden-compra-detail.html",
   styleUrls: ["./orden-compra-detail.scss"],
 })
@@ -27,6 +28,14 @@ export class OrdenCompraDetail implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+
+  fases = [
+    { key: "DRAFT", label: "Borrador" },
+    { key: "SENT", label: "Enviado" },
+    { key: "PARTIAL", label: "Parcial" },
+    { key: "RECEIVED", label: "Recibido" },
+  ];
+  cancelado = "CANCELLED";
 
   orden = signal<PurchaseOrder | null>(null);
   supplier = signal<Supplier | null>(null);

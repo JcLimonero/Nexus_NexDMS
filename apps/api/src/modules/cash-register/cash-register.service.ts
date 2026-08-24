@@ -18,6 +18,10 @@ import {
   CashMovement,
   CashMovementKindEnum,
 } from './entities/cash-movement.entity';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class CashRegisterService {
@@ -123,8 +127,15 @@ export class CashRegisterService {
       throw new NotFoundException('Sucursal no encontrada');
     }
 
+    const { codigo } = await siguienteCodigoDocumento(
+      this.sessionRepo.manager,
+      user.tenantId,
+      CODIGO_OBJETO.CORTE_CAJA,
+    );
+
     const session = this.sessionRepo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       branchId: dto.branchId,
       userId: user.sub,
       openingBalance: dto.openingBalance,

@@ -50,14 +50,19 @@
               </div>
               <div class="col-md-4 mb-3">
                 <label class="form-label">Cliente <span class="text-danger">*</span></label>
-                <select class="form-select" formControlName="clientId">
-                  <option value="">Seleccionar cliente</option>
-                  @for (c of clients(); track c.id) {
-                    <option [ngValue]="c.id">{{ getClientLabel(c) }}</option>
-                  }
-                </select>
+                <app-client-selector
+                  [selectedId]="form.get('clientId')?.value || ''"
+                  (selectedIdChange)="form.get('clientId')?.setValue($event)"
+                />
                 @if (form.get('clientId')?.invalid && form.get('clientId')?.touched) {
                   <div class="text-danger small mt-1">El cliente es obligatorio</div>
+                }
+                @if (convenio(); as cv) {
+                  @if (cv.unitSaleDiscountPct) {
+                    <small class="text-info d-block mt-1">
+                      🚚 Flotilla «{{ cv.name }}» — {{ cv.unitSaleDiscountPct }}% de descuento en unidad
+                    </small>
+                  }
                 }
               </div>
             </div>

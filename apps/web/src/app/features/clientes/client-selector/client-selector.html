@@ -48,6 +48,9 @@
           [class.active]="c.id === selectedId()"
           (mousedown)="selectClient(c); $event.preventDefault()"
         >
+          @if (c.clientCode) {
+            <span class="badge bg-light text-secondary border me-2 font-monospace">{{ c.clientCode }}</span>
+          }
           {{ getDisplayName(c) }}
           @if (c.phone) {
             <span class="text-muted small ms-2">{{ c.phone }}</span>

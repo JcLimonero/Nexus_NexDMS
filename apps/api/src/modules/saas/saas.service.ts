@@ -19,12 +19,15 @@ import {
 } from './entities/saas.entities';
 import { PALETAS, paletaPorId } from '../tenants/branding.paletas';
 import { StorageService } from '../../common/storage/storage.service';
+import { validateLogoFile } from '../../common/validators/file.validator';
 import { ConfigService } from '@nestjs/config';
 import {
   BillingBlockState,
   BillingStatusService,
 } from './billing-status.service';
 import { ConektaService, CheckoutSalida } from './conekta.service';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { statusPill, wrapAdminEmail } from '../../common/email/templates';
 
 export interface ResumenCobroCliente {
   tenantId: string;
@@ -55,7 +58,78 @@ export class SaasService {
     private readonly config: ConfigService,
     private readonly billing: BillingStatusService,
     private readonly conekta: ConektaService,
+    private readonly email: EmailjsService,
   ) {}
+
+  /**
+   * Arma y envía a compras de Nexus el resumen de clientes en mora (aviso de
+   * #36 vía EmailJS). Devuelve cuántos morosos había y si se envió. No manda
+   * correo si no hay morosos.
+   */
+  async enviarResumenMora(): Promise<{ enviado: boolean; morosos: number }> {
+    const panorama = await this.panorama();
+    const morosos = panorama.morosos ?? [];
+    if (!morosos.length) return { enviado: false, morosos: 0 };
+
+    const mxn = (n: number) =>
+      Number(n || 0).toLocaleString('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+      });
+    const hoy = new Date().toLocaleDateString('es-MX', {
+      timeZone: 'America/Mexico_City',
+    });
+    const filas = morosos
+      .map((m, i) => {
+        const bg = i % 2 ? '#ffffff' : '#fbfcfe';
+        const pill =
+          m.estado === BillingBlockState.BLOQUEADO
+            ? statusPill('Bloqueado', 'danger')
+            : statusPill('Solo lectura', 'warning');
+        const susp = m.suspendidoManual
+          ? ` ${statusPill('Suspendido', 'neutral')}`
+          : '';
+        return `
+        <tr style="background:${bg}">
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;color:#0f172a">${m.nombre}</td>
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7">${pill}${susp}</td>
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;text-align:right;color:#475569">${m.diasMora}</td>
+          <td style="padding:11px 12px;border-bottom:1px solid #eef2f7;text-align:right;font-weight:700;color:#0f172a">${mxn(m.adeudo)}</td>
+        </tr>`;
+      })
+      .join('');
+    const content = `
+      <p style="margin:0 0 20px;color:#475569">Resumen al <strong>${hoy}</strong>:
+        ${panorama.enSoloLectura} en solo lectura, ${panorama.bloqueadosPorPago} bloqueados,
+        con un adeudo total de <strong style="color:#0f172a">${mxn(panorama.adeudoTotal)}</strong>.</p>
+      <table role="presentation" cellpadding="0" cellspacing="0" style="border-collapse:collapse;width:100%;font-size:14px;border:1px solid #eef2f7;border-radius:10px;overflow:hidden">
+        <thead>
+          <tr style="background:#f1f5f9">
+            <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Cliente</th>
+            <th style="padding:10px 12px;text-align:left;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Estado</th>
+            <th style="padding:10px 12px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Días</th>
+            <th style="padding:10px 12px;text-align:right;color:#64748b;font-size:11px;text-transform:uppercase;letter-spacing:.05em">Adeudo</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+      <p style="margin:20px 0 0;color:#94a3b8;font-size:13px">Revisa el portal de administración para el detalle y las acciones de cada cliente.</p>`;
+    const html = wrapAdminEmail({
+      title: `${morosos.length} cliente(s) en mora`,
+      eyebrow: 'Cobranza SaaS',
+      preheader: `Resumen de mora al ${hoy}`,
+      content,
+      logoUrl: this.config.get<string>(
+        'NEXUS_LOGO_URL',
+        'https://admin.nexusqsystem.com/nexus/logo.png',
+      ),
+    });
+    const enviado = await this.email.enviar({
+      subject: `NexDMS · ${morosos.length} cliente(s) en mora — ${hoy}`,
+      html,
+    });
+    return { enviado, morosos: morosos.length };
+  }
 
   // ─── Planes ─────────────────────────────────────────────────
 
@@ -221,25 +295,33 @@ export class SaasService {
       this.planes(),
       this.precioRepo.find(),
     ]);
+    return this.calcCobro(t, planes, precios);
+  }
+
+  /**
+   * Cálculo puro del cobro mensual a partir de datos ya cargados (planes y
+   * precios de módulo). Se separa para poder calcular el ingreso de todos los
+   * clientes sin una consulta por cliente (ver {@link panorama}).
+   */
+  private calcCobro(
+    t: Tenant,
+    planes: SaasPlan[],
+    precios: SaasModulePrice[],
+  ): Cobro {
     // El paquete contratado manda sobre el nivel: dos clientes en el mismo
-    // nivel pueden pagar distinto porque compraron paquetes distintos. El
-    // nivel solo decide la tarifa de quien todavía no tiene paquete asignado.
+    // nivel pueden pagar distinto porque compraron paquetes distintos.
     const plan =
       planes.find((p) => p.id === t.saasPlanId) ??
       planes.find((p) => p.key === t.plan);
     const incluidos = new Set(modulesForPlan(t.plan));
     const porClave = new Map(precios.map((p) => [p.moduleKey, p.monthlyPrice]));
-
     const extras = (t.extraModules ?? [])
-      // Un módulo que el plan ya incluye no se cobra dos veces, aunque
-      // alguien lo haya marcado como extra por error.
       .filter((k) => !incluidos.has(k as never))
       .map((k) => ({
         key: k,
         name: MODULE_REGISTRY.find((m) => m.key === k)?.name ?? k,
         precio: porClave.get(k) ?? 0,
       }));
-
     const precioPlan = plan?.monthlyPrice ?? 0;
     return {
       plan: {
@@ -324,10 +406,8 @@ export class SaasService {
     file: Express.Multer.File,
     tipo: 'logo' | 'icon',
   ): Promise<string> {
-    if (!file) throw new BadRequestException('Archivo requerido');
-    if (!file.mimetype.startsWith('image/')) {
-      throw new BadRequestException('El archivo debe ser una imagen');
-    }
+    // Reutiliza el validador de imágenes: tipos jpeg/png/webp y máx 2MB.
+    validateLogoFile(file);
     return this.storage.upload(
       file.buffer,
       `branding/${tenantId}/${tipo}-${Date.now()}`,
@@ -594,6 +674,7 @@ export class SaasService {
   async confirmarPagoConekta(orderId: string): Promise<void> {
     const r = await this.conekta.confirmarOrden(orderId);
     if (!r.pagada || !r.tenantId) return;
+    let monto = 0;
     for (const period of r.periodos) {
       const pago = await this.pagoRepo.findOne({
         where: { tenantId: r.tenantId, period },
@@ -604,8 +685,46 @@ export class SaasService {
       pago.method = 'conekta';
       pago.reference = r.referencia;
       await this.pagoRepo.save(pago);
+      monto += pago.amount;
     }
     this.billing.invalidar(r.tenantId);
+    // Aviso a Nexus del pago recibido.
+    void this.avisarPagoRecibido(r.tenantId, r.periodos, monto, r.referencia);
+  }
+
+  /** Correo a Nexus cuando un cliente paga su suscripción en línea. */
+  private async avisarPagoRecibido(
+    tenantId: string,
+    periodos: string[],
+    monto: number,
+    referencia: string,
+  ): Promise<void> {
+    try {
+      const t = await this.tenant(tenantId);
+      const mxn = Number(monto || 0).toLocaleString('es-MX', {
+        style: 'currency',
+        currency: 'MXN',
+      });
+      const html = wrapAdminEmail({
+        title: 'Pago de suscripción recibido',
+        eyebrow: 'Cobranza SaaS',
+        content:
+          `<p>El cliente <strong>${t.name}</strong> pagó su suscripción en línea.</p>` +
+          `<p>Monto: <strong>${mxn}</strong><br>` +
+          `Periodos: ${periodos.join(', ') || '—'}<br>` +
+          `Referencia: ${referencia || '—'}</p>`,
+        logoUrl: this.config.get<string>(
+          'NEXUS_LOGO_URL',
+          'https://admin.nexusqsystem.com/nexus/logo.png',
+        ),
+      });
+      await this.email.enviar({
+        subject: `NexDMS · Pago recibido — ${t.name}`,
+        html,
+      });
+    } catch {
+      // El aviso no debe tumbar la confirmación del pago.
+    }
   }
 
   /**
@@ -613,12 +732,18 @@ export class SaasService {
    * Es lo primero que quiere ver quien administra el SaaS.
    */
   async panorama() {
-    const tenants = await this.tenantRepo.find();
+    // Se precargan planes y precios una sola vez: el ingreso recurrente se
+    // calcula en memoria para todos los clientes, sin una consulta por cliente.
+    const [tenants, planes, precios] = await Promise.all([
+      this.tenantRepo.find({ where: { isTemplate: false } }),
+      this.planes(),
+      this.precioRepo.find(),
+    ]);
     const activos = tenants.filter((t) => t.isActive);
-    let recurrente = 0;
-    for (const t of activos) {
-      recurrente += (await this.cobroMensual(t.id)).total;
-    }
+    const recurrente = activos.reduce(
+      (sum, t) => sum + this.calcCobro(t, planes, precios).total,
+      0,
+    );
     const vencidos = (
       await this.pagoRepo.find({
         where: [
@@ -674,15 +799,22 @@ export class SaasService {
    * `billingDay`.
    */
   async resumenCobros(): Promise<ResumenCobroCliente[]> {
-    const tenants = await this.tenantRepo.find();
-    const salida: ResumenCobroCliente[] = [];
-    for (const t of tenants) {
-      const pagos = await this.pagoRepo.find({
-        where: { tenantId: t.id },
-        order: { period: 'DESC' },
-      });
-      const ultimo = pagos[0] ?? null;
-      const pendientes = pagos
+    // Dos consultas en total (clientes y todos los pagos), no una por cliente:
+    // los pagos se agrupan por tenant en memoria.
+    const [tenants, pagos] = await Promise.all([
+      this.tenantRepo.find({ where: { isTemplate: false } }),
+      this.pagoRepo.find({ order: { period: 'DESC' } }),
+    ]);
+    const porTenant = new Map<string, SaasPayment[]>();
+    for (const p of pagos) {
+      const arr = porTenant.get(p.tenantId);
+      if (arr) arr.push(p);
+      else porTenant.set(p.tenantId, [p]);
+    }
+    return tenants.map((t) => {
+      const lista = porTenant.get(t.id) ?? []; // ya vienen ordenados por period DESC
+      const ultimo = lista[0] ?? null;
+      const pendientes = lista
         .filter(
           (p) =>
             p.status === SaasPaymentStatusEnum.PENDIENTE ||
@@ -693,7 +825,7 @@ export class SaasService {
       const proximoCobro =
         pendientes[0]?.dueDate ??
         (t.billingDay ? this.proximoDiaCobro(t.billingDay) : null);
-      salida.push({
+      return {
         tenantId: t.id,
         ultimoPago: ultimo
           ? {
@@ -703,9 +835,8 @@ export class SaasService {
             }
           : null,
         proximoCobro,
-      });
-    }
-    return salida;
+      };
+    });
   }
 
   /** Siguiente fecha con día de mes = `dia`, hoy o en el futuro (AAAA-MM-DD). */

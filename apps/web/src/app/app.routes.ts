@@ -94,6 +94,13 @@ export const routes: Routes = [
         (m) => m.ForgetPwd,
       ),
   },
+  {
+    path: "auth/reset-password",
+    loadComponent: () =>
+      import("./pages/authentication/reset-pwd/reset-pwd").then(
+        (m) => m.ResetPwd,
+      ),
+  },
   // Portal de pago del SaaS: fuera del shell del DMS a propósito. Es a donde
   // llega un cliente bloqueado por falta de pago, así que no debe cargar el
   // layout (que dispararía peticiones bloqueadas y un bucle de 403).

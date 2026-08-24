@@ -6,7 +6,7 @@
       <div>
         <h1>
           @if (orden(); as o) {
-            Orden #{{ o.folio }}
+            Orden {{ o.folio }}
           } @else {
             Nueva orden de carrocería
           }
@@ -17,6 +17,15 @@
         <a class="hp-btn hp-btn--ghost" routerLink="/bodywork">Volver</a>
       </div>
     </div>
+
+    <!-- Seguimiento de fases -->
+    @if (orden(); as o) {
+      <app-phase-tracker
+        [phases]="fases"
+        [current]="o.status"
+        [canceledKey]="cancelado"
+      />
+    }
 
     <!-- Flujo de estado -->
     @if (orden(); as o) {

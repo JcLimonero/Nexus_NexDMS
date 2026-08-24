@@ -105,7 +105,12 @@
           @for (t of tenants(); track t.id) {
             <tr [class.suspendido]="!t.isActive">
               <td>{{ t.name }}</td>
-              <td class="mono">{{ t.slug }}</td>
+              <td class="mono">
+                {{ t.slug }}
+                @if (t.codePrefix) {
+                  <span class="extra-chip" title="Prefijo de códigos de documentos">{{ t.codePrefix }}</span>
+                }
+              </td>
               <td>
                 <span class="plan" [attr.data-plan]="t.plan" [title]="etiquetaPlan(t.plan)">
                   {{ planDe(t) }}
@@ -180,6 +185,17 @@
         <label class="campo">
           <span>Identificador</span>
           <input [(ngModel)]="form.slug" />
+        </label>
+        <label class="campo">
+          <span>Prefijo de códigos</span>
+          <input
+            [(ngModel)]="form.codePrefix"
+            (input)="alEscribirPrefijo()"
+            maxlength="3"
+            placeholder="APG"
+            style="text-transform: uppercase"
+          />
+          <small class="ayuda">3 letras, fijo. Ej. cliente {{ (form.codePrefix || 'APG') }}C00000001</small>
         </label>
         <label class="campo ancho-total">
           <span>Plan contratado</span>

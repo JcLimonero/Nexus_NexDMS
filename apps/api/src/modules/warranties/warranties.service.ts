@@ -9,6 +9,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Warranty } from './entities/warranty.entity';
 import { WarrantyStatusEnum } from './entities/warranty.entity';
 import { Branch } from '../branches/entities/branch.entity';
+import { Client } from '../clients/entities/client.entity';
 import { CreateWarrantyDto } from './dto/create-warranty.dto';
 import { FilterWarrantiesDto } from './dto/filter-warranties.dto';
 import { AuthorizeWarrantyDto } from './dto/authorize-warranty.dto';
@@ -16,6 +17,12 @@ import { ResolveWarrantyDto } from './dto/resolve-warranty.dto';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { BranchesService } from '../branches/branches.service';
+import { EmailjsService } from '../../common/email/emailjs.service';
+import { EmailComposer } from '../../common/email/email-composer.service';
+import {
+  CODIGO_OBJETO,
+  siguienteCodigoDocumento,
+} from '../../common/codigos/document-code.util';
 
 @Injectable()
 export class WarrantiesService {
@@ -24,9 +31,68 @@ export class WarrantiesService {
     private readonly warrantyRepo: Repository<Warranty>,
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
+    @InjectRepository(Client)
+    private readonly clientRepo: Repository<Client>,
     private readonly dataSource: DataSource,
     private readonly branchesService: BranchesService,
+    private readonly emailjs: EmailjsService,
+    private readonly composer: EmailComposer,
   ) {}
+
+  /** Avisa al cliente por correo del estado de su garantía (si tiene correo). */
+  private async avisarGarantia(
+    warranty: Warranty,
+    kind: 'abierta' | 'resuelta' | 'rechazada',
+  ): Promise<void> {
+    try {
+      const client = await this.clientRepo.findOne({
+        where: { id: warranty.clientId },
+      });
+      const email = client?.email;
+      if (!email) return;
+      const nombre =
+        client?.companyName ||
+        [client?.firstName, client?.lastName].filter(Boolean).join(' ') ||
+        '';
+      const textos = {
+        abierta: {
+          subject: 'Recibimos tu solicitud de garantía',
+          eyebrow: 'Garantía',
+          body:
+            `<p>Hola ${nombre},</p>` +
+            `<p>Registramos tu solicitud de garantía. La estamos revisando y te avisaremos del resultado.</p>` +
+            `<p><strong>Reporte:</strong> ${warranty.description}</p>`,
+        },
+        resuelta: {
+          subject: 'Tu garantía fue resuelta',
+          eyebrow: 'Garantía',
+          body:
+            `<p>Hola ${nombre},</p>` +
+            `<p>Tu garantía fue <strong>resuelta</strong>.</p>` +
+            (warranty.resolution
+              ? `<p><strong>Resolución:</strong> ${warranty.resolution}</p>`
+              : ''),
+        },
+        rechazada: {
+          subject: 'Actualización de tu garantía',
+          eyebrow: 'Garantía',
+          body:
+            `<p>Hola ${nombre},</p>` +
+            `<p>Tras revisar tu solicitud de garantía, no procedió en esta ocasión. ` +
+            `Si tienes dudas, contáctanos y con gusto te explicamos.</p>`,
+        },
+      }[kind];
+      const html = await this.composer.brandedClient(
+        warranty.tenantId,
+        textos.subject,
+        textos.body,
+        textos.eyebrow,
+      );
+      await this.emailjs.enviar({ subject: textos.subject, html, to: email });
+    } catch {
+      // El correo no debe afectar la operación de la garantía.
+    }
+  }
 
   private applyScope(
     qb: ReturnType<Repository<Warranty>['createQueryBuilder']>,
@@ -70,8 +136,15 @@ export class WarrantiesService {
       );
     }
 
+    const { codigo } = await siguienteCodigoDocumento(
+      this.dataSource,
+      user.tenantId,
+      CODIGO_OBJETO.GARANTIA,
+    );
+
     const warranty = this.warrantyRepo.create({
       tenantId: user.tenantId,
+      folio: codigo,
       branchId: dto.branchId,
       unitSaleId: dto.unitSaleId ?? null,
       serviceOrderId: dto.serviceOrderId ?? null,
@@ -86,7 +159,9 @@ export class WarrantiesService {
       startDate,
       endDate,
     });
-    return this.warrantyRepo.save(warranty);
+    const saved = await this.warrantyRepo.save(warranty);
+    void this.avisarGarantia(saved, 'abierta');
+    return saved;
   }
 
   async findAll(
@@ -232,7 +307,9 @@ export class WarrantiesService {
       status: WarrantyStatusEnum.RESOLVED,
       resolution: dto.resolution,
     });
-    return this.findOne(user, id);
+    const actualizada = await this.findOne(user, id);
+    void this.avisarGarantia(actualizada, 'resuelta');
+    return actualizada;
   }
 
   async reject(
@@ -256,6 +333,8 @@ export class WarrantiesService {
       status: WarrantyStatusEnum.REJECTED,
       authorizerId: user.sub,
     });
-    return this.findOne(user, id);
+    const actualizada = await this.findOne(user, id);
+    void this.avisarGarantia(actualizada, 'rechazada');
+    return actualizada;
   }
 }
