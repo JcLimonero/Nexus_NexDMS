@@ -147,8 +147,8 @@
   color: var(--text-secondary);
 }
 .hp-badge--seg {
-  background: #ecfeff; // TODO token
-  color: #0e7490; // TODO token
+  background: var(--accent-cyan-bg);
+  color: var(--accent-cyan);
 }
 
 .hp-estado {

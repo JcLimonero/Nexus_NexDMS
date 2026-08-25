@@ -75,7 +75,7 @@
   width: 100%;
   border-collapse: collapse;
   background: var(--card);
-  border-radius: 10px; // TODO token
+  border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
@@ -168,7 +168,7 @@
   select,
   textarea {
     border: 1px solid var(--border-hover);
-    border-radius: 7px; // TODO token
+    border-radius: var(--radius-md);
     padding: 8px 10px;
     font-size: 13px;
     font-family: inherit;
