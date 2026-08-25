@@ -316,8 +316,8 @@
   </div>
 
   @if (entregaAbierta()) {
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;" (click)="entregaAbierta.set(false)"></div>
-    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(440px,94vw);max-height:90vh;overflow:auto;">
+    <div class="ui-scrim" (click)="entregaAbierta.set(false)"></div>
+    <div class="card ui-modal" style="width:min(440px,94vw)">
       <div class="card-header"><h6 class="mb-0">Entregar unidad</h6></div>
       <div class="card-body">
         <label class="form-label d-block">¿Cómo se entrega?</label>
@@ -357,8 +357,8 @@
   }
 
   @if (valeAbierto()) {
-    <div style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:1050;" (click)="valeAbierto.set(false)"></div>
-    <div class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:1051;width:min(620px,94vw);max-height:90vh;overflow:auto;">
+    <div class="ui-scrim" (click)="valeAbierto.set(false)"></div>
+    <div class="card ui-modal" style="width:min(620px,94vw)">
       <div class="card-header"><h6 class="mb-0">Vale(s) de compra</h6></div>
       <div class="card-body">
         <p class="text-muted small">Egresos de caja por refacciones compradas para esta orden. Se puede comprar a distintos proveedores: agrega un renglón por vale. Cada uno queda ligado al auto y entra al corte.</p>

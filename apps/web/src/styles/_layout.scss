@@ -159,3 +159,22 @@ $breakpoints: (
 .fw-500 { font-weight: var(--font-medium); }
 .fw-600 { font-weight: var(--font-semibold); }
 .w-100 { width: 100%; }
+
+/* Modales ad-hoc (sin ng-bootstrap): scrim + caja centrada.
+   El ancho se deja por modal (varía), pero overlay, centrado y z-index
+   se unifican aquí para no repetir estilos inline ni descuadrar el tono. */
+.ui-scrim {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1050;
+}
+.ui-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1051;
+  max-height: 90vh;
+  overflow: auto;
+}
