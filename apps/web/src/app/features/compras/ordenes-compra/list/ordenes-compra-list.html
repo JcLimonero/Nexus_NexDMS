@@ -172,15 +172,12 @@
 </div>
 
 @if (importOpen()) {
-  <div
-    style="position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 1050;"
-    (click)="cerrarImport()"
-  ></div>
+  <div class="ui-scrim" (click)="cerrarImport()"></div>
   <div
     role="dialog"
     aria-modal="true"
-    style="position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); z-index: 1051; width: min(640px, 94vw); max-height: 90vh; overflow: auto;"
-    class="card shadow"
+    class="card shadow ui-modal"
+    style="width: min(640px, 94vw)"
   >
     <div class="card-header d-flex justify-content-between align-items-center">
       <h5 class="mb-0">Importar factura de compra (XML)</h5>

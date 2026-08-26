@@ -11,12 +11,54 @@
    oculto (.d-lg-none, <992px). En ese rango el menú queda inalcanzable.
    Se fuerza visible en escritorio y el contenido se recorre 260px. */
 @media (min-width: 992px) {
+  /* En escritorio, `.open` = menú COLAPSADO a "mini": solo íconos (72px).
+     El botón del header (align-left) alterna entre completo y mini. El
+     contenido se recorre para ocupar el espacio liberado. */
   .page-wrapper .page-body-wrapper .page-sidebar.open {
     margin-left: 0 !important;
+    width: var(--sidebar-collapsed) !important;
+    overflow: visible;
   }
   .page-wrapper .page-body-wrapper .page-sidebar.open ~ .page-body,
   .page-wrapper .page-body-wrapper .page-sidebar.open ~ footer {
-    margin-left: 260px !important;
+    margin-left: var(--sidebar-collapsed) !important;
+  }
+
+  /* Oculta etiquetas/badges y centra el ícono. */
+  .page-sidebar.open .sidebar-menu > li > a.sidebar-header > span {
+    display: none !important;
+  }
+  .page-sidebar.open .sidebar-menu > li > a.sidebar-header {
+    justify-content: center;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    text-align: center;
+  }
+
+  /* Submenú oculto en mini; aparece como flyout a la derecha al pasar el
+     cursor sobre su ítem, para no perder acceso a los hijos. */
+  .page-sidebar.open .sidebar-menu > li {
+    position: relative;
+  }
+  .page-sidebar.open .sidebar-menu .sidebar-submenu {
+    display: none !important;
+  }
+  .page-sidebar.open .sidebar-menu > li:hover > .sidebar-submenu {
+    display: block !important;
+    position: absolute;
+    left: 100%;
+    top: 0;
+    min-width: 210px;
+    max-height: none !important;
+    height: auto !important;
+    padding: var(--space-8) 0 !important;
+    background: var(--sidebar-bg-via);
+    box-shadow: var(--shadow-lg);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    z-index: 1100;
+  }
+  .page-sidebar.open .sidebar-menu > li:hover > .sidebar-submenu span {
+    display: inline !important;
   }
 }
 

@@ -304,7 +304,7 @@
   height: 180px;
   border: 1px dashed var(--border);
   border-radius: var(--radius-md);
-  background: #fff;
+  background: var(--card);
   /* Sin esto, arrastrar el dedo desplaza la página en vez de firmar. */
   touch-action: none;
   cursor: crosshair;

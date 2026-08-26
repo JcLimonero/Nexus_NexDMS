@@ -58,6 +58,12 @@
   --info: var(--nexus-600);
   --info-bg: var(--nexus-50);
 
+  /* ── Acentos extra ──────────────────────────────── */
+  --accent-cyan: #0E7490;          /* teal para badges informativos (segmentos) */
+  --accent-cyan-bg: #ECFEFF;
+  --surface-dark: var(--navy-700); /* superficie oscura (botón/realce) de marca */
+  --surface-dark-hover: var(--navy-600);
+
   /* ── Sidebar (navy de marca) ────────────────────── */
   --sidebar-bg-from: var(--navy-600);
   --sidebar-bg-via: var(--navy-700);
@@ -199,6 +205,11 @@
   --danger-bg: #3A1815;
   --info: var(--nexus-400);
   --info-bg: rgba(69, 137, 181, 0.14);
+
+  --accent-cyan: #5EE0F2;
+  --accent-cyan-bg: rgba(14, 116, 144, 0.18);
+  --surface-dark: #2C4A5E;
+  --surface-dark-hover: #35586E;
 
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
   --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45);

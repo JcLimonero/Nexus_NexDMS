@@ -1,8 +1,9 @@
+// Stepper de fase — usa los tokens del sistema de diseño (dark-mode correcto).
 .pt {
   display: flex;
   align-items: flex-start;
   overflow-x: auto;
-  padding: 6px 0 4px;
+  padding: var(--space-4) 0;
 }
 .pt-step {
   flex: 1 0 0;
@@ -17,7 +18,7 @@
   left: -50%;
   width: 100%;
   height: 3px;
-  background: #cbd5e1;
+  background: var(--border-strong);
   z-index: 1;
 }
 .pt-step:first-child::before {
@@ -26,53 +27,53 @@
 .pt-bul {
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-pill);
   margin: 0 auto 7px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 13px;
+  font-weight: var(--font-bold);
+  font-size: var(--text-sm);
   position: relative;
   z-index: 2;
-  background: #fff;
-  border: 2px solid #94a3b8;
-  color: #94a3b8;
+  background: var(--card);
+  border: 2px solid var(--text-muted);
+  color: var(--text-muted);
   transition: 0.2s;
 }
 .pt-lbl {
-  font-size: 12px;
-  color: #64748b;
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
   line-height: 1.25;
   padding: 0 3px;
 }
 .pt-step.done .pt-bul {
-  background: #16a34a;
-  border-color: #16a34a;
+  background: var(--success);
+  border-color: var(--success);
   color: #fff;
 }
 .pt-step.done::before {
-  background: #16a34a;
+  background: var(--success);
 }
 .pt-step.now .pt-bul {
-  background: #2563eb;
-  border-color: #2563eb;
-  color: #fff;
-  box-shadow: 0 0 0 4px #eff4ff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--text-on-brand);
+  box-shadow: var(--focus-ring);
 }
 .pt-step.now::before {
-  background: #16a34a;
+  background: var(--success);
 }
 .pt-step.now .pt-lbl {
-  color: #0f172a;
-  font-weight: 600;
+  color: var(--text-primary);
+  font-weight: var(--font-semibold);
 }
 .pt-cancel {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  padding: 8px 12px;
-  font-size: 13px;
-  font-weight: 500;
+  background: var(--danger-bg);
+  color: var(--danger);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  padding: var(--space-8) var(--space-12);
+  font-size: var(--text-sm);
+  font-weight: var(--font-medium);
 }
