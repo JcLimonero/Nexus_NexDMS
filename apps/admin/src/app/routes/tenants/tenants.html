@@ -225,10 +225,11 @@
   </div>
 }
 
-<!-- Módulos del cliente -->
+<!-- Módulos del cliente. Se abre sobre la ficha, así que va con z-index mayor
+     (`sobre`) para no quedar detrás de ella. -->
 @if (moduloDe(); as t) {
-  <div class="fondo" (click)="cerrarModulos()"></div>
-  <div class="dialogo" role="dialog" aria-modal="true">
+  <div class="fondo sobre" (click)="cerrarModulos()"></div>
+  <div class="dialogo sobre" role="dialog" aria-modal="true">
     <header class="dialogo-top">
       <div>
         <h2>Módulos de {{ t.name }}</h2>

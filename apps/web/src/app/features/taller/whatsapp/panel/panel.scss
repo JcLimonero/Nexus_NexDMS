@@ -1,0 +1,237 @@
+@use "../whatsapp-common" as *;
+
+.wa-page {
+  padding: var(--space-16) 0;
+}
+.cap {
+  text-transform: capitalize;
+}
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: var(--space-16);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .panel-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pcard {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-16);
+}
+.pcard-h {
+  margin: 0 0 2px;
+  font-size: var(--text-section-title);
+  font-weight: var(--text-section-title-weight);
+  color: var(--text-primary);
+}
+.pcard-sub {
+  margin: 0 0 var(--space-16);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/* ── Embudo ── */
+.funnel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.fstep-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 4px;
+  font-size: var(--text-sm);
+}
+.fstep-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+.fstep-val {
+  color: var(--text-primary);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.fstep-pct {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.fbar-track {
+  height: 22px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+.fbar {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--primary) 55%, var(--card));
+  transition: width 0.4s ease;
+
+  &.fbar-end {
+    background: var(--success);
+  }
+}
+
+/* ── Retorno ── */
+.pcard-roi {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+.roi-rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.roi-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  b {
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .pos {
+    color: var(--success);
+  }
+  .neg {
+    color: var(--danger);
+  }
+}
+.roi-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-8);
+  padding-top: var(--space-12);
+  border-top: 1px solid var(--primary);
+  font-weight: 600;
+  color: var(--text-primary);
+
+  b {
+    font-size: var(--text-2xl);
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ── Antes/después no-shows ── */
+.ba {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-12);
+}
+.ba-label {
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+.ba-bar {
+  height: 18px;
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  display: inline-block;
+  width: 100%;
+  vertical-align: middle;
+}
+.ba-fill {
+  height: 100%;
+  &.neg {
+    background: var(--danger);
+  }
+  &.pos {
+    background: var(--success);
+  }
+}
+.ba-val {
+  font-weight: 700;
+  font-size: var(--text-sm);
+  margin-top: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.ba-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  margin-top: var(--space-16);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+
+  .pos {
+    color: var(--success);
+  }
+}
+
+/* ── Donut carga del equipo ── */
+.donut {
+  --pct: 71;
+  width: 150px;
+  height: 150px;
+  margin: var(--space-8) auto var(--space-12);
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--primary) calc(var(--pct) * 1%),
+    color-mix(in srgb, var(--warning) 60%, var(--card)) 0
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 20px;
+    background: var(--card);
+    border-radius: 50%;
+  }
+}
+.donut-center {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+
+  b {
+    display: block;
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  span {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+  }
+}
+.legend {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-16);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+
+  .dot {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 4px;
+  }
+  .dot-bot {
+    background: var(--primary);
+  }
+  .dot-agent {
+    background: color-mix(in srgb, var(--warning) 60%, var(--card));
+  }
+}

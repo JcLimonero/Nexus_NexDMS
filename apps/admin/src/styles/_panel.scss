@@ -344,6 +344,16 @@ textarea {
   z-index: 40;
 }
 
+/* Diálogo secundario abierto sobre otro (p. ej. Módulos sobre la ficha del
+   cliente): comparte z-index con el primero, así que sin esto quedaría detrás
+   —el que va después en el DOM pinta encima—. Se eleva por encima. */
+.fondo.sobre {
+  z-index: 60;
+}
+.dialogo.sobre {
+  z-index: 61;
+}
+
 .dialogo {
   position: fixed;
   top: 50%;
