@@ -724,14 +724,35 @@ describe('WhatsappConversationsService', () => {
       ).resolves.toBe(ConversationErrorCode.ALREADY_TAKEN);
     });
 
-    it('no se puede tomar una conversación que ya terminó', async () => {
+    it('se puede tomar una conversación cerrada (agendada) para entrar como humano, sin tocar su estado', async () => {
       convQb.getOne.mockResolvedValue(
         conversationRow({ state: WhatsappConversationStateEnum.BOOKED }),
       );
 
-      await expect(
-        codeOf(() => service.take(userWith(), 'conv-1')),
-      ).resolves.toBe(ConversationErrorCode.NOT_TAKEABLE);
+      await service.take(userWith({ sub: 'user-9' }), 'conv-1');
+
+      // A diferencia de tomar una que sigue con el bot, aquí no hay `state`
+      // en el update: sigue contando como agendada en la bandeja, sólo que
+      // ahora alguien puede escribir en ella.
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+        assignedUserId: 'user-9',
+      });
+    });
+
+    it('lo mismo aplica a una cancelada o expirada', async () => {
+      for (const state of [
+        WhatsappConversationStateEnum.CANCELLED,
+        WhatsappConversationStateEnum.EXPIRED,
+      ]) {
+        conversationRepo.update.mockClear();
+        convQb.getOne.mockResolvedValue(conversationRow({ state }));
+
+        await service.take(userWith({ sub: 'user-9' }), 'conv-1');
+
+        expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
+          assignedUserId: 'user-9',
+        });
+      }
     });
 
     it('404 si la conversación es de otra sucursal', async () => {
@@ -756,8 +777,8 @@ describe('WhatsappConversationsService', () => {
 
       await service.take(userWith({ sub: 'user-9' }), 'conv-1');
 
+      // Ya estaba en WITH_AGENT: no hace falta volver a ponerlo.
       expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
-        state: WhatsappConversationStateEnum.WITH_AGENT,
         assignedUserId: 'user-9',
       });
     });
@@ -870,6 +891,21 @@ describe('WhatsappConversationsService', () => {
 
       expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
         state: WhatsappConversationStateEnum.BOT,
+        assignedUserId: null,
+      });
+    });
+
+    it('soltar una cerrada (agendada) no la revive para el bot: sólo la deja sin dueño', async () => {
+      convQb.getOne.mockResolvedValue(
+        conversationRow({
+          state: WhatsappConversationStateEnum.BOOKED,
+          assignedUserId: 'user-9',
+        }),
+      );
+
+      await service.release(userWith({ sub: 'user-9' }), 'conv-1');
+
+      expect(conversationRepo.update).toHaveBeenCalledWith('conv-1', {
         assignedUserId: null,
       });
     });
@@ -1014,6 +1050,22 @@ describe('WhatsappConversationsService', () => {
           }),
         ),
       ).resolves.toBe(ConversationErrorCode.ALREADY_TAKEN);
+    });
+
+    it('se puede responder en una agendada mientras siga abierta la ventana de 24h', async () => {
+      convQb.getOne.mockResolvedValue(
+        tomadaPor('user-9', { state: WhatsappConversationStateEnum.BOOKED }),
+      );
+
+      await service.sendMessage(userWith({ sub: 'user-9' }), 'conv-1', {
+        text: '¿Sigues confirmado para tu cita?',
+      });
+
+      expect(whatsapp.sendText).toHaveBeenCalledWith(
+        META_PHONE,
+        '¿Sigues confirmado para tu cita?',
+        { phoneNumberId: '123', token: 'tok' },
+      );
     });
 
     it('avisa si la sucursal no tiene WhatsApp configurado', async () => {

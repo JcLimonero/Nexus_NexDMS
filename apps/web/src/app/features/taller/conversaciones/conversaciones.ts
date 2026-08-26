@@ -247,7 +247,13 @@ export class Conversaciones implements OnInit, OnDestroy {
       next: (d) => {
         this.detail.set(d);
         this.working.set(false);
-        this.toastr.info("La conversación volvió con el asistente");
+        // Sólo vuelve con el asistente si de ahí venía: soltar una ya
+        // cerrada (agendada/cancelada/expirada) sólo la deja sin dueño.
+        this.toastr.info(
+          d.state === "BOT"
+            ? "La conversación volvió con el asistente"
+            : "Soltaste la conversación",
+        );
         this.cargarLista();
       },
       error: (err: HttpErrorResponse) => {
@@ -305,8 +311,7 @@ export class Conversaciones implements OnInit, OnDestroy {
     if (
       code === "WINDOW_CLOSED" ||
       code === "ALREADY_TAKEN" ||
-      code === "NOT_TAKEN" ||
-      code === "NOT_TAKEABLE"
+      code === "NOT_TAKEN"
     ) {
       this.cargarDetalle(id, true);
       this.cargarLista();

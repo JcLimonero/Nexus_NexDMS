@@ -213,8 +213,10 @@ export class WhatsappConversationsService {
   // ─── Toma y respuesta del asesor ─────────────────
 
   /**
-   * Un asesor entra a una conversación: la que atiende el asistente, o una
-   * que ya escaló y sigue esperando a que alguien la tome.
+   * Un asesor entra a una conversación: la que atiende el asistente, una que
+   * ya escaló y sigue esperando a que alguien la tome, o una ya cerrada
+   * (agendada, cancelada, expirada) a la que quiere entrar como humano —para
+   * darle seguimiento a una cita ya agendada, por ejemplo.
    *
    * Quién la tiene se decide por `assignedUserId`, no por el estado: una
    * conversación escalada por `escalate()` ya está en `WITH_AGENT` —así
@@ -222,6 +224,12 @@ export class WhatsappConversationsService {
    * Tratar todo `WITH_AGENT` como "ya la tiene alguien" —como hacía antes—
    * dejaba las escaladas sin dueño atoradas: el primero que intentaba
    * tomarla se topaba con `ALREADY_TAKEN` contra nadie.
+   *
+   * El estado sólo cambia a `WITH_AGENT` si venía de `BOT` —ahí sí hace
+   * falta para callar al bot—. Tomar una ya cerrada no le cambia el estado:
+   * seguiría contando como agendada/cancelada/expirada en la bandeja, sólo
+   * que ahora alguien puede escribir en ella (si la ventana de 24h de Meta
+   * lo permite; eso lo checa `sendMessage`, no esto).
    *
    * `reason` es opcional y sólo para `BOT_WAS_WRONG` (ver
    * `TakeConversationDto`): el asesor lo marca al ver que el bot dio mal la
@@ -246,18 +254,10 @@ export class WhatsappConversationsService {
       });
     }
 
-    if (
-      conversation.state !== WhatsappConversationStateEnum.BOT &&
-      conversation.state !== WhatsappConversationStateEnum.WITH_AGENT
-    ) {
-      throw new ConflictException({
-        message: 'Esta conversación ya terminó',
-        code: ConversationErrorCode.NOT_TAKEABLE,
-      });
-    }
-
     await this.conversationRepo.update(id, {
-      state: WhatsappConversationStateEnum.WITH_AGENT,
+      ...(conversation.state === WhatsappConversationStateEnum.BOT
+        ? { state: WhatsappConversationStateEnum.WITH_AGENT }
+        : {}),
       assignedUserId: user.sub,
       ...(reason ? { escalationReason: reason } : {}),
     });
@@ -265,16 +265,21 @@ export class WhatsappConversationsService {
   }
 
   /**
-   * El asesor suelta la conversación y la devuelve al asistente.
+   * El asesor suelta la conversación.
    *
    * Puede soltarla quien la tomó o, para destrabar, un responsable: si alguien
    * se va a comer y deja tres conversaciones tomadas, su jefe tiene que poder
    * liberarlas sin esperar a que vuelva.
+   *
+   * Sólo vuelve a `BOT` si de ahí venía. Soltar una que ya estaba cerrada
+   * (agendada, cancelada, expirada) no debe revivirla para el asistente ni
+   * mentir en la bandeja: se queda con el mismo desenlace, sólo que sin
+   * dueño.
    */
   async release(user: UserPayload, id: string): Promise<ConversationDetailDto> {
     const conversation = await this.findInScope(user, id);
 
-    if (conversation.state !== WhatsappConversationStateEnum.WITH_AGENT) {
+    if (!conversation.assignedUserId) {
       throw new ConflictException({
         message: 'Esta conversación no la ha tomado nadie',
         code: ConversationErrorCode.NOT_TAKEN,
@@ -288,7 +293,9 @@ export class WhatsappConversationsService {
     }
 
     await this.conversationRepo.update(id, {
-      state: WhatsappConversationStateEnum.BOT,
+      ...(conversation.state === WhatsappConversationStateEnum.WITH_AGENT
+        ? { state: WhatsappConversationStateEnum.BOT }
+        : {}),
       assignedUserId: null,
     });
     return this.findOne(user, id);
@@ -307,7 +314,7 @@ export class WhatsappConversationsService {
   ): Promise<MessageDto> {
     const conversation = await this.findInScope(user, id);
 
-    if (conversation.state !== WhatsappConversationStateEnum.WITH_AGENT) {
+    if (!conversation.assignedUserId) {
       throw new ConflictException({
         message: 'Toma la conversación antes de responder',
         code: ConversationErrorCode.NOT_TAKEN,

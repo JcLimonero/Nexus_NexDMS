@@ -22,8 +22,6 @@ export class SendMessageDto {
 export enum ConversationErrorCode {
   /** Otra persona la está atendiendo. */
   ALREADY_TAKEN = 'ALREADY_TAKEN',
-  /** No está en un estado que permita tomarla. */
-  NOT_TAKEABLE = 'NOT_TAKEABLE',
   /** Nadie la ha tomado todavía. */
   NOT_TAKEN = 'NOT_TAKEN',
   /** Pasaron las 24 h desde el último mensaje del cliente. */

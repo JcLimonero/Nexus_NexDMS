@@ -99,7 +99,6 @@ export interface ConversationDetail extends ConversationSummary {
 /** Motivos por los que el API rechaza una acción sobre la conversación. */
 export type ConversationErrorCode =
   | "ALREADY_TAKEN"
-  | "NOT_TAKEABLE"
   | "NOT_TAKEN"
   | "WINDOW_CLOSED"
   | "SEND_FAILED"

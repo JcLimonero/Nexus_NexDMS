@@ -110,7 +110,7 @@
                     </span>
                   }
 
-                  @if (conv.state === "BOT") {
+                  @if (!conv.assignedTo) {
                     <button
                       type="button"
                       class="btn btn-sm btn-outline-primary conv-take-over"
@@ -122,7 +122,7 @@
                     </button>
                   }
 
-                  @if (conv.state === "WITH_AGENT" && esMia()) {
+                  @if (esMia()) {
                     <button
                       type="button"
                       class="btn btn-sm btn-outline-secondary conv-take-over"
@@ -205,7 +205,7 @@
                 }
               </div>
 
-              @if (conv.state === "WITH_AGENT" && esMia()) {
+              @if (esMia()) {
                 @if (conv.canReplyFreeText) {
                   <div class="conv-compose">
                     <textarea
