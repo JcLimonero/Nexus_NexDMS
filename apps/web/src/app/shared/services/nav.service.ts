@@ -15,6 +15,14 @@ export interface Menu {
   bookmark?: boolean;
   queryParams?: Record<string, string>;
   children?: Menu[];
+  /**
+   * Clave de módulo con la que se filtra este ítem. Se usa cuando el módulo no
+   * coincide con el primer segmento del path (p. ej. los módulos de WhatsApp,
+   * que viven bajo /workshop pero se contratan por separado).
+   */
+  module?: string;
+  /** Se muestra si el tenant tiene habilitado CUALQUIERA de estos módulos. */
+  modules?: string[];
 }
 
 @Injectable({
@@ -75,6 +83,20 @@ export class NavService {
           path: "/workshop/conversaciones",
           title: "Conversaciones",
           type: "link",
+        },
+        // WhatsApp: cada pantalla es su propio módulo facturable, por eso lleva
+        // `module` explícito (su path vive bajo /workshop pero no depende de él).
+        {
+          title: "WhatsApp",
+          type: "sub",
+          active: false,
+          children: [
+            { path: "/workshop/whatsapp/panel", title: "Panel de resultados", type: "link", modules: ["wa-service-due", "wa-appointment-reminder", "wa-conversational-agent"] },
+            { path: "/workshop/whatsapp/servicios-pendientes", title: "Servicios pendientes", type: "link", module: "wa-service-due" },
+            { path: "/workshop/whatsapp/recordatorio-cita", title: "Recordatorio de cita", type: "link", module: "wa-appointment-reminder" },
+            { path: "/workshop/whatsapp/agente-conversacional", title: "Agente conversacional", type: "link", module: "wa-conversational-agent" },
+            { path: "/workshop/whatsapp/consumo", title: "Consumo y facturación", type: "link", modules: ["wa-service-due", "wa-appointment-reminder", "wa-conversational-agent"] },
+          ],
         },
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/quotes/servicio", title: "Presupuestos de servicio", type: "link" },
@@ -278,8 +300,14 @@ export class NavService {
       // propio; se muestra si el tenant tiene almacén o inventario de refacciones.
       "importar-catalogos": ["warehouse", "parts-inventory"],
     };
-    const permitido = (path?: string): boolean => {
-      const key = keyOf(path);
+    const permitido = (item: Menu): boolean => {
+      // Un ítem puede declarar su módulo aparte cuando no coincide con el primer
+      // segmento del path (p. ej. WhatsApp, bajo /workshop pero facturado solo).
+      if (item.module) return allowed.has(item.module);
+      // O mostrarse si tiene cualquiera de varios módulos (p. ej. el consumo de
+      // WhatsApp, visible si contrató al menos uno de sus módulos).
+      if (item.modules) return item.modules.some((m) => allowed.has(m));
+      const key = keyOf(item.path);
       if (allowed.has(key)) return true;
       const padres = ALIAS[key];
       return !!padres && padres.some((p) => allowed.has(p));
@@ -292,7 +320,7 @@ export class NavService {
           if (children.length) acc.push({ ...item, children });
           return acc;
         }
-        if (permitido(item.path)) acc.push(item);
+        if (permitido(item)) acc.push(item);
         return acc;
       }, []);
 

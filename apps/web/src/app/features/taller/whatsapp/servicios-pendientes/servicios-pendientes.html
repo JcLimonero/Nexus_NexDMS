@@ -1,0 +1,67 @@
+<div class="container-fluid wa-page">
+  <div class="card">
+    <div class="card-header">
+      <h5>Servicios pendientes por WhatsApp</h5>
+      <span>Aviso automático cuando el vehículo ya requiere servicio, por kilometraje o por tiempo desde la última visita.</span>
+    </div>
+    <div class="card-body">
+      <div class="wa-kpis">
+        <div class="wa-kpi accent"><div class="k">Por recordar</div><div class="v">{{ total() }}</div><div class="s">vehículos con servicio pendiente</div></div>
+        <div class="wa-kpi"><div class="k">Enviados</div><div class="v">{{ enviados() }}</div><div class="s">de {{ total() }}</div></div>
+        <div class="wa-kpi"><div class="k">Leídos</div><div class="v good">{{ leidos() }}</div><div class="s">check azul</div></div>
+        <div class="wa-kpi"><div class="k">Agendaron</div><div class="v good">{{ agendaron() }}</div><div class="s">tras el recordatorio</div></div>
+        <div class="wa-kpi"><div class="k">Sin respuesta</div><div class="v" [class.warn]="sinRespuesta()">{{ sinRespuesta() }}</div><div class="s">requieren llamada</div></div>
+        <div class="wa-kpi"><div class="k">Cobertura</div><div class="v">{{ cobertura() }}%</div><div class="s">vehículos contactados</div></div>
+      </div>
+
+      <div class="wa-split">
+        <div>
+          <div class="wa-toolbar">
+            <h6>Vehículos con servicio pendiente</h6>
+            <button class="btn-wa" [disabled]="pendientes() === 0" (click)="sendAll()">Recordar a todos</button>
+          </div>
+          <table class="wa-table">
+            <thead>
+              <tr><th>Vehículo</th><th>Cliente</th><th>Motivo</th><th>Recordatorio</th><th>Resultado</th><th></th></tr>
+            </thead>
+            <tbody>
+              @for (r of data(); track r.folio) {
+                <tr>
+                  <td><div class="cli">{{ r.vehiculo }}</div><div class="wa-mono">{{ r.folio }}</div></td>
+                  <td><div class="cli">{{ r.cliente }}</div><div class="sub">{{ r.tel }}</div></td>
+                  <td>{{ r.motivo }}</td>
+                  <td><span class="pill" [class]="remMeta(r.rem).cls">{{ remMeta(r.rem).label }}</span></td>
+                  <td>
+                    @if (resPill(r.res); as rp) {
+                      <span class="pill" [class]="rp.cls">{{ rp.label }}</span>
+                    } @else {
+                      <span class="sub">—</span>
+                    }
+                  </td>
+                  <td>
+                    <div class="row-acc">
+                      <button class="btn-wa" (click)="send(r)">{{ canSend(r) ? "Enviar" : "Reenviar" }}</button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="wa-tip">Se dispara solo, por kilometraje o por tiempo desde la última visita. Si el cliente acepta, el asistente le comparte el calendario y agenda la cita.</p>
+        </div>
+
+        <div class="wa-preview">
+          <div class="wh">🟢 Recordatorio de servicio · plantilla</div>
+          <div class="wa-body">
+            <div class="bubble">
+              Hola <b>Jorge Medina</b> 👋 Su <b>Jetta 2021</b> ya alcanzó los <b>40,000 km</b> y le corresponde su <b>servicio de mantenimiento</b>.<br /><br />
+              ¿Desea que le agende una cita? Con gusto le comparto las fechas y horarios disponibles.
+              <div class="wa-btns"><button>📅 Agendar cita</button><button>Más tarde</button></div>
+              <div class="t">09:10 ✓✓</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

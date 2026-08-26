@@ -1,0 +1,258 @@
+/* Estilos compartidos por las pantallas del módulo WhatsApp del taller.
+   Se traen con `@use "../whatsapp-common" as *;` en cada componente; Angular
+   los aísla por componente al compilar. Colores del design system del DMS;
+   el verde de WhatsApp (#25D366) es el único literal, por ser color de marca
+   ajeno. */
+
+/* ── KPIs ─────────────────────────────────────────────── */
+.wa-kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-12);
+  margin: 0 0 var(--space-16);
+}
+.wa-kpi {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-12) var(--space-16);
+
+  &.accent {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
+  .k {
+    font-size: var(--text-overline);
+    text-transform: uppercase;
+    letter-spacing: var(--text-overline-tracking);
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .v {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    margin-top: 4px;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+
+    &.good {
+      color: var(--success);
+    }
+    &.warn {
+      color: var(--warning);
+    }
+    &.bad {
+      color: var(--danger);
+    }
+  }
+  .s {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    margin-top: 2px;
+  }
+}
+
+/* ── Pastillas de estado ──────────────────────────────── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-pill);
+  white-space: nowrap;
+}
+.p-wait {
+  background: var(--bg);
+  color: var(--text-secondary);
+}
+.p-sent {
+  background: var(--info-bg);
+  color: var(--info);
+}
+.p-ok {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.p-warn {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.p-bad {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+.p-wa {
+  background: color-mix(in srgb, #25d366 16%, transparent);
+  color: #0e7a3b;
+}
+
+.wa-mono {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+}
+
+/* ── Botón de envío verde WhatsApp ────────────────────── */
+.btn-wa {
+  background: #25d366;
+  color: #04331b;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 6px 13px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+}
+
+/* ── División pantalla / vista previa ─────────────────── */
+.wa-split {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: var(--space-16);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .wa-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Vista previa de la plantilla de WhatsApp ─────────── */
+.wa-preview {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  align-self: start;
+
+  .wh {
+    background: #25d366;
+    color: #04331b;
+    padding: 10px 14px;
+    font-weight: 700;
+    font-size: var(--text-sm);
+  }
+  .wa-body {
+    background: #ece5dd;
+    padding: 14px;
+    min-height: 140px;
+  }
+  .bubble {
+    background: #fff;
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: var(--text-sm);
+    color: #111;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+    max-width: 250px;
+
+    .t {
+      font-size: 11px;
+      color: #667781;
+      margin-top: 5px;
+      text-align: right;
+    }
+  }
+  .wa-btns {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    button {
+      background: #fff;
+      border: 1px solid #d6d9dc;
+      border-radius: 8px;
+      padding: 8px;
+      color: #0a7cff;
+      font-weight: 600;
+      font-size: var(--text-sm);
+      cursor: pointer;
+    }
+  }
+  .wa-loc {
+    margin-top: 8px;
+    border: 1px solid #d6d9dc;
+    border-radius: 8px;
+    overflow: hidden;
+
+    .map {
+      height: 74px;
+      background: linear-gradient(135deg, #cfe6d4, #9ccbb0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+    }
+    .addr {
+      padding: 8px 10px;
+      font-size: 12px;
+      background: #fff;
+      color: #111;
+      line-height: 1.4;
+
+      b {
+        display: block;
+        margin-bottom: 1px;
+      }
+      a {
+        color: #0a7cff;
+        text-decoration: none;
+        font-weight: 600;
+      }
+    }
+  }
+}
+
+/* ── Tabla ────────────────────────────────────────────── */
+.wa-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+
+  th {
+    text-align: left;
+    padding: 10px 14px;
+    color: var(--text-muted);
+    font-size: var(--text-overline);
+    text-transform: uppercase;
+    letter-spacing: var(--text-overline-tracking);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td {
+    border-bottom: none;
+  }
+  .cli {
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .sub {
+    color: var(--text-secondary);
+    font-size: var(--text-xs);
+  }
+  .row-acc {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+  }
+}
+
+.wa-tip {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  padding: 10px 0 0;
+}

@@ -1,0 +1,67 @@
+@use "../whatsapp-common" as *;
+
+.wa-page {
+  padding: var(--space-16) 0;
+}
+.cap {
+  text-transform: capitalize;
+}
+
+.cons-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-24);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .cons-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cons-h {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-section-title);
+  font-weight: var(--text-section-title-weight);
+  color: var(--text-primary);
+}
+
+.wa-table {
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+  .strong {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  tfoot td {
+    border-top: 2px solid var(--border);
+    padding-top: 12px;
+    font-weight: 600;
+  }
+}
+
+.cons-total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-12);
+  margin-top: var(--space-16);
+  padding: var(--space-16);
+  border: 1px solid var(--primary);
+  background: var(--primary-soft);
+  border-radius: var(--radius-md);
+
+  .l {
+    font-weight: 600;
+    color: var(--text-primary);
+    text-transform: capitalize;
+  }
+  .v {
+    font-size: var(--text-2xl);
+    font-weight: 700;
+    color: var(--primary);
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -1,0 +1,122 @@
+<div class="container-fluid wa-page">
+  <div class="card">
+    <div class="card-header">
+      <h5>Recordatorio de cita por WhatsApp</h5>
+      <span>Recordatorio de las citas agendadas y seguimiento de su confirmación. El cliente confirma respondiendo en WhatsApp.</span>
+    </div>
+    <div class="card-body">
+      <div class="wa-subtabs">
+        <button [class.on]="tab() === 'recordatorio'" (click)="setTab('recordatorio')">📅 Recordatorio</button>
+        <button [class.on]="tab() === 'confirmacion'" (click)="setTab('confirmacion')">✅ Confirmación</button>
+      </div>
+
+      <!-- ── KPIs ── -->
+      @if (tab() === "recordatorio") {
+        <div class="wa-kpis">
+          <div class="wa-kpi accent"><div class="k">Enviados</div><div class="v">{{ enviados() }}</div><div class="s">de {{ total() }} citas</div></div>
+          <div class="wa-kpi"><div class="k">Entregados</div><div class="v">{{ entregados() }}</div><div class="s">checks dobles</div></div>
+          <div class="wa-kpi"><div class="k">Leídos</div><div class="v good">{{ leidos() }}</div><div class="s">check azul</div></div>
+          <div class="wa-kpi"><div class="k">Pendientes</div><div class="v" [class.warn]="pendientesRem()">{{ pendientesRem() }}</div><div class="s">por recordar</div></div>
+          <div class="wa-kpi"><div class="k">Fallidos</div><div class="v" [class.bad]="fallidos()">{{ fallidos() }}</div><div class="s">sin WhatsApp</div></div>
+          <div class="wa-kpi"><div class="k">Cobertura</div><div class="v">{{ cobertura() }}%</div><div class="s">citas con recordatorio</div></div>
+        </div>
+      } @else {
+        <div class="wa-kpis">
+          <div class="wa-kpi accent"><div class="k">% Confirmación</div><div class="v" [class.good]="tasaConfirmacion() >= 60" [class.warn]="tasaConfirmacion() < 60">{{ tasaConfirmacion() }}%</div><div class="s">{{ confirmadas() }} de {{ total() }}</div></div>
+          <div class="wa-kpi"><div class="k">Confirmadas</div><div class="v good">{{ confirmadas() }}</div><div class="s">listas para atender</div></div>
+          <div class="wa-kpi"><div class="k">Pendientes</div><div class="v" [class.warn]="pendientesCon()">{{ pendientesCon() }}</div><div class="s">sin responder aún</div></div>
+          <div class="wa-kpi"><div class="k">No responden</div><div class="v">{{ noResponden() }}</div><div class="s">requieren llamada</div></div>
+          <div class="wa-kpi"><div class="k">No-shows</div><div class="v" [class.bad]="noShows()">{{ noShows() }}</div><div class="s">no asistieron</div></div>
+          <div class="wa-kpi"><div class="k">Tiempo prom.</div><div class="v">{{ tiempoProm() }}</div><div class="s">a confirmar</div></div>
+        </div>
+      }
+
+      <div class="wa-split">
+        <div>
+          <!-- ── Recordatorio ── -->
+          @if (tab() === "recordatorio") {
+            <div class="wa-toolbar">
+              <h6>Citas por confirmar</h6>
+              <button class="btn-wa" [disabled]="pendientesRem() === 0" (click)="sendAll()">Recordar a todos</button>
+            </div>
+            <table class="wa-table">
+              <thead><tr><th>Cita</th><th>Cliente</th><th>Servicio</th><th>Recordatorio</th><th></th></tr></thead>
+              <tbody>
+                @for (r of data(); track r.folio) {
+                  <tr>
+                    <td><div class="wa-mono">{{ r.folio }}</div><div class="sub">{{ r.fecha }}</div></td>
+                    <td><div class="cli">{{ r.cliente }}</div><div class="sub">{{ r.tel }}</div></td>
+                    <td>{{ r.servicio }}</td>
+                    <td><span class="pill" [class]="remMeta(r.rem).cls">{{ remMeta(r.rem).label }}</span></td>
+                    <td><div class="row-acc"><button class="btn-wa" (click)="send(r)">{{ canSend(r) ? "Enviar" : "Reenviar" }}</button></div></td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="wa-tip">El estado avanza como los "checks" de WhatsApp: Enviado → Entregado → Leído. Fallido = número inválido o sin WhatsApp.</p>
+          } @else {
+            <!-- ── Confirmación ── -->
+            <div class="wa-toolbar">
+              <h6>Seguimiento de confirmación</h6>
+              <span class="sub">El cliente confirma respondiendo en WhatsApp; aquí se ve el estado en vivo.</span>
+            </div>
+            <table class="wa-table">
+              <thead><tr><th>Cita</th><th>Cliente</th><th>Servicio</th><th>Confirmación</th><th>Simular respuesta</th></tr></thead>
+              <tbody>
+                @for (r of data(); track r.folio) {
+                  <tr>
+                    <td><div class="wa-mono">{{ r.folio }}</div><div class="sub">{{ r.fecha }}</div></td>
+                    <td><div class="cli">{{ r.cliente }}</div><div class="sub">{{ r.tel }}</div></td>
+                    <td>{{ r.servicio }}</td>
+                    <td><span class="pill" [class]="conMeta(r.con).cls">{{ conMeta(r.con).label }}</span></td>
+                    <td>
+                      <div class="row-acc">
+                        @if (waitingConf(r)) {
+                          <button class="btn-wa" (click)="respond(r, 'confirmada')">✅ Confirma</button>
+                          <button class="btn-ghost" (click)="respond(r, 'cancelada')">✖️ Cancela</button>
+                        } @else {
+                          <span class="sub">—</span>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="wa-tip">En producción, los botones "Confirmar / Cancelar" del mensaje disparan el webhook del bot y cambian el estado solos. Aquí se simula con los botones de la derecha.</p>
+          }
+        </div>
+
+        <!-- ── Vista previa ── -->
+        @if (tab() === "recordatorio") {
+          <div class="wa-preview">
+            <div class="wh">🟢 Recordatorio de cita · plantilla</div>
+            <div class="wa-body">
+              <div class="bubble">
+                Hola <b>Roberto Silva</b> 👋 Le recordamos su cita en <b>Sucursal Pachuca</b> hoy a las <b>15:30</b> para <b>Afinación mayor</b>.<br /><br />¿Podrá asistir?
+                <div class="wa-btns"><button>✅ Confirmar</button><button>📅 Reagendar</button><button>✖️ Cancelar</button></div>
+                <div class="t">10:24 ✓✓</div>
+              </div>
+            </div>
+          </div>
+        } @else {
+          <div class="wa-preview">
+            <div class="wh">🟢 Al confirmar · se envía el detalle</div>
+            <div class="wa-body">
+              <div class="bubble">
+                ¡Listo, <b>María González</b>! ✅ Su cita quedó <b>confirmada</b>.<br /><br />
+                📋 <b>Detalle de su cita</b><br />• Servicio: <b>Cambio de frenos</b><br />• Fecha: <b>hoy · 17:00</b><br />• Sucursal: <b>Sucursal Pachuca</b><br />• Folio: <b>DEMCT00000021</b>
+                <div class="wa-loc">
+                  <div class="map">📍</div>
+                  <div class="addr"><b>Sucursal Pachuca</b>Blvd. Felipe Ángeles 1201, Col. Centro, Pachuca, Hgo.<a href="javascript:void(0)">Ver en mapa ›</a></div>
+                </div>
+                <div class="wa-contact">☎️ <b>Contacto</b><br />Servicio: <b>771 123 4567</b><br />Refacciones: <b>771 123 4570</b><br />WhatsApp: <b>771 987 6543</b></div>
+                <div class="t">16:41 ✓✓</div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+</div>

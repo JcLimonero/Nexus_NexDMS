@@ -1,0 +1,93 @@
+<div class="container-fluid wa-page">
+  <div class="card">
+    <div class="card-header">
+      <h5>Panel de resultados de WhatsApp <span class="pill p-wa demo-tag">Demo</span></h5>
+      <span>Lo que el módulo aporta al taller: citas generadas, asistencia y retorno. Periodo: <b class="cap">{{ periodo }}</b>.</span>
+    </div>
+    <div class="card-body">
+      <!-- KPIs de valor -->
+      <div class="wa-kpis">
+        <div class="wa-kpi accent"><div class="k">Citas por WhatsApp</div><div class="v">{{ agendadas | number }}</div><div class="s">agendadas este periodo</div></div>
+        <div class="wa-kpi"><div class="k">Conversión aviso→cita</div><div class="v good">{{ convAvisoCita() | percent: "1.0-0" }}</div><div class="s">de los mensajes enviados</div></div>
+        <div class="wa-kpi"><div class="k">Costo por cita</div><div class="v good">{{ costoPorCita() | currency: "MXN":"symbol-narrow":"1.2-2" }}</div><div class="s">lo que cuesta agendar una</div></div>
+        <div class="wa-kpi"><div class="k">Citas vía WhatsApp</div><div class="v">{{ pctViaWhats() | percent: "1.0-0" }}</div><div class="s">del total del taller</div></div>
+        <div class="wa-kpi"><div class="k">Resueltas por el bot</div><div class="v good">{{ resueltasBotPct() }}%</div><div class="s">sin ocupar a un asesor</div></div>
+        <div class="wa-kpi"><div class="k">1ª respuesta</div><div class="v">{{ tiempoRespuestaSeg }} s</div><div class="s">tiempo promedio</div></div>
+      </div>
+
+      <div class="panel-grid">
+        <!-- Embudo de prospección -->
+        <div class="pcard">
+          <h6 class="pcard-h">Embudo de prospección</h6>
+          <p class="pcard-sub">De cada aviso enviado, cuántos terminan en una cita.</p>
+          <div class="funnel">
+            @for (s of funnel(); track s.label; let i = $index) {
+              <div class="fstep">
+                <div class="fstep-top">
+                  <span class="fstep-label">{{ s.label }}</span>
+                  <span class="fstep-val">{{ s.value | number }} <span class="fstep-pct">· {{ stepPct(s.value) }}%</span></span>
+                </div>
+                <div class="fbar-track">
+                  <div class="fbar" [class.fbar-end]="i === funnel().length - 1" [style.width.%]="barWidth(s.value)"></div>
+                </div>
+              </div>
+            }
+          </div>
+          <p class="wa-tip">La conversión final (aviso → cita) es del <b>{{ convAvisoCita() | percent: "1.0-0" }}</b>. Sin recordatorios, esos clientes normalmente se olvidan del servicio.</p>
+        </div>
+
+        <!-- Retorno -->
+        <div class="pcard pcard-roi">
+          <h6 class="pcard-h">Retorno del módulo</h6>
+          <div class="roi-rows">
+            <div class="roi-row"><span>Ingreso atribuible a las citas</span><b class="pos">{{ ingresoAtribuible() | currency: "MXN":"symbol-narrow":"1.0-0" }}</b></div>
+            <div class="roi-row"><span>Ticket promedio de servicio</span><b>{{ ticketPromedio | currency: "MXN":"symbol-narrow":"1.0-0" }}</b></div>
+            <div class="roi-row"><span>Costo de WhatsApp en el periodo</span><b class="neg">{{ costoPeriodo | currency: "MXN":"symbol-narrow":"1.2-2" }}</b></div>
+            <div class="roi-total">
+              <span>Retorno (ingreso ÷ costo)</span>
+              <b>{{ roi() | number: "1.0-0" }}×</b>
+            </div>
+          </div>
+          <p class="wa-tip">Por cada peso invertido en WhatsApp, el taller factura ~<b>{{ roi() | number: "1.0-0" }}</b> en servicios agendados. El costo por cita agendada es de <b>{{ costoPorCita() | currency: "MXN":"symbol-narrow":"1.2-2" }}</b>.</p>
+        </div>
+
+        <!-- Asistencia -->
+        <div class="pcard">
+          <h6 class="pcard-h">Asistencia a las citas</h6>
+          <p class="pcard-sub">La confirmación y el reagendamiento reducen los espacios perdidos.</p>
+          <div class="ba">
+            <div class="ba-col">
+              <div class="ba-label">No-shows antes</div>
+              <div class="ba-bar"><div class="ba-fill neg" [style.width.%]="noShowAntes"></div></div>
+              <div class="ba-val">{{ noShowAntes }}%</div>
+            </div>
+            <div class="ba-col">
+              <div class="ba-label">No-shows con el módulo</div>
+              <div class="ba-bar"><div class="ba-fill pos" [style.width.%]="noShowDespues"></div></div>
+              <div class="ba-val">{{ noShowDespues }}%</div>
+            </div>
+          </div>
+          <div class="ba-foot">
+            <div><b class="pos">−{{ noShowReduccion() }} pts</b> de inasistencia</div>
+            <div><b>{{ reagendadas | number }}</b> citas reagendadas (no se perdieron)</div>
+          </div>
+        </div>
+
+        <!-- Carga del equipo -->
+        <div class="pcard">
+          <h6 class="pcard-h">Carga del equipo</h6>
+          <p class="pcard-sub">Cuánto resuelve el asistente solo, antes de pasar a una persona.</p>
+          <div class="donut" [style.--pct]="resueltasBotPct()">
+            <div class="donut-center"><b>{{ resueltasBotPct() }}%</b><span>por el bot</span></div>
+          </div>
+          <div class="legend">
+            <span><i class="dot dot-bot"></i> Asistente {{ resueltasBotPct() }}%</span>
+            <span><i class="dot dot-agent"></i> Asesor {{ 100 - resueltasBotPct() }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="wa-tip">Cifras de demostración para la presentación. En producción se calculan desde las citas atribuidas a WhatsApp y el registro de uso.</p>
+    </div>
+  </div>
+</div>

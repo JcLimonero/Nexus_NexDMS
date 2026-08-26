@@ -27,6 +27,9 @@ export type ModuleKey =
   | 'sale-documents'
   | 'quotes'
   | 'workshop'
+  | 'wa-service-due'
+  | 'wa-appointment-reminder'
+  | 'wa-conversational-agent'
   | 'reception'
   | 'bodywork'
   | 'warranties'
@@ -89,6 +92,36 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     route: '/workshop/service-orders',
     minPlan: TenantPlanEnum.BASIC,
     hasDashboard: true,
+  },
+  {
+    // Complementos de WhatsApp del taller. Se contratan y cobran por separado
+    // (cada uno es su propio módulo), aunque en el menú viven agrupados bajo
+    // Taller. No tienen endpoints propios todavía: son prototipo en el DMS.
+    key: 'wa-service-due',
+    name: 'WhatsApp · Servicios pendientes',
+    description:
+      'Aviso automático por WhatsApp cuando un vehículo ya requiere servicio, por kilometraje o por tiempo desde la última visita.',
+    icon: 'message-circle',
+    route: '/workshop/whatsapp/servicios-pendientes',
+    minPlan: TenantPlanEnum.BASIC,
+  },
+  {
+    key: 'wa-appointment-reminder',
+    name: 'WhatsApp · Recordatorio de cita',
+    description:
+      'Recordatorio de citas de taller por WhatsApp y seguimiento de su confirmación por el cliente.',
+    icon: 'message-circle',
+    route: '/workshop/whatsapp/recordatorio-cita',
+    minPlan: TenantPlanEnum.BASIC,
+  },
+  {
+    key: 'wa-conversational-agent',
+    name: 'WhatsApp · Agente conversacional',
+    description:
+      'Asistente de WhatsApp que agenda, reagenda y cancela citas (con WhatsApp Flows) y escala a un asesor cuando se atora.',
+    icon: 'message-circle',
+    route: '/workshop/whatsapp/agente-conversacional',
+    minPlan: TenantPlanEnum.BASIC,
   },
   {
     key: 'reception',

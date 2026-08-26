@@ -1,0 +1,68 @@
+<div class="container-fluid wa-page">
+  <div class="card">
+    <div class="card-header">
+      <h5>Consumo y facturación de WhatsApp <span class="pill p-wa demo-tag">Demo</span></h5>
+      <span>Lo que se ha consumido este periodo por mensajes y conversaciones, y el total a pagar. Periodo: <b class="cap">{{ periodo }}</b>.</span>
+    </div>
+    <div class="card-body">
+      <div class="wa-kpis">
+        <div class="wa-kpi"><div class="k">Mensajes enviados</div><div class="v">{{ totalMensajes() | number }}</div><div class="s">tarifa plana por mensaje</div></div>
+        <div class="wa-kpi"><div class="k">Conversaciones</div><div class="v">{{ conversaciones() | number }}</div><div class="s">sesiones de 24 h</div></div>
+        <div class="wa-kpi"><div class="k">Costo mensajes</div><div class="v">{{ costoMensajes() | currency: "MXN":"symbol-narrow":"1.2-2" }}</div><div class="s">{{ totalMensajes() | number }} × {{ rateMsg | currency: "MXN":"symbol-narrow":"1.2-2" }}</div></div>
+        <div class="wa-kpi"><div class="k">Costo conversaciones</div><div class="v">{{ costoConversaciones() | currency: "MXN":"symbol-narrow":"1.2-2" }}</div><div class="s">{{ conversaciones() | number }} × {{ rateConv | currency: "MXN":"symbol-narrow":"1.2-2" }}</div></div>
+        <div class="wa-kpi accent"><div class="k">Total del periodo</div><div class="v">{{ total() | currency: "MXN":"symbol-narrow":"1.2-2" }}</div><div class="s">a pagar</div></div>
+      </div>
+
+      <div class="cons-grid">
+        <div>
+          <h6 class="cons-h">Mensajes por tipo</h6>
+          <table class="wa-table">
+            <thead><tr><th>Tipo</th><th>Categoría Meta</th><th class="num">Cantidad</th><th class="num">Tarifa</th><th class="num">Subtotal</th></tr></thead>
+            <tbody>
+              @for (l of mensajes(); track l.tipo) {
+                <tr>
+                  <td class="cli">{{ l.tipo }}</td>
+                  <td><span class="pill" [class]="catClass(l.categoria)">{{ l.categoria }}</span></td>
+                  <td class="num">{{ l.cantidad | number }}</td>
+                  <td class="num">{{ rateMsg | currency: "MXN":"symbol-narrow":"1.2-2" }}</td>
+                  <td class="num">{{ subtotal(l) | currency: "MXN":"symbol-narrow":"1.2-2" }}</td>
+                </tr>
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="2" class="cli">Total mensajes</td>
+                <td class="num">{{ totalMensajes() | number }}</td>
+                <td class="num"></td>
+                <td class="num strong">{{ costoMensajes() | currency: "MXN":"symbol-narrow":"1.2-2" }}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <p class="wa-tip">Los recordatorios y confirmaciones son <b>Utility</b>: dentro de la ventana de 24 h suelen ser gratuitos para Meta. Aquí se aplica tu tarifa de servicio (plana) sobre todos los envíos.</p>
+        </div>
+
+        <div>
+          <h6 class="cons-h">Conversaciones del agente</h6>
+          <table class="wa-table">
+            <thead><tr><th>Concepto</th><th class="num">Cantidad</th><th class="num">Tarifa</th><th class="num">Subtotal</th></tr></thead>
+            <tbody>
+              <tr>
+                <td class="cli">Sesiones de 24 h atendidas</td>
+                <td class="num">{{ conversaciones() | number }}</td>
+                <td class="num">{{ rateConv | currency: "MXN":"symbol-narrow":"1.2-2" }}</td>
+                <td class="num">{{ costoConversaciones() | currency: "MXN":"symbol-narrow":"1.2-2" }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="wa-tip">Una conversación = ventana de 24 h por número de cliente. Todos los mensajes dentro de esa ventana cuentan como una sola conversación. Las que inicia el cliente no tienen costo de Meta (Service); aquí se cobra tu tarifa por sesión.</p>
+
+          <div class="cons-total">
+            <div class="l">Total a pagar · {{ periodo }}</div>
+            <div class="v">{{ total() | currency: "MXN":"symbol-narrow":"1.2-2" }}</div>
+          </div>
+          <p class="wa-tip">Tarifas de demostración, configurables por tenant. En producción se calculan desde el registro de uso (un evento por mensaje y por sesión).</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

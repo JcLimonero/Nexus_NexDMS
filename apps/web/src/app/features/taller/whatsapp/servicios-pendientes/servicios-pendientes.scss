@@ -1,0 +1,21 @@
+@use "../whatsapp-common" as *;
+
+.wa-page {
+  padding: var(--space-16) 0;
+}
+
+.wa-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-8);
+
+  h6 {
+    margin: 0;
+    font-size: var(--text-section-title);
+    font-weight: var(--text-section-title-weight);
+    color: var(--text-primary);
+  }
+}

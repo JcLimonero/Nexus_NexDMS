@@ -1,0 +1,65 @@
+@use "../whatsapp-common" as *;
+
+.wa-page {
+  padding: var(--space-16) 0;
+}
+
+.wa-subtabs {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  margin-bottom: var(--space-16);
+
+  button {
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    font-size: var(--text-sm);
+    font-weight: 600;
+    font-family: inherit;
+
+    &.on {
+      background: var(--card);
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+}
+
+.wa-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-8);
+
+  h6 {
+    margin: 0;
+    font-size: var(--text-section-title);
+    font-weight: var(--text-section-title-weight);
+    color: var(--text-primary);
+  }
+}
+
+.btn-ghost {
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 6px 13px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.wa-contact {
+  margin-top: 8px;
+}

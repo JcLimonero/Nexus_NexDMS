@@ -1,0 +1,519 @@
+@use "../whatsapp-common" as *;
+
+.wa-page {
+  padding: var(--space-16) 0;
+}
+.demo-tag {
+  display: inline-block;
+  margin-left: var(--space-8);
+  vertical-align: middle;
+  font-weight: 500;
+}
+.sub {
+  color: var(--text-secondary);
+  font-size: var(--text-xs);
+}
+
+/* ── Dos columnas ── */
+.conv-body {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: var(--space-16);
+  align-items: start;
+}
+
+/* ── Lista ── */
+.conv-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: calc(100vh - 320px);
+  min-height: 320px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border);
+}
+.conv-item {
+  padding: var(--space-12) var(--space-16) var(--space-12) 0;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: var(--bg);
+  }
+  &.selected {
+    background-color: var(--primary-soft);
+    box-shadow: inset 3px 0 0 var(--primary);
+    padding-left: var(--space-12);
+  }
+}
+.conv-item-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-8);
+  padding-left: var(--space-12);
+}
+.conv-name {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+.conv-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.conv-prev {
+  margin: 2px 0 6px;
+  padding-left: var(--space-12);
+  font-size: var(--text-xs);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.conv-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-left: var(--space-12);
+}
+.esc {
+  font-size: 12px;
+}
+
+/* ── Detalle ── */
+.conv-detail {
+  min-width: 0;
+}
+.conv-dh {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-12);
+  flex-wrap: wrap;
+  padding-bottom: var(--space-12);
+  border-bottom: 1px solid var(--border);
+
+  strong {
+    color: var(--text-primary);
+  }
+}
+.conv-phone {
+  margin-left: var(--space-8);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+}
+.conv-who {
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.conv-appt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-xs);
+  color: var(--primary);
+}
+
+/* ── Barra de acciones ── */
+.conv-actions {
+  display: flex;
+  gap: var(--space-8);
+  padding: var(--space-12) 0;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.btn-brand {
+  background: var(--primary);
+  color: var(--text-on-brand);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.btn-ghost {
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 7px 14px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+/* ── Calendario de reagendamiento ── */
+.cal {
+  padding: var(--space-12) 0 var(--space-16);
+  border-bottom: 1px solid var(--border);
+}
+.cal-h {
+  font-weight: 600;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.cal-lbl {
+  font-size: var(--text-overline);
+  text-transform: uppercase;
+  letter-spacing: var(--text-overline-tracking);
+  color: var(--text-muted);
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+.cal-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.chip-d,
+.chip-t {
+  border: 1px solid var(--border-strong);
+  background: var(--card);
+  border-radius: var(--radius-sm);
+  padding: 6px 11px;
+  cursor: pointer;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  line-height: 1.25;
+  font-family: inherit;
+
+  &.sel {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--text-on-brand);
+  }
+}
+.chip-d .dow {
+  display: block;
+  font-size: 10px;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+.chip-d.sel .dow {
+  color: color-mix(in srgb, var(--text-on-brand) 82%, transparent);
+}
+.chip-t.taken {
+  opacity: 0.4;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+.cal-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-8);
+  margin-top: 14px;
+}
+
+/* ── Hilo y burbujas ── */
+.thread {
+  max-height: calc(100vh - 360px);
+  min-height: 280px;
+  overflow-y: auto;
+  padding: var(--space-16) var(--space-8) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.handoff {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  margin: var(--space-8) 0;
+  color: var(--warning);
+  font-size: 11px;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--warning);
+    opacity: 0.35;
+  }
+}
+.brow {
+  display: flex;
+
+  &.customer {
+    justify-content: flex-start;
+  }
+  &.bot,
+  &.agent,
+  &.system {
+    justify-content: flex-end;
+  }
+}
+.bub {
+  max-width: 80%;
+  padding: var(--space-8) var(--space-12);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+  line-height: 1.45;
+
+  .brow.customer & {
+    background-color: var(--bg);
+    border: 1px solid var(--border);
+  }
+  .brow.bot & {
+    background-color: var(--primary-soft);
+  }
+  .brow.agent & {
+    background-color: var(--success-bg);
+    box-shadow: inset 2px 0 0 var(--success);
+  }
+}
+.bub-auth {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--success);
+}
+.bub-txt {
+  display: block;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.bub-t {
+  display: block;
+  margin-top: 2px;
+  text-align: right;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.wa-btns {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  button {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 7px;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: var(--text-sm);
+    cursor: pointer;
+    font-family: inherit;
+  }
+}
+
+/* Foto adjunta (SVG en línea) */
+.att {
+  margin: 0 0 8px;
+  width: 210px;
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: #fff;
+
+  .ph {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  figcaption {
+    font-size: 11px;
+    line-height: 1.3;
+    color: var(--text-secondary);
+    padding: 6px 8px;
+    background: var(--card);
+  }
+}
+
+/* Detalle de cita: ubicación y contacto dentro de la burbuja */
+.wa-loc {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+
+  .map {
+    height: 74px;
+    background: linear-gradient(135deg, #cfe6d4, #9ccbb0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+  .addr {
+    padding: 8px 10px;
+    font-size: 12px;
+    background: var(--card);
+    color: var(--text-primary);
+    line-height: 1.4;
+
+    b {
+      display: block;
+      margin-bottom: 1px;
+    }
+    a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  }
+}
+.wa-contact {
+  margin-top: 8px;
+}
+
+/* ── Simulación de WhatsApp Flow ── */
+.frow {
+  display: flex;
+  justify-content: center;
+  margin: 2px 0;
+}
+.flow {
+  width: 256px;
+  max-width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px 16px 12px 12px;
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  color: var(--text-primary);
+}
+.flow-bar {
+  width: 38px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-strong);
+  margin: 8px auto 2px;
+}
+.flow-htop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 14px;
+  font-weight: 700;
+  font-size: 13.5px;
+}
+.flow-x {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+.flow-sub {
+  padding: 0 14px 8px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+}
+.flow-field {
+  padding: 10px 14px 0;
+
+  > label {
+    display: block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    font-weight: 700;
+    margin-bottom: 5px;
+  }
+}
+.flow-cal {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 8px 9px;
+}
+.flow-cal-h {
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
+  margin-bottom: 6px;
+  text-transform: capitalize;
+}
+.flow-cal-dow,
+.flow-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+.flow-cal-dow span {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.flow-cal-grid span {
+  font-size: 10.5px;
+  padding: 3px 0;
+  border-radius: 50%;
+  line-height: 1.5;
+
+  &.hi {
+    background: #25d366;
+    color: #04331b;
+    font-weight: 700;
+  }
+}
+.flow-timesel {
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 9px 11px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  font-size: 12.5px;
+}
+.flow-cta {
+  display: block;
+  margin: 12px 14px 6px;
+  width: calc(100% - 28px);
+  background: #25d366;
+  color: #04331b;
+  border: none;
+  border-radius: 9px;
+  padding: 10px;
+  font-weight: 700;
+  font-size: var(--text-sm);
+  font-family: inherit;
+  cursor: pointer;
+}
+.flow-foot {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 9.5px;
+  padding: 0 0 10px;
+}
+
+.conv-empty {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+/* ── Angosto ── */
+@media (max-width: 991px) {
+  .conv-body {
+    grid-template-columns: 1fr;
+  }
+  .conv-list {
+    max-height: 240px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+  .bub {
+    max-width: 90%;
+  }
+}
