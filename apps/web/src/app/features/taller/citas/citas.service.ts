@@ -20,7 +20,7 @@ export interface Appointment {
   clientId?: string;
   vehicleId?: string;
   mechanicId?: string;
-  origin: "INTERNAL" | "PUBLIC_PORTAL";
+  origin: "INTERNAL" | "PUBLIC_PORTAL" | "WHATSAPP_BOT";
   status: AppointmentStatus;
   serviceType: string;
   serviceTypeId?: string;
@@ -29,6 +29,8 @@ export interface Appointment {
   notes?: string;
   scheduledAt: string;
   durationMin: number;
+  /** Presente cuando la cita se originó (o se ligó) a un chat de WhatsApp. */
+  whatsappConversationId?: string | null;
   client?: {
     id: string;
     clientCode?: string | null;

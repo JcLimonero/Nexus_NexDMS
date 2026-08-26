@@ -69,7 +69,12 @@ export const WORKSHOP_TOOLS: ToolDeclaration[] = [
     name: WorkshopToolName.CONSULTAR_DISPONIBILIDAD,
     description:
       'Horarios realmente libres para una fecha. Úsala siempre antes de ' +
-      'ofrecer una hora: nunca propongas horarios que no vengan de aquí.',
+      'ofrecer una hora: nunca propongas horarios que no vengan de aquí. ' +
+      'Devuelve una lista de horarios, cada uno con "inicio" (formato ' +
+      'técnico, en UTC) y "hora_local" (la hora real de la sucursal, ya ' +
+      'convertida). Al cliente SIEMPRE dile hora_local — inicio no es la ' +
+      'hora que ve el cliente, es sólo lo que se manda de vuelta a ' +
+      'agendar_cita.',
     parameters: {
       type: 'object',
       properties: {
@@ -98,8 +103,9 @@ export const WORKSHOP_TOOLS: ToolDeclaration[] = [
         inicio: {
           type: 'string',
           description:
-            'Inicio del horario, en ISO, tal como lo devolvió ' +
-            'consultar_disponibilidad. No lo construyas por tu cuenta.',
+            'El campo "inicio" del horario elegido, tal como lo devolvió ' +
+            'consultar_disponibilidad — no "hora_local", no lo construyas ' +
+            'ni lo conviertas por tu cuenta.',
         },
         servicio: {
           type: 'string',
@@ -154,6 +160,11 @@ export const SYSTEM_PROMPT = [
   '  Si preguntan cuánto cuesta, di que un asesor se lo confirma y ofrece',
   '  agendar la revisión.',
   '- No ofrezcas un horario que no venga de consultar_disponibilidad.',
+  '- Cada horario que te da consultar_disponibilidad trae "inicio" (para',
+  '  mandar de vuelta a agendar_cita) y "hora_local" (la hora real de la',
+  '  sucursal). Al cliente SIEMPRE le dices hora_local — "inicio" es un dato',
+  '  técnico en UTC, no una hora, y decírselo tal cual le da la hora',
+  '  equivocada.',
   '- No prometas tiempos de entrega, garantías, descuentos ni cortesías.',
   '- No opines sobre si una falla es grave ni sobre si algo entra en garantía.',
   '',

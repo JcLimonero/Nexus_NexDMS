@@ -9,6 +9,7 @@ import {
   WorkshopToolName,
 } from './tool-contract';
 import { ServiceType } from '../service-types/entities/service-type.entity';
+import { Branch } from '../branches/entities/branch.entity';
 import { UserAvailabilityService } from '../user-availability/user-availability.service';
 import { AppointmentsService } from '../appointments/appointments.service';
 import { AppointmentOriginEnum } from '../appointments/entities/appointment.entity';
@@ -77,6 +78,8 @@ export class WhatsappAssistantService {
     private readonly gemini: GeminiClient,
     @InjectRepository(ServiceType)
     private readonly serviceTypeRepo: Repository<ServiceType>,
+    @InjectRepository(Branch)
+    private readonly branchRepo: Repository<Branch>,
     private readonly availability: UserAvailabilityService,
     private readonly appointments: AppointmentsService,
     private readonly conversations: WhatsappConversationsService,
@@ -198,12 +201,21 @@ export class WhatsappAssistantService {
           servicioId,
         );
 
+        const branch = await this.branchRepo.findOne({
+          where: { id: ctx.branchId },
+          select: ['timezone'],
+        });
+        const timezone = branch?.timezone || 'America/Mexico_City';
+
         const seen = new Set<string>();
-        const horarios: string[] = [];
+        const horarios: { inicio: string; hora_local: string }[] = [];
         for (const s of slots) {
           if (!seen.has(s.start)) {
             seen.add(s.start);
-            horarios.push(s.start);
+            horarios.push({
+              inicio: s.start,
+              hora_local: this.horaLocal(s.start, timezone),
+            });
           }
           if (horarios.length >= 6) break;
         }
@@ -212,6 +224,9 @@ export class WhatsappAssistantService {
 
       case WorkshopToolName.AGENDAR_CITA: {
         try {
+          this.logger.debug(
+            `agendar_cita args crudos del modelo: ${JSON.stringify(call.args)}`,
+          );
           const cita = await this.appointments.createPublic(
             {
               branchSlug: ctx.branchSlug,
@@ -246,6 +261,26 @@ export class WhatsappAssistantService {
       default:
         return { result: { error: 'herramienta desconocida' } };
     }
+  }
+
+  /**
+   * Hora de un slot en la zona horaria de la sucursal, para que el modelo se
+   * la diga al cliente sin tener que convertir nada él mismo.
+   *
+   * `s.start` que devuelve `UserAvailabilityService` ya es un instante UTC
+   * real (`toISOString()`), así que formatearlo con `timeZone` aquí es
+   * correcto sin importar en qué TZ corra el proceso de Node. Antes de esto,
+   * el modelo recibía sólo el ISO crudo y leía la hora UTC como si ya fuera
+   * local — "17:00Z" se volvía "5:00 PM" en vez de las 11:00 AM reales en
+   * `America/Mexico_City`.
+   */
+  private horaLocal(iso: string, timezone: string): string {
+    return new Date(iso).toLocaleTimeString('es-MX', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+      timeZone: timezone,
+    });
   }
 
   private parseReason(raw: unknown): WhatsappEscalationReasonEnum {

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { ServiceType } from '../service-types/entities/service-type.entity';
+import { Branch } from '../branches/entities/branch.entity';
 import { AppointmentsService } from '../appointments/appointments.service';
 import { AppointmentOriginEnum } from '../appointments/entities/appointment.entity';
 import { UserAvailabilityService } from '../user-availability/user-availability.service';
@@ -21,6 +22,7 @@ describe('WhatsappAssistantService', () => {
   let service: WhatsappAssistantService;
   let gemini: { isConfigured: boolean; generate: jest.Mock };
   let serviceTypeRepo: { find: jest.Mock };
+  let branchRepo: { findOne: jest.Mock };
   let availability: { getAvailableSlots: jest.Mock };
   let appointments: { createPublic: jest.Mock };
   let conversations: {
@@ -32,6 +34,9 @@ describe('WhatsappAssistantService', () => {
   beforeEach(async () => {
     gemini = { isConfigured: true, generate: jest.fn() };
     serviceTypeRepo = { find: jest.fn().mockResolvedValue([]) };
+    branchRepo = {
+      findOne: jest.fn().mockResolvedValue({ timezone: 'America/Mexico_City' }),
+    };
     availability = { getAvailableSlots: jest.fn().mockResolvedValue([]) };
     appointments = {
       createPublic: jest.fn().mockResolvedValue({ id: 'appt-1' }),
@@ -47,6 +52,7 @@ describe('WhatsappAssistantService', () => {
         WhatsappAssistantService,
         { provide: GeminiClient, useValue: gemini },
         { provide: getRepositoryToken(ServiceType), useValue: serviceTypeRepo },
+        { provide: getRepositoryToken(Branch), useValue: branchRepo },
         { provide: UserAvailabilityService, useValue: availability },
         { provide: AppointmentsService, useValue: appointments },
         { provide: WhatsappConversationsService, useValue: conversations },
@@ -112,7 +118,11 @@ describe('WhatsappAssistantService', () => {
     expect(segundaLlamada.toolResults).toEqual([
       {
         name: 'consultar_disponibilidad',
-        result: { horarios: ['2026-08-25T10:00:00.000Z'] },
+        result: {
+          horarios: [
+            { inicio: '2026-08-25T10:00:00.000Z', hora_local: '4:00 a.m.' },
+          ],
+        },
       },
     ]);
     expect(result?.replies).toEqual([

@@ -11,6 +11,7 @@ import {
   viewChild,
 } from "@angular/core";
 import { FormsModule } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
 
 import { ToastrService } from "ngx-toastr";
 
@@ -63,6 +64,7 @@ export class Conversaciones implements OnInit, OnDestroy {
   private api = inject(ConversacionesService);
   private auth = inject(AuthService);
   private toastr = inject(ToastrService);
+  private route = inject(ActivatedRoute);
 
   private thread = viewChild<ElementRef<HTMLElement>>("thread");
 
@@ -105,6 +107,15 @@ export class Conversaciones implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.myUserId.set(this.auth.getUser()?.id ?? null);
+
+    // Entrada directa desde otra pantalla (p. ej. una cita con conversación
+    // ligada): abre esa conversación en vez de la primera de la lista.
+    const deepLinkId = this.route.snapshot.queryParamMap.get("conversationId");
+    if (deepLinkId) {
+      this.selectedId.set(deepLinkId);
+      this.cargarDetalle(deepLinkId);
+    }
+
     this.cargarLista(true);
     this.pollId = setInterval(() => this.refrescar(), POLL_MS);
   }

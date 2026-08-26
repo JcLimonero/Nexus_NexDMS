@@ -50,3 +50,7 @@ temp/
 
 # El .env de cada aplicación lleva credenciales y no se versiona.
 apps/*/.env
+
+# Notas locales de trabajo (no se versionan)
+*.local.md
+*.local.json
