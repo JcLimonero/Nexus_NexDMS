@@ -55,6 +55,12 @@ export interface ModuleDef {
   core?: boolean;
   /** Tiene dashboard propio en /m/:key. */
   hasDashboard?: boolean;
+  /**
+   * Complemento opcional: NO se enciende por defecto aunque el plan lo permita.
+   * Solo aparece cuando se activa explícitamente por tenant (se cobra aparte).
+   * Sigue siendo contratable (pasa la validación de plan al activarlo).
+   */
+  addon?: boolean;
 }
 
 /** Orden jerárquico de planes: cada uno incluye lo del anterior. */
@@ -104,6 +110,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     icon: 'message-circle',
     route: '/workshop/whatsapp/servicios-pendientes',
     minPlan: TenantPlanEnum.BASIC,
+    addon: true,
   },
   {
     key: 'wa-appointment-reminder',
@@ -113,6 +120,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     icon: 'message-circle',
     route: '/workshop/whatsapp/recordatorio-cita',
     minPlan: TenantPlanEnum.BASIC,
+    addon: true,
   },
   {
     key: 'wa-conversational-agent',
@@ -122,6 +130,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
     icon: 'message-circle',
     route: '/workshop/whatsapp/agente-conversacional',
     minPlan: TenantPlanEnum.BASIC,
+    addon: true,
   },
   {
     key: 'reception',
@@ -347,7 +356,11 @@ export function resolveModules(
   const core = MODULE_REGISTRY.filter((m) => m.core).map((m) => m.key);
 
   if (!enabledModules || enabledModules.length === 0) {
-    return MODULE_REGISTRY.filter((m) => fromPlan.has(m.key)).map((m) => m.key);
+    // Los complementos (addon) no se encienden por defecto aunque el plan los
+    // permita: solo aparecen si se activan explícitamente por tenant.
+    return MODULE_REGISTRY.filter((m) => fromPlan.has(m.key) && !m.addon).map(
+      (m) => m.key,
+    );
   }
 
   const selected = new Set<string>([...enabledModules, ...core]);
