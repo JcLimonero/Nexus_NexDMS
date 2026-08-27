@@ -30,7 +30,8 @@ export interface SurveyConfig {
 export interface BranchConfigSafe {
   id: string;
   branchId: string;
-  whatsappPhoneId: string | null;
+  /** `phone_number_id` de Meta. Viaja en claro: no es secreto y hay que poder verificarlo. */
+  whatsappPhoneNumberId: string | null;
   whatsappToken: string | null;
   facturaapiApiKey: string | null;
   bankName: string | null;
@@ -42,7 +43,7 @@ export interface BranchConfigSafe {
 }
 
 export interface UpdateBranchConfigDto {
-  whatsappPhoneId?: string;
+  whatsappPhoneNumberId?: string;
   whatsappToken?: string;
   facturaapiApiKey?: string;
   bankName?: string;

@@ -15,9 +15,21 @@ export class BranchConfig {
   @Column({ name: 'branch_id', type: 'uuid' })
   branchId: string;
 
-  @Column({ name: 'whatsapp_phone_id', type: 'text', nullable: true })
-  whatsappPhoneId: string | null;
+  /**
+   * `phone_number_id` de Meta. En claro y con índice único: es la llave con la
+   * que el webhook averigua de qué sucursal viene cada mensaje, y un valor
+   * cifrado con AES-CBC no se puede buscar. No es secreto — identifica al
+   * número, no autoriza a usarlo; eso lo hace el token de abajo.
+   */
+  @Column({
+    name: 'whatsapp_phone_number_id',
+    type: 'varchar',
+    length: 50,
+    nullable: true,
+  })
+  whatsappPhoneNumberId: string | null;
 
+  /** Cifrado con `EncryptionService`. Nunca se devuelve al cliente. */
   @Column({ name: 'whatsapp_token', type: 'text', nullable: true })
   whatsappToken: string | null;
 

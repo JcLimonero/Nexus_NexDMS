@@ -54,6 +54,17 @@ export class HttpExceptionFilter implements ExceptionFilter {
       path: request.url,
     };
 
+    // Un `code` en la excepción se deja pasar tal cual: hay pantallas que
+    // tienen que distinguir dos rechazos con el mismo estatus HTTP, y hacerlo
+    // comparando el texto en español se rompe en cuanto alguien lo reescribe.
+    if (
+      typeof exceptionResponse === 'object' &&
+      exceptionResponse !== null &&
+      'code' in exceptionResponse
+    ) {
+      body.code = (exceptionResponse as { code: unknown }).code;
+    }
+
     if (process.env.NODE_ENV !== 'production' && exception instanceof Error) {
       body.stack = exception.stack;
       body.errorName = exception.name;

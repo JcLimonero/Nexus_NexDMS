@@ -8,15 +8,36 @@ export interface WhatsAppSendParams {
   templateParams?: Record<string, string>;
 }
 
+/**
+ * De qué número sale el mensaje.
+ *
+ * Cada sucursal tiene el suyo (`branch_config`); las de entorno quedan sólo
+ * como respaldo para desarrollo y para los envíos que todavía no saben de qué
+ * sucursal son.
+ */
+export interface WhatsAppCredentials {
+  phoneNumberId: string;
+  token: string;
+}
+
 @Injectable()
 export class WhatsAppProvider {
   private readonly logger = new Logger(WhatsAppProvider.name);
-  private readonly phoneId: string | null;
-  private readonly token: string | null;
+  private readonly envPhoneId: string | null;
+  private readonly envToken: string | null;
 
   constructor(private readonly config: ConfigService) {
-    this.phoneId = this.config.get<string>('WHATSAPP_PHONE_ID') ?? null;
-    this.token = this.config.get<string>('WHATSAPP_TOKEN') ?? null;
+    this.envPhoneId = this.config.get<string>('WHATSAPP_PHONE_ID') ?? null;
+    this.envToken = this.config.get<string>('WHATSAPP_TOKEN') ?? null;
+  }
+
+  /** Las de la sucursal si vienen; si no, las de entorno. */
+  private resolve(creds?: WhatsAppCredentials): WhatsAppCredentials | null {
+    if (creds?.phoneNumberId && creds.token) return creds;
+    if (this.envPhoneId && this.envToken) {
+      return { phoneNumberId: this.envPhoneId, token: this.envToken };
+    }
+    return null;
   }
 
   /**
@@ -26,19 +47,21 @@ export class WhatsAppProvider {
   async sendText(
     to: string,
     body: string,
+    creds?: WhatsAppCredentials,
   ): Promise<{ success: boolean; messageId?: string }> {
-    if (!this.phoneId || !this.token) {
+    const active = this.resolve(creds);
+    if (!active) {
       // Mock: sin credenciales, no fallar
       this.logger.debug(`[mock] WhatsApp a ${to}: ${body.slice(0, 80)}`);
       return { success: true, messageId: 'mock-' + Date.now() };
     }
     try {
-      const url = `https://graph.facebook.com/v18.0/${this.phoneId}/messages`;
+      const url = `https://graph.facebook.com/v18.0/${active.phoneNumberId}/messages`;
       const response = await fetchWithRetry(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.token}`,
+          Authorization: `Bearer ${active.token}`,
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',
@@ -63,19 +86,21 @@ export class WhatsAppProvider {
 
   async send(
     params: WhatsAppSendParams,
+    creds?: WhatsAppCredentials,
   ): Promise<{ success: boolean; messageId?: string }> {
-    if (!this.phoneId || !this.token) {
+    const active = this.resolve(creds);
+    if (!active) {
       // Mock: sin credenciales, no fallar
       return { success: true, messageId: 'mock-' + Date.now() };
     }
 
     try {
-      const url = `https://graph.facebook.com/v18.0/${this.phoneId}/messages`;
+      const url = `https://graph.facebook.com/v18.0/${active.phoneNumberId}/messages`;
       const response = await fetchWithRetry(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${this.token}`,
+          Authorization: `Bearer ${active.token}`,
         },
         body: JSON.stringify({
           messaging_product: 'whatsapp',

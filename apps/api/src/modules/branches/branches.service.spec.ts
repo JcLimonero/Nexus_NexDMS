@@ -78,6 +78,12 @@ describe('BranchesService', () => {
             delete: jest.fn().mockResolvedValue(undefined),
           },
         },
+        {
+          // Sólo se usa para tirar la caché de ruteo de WhatsApp al cambiar
+          // el número de la sucursal.
+          provide: 'REDIS_CLIENT',
+          useValue: { del: jest.fn().mockResolvedValue(1) },
+        },
       ],
     }).compile();
 

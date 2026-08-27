@@ -234,6 +234,15 @@
                 </td>
                 <td class="text-end">
                   <div class="table-actions">
+                    @if (c.whatsappConversationId) {
+                      <button
+                        class="table-action-btn"
+                        title="Ver conversación de WhatsApp"
+                        (click)="verConversacion(c); $event.stopPropagation()"
+                      >
+                        <app-feather-icons [icon]="'message-circle'" />
+                      </button>
+                    }
                     @if (c.status === "PENDING_CONFIRMATION" || c.status === "SCHEDULED") {
                       <button
                         class="table-action-btn"

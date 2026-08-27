@@ -81,6 +81,26 @@ export class CitaNoSePresentoEvent {
   ) {}
 }
 
+/**
+ * Un chat de WhatsApp dejó de ser cosa del asistente.
+ *
+ * No lleva a quién se asignó: nadie la tomó todavía, eso es justo lo que
+ * este evento avisa. El motivo importa para quien la abra —no es lo mismo
+ * "el cliente pidió una persona" que "el bot se atoró"— y para el tablero:
+ * si la mayoría escala por `BOT_LOOPED`, el problema es el asistente y no
+ * la carga de trabajo.
+ */
+export class ConversacionEscaladaEvent {
+  constructor(
+    public readonly conversationId: string,
+    public readonly branchId: string,
+    public readonly tenantId: string,
+    public readonly reason: string,
+    public readonly phone: string,
+    public readonly contactName: string | null,
+  ) {}
+}
+
 export class StockMinimoEvent {
   constructor(
     public readonly branchId: string,

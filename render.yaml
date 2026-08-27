@@ -108,3 +108,31 @@ services:
         sync: false
       - key: B2_KEY_PREFIX
         sync: false
+      # WhatsApp (Meta Cloud API). Las credenciales de envío son por sucursal y
+      # viven en la BD; lo de aquí es de la app de Meta y aplica a todas.
+      # WHATSAPP_APP_SECRET valida la firma del webhook: en producción, sin él
+      # el webhook se rechaza y el bot deja de recibir mensajes.
+      - key: WHATSAPP_VERIFY_TOKEN
+        sync: false
+      - key: WHATSAPP_APP_SECRET
+        sync: false
+      # Asistente de WhatsApp (Gemini en Vertex AI, F7). Un solo proyecto de
+      # GCP para todos los tenants. Sin estas variables el asistente no se
+      # llama y el bot sigue con su flujo de menús numerados — no bloquea el
+      # deploy, pero tampoco hace nada hasta que se configuren.
+      # ⚠️ GCP_LOCATION pendiente de decisión legal: en qué país se procesan
+      # los datos de los clientes del taller. Resolver antes de producción.
+      # `gemini-3.7-flash` sólo responde hoy en el endpoint `global` (404 en
+      # `us-central1` para este modelo específico); `global` renuncia a la
+      # garantía de residencia regional. Cambiar a una región concreta si eso
+      # importa más que usar este modelo en particular.
+      - key: GCP_PROJECT_ID
+        sync: false
+      - key: GCP_LOCATION
+        value: global
+      - key: GCP_SA_EMAIL
+        sync: false
+      - key: GCP_SA_PRIVATE_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.7-flash

@@ -1,9 +1,11 @@
 import { IsInt, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 
 export class UpdateBranchConfigDto {
+  /** `phone_number_id` de Meta. Se guarda en claro: con él se enruta el webhook. */
   @IsOptional()
   @IsString()
-  whatsappPhoneId?: string;
+  @MaxLength(50)
+  whatsappPhoneNumberId?: string;
 
   @IsOptional()
   @IsString()

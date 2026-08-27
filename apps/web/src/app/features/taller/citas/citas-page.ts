@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { Router } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { CitasService, Appointment } from "./citas.service";
@@ -40,6 +41,7 @@ export class CitasPage implements OnInit {
   private branchesService = inject(BranchesService);
   private clientesService = inject(ClientesService);
   private toastr = inject(ToastrService);
+  private router = inject(Router);
 
   // ─── Filtros / contexto ───
   branches = signal<{ id: string; name: string }[]>([]);
@@ -307,6 +309,14 @@ export class CitasPage implements OnInit {
       },
       error: (err) =>
         this.toastr.error(err?.error?.message || "Error al cancelar"),
+    });
+  }
+
+  /** Abre, en Conversaciones, el chat de WhatsApp que originó esta cita. */
+  verConversacion(cita: Appointment): void {
+    if (!cita.whatsappConversationId) return;
+    this.router.navigate(["/workshop/conversaciones"], {
+      queryParams: { conversationId: cita.whatsappConversationId },
     });
   }
 

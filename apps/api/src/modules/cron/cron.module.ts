@@ -17,6 +17,8 @@ import { ShopDailySummaryJob } from './jobs/shop-daily-summary.job';
 import { DataRetentionJob } from './jobs/data-retention.job';
 import { ServicePlanningModule } from '../service-planning/service-planning.module';
 import { ServiceDueNotification } from '../service-planning/entities/service-due-notification.entity';
+import { WhatsappConversationExpiryJob } from './jobs/whatsapp-conversation-expiry.job';
+import { WhatsappConversation } from '../whatsapp-conversations/entities/whatsapp-conversation.entity';
 import { SaasModule } from '../saas/saas.module';
 import { EmailModule } from '../../common/email/email.module';
 
@@ -31,6 +33,7 @@ import { EmailModule } from '../../common/email/email.module';
       CatalogUnit,
       Branch,
       ServiceDueNotification,
+      WhatsappConversation,
     ]),
     ServicePlanningModule,
     SaasModule,
@@ -42,6 +45,7 @@ import { EmailModule } from '../../common/email/email.module';
     StockMinimumJob,
     PaymentOverdueJob,
     ServiceDueRemindersJob,
+    WhatsappConversationExpiryJob,
     SaasOverdueSummaryJob,
     ShopDailySummaryJob,
     DataRetentionJob,

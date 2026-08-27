@@ -44,7 +44,7 @@ export class SucursalConfig implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       facturaapiApiKey: [""],
-      whatsappPhoneId: [""],
+      whatsappPhoneNumberId: ["", [Validators.maxLength(50)]],
       whatsappToken: [""],
       bankName: ["", [Validators.maxLength(100)]],
       bankClabe: ["", [Validators.maxLength(18)]],
@@ -73,7 +73,7 @@ export class SucursalConfig implements OnInit {
       next: (config) => {
         this.form.patchValue({
           facturaapiApiKey: config.facturaapiApiKey ?? "",
-          whatsappPhoneId: config.whatsappPhoneId ?? "",
+          whatsappPhoneNumberId: config.whatsappPhoneNumberId ?? "",
           whatsappToken: config.whatsappToken ?? "",
           bankName: config.bankName ?? "",
           bankClabe: config.bankClabe ?? "",
@@ -102,8 +102,11 @@ export class SucursalConfig implements OnInit {
 
     if (raw.facturaapiApiKey !== undefined && raw.facturaapiApiKey !== "")
       dto.facturaapiApiKey = raw.facturaapiApiKey;
-    if (raw.whatsappPhoneId !== undefined && raw.whatsappPhoneId !== "")
-      dto.whatsappPhoneId = raw.whatsappPhoneId;
+    // A diferencia del token, el id del número se manda aunque venga vacío:
+    // no es secreto, se muestra completo, y vaciarlo es cómo se desconecta una
+    // sucursal de WhatsApp.
+    if (raw.whatsappPhoneNumberId !== undefined)
+      dto.whatsappPhoneNumberId = raw.whatsappPhoneNumberId;
     if (raw.whatsappToken !== undefined && raw.whatsappToken !== "")
       dto.whatsappToken = raw.whatsappToken;
     if (raw.bankName !== undefined) dto.bankName = raw.bankName;
@@ -118,7 +121,7 @@ export class SucursalConfig implements OnInit {
       next: (config) => {
         this.form.patchValue({
           facturaapiApiKey: config.facturaapiApiKey ?? "",
-          whatsappPhoneId: config.whatsappPhoneId ?? "",
+          whatsappPhoneNumberId: config.whatsappPhoneNumberId ?? "",
           whatsappToken: config.whatsappToken ?? "",
         });
         this.toastr.success("Configuración guardada");
