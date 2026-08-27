@@ -104,58 +104,68 @@
         <tbody>
           @for (t of tenants(); track t.id) {
             <tr [class.suspendido]="!t.isActive">
-              <td>{{ t.name }}</td>
-              <td class="mono">
-                {{ t.slug }}
+              <td class="col-grupo">
+                <span class="grupo-nombre">{{ t.name }}</span>
+              </td>
+              <td class="col-id">
+                <span class="mono">{{ t.slug }}</span>
                 @if (t.codePrefix) {
-                  <span class="extra-chip" title="Prefijo de códigos de documentos">{{ t.codePrefix }}</span>
+                  <span class="cod-chip" title="Prefijo de códigos de documentos">{{ t.codePrefix }}</span>
                 }
               </td>
-              <td>
+              <td class="col-plan">
                 <span class="plan" [attr.data-plan]="t.plan" [title]="etiquetaPlan(t.plan)">
                   {{ planDe(t) }}
                 </span>
               </td>
-              <td class="extras-celda">
+              <td class="col-extras">
                 @if (extrasDe(t).length) {
-                  @for (m of extrasDe(t); track m.key) {
-                    <span class="extra-chip">{{ m.name }}</span>
-                  }
+                  <div class="chips">
+                    @for (m of extrasDe(t) | slice: 0 : 3; track m.key) {
+                      <span class="extra-chip">{{ m.name }}</span>
+                    }
+                    @if (extrasDe(t).length > 3) {
+                      <span class="extra-chip mas">+{{ extrasDe(t).length - 3 }}</span>
+                    }
+                  </div>
                 } @else {
-                  <span class="pagos-sin">—</span>
+                  <span class="vacio-celda">—</span>
                 }
               </td>
-              <td>
+              <td class="col-estado">
                 <span class="estado" [attr.data-activo]="t.isActive">
-                  {{ t.isActive ? "Activo" : "Suspendido" }}
+                  <i class="punto"></i>{{ t.isActive ? "Activo" : "Suspendido" }}
                 </span>
               </td>
-              <td class="pagos-celda">
-                @if (cobroDe(t); as c) {
-                  @if (c.ultimoPago; as u) {
-                    <span
-                      class="cobro-estado"
-                      [attr.data-estado]="u.vencido ? 'VENCIDO' : u.status"
-                    >
-                      {{ u.vencido ? "Vencido" : (u.status | titlecase) }}
-                    </span>
-                    <span class="pagos-periodo">último: {{ u.period }}</span>
+              <td class="col-pagos">
+                <div class="pagos-wrap">
+                  @if (cobroDe(t); as c) {
+                    @if (c.ultimoPago; as u) {
+                      <span
+                        class="cobro-estado"
+                        [attr.data-estado]="u.vencido ? 'VENCIDO' : u.status"
+                      >{{ u.vencido ? "Vencido" : (u.status | titlecase) }}</span>
+                      <span class="pagos-meta">último {{ u.period }}</span>
+                      @if (c.proximoCobro) {
+                        <span class="pagos-meta">próximo {{ c.proximoCobro | date: "dd/MM/yyyy" }}</span>
+                      }
+                    } @else {
+                      <span class="cobro-estado" data-estado="SIN">Sin pagos</span>
+                      @if (c.proximoCobro) {
+                        <span class="pagos-meta">próximo {{ c.proximoCobro | date: "dd/MM/yyyy" }}</span>
+                      }
+                    }
                   } @else {
-                    <span class="pagos-sin">Sin pagos</span>
+                    <span class="vacio-celda">—</span>
                   }
-                  @if (c.proximoCobro) {
-                    <span class="pagos-proximo">
-                      próximo: {{ c.proximoCobro | date: "dd/MM/yyyy" }}
-                    </span>
-                  }
-                } @else {
-                  <span class="pagos-sin">—</span>
-                }
+                </div>
               </td>
-              <td class="acciones">
-                <button type="button" class="btn-chico" (click)="abrirFicha(t)">
-                  Ficha
-                </button>
+              <td class="col-acc">
+                <div class="acciones">
+                  <button type="button" class="btn-chico" (click)="abrirFicha(t)">
+                    Ficha
+                  </button>
+                </div>
               </td>
             </tr>
           }

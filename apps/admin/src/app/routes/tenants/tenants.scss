@@ -137,40 +137,98 @@
   }
 }
 
-/* ── Columna de módulos extra en la lista ─────────────── */
-.extras-celda {
+/* ── Lista de clientes: alineación y columnas ─────────── */
+/* Las celdas se mantienen como celdas de tabla; el flex vive en un <div>
+   interno. Antes el `display:flex` estaba en el <td>, lo que rompía
+   `border-collapse` y desalineaba las filas. */
+.tabla td.col-grupo,
+.tabla td.col-id,
+.tabla td.col-plan,
+.tabla td.col-extras,
+.tabla td.col-estado,
+.tabla td.col-pagos,
+.tabla td.col-acc {
+  vertical-align: middle;
+}
+.grupo-nombre {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.col-id {
+  white-space: nowrap;
+}
+.cod-chip {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+/* Módulos extra: chips con desborde "+N". */
+.col-extras .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  max-width: 220px;
+  gap: 5px;
+  max-width: 260px;
 }
 .extra-chip {
   display: inline-block;
-  padding: 2px var(--space-8);
+  padding: 2px 9px;
   border-radius: var(--radius-pill);
   font-size: var(--text-caption);
-  font-weight: 600;
-  background: var(--primary-soft, #eef2ff);
-  color: var(--primary, #4338ca);
+  font-weight: 500;
+  background: var(--nexus-50);
+  border: 1px solid var(--nexus-100);
+  color: var(--nexus-700);
   white-space: nowrap;
+
+  &.mas {
+    background: var(--bg);
+    border-color: var(--border);
+    color: var(--text-secondary);
+  }
 }
 
-/* ── Columna de pagos en la lista ─────────────────────── */
-.pagos-celda {
+/* Estado con punto de color. */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+
+  .punto {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+}
+
+/* Pagos: pastilla de estado + fechas apiladas. */
+.pagos-wrap {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   align-items: flex-start;
-  font-size: var(--text-caption);
 }
-.pagos-periodo,
-.pagos-proximo,
-.pagos-sin {
+.cobro-estado[data-estado="SIN"] {
+  background: var(--bg);
+  color: var(--text-secondary);
+}
+.pagos-meta {
   color: var(--text-secondary);
   font-size: var(--text-caption);
-}
-.pagos-proximo {
   font-variant-numeric: tabular-nums;
+}
+.vacio-celda {
+  color: var(--text-secondary);
 }
 
 /* ── Barra de acciones de la ficha (Entrar / Módulos) ── */
