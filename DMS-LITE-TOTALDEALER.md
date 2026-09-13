@@ -12,6 +12,9 @@ Objetivo: un MVP para instalar un piloto o arrancar un taller.
 > SLA de primera respuesta por plan: Básico 8 h, Intermedio 4 h, Premium 2 h hábiles.
 > Horario L–V 9:00–18:00 (centro); caídas críticas de plataforma, atención de Nexus fuera de
 > horario. Desarrollos a la medida se cotizan aparte (no son soporte).
+>
+> **Desempate:** cualquier decisión en la que no se llegue a un acuerdo la resuelve **Nexus**
+> (última palabra). Evita el bloqueo del 50/50 y mantiene el control del rumbo en el dueño del código.
 
 > **Conclusión rápida:** lo que piden **ya existe casi en su totalidad** en la plataforma.
 > No es "construir módulos", es **empaquetar una edición Lite** (preset de módulos + afinar
