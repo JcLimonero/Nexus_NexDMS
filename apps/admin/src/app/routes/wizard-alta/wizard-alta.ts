@@ -14,6 +14,7 @@ import {
   CatalogosMaestrosService,
   EntradaCatalogo,
 } from "../catalogos-maestros/catalogos-maestros.service";
+import { Barra } from "../../shared/barra/barra";
 
 type ModoCat = "ALL" | "SOME" | "NONE";
 
@@ -25,7 +26,7 @@ type ModoCat = "ALL" | "SOME" | "NONE";
 @Component({
   selector: "app-wizard-alta",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Barra],
   templateUrl: "./wizard-alta.html",
   styleUrls: ["./wizard-alta.scss"],
 })
