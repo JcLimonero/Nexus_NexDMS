@@ -48,14 +48,14 @@ WHERE (SELECT count(*) FROM customer_vehicles WHERE tenant_id = (SELECT tenant_i
 -- Un vehículo por cada cliente que aún no tenga vehículo (los recién creados).
 INSERT INTO customer_vehicles (id, tenant_id, owner_id, vehicle_type, make, model, year, color, plate, vin, mileage)
 SELECT gen_random_uuid(), (SELECT tenant_id FROM ref), c.id,
-       (ARRAY['CAR','CAR','CAR','SUV','SUV'])[1 + (c.g % 5)]::customer_vehicles_vehicle_type_enum,
+       (ARRAY['CAR','CAR','CAR','SUV','SUV'])[1 + (c.g % 5)::int]::customer_vehicles_vehicle_type_enum,
        'Honda',
-       (ARRAY['Civic','City','Accord','CR-V','HR-V','BR-V'])[1 + (c.g % 6)],
-       2015 + (c.g % 10),
-       (ARRAY['Blanco','Negro','Gris','Rojo','Azul','Plata'])[1 + (c.g % 6)],
+       (ARRAY['Civic','City','Accord','CR-V','HR-V','BR-V'])[1 + (c.g % 6)::int],
+       (2015 + (c.g % 10))::int,
+       (ARRAY['Blanco','Negro','Gris','Rojo','Azul','Plata'])[1 + (c.g % 6)::int],
        'TDM' || lpad(c.g::text, 4, '0'),
        'DEMOVIN' || lpad(c.g::text, 10, '0'),
-       15000 + (c.g % 12) * 9000
+       (15000 + (c.g % 12) * 9000)::int
 FROM (
   SELECT c.id, row_number() OVER (ORDER BY c.created_at, c.id) AS g
   FROM clients c
@@ -87,20 +87,20 @@ JOIN veh v ON v.rn = ((o.seq - 1) % (SELECT count(*) FROM veh)) + 1;
 CREATE TEMP TABLE plan2 AS
 SELECT p.*,
   ((( (SELECT hoy FROM ref)
-      - ((p.veh_rn * 7) % 90)
-      - (p.p_total - p.pos) * 200 )::timestamp) + time '09:00') AS rec
+      - ((p.veh_rn * 7) % 90)::int
+      - ((p.p_total - p.pos) * 200)::int )::timestamp) + time '09:00') AS rec
 FROM plan p;
 
 UPDATE service_orders so SET
   vehicle_id     = pl.vehicle_id,
   owner_id       = pl.owner_id,
-  km_in          = pl.pos * 10000,
+  km_in          = (pl.pos * 10000)::int,
   reported_fault = 'Servicio de ' || (pl.pos * 10)::text || ',000 km',
   folio          = 'TDM-' || to_char(pl.rec, 'YYYY') || '-' || lpad(pl.seq::text, 4, '0'),
   received_at    = pl.rec,
   promised_at    = pl.rec + interval '5 hours',
   status = (CASE WHEN pl.rec::date <= (SELECT hoy FROM ref) - 5 THEN 'DELIVERED'
-                 ELSE (ARRAY['IN_PROGRESS','READY','WAITING_PARTS','RECEIVED'])[1 + (pl.pos % 4)] END
+                 ELSE (ARRAY['IN_PROGRESS','READY','WAITING_PARTS','RECEIVED'])[1 + (pl.pos % 4)::int] END
            )::service_orders_status_enum,
   delivered_at = CASE WHEN pl.rec::date <= (SELECT hoy FROM ref) - 5 THEN pl.rec + interval '6 hours' END,
   diagnosis = CASE WHEN pl.rec::date <= (SELECT hoy FROM ref) - 5
