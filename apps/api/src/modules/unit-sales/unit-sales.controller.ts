@@ -19,6 +19,7 @@ import { UnitSalesService } from './unit-sales.service';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { ReciboPagoPdfService } from './recibo-pago-pdf.service';
 import { ContratoCompraventaPdfService } from './contrato-compraventa-pdf.service';
+import { PlanPagosPdfService } from './plan-pagos-pdf.service';
 import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import type { RegistrarPagoDto } from './unit-sale-payments.service';
 import { CreateUnitSaleDto } from './dto/create-unit-sale.dto';
@@ -45,6 +46,7 @@ export class UnitSalesController {
     private readonly pagos: UnitSalePaymentsService,
     private readonly reciboPdf: ReciboPagoPdfService,
     private readonly contratoPdf: ContratoCompraventaPdfService,
+    private readonly planPagosPdf: PlanPagosPdfService,
     private readonly correo: DocumentoCorreoService,
   ) {}
 
@@ -181,6 +183,46 @@ export class UnitSalesController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.unitSalesService.getPaymentPlan(user, id);
+  }
+
+  /** El plan de pagos (tabla de amortización) en PDF; `inline` para revisar. */
+  @Get(':id/payment-plan/pdf')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')
+  async planPagosPdfDoc(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.planPagosPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
+
+  /** Envía el plan de pagos por correo al cliente con el PDF adjunto. */
+  @Post(':id/payment-plan/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'EXECUTIVE')
+  async enviarPlanPagos(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.planPagosPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Plan de pagos',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
   }
 
   @Get(':id/accessories')

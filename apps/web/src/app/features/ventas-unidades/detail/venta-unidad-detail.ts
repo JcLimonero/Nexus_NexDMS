@@ -59,6 +59,30 @@ export class VentaUnidadDetail implements OnInit {
     });
   }
 
+  /** Abre el plan de pagos (tabla de amortización) en PDF. */
+  verPlanPagos(id: string, folio?: string): void {
+    abrirPdf(this.http, `/api/v1/unit-sales/${id}/payment-plan/pdf`, {
+      filename: `${folio ?? id.slice(0, 8)}.pdf`,
+      onError: () => this.toastr.error("La venta no tiene plan de pagos"),
+    });
+  }
+
+  /** Envía el plan de pagos por correo (PDF adjunto). */
+  enviarPlanPagos(id: string): void {
+    const email = window.prompt(
+      "Enviar el plan de pagos por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/unit-sales/${id}/payment-plan/email`, body).subscribe({
+      next: () => this.toastr.success("Plan de pagos enviado por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
+  }
+
   /** Quién puede aprobar o rechazar documentos del expediente. */
   puedeRevisar = (this.auth.getUser()?.roles ?? []).some((r) =>
     ["SUPERADMIN", "ADMIN", "MANAGER"].includes(r),

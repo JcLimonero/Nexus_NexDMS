@@ -17,6 +17,7 @@ import { Tenant } from '../tenants/entities/tenant.entity';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { ReciboPagoPdfService } from './recibo-pago-pdf.service';
 import { ContratoCompraventaPdfService } from './contrato-compraventa-pdf.service';
+import { PlanPagosPdfService } from './plan-pagos-pdf.service';
 import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { StorageModule } from '../../common/storage/storage.module';
@@ -51,6 +52,7 @@ import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
     UnitSalePaymentsService,
     ReciboPagoPdfService,
     ContratoCompraventaPdfService,
+    PlanPagosPdfService,
   ],
   exports: [UnitSalesService],
 })
