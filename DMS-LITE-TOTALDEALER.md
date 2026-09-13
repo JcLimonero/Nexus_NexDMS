@@ -96,6 +96,30 @@ Objetivo: un MVP para instalar un piloto o arrancar un taller.
 
 **Postura recomendada:** el vehículo se acepta; los términos se negocian **desde la fuerza** (el producto ya existe, es el activo de Nexus). Contrapropuesta: (1) IP del core = Nexus; (2) 50/50 de utilidad condicionado a **mínimos de ventas de TD**; (3) desarrollo facturado correctamente; (4) alcance del PO acotado al Lite; (5) finanzas re-modeladas con *ramp* y todos los costos; (6) cláusula 07 fuerte y con IP claro.
 
+## Alcance de features: roadmap = NexQS; Total Go = alcance actual
+- **El plan de features nuevos (`PENDIENTES.md`) es de NexQS**, la versión independiente de Nexus (cláusula 07).
+- **Total Go = el producto que tenemos hoy** (el alcance DMS Lite ya construido). No hereda automáticamente el roadmap de NexQS.
+- Lo que el Product Owner de Total Dealer solicite para Total Go se construye **a petición y por acuerdo**; se factura como desarrollo (no es soporte) y Nexus decide si además lo incorpora a NexQS.
+- Los *feature flags* por edición son los que permiten que una función viva en NexQS y no en Total Go (o viceversa) desde una sola base de código.
+
+## Arquitectura de despliegue (dos ediciones, una base de código)
+El frontend llama al API con rutas **relativas** (`/api/...`) y cada `vercel.json` reescribe `/api/*`
+al mismo backend de Render. Por eso una edición nueva es **otro proyecto de Vercel apuntando al
+mismo API** — no un fork. Además, al pasar por el rewrite, las **cookies de sesión quedan de primer
+nivel en cada dominio** (no se cruzan) → base para administraciones independientes.
+
+**Fase 1 — portal en vivo (sin código):**
+- App portal = `apps/web` (DMS operativo). Se le agregó `apps/web/vercel.json` (output `dist/web/browser`, rewrite a `nexdms-api.onrender.com`).
+- En Vercel: nuevo proyecto desde el mismo repo, Root Directory `apps/web`, dominio `app.totaldealer.com` (CNAME en el DNS de Total Dealer).
+- Funciona contra el mismo API, pero se ve con marca NexQS y sin separación de administración.
+
+**Fase 2 — edición real Total Go (dev pendiente):**
+- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total Go.
+- **Preset de módulos Total Go:** encender solo los del alcance, ocultar el resto (feature flags/edición).
+- **Scope por socio (admin independiente):** el admin de TD ve solo sus tenants; Nexus conserva vista maestra para conciliar el 50/50 y dar soporte. Repetir el despliegue con `apps/admin` en `admin.totaldealer.com`.
+
+> Nota: `apps/citas` no tiene `package.json`/`angular.json` propio (solo `dist/` prebuild); si se quiere como portal aparte, primero hay que darle build propio.
+
 ## Siguientes pasos sugeridos para el MVP/piloto
 
 1. Definir el **preset de módulos "Lite"** (encender los de la tabla, apagar lo de agencia).
