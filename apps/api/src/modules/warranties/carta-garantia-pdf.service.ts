@@ -3,6 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { Warranty } from './entities/warranty.entity';
+import {
+  WarrantyEvidence,
+  WarrantyEvidenceKindEnum,
+} from './entities/warranty-evidence.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
@@ -35,6 +39,8 @@ export class CartaGarantiaPdfService {
   constructor(
     @InjectRepository(Warranty)
     private readonly warrantyRepo: Repository<Warranty>,
+    @InjectRepository(WarrantyEvidence)
+    private readonly evidenceRepo: Repository<WarrantyEvidence>,
     @InjectRepository(Branch) private readonly branchRepo: Repository<Branch>,
     @InjectRepository(LegalEntity)
     private readonly legalRepo: Repository<LegalEntity>,
@@ -72,6 +78,28 @@ export class CartaGarantiaPdfService {
       ? await this.legalRepo.findOne({ where: { id: sucursal.legalEntityId } })
       : null;
     const logo = await descargarLogo(this.storage, sucursal?.logoKey, t?.logoKey);
+
+    // Miniaturas de las FOTOS de evidencia (el video solo se ve en pantalla).
+    // Best-effort y con tope para no generar PDFs enormes.
+    const fotos = await this.evidenceRepo.find({
+      where: { warrantyId, tenantId, kind: WarrantyEvidenceKindEnum.PHOTO },
+      order: { createdAt: 'ASC' },
+      take: 6,
+    });
+    const fotosImg = (
+      await Promise.all(
+        fotos.map(async (f) => {
+          try {
+            return {
+              buffer: await this.storage.download(f.storageKey),
+              caption: f.caption ?? '',
+            };
+          } catch {
+            return null;
+          }
+        }),
+      )
+    ).filter((x): x is { buffer: Buffer; caption: string } => x !== null);
 
     const pdf = new PdfDoc({ paletteId: t?.palette });
     const { doc, M, ancho } = pdf;
@@ -167,6 +195,46 @@ export class CartaGarantiaPdfService {
         .fillColor(pdf.tinta)
         .text(w.resolution, M, doc.y, { width: ancho });
       doc.moveDown(0.4);
+    }
+
+    // ── Evidencia fotográfica ──
+    if (fotosImg.length) {
+      pdf.seccion('Evidencia fotográfica');
+      const cols = 3;
+      const gap = 8;
+      const celda = (ancho - gap * (cols - 1)) / cols;
+      const altoFoto = celda * 0.72;
+      const altoCaption = 10;
+      fotosImg.forEach((f, i) => {
+        const col = i % cols;
+        if (col === 0 && doc.y + altoFoto + altoCaption > doc.page.height - 40) {
+          doc.addPage();
+        }
+        const filaY = doc.y;
+        const x = M + col * (celda + gap);
+        try {
+          doc.image(f.buffer, x, filaY, {
+            fit: [celda, altoFoto],
+            align: 'center',
+            valign: 'center',
+          });
+        } catch {
+          /* formato no soportado por pdfkit: se omite */
+        }
+        doc.rect(x, filaY, celda, altoFoto).lineWidth(0.5).strokeColor(PDF_TENUE).stroke();
+        if (f.caption) {
+          doc.fontSize(6.5).fillColor(PDF_TENUE).text(f.caption, x, filaY + altoFoto + 2, {
+            width: celda,
+            align: 'center',
+            lineBreak: false,
+          });
+        }
+        if (col === cols - 1 || i === fotosImg.length - 1) {
+          doc.y = filaY + altoFoto + altoCaption + gap;
+          doc.x = M;
+        }
+      });
+      doc.moveDown(0.3);
     }
 
     // ── Condiciones ──

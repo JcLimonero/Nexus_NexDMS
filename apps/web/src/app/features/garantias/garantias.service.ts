@@ -27,6 +27,17 @@ export interface ServiceOrderListItem {
   vehicle?: { year: number; make: string; model: string };
 }
 
+export interface WarrantyEvidence {
+  id: string;
+  kind: "PHOTO" | "VIDEO";
+  contentType: string | null;
+  fileName: string | null;
+  sizeBytes: number | null;
+  caption: string | null;
+  createdAt: string;
+  url: string | null;
+}
+
 @Injectable({
   providedIn: "root",
 })
@@ -69,6 +80,33 @@ export class GarantiasService {
     return this.http.post<Warranty>(`${WARRANTIES_URL}/${id}/reject`, {
       reason: reason ?? "",
     });
+  }
+
+  // ── Evidencia (fotos/videos) ──
+  getEvidence(warrantyId: string): Observable<WarrantyEvidence[]> {
+    return this.http.get<WarrantyEvidence[]>(
+      `${WARRANTIES_URL}/${warrantyId}/evidence`,
+    );
+  }
+
+  uploadEvidence(
+    warrantyId: string,
+    file: File,
+    caption?: string,
+  ): Observable<WarrantyEvidence> {
+    const form = new FormData();
+    form.append("file", file);
+    if (caption) form.append("caption", caption);
+    return this.http.post<WarrantyEvidence>(
+      `${WARRANTIES_URL}/${warrantyId}/evidence`,
+      form,
+    );
+  }
+
+  deleteEvidence(warrantyId: string, evidenceId: string): Observable<unknown> {
+    return this.http.delete(
+      `${WARRANTIES_URL}/${warrantyId}/evidence/${evidenceId}`,
+    );
   }
 
   getVehiclesByClient(clientId: string): Observable<CustomerVehicle[]> {

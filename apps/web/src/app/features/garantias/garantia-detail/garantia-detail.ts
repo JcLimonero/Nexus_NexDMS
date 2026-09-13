@@ -6,7 +6,7 @@ import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
 import { abrirPdf } from "../../../shared/utils/abrir-pdf";
-import { GarantiasService } from "../garantias.service";
+import { GarantiasService, WarrantyEvidence } from "../garantias.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { Warranty, WarrantyStatus } from "../models/warranty.model";
 import { PhaseTracker } from "../../../shared/components/phase-tracker/phase-tracker";
@@ -42,6 +42,10 @@ export class GarantiaDetail implements OnInit {
   resolution = signal("");
   rejectReason = signal("");
 
+  // Evidencia (fotos/videos)
+  evidencia = signal<WarrantyEvidence[]>([]);
+  subiendo = signal(false);
+
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({
       next: (res) =>
@@ -64,6 +68,56 @@ export class GarantiaDetail implements OnInit {
         this.loading.set(false);
         this.error.set(err?.error?.message || "Error al cargar garantía");
       },
+    });
+    this.cargarEvidencia(id);
+  }
+
+  private cargarEvidencia(id: string): void {
+    this.garantiasService.getEvidence(id).subscribe({
+      next: (ev) => this.evidencia.set(ev),
+    });
+  }
+
+  /** Se puede subir/quitar evidencia mientras la garantía sigue en trámite. */
+  puedeSubirEvidencia(): boolean {
+    const w = this.garantia();
+    return (
+      !!w &&
+      [WarrantyStatus.OPEN, WarrantyStatus.IN_PROGRESS].includes(w.status)
+    );
+  }
+
+  subirEvidencia(ev: Event): void {
+    const w = this.garantia();
+    const input = ev.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!w || !file) return;
+    this.subiendo.set(true);
+    this.garantiasService.uploadEvidence(w.id, file).subscribe({
+      next: () => {
+        input.value = "";
+        this.subiendo.set(false);
+        this.toastr.success("Evidencia subida");
+        this.cargarEvidencia(w.id);
+      },
+      error: (e) => {
+        this.subiendo.set(false);
+        this.toastr.error(e?.error?.message || "No se pudo subir la evidencia");
+      },
+    });
+  }
+
+  eliminarEvidencia(id: string): void {
+    const w = this.garantia();
+    if (!w) return;
+    if (!confirm("¿Quitar esta evidencia?")) return;
+    this.garantiasService.deleteEvidence(w.id, id).subscribe({
+      next: () => {
+        this.toastr.success("Evidencia eliminada");
+        this.cargarEvidencia(w.id);
+      },
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo eliminar"),
     });
   }
 

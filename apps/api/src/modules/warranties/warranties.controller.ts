@@ -1,18 +1,23 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
   Query,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import type { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { WarrantiesService } from './warranties.service';
 import { CartaGarantiaPdfService } from './carta-garantia-pdf.service';
+import { WarrantyEvidenceService } from './warranty-evidence.service';
 import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import { CreateWarrantyDto } from './dto/create-warranty.dto';
 import { FilterWarrantiesDto } from './dto/filter-warranties.dto';
@@ -33,8 +38,46 @@ export class WarrantiesController {
   constructor(
     private readonly warrantiesService: WarrantiesService,
     private readonly cartaGarantiaPdf: CartaGarantiaPdfService,
+    private readonly evidencia: WarrantyEvidenceService,
     private readonly correo: DocumentoCorreoService,
   ) {}
+
+  /** Evidencia (fotos/videos) de la garantía, para revisar antes de decidir. */
+  @Get(':id/evidence')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  listEvidence(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.evidencia.listar(user, id);
+  }
+
+  /** Sube una foto o video de evidencia (mientras la garantía sigue en trámite). */
+  @Post(':id/evidence')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  @UseInterceptors(
+    FileInterceptor('file', { limits: { fileSize: 100 * 1024 * 1024 } }),
+  )
+  uploadEvidence(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile()
+    file: { buffer: Buffer; mimetype: string; originalname?: string },
+    @Body() body: { caption?: string },
+  ) {
+    return this.evidencia.subir(user, id, file, body?.caption);
+  }
+
+  /** Quita una evidencia (mientras la garantía sigue en trámite). */
+  @Delete(':id/evidence/:evidenceId')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  deleteEvidence(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('evidenceId', ParseUUIDPipe) evidenceId: string,
+  ) {
+    return this.evidencia.eliminar(user, evidenceId);
+  }
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
