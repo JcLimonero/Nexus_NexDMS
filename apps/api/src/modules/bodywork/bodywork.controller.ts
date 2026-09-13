@@ -8,12 +8,14 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -21,6 +23,7 @@ import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 import { BodyworkService } from './bodywork.service';
+import { BodyworkPdfService } from './bodywork-pdf.service';
 import type {
   ActualizarOrdenDto,
   CrearOrdenDto,
@@ -50,7 +53,30 @@ const OPERATIVOS = [
 @RequiresModule('bodywork')
 @Controller('bodywork')
 export class BodyworkController {
-  constructor(private readonly bodywork: BodyworkService) {}
+  constructor(
+    private readonly bodywork: BodyworkService,
+    private readonly bodyworkPdf: BodyworkPdfService,
+  ) {}
+
+  /** Presupuesto de colisión en PDF, con la identidad de la sucursal. */
+  @Get(':id/pdf')
+  @Roles(...OPERATIVOS)
+  async pdf(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.bodyworkPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
 
   // ── Catálogo de piezas ──
   @Get('catalog/parts')

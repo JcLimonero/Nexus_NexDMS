@@ -171,6 +171,15 @@ export class ExportService {
     const d = this.definicion(dataset);
     const filas = await this.filas(dataset, tenantId);
 
+    // Color de marca del tenant → ARGB para el encabezado.
+    const fila0 = await this.dataSource.query(
+      'SELECT palette FROM tenants WHERE id = $1',
+      [tenantId],
+    );
+    const argb =
+      'FF' +
+      paletaPorId(fila0?.[0]?.palette ?? null).primary.replace('#', '').toUpperCase();
+
     const wb = new ExcelJS.Workbook();
     wb.creator = 'NexQS';
     wb.created = new Date();
@@ -184,7 +193,7 @@ export class ExportService {
     ws.getRow(1).fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF203848' },
+      fgColor: { argb },
     };
     ws.getRow(1).font = { bold: true, color: { argb: 'FFFFFFFF' } };
     for (const f of filas) ws.addRow(f);
