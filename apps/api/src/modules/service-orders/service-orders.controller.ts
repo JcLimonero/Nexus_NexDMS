@@ -36,6 +36,7 @@ import { CreateFindingDto } from './dto/create-finding.dto';
 import { SaveSafetyChecklistDto } from '../mechanic-checklist/dto/save-safety-checklist.dto';
 import { AssignMechanicDto } from './dto/assign-mechanic.dto';
 import { MechanicChecklistService } from '../mechanic-checklist/mechanic-checklist.service';
+import { InformeRevisionPdfService } from '../mechanic-checklist/informe-revision-pdf.service';
 import { DeliverServiceOrderDto } from './dto/deliver-service-order.dto';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -54,6 +55,7 @@ export class ServiceOrdersController {
     private readonly serviceOrdersService: ServiceOrdersService,
     private readonly ordenPdf: OrdenPdfService,
     private readonly mechanicChecklistService: MechanicChecklistService,
+    private readonly informeRevisionPdf: InformeRevisionPdfService,
     private readonly correo: DocumentoCorreoService,
   ) {}
 
@@ -365,6 +367,49 @@ export class ServiceOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.mechanicChecklistService.getSafetyChecklist(user, id);
+  }
+
+  /**
+   * Informe de revisión de la unidad (puntos de seguridad) en PDF: el reporte
+   * con el semáforo de cada punto que se entrega al cliente. Va `inline`.
+   */
+  @Get(':id/safety-checklist/pdf')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  async safetyChecklistPdf(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.informeRevisionPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
+
+  /** Envía el informe de revisión por correo al cliente con el PDF adjunto. */
+  @Post(':id/safety-checklist/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC')
+  async enviarInformeRevision(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.informeRevisionPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Informe de revisión',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
   }
 
   @Post(':id/time/start')

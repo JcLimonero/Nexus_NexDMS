@@ -249,6 +249,33 @@ export class OrdenServicioDetail implements OnInit {
       });
   }
 
+  /** Abre el informe de revisión (puntos de seguridad) en PDF. */
+  imprimirRevision(id: string, folio?: string): void {
+    abrirPdf(this.http, `/api/v1/service-orders/${id}/safety-checklist/pdf`, {
+      filename: `${folio ?? id.slice(0, 8)}-revision.pdf`,
+      onError: () =>
+        this.toastr.error("No se pudo generar el informe de revisión"),
+    });
+  }
+
+  /** Envía el informe de revisión por correo (PDF adjunto). */
+  enviarRevision(id: string): void {
+    const email = window.prompt(
+      "Enviar el informe de revisión por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http
+      .post(`/api/v1/service-orders/${id}/safety-checklist/email`, body)
+      .subscribe({
+        next: () => this.toastr.success("Informe enviado por correo"),
+        error: (e) =>
+          this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+      });
+  }
+
   /** Envía la orden por correo (PDF adjunto). Vacío usa el correo del cliente. */
   enviarCorreo(id: string): void {
     const email = window.prompt(

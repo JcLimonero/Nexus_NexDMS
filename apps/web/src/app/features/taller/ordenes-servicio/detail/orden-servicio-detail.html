@@ -18,6 +18,12 @@
               <button class="btn btn-outline-primary btn-sm" (click)="enviarCorreo(o.id)">
                 <i class="icofont icofont-email me-1"></i> Enviar por correo
               </button>
+              <button class="btn btn-primary btn-sm" (click)="imprimirRevision(o.id, o.folio)">
+                Informe de revisión
+              </button>
+              <button class="btn btn-outline-primary btn-sm" (click)="enviarRevision(o.id)">
+                <i class="icofont icofont-email me-1"></i> Enviar informe
+              </button>
               <button class="btn btn-outline-warning btn-sm" (click)="abrirVale()">
                 <i class="icofont icofont-cart me-1"></i> Vale de compra
               </button>
