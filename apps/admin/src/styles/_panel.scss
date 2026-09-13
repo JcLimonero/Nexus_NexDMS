@@ -203,6 +203,12 @@ textarea {
 }
 
 .btn-chico {
+  /* inline-flex + text-decoration:none para que funcione igual como <button>
+     o como <a> (p. ej. el enlace "Ficha" hacia /tenants/:id). */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   height: var(--control-h-sm);
   padding: 0 var(--control-px-sm);
   border: var(--control-border-w) solid var(--border);
