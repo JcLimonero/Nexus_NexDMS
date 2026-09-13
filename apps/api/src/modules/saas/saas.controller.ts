@@ -180,11 +180,6 @@ export class SaasController {
 
   // ─── Usuarios base del cliente (por plataforma) ──────────────────────
 
-  @Get('tenants/:id/stats')
-  estadisticas(@Param('id', ParseUUIDPipe) id: string) {
-    return this.saas.estadisticas(id);
-  }
-
   @Get('tenants/:id/users')
   usuarios(@Param('id', ParseUUIDPipe) id: string) {
     return this.saas.listarUsuarios(id);

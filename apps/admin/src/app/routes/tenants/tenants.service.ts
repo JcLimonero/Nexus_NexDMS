@@ -351,13 +351,6 @@ export class SaasService {
     );
   }
 
-  /** KPIs operativos del cliente para el panel de la ficha. */
-  estadisticas(tenantId: string): Observable<EstadisticasTenant> {
-    return this.http.get<EstadisticasTenant>(
-      `/api/v1/saas/tenants/${tenantId}/stats`,
-    );
-  }
-
   // ─── Usuarios base del cliente ───────────────────────
   usuarios(tenantId: string): Observable<UsuarioTenant[]> {
     return this.http.get<UsuarioTenant[]>(
@@ -395,21 +388,6 @@ export class SaasService {
       {},
     );
   }
-}
-
-/** KPIs operativos del cliente (panel de la ficha). */
-export interface EstadisticasTenant {
-  clientes: number;
-  vehiculos: number;
-  ordenes: number;
-  ordenesActivas: number;
-  ordenesMes: number;
-  citasPorSemana: number;
-  citasFuturas: number;
-  unidadesPiso: number;
-  ventasUnidades: number;
-  usuarios: number;
-  ticketPromedio: number;
 }
 
 /** Cuenta de acceso de un cliente (para el tab de Usuarios). */
