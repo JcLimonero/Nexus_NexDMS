@@ -46,7 +46,18 @@ Pendiente real: vertical maquinaria, preset de módulos, PDF de cotización, PLD
 - [ ] **Entrega por WhatsApp** — pendiente (requiere credenciales de WhatsApp Business del tenant y enviar el PDF como documento).
 - [ ] **Botones "Enviar/Imprimir" en el front** — en cada documento (hoy el PDF es `inline` y el envío se hace por API).
 - [ ] **Consistencia de folios** — usar el código legible en todos (ya se usa el folio propio en orden/cotización/recibo/H&P).
-- [ ] **Opcional a futuro** — evaluar HTML→PDF (Puppeteer) si el mantenimiento con `pdfkit` crece.
+- [x] **Contrato de compraventa** — `unit-sales/contrato-compraventa-pdf.service.ts` + `GET /unit-sales/:id/contrato` (+ envío por correo). Plantilla ilustrativa con **marca de agua**; si el cliente define su texto, usa el suyo (sin marca).
+- [x] **Plantilla de contrato editable por el cliente** — tabla genérica `document_templates` (por `template_key`), `GET/PUT /document-templates/:key`, editor de texto reutilizable `app-editor-html` (ControlValueAccessor, salida HTML) y pantalla `/sales/plantilla-contrato`. El contrato renderiza un subconjunto de HTML (párrafos, títulos, listas, negritas/cursiva/subrayado).
+
+### Módulo NexQS futuro — Plantillas de documentos con HTML→PDF y variables
+Evolución del punto anterior, empaquetado como **módulo cobrable de NexQS**:
+- [ ] **Motor HTML→PDF (Puppeteer/Chromium)** para fidelidad total del formato (el `pdfkit` actual solo interpreta un subconjunto).
+- [ ] **Plantilla por defecto por cada documento** (cotización, orden, recibo, contrato, presupuesto…), editable por el cliente si lo desea.
+- [ ] **Variables sustituibles** (placeholders tipo `{{cliente.nombre}}`, `{{unidad.serie}}`, `{{precio.total}}`) que se reemplazan con los datos de cada operación; la plantilla base trae las variables ya puestas.
+- [ ] **Editor** reutilizable (ya existe `app-editor-html`) + catálogo de variables disponibles por tipo de documento.
+- [ ] Empaquetarlo como módulo (activable/cobrable por tenant).
+
+- [ ] **Opcional a futuro** — el subconjunto HTML de `pdfkit` cubre lo básico; el módulo de arriba lo sustituye cuando se priorice.
 
 ### Correo saliente con el DOMINIO DEL CLIENTE (por definir)
 Hoy el remitente es el dominio de la plataforma. Para que cada correo salga como

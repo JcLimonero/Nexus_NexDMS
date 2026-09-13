@@ -18,6 +18,7 @@ import type { Response } from 'express';
 import { UnitSalesService } from './unit-sales.service';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { ReciboPagoPdfService } from './recibo-pago-pdf.service';
+import { ContratoCompraventaPdfService } from './contrato-compraventa-pdf.service';
 import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import type { RegistrarPagoDto } from './unit-sale-payments.service';
 import { CreateUnitSaleDto } from './dto/create-unit-sale.dto';
@@ -43,8 +44,49 @@ export class UnitSalesController {
     private readonly unitSalesService: UnitSalesService,
     private readonly pagos: UnitSalePaymentsService,
     private readonly reciboPdf: ReciboPagoPdfService,
+    private readonly contratoPdf: ContratoCompraventaPdfService,
     private readonly correo: DocumentoCorreoService,
   ) {}
+
+  /** Contrato de compraventa (plantilla ilustrativa) en PDF. */
+  @Get(':id/contrato')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'EXECUTIVE')
+  async contrato(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.contratoPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
+
+  /** Envía el contrato por correo al cliente. */
+  @Post(':id/contrato/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'SELLER', 'EXECUTIVE')
+  async enviarContrato(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.contratoPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Contrato de compraventa',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
+  }
 
   /** Envía el recibo de pago por correo al cliente con el PDF adjunto. */
   @Post('payments/:paymentId/recibo/email')

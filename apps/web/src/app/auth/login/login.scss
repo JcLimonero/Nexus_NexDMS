@@ -43,6 +43,26 @@
     height: auto;
     object-fit: contain;
   }
+
+  .login-logo-cliente {
+    max-width: 260px;
+  }
+}
+
+/* Cuando el cliente trae su propio logo (normalmente a color, pensado para
+   fondo claro), el fondo del login va claro para que el logo contraste. El
+   fondo oscuro se reserva para el logo blanco por defecto. */
+.auth-bg.auth-bg--claro {
+  background: radial-gradient(
+      120% 120% at 15% 10%,
+      #ffffff 0%,
+      #eef1f5 45%,
+      #dbe2ea 100%
+    ) !important;
+
+  &::before {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg fill='none' stroke='%23334155' stroke-opacity='0.12' stroke-width='1'%3E%3Cpath d='M80 12 L148 50 L148 110 L80 148 L12 110 L12 50 Z'/%3E%3Cpath d='M80 12 L80 148 M12 50 L148 110 M148 50 L12 110'/%3E%3C/g%3E%3Cg fill='%23334155' fill-opacity='0.18'%3E%3Ccircle cx='80' cy='12' r='2.5'/%3E%3Ccircle cx='148' cy='50' r='2.5'/%3E%3Ccircle cx='148' cy='110' r='2.5'/%3E%3Ccircle cx='80' cy='148' r='2.5'/%3E%3Ccircle cx='12' cy='110' r='2.5'/%3E%3Ccircle cx='12' cy='50' r='2.5'/%3E%3Ccircle cx='80' cy='80' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  }
 }
 
 /* Responsive: evita overflow en móvil */

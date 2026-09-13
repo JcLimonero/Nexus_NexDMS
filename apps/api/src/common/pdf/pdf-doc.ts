@@ -328,6 +328,185 @@ export class PdfDoc {
     }
   }
 
+  /**
+   * Renderiza un subconjunto de HTML (el que produce el editor del cliente):
+   * párrafos, títulos h1–h3, listas ul/ol, y negritas/cursivas/subrayado en
+   * línea. No es un motor HTML completo (para eso sería HTML→PDF); cubre lo
+   * típico de un contrato. Todo con el ancho y colores del documento.
+   */
+  html(raw: string): void {
+    const tokens = this.tokenizarHtml(raw || '');
+    let bold = false;
+    let italic = false;
+    let underline = false;
+    const lista: ('ul' | 'ol')[] = [];
+    const contador: number[] = [];
+    let runs: { t: string; b: boolean; i: boolean; u: boolean }[] = [];
+    let bloque: 'p' | 'h1' | 'h2' | 'h3' | 'li' | null = null;
+    let vinieta = '';
+
+    const flush = () => {
+      if (bloque && runs.some((r) => r.t.trim())) {
+        this.renderBloque(bloque, runs, lista.length, vinieta);
+      }
+      runs = [];
+      vinieta = '';
+    };
+
+    for (const tk of tokens) {
+      if (tk.tag) {
+        const n = tk.name;
+        if (n === 'b' || n === 'strong') bold = tk.open;
+        else if (n === 'i' || n === 'em') italic = tk.open;
+        else if (n === 'u') underline = tk.open;
+        else if (n === 'br') runs.push({ t: '\n', b: bold, i: italic, u: underline });
+        else if (['p', 'h1', 'h2', 'h3', 'div', 'blockquote'].includes(n)) {
+          flush();
+          bloque = tk.open
+            ? ((n === 'div' || n === 'blockquote' ? 'p' : n) as typeof bloque)
+            : null;
+        } else if (n === 'ul' || n === 'ol') {
+          if (tk.open) {
+            lista.push(n);
+            contador.push(0);
+          } else {
+            lista.pop();
+            contador.pop();
+          }
+        } else if (n === 'li') {
+          if (tk.open) {
+            flush();
+            bloque = 'li';
+            const tipo = lista[lista.length - 1] ?? 'ul';
+            if (tipo === 'ol') {
+              contador[contador.length - 1]++;
+              vinieta = `${contador[contador.length - 1]}. `;
+            } else {
+              vinieta = '•  ';
+            }
+          } else {
+            flush();
+            bloque = null;
+          }
+        }
+      } else {
+        const texto = this.decodeHtml(tk.text).replace(/\s+/g, ' ');
+        if (!texto.trim() && !runs.length) continue;
+        if (!bloque) bloque = 'p';
+        runs.push({ t: texto, b: bold, i: italic, u: underline });
+      }
+    }
+    flush();
+  }
+
+  private tokenizarHtml(
+    raw: string,
+  ): ({ tag: false; text: string } | { tag: true; name: string; open: boolean })[] {
+    const limpio = raw
+      .replace(/<(script|style)[\s\S]*?<\/\1>/gi, '')
+      .replace(/<!--[\s\S]*?-->/g, '');
+    const out: (
+      | { tag: false; text: string }
+      | { tag: true; name: string; open: boolean }
+    )[] = [];
+    const re = /<\s*(\/?)\s*([a-zA-Z0-9]+)[^>]*?>/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(limpio)) !== null) {
+      if (m.index > last) out.push({ tag: false, text: limpio.slice(last, m.index) });
+      out.push({ tag: true, name: m[2].toLowerCase(), open: m[1] !== '/' });
+      last = re.lastIndex;
+    }
+    if (last < limpio.length) out.push({ tag: false, text: limpio.slice(last) });
+    return out;
+  }
+
+  private decodeHtml(s: string): string {
+    return s
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&nbsp;/g, ' ');
+  }
+
+  private renderBloque(
+    tipo: 'p' | 'h1' | 'h2' | 'h3' | 'li',
+    runs: { t: string; b: boolean; i: boolean; u: boolean }[],
+    nivelLista: number,
+    vinieta: string,
+  ): void {
+    const { doc, M, ancho } = this;
+    if (doc.y > doc.page.height - 60) doc.addPage();
+    const size = tipo === 'h1' ? 14 : tipo === 'h2' ? 12 : tipo === 'h3' ? 10.5 : 9;
+    const negritaBloque = tipo.startsWith('h');
+    const indent = tipo === 'li' ? 14 + (nivelLista - 1) * 12 : 0;
+    const x = M + indent;
+    const w = ancho - indent;
+    const y0 = doc.y;
+
+    if (vinieta) {
+      doc
+        .font('Helvetica')
+        .fontSize(size)
+        .fillColor(this.tinta)
+        .text(vinieta, x - 12, y0, { width: 12, lineBreak: false });
+      doc.y = y0;
+    }
+
+    runs.forEach((r, idx) => {
+      const b = r.b || negritaBloque;
+      const font =
+        b && r.i
+          ? 'Helvetica-BoldOblique'
+          : b
+            ? 'Helvetica-Bold'
+            : r.i
+              ? 'Helvetica-Oblique'
+              : 'Helvetica';
+      doc
+        .font(font)
+        .fontSize(size)
+        .fillColor(negritaBloque ? this.marca : this.tinta)
+        .text(r.t === '\n' ? ' ' : r.t, idx === 0 ? x : undefined, idx === 0 ? y0 : undefined, {
+          width: w,
+          continued: idx < runs.length - 1,
+          underline: r.u,
+        });
+    });
+    doc.moveDown(tipo.startsWith('h') ? 0.4 : 0.35);
+    doc.x = M;
+  }
+
+  /**
+   * Marca de agua diagonal en todas las páginas (p. ej. "Solo para fines
+   * ilustrativos"). Se estampa tenue y girada, sobre el contenido, para dejar
+   * claro que el documento es una plantilla/borrador y no el definitivo.
+   */
+  marcaDeAgua(texto: string): void {
+    const { doc } = this;
+    const paginas = doc.bufferedPageRange();
+    for (let i = 0; i < paginas.count; i++) {
+      doc.switchToPage(paginas.start + i);
+      const w = doc.page.width;
+      const h = doc.page.height;
+      doc.save();
+      doc.rotate(-45, { origin: [w / 2, h / 2] });
+      doc
+        .fontSize(46)
+        .font('Helvetica-Bold')
+        .fillColor('#000000')
+        .opacity(0.07)
+        .text(texto.toUpperCase(), w / 2 - h / 2, h / 2 - 28, {
+          width: h,
+          align: 'center',
+        });
+      doc.opacity(1);
+      doc.restore();
+    }
+  }
+
   /** Cierra el documento y entrega el buffer. */
   async finalizar(): Promise<Buffer> {
     this.doc.end();

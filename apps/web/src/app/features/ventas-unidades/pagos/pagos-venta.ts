@@ -4,6 +4,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
 import { ToastrService } from "ngx-toastr";
+import { abrirPdf } from "../../../shared/utils/abrir-pdf";
 
 import {
   ETIQUETA_FORMA,
@@ -39,18 +40,10 @@ export class PagosVenta {
 
   /** Abre el recibo del pago en PDF (blob, para que lleve la credencial). */
   verRecibo(p: PagoVenta): void {
-    this.http
-      .get(`/api/v1/unit-sales/payments/${p.id}/recibo`, {
-        responseType: "blob",
-      })
-      .subscribe({
-        next: (pdf) => {
-          const url = URL.createObjectURL(pdf);
-          window.open(url, "_blank", "noopener");
-          setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        },
-        error: () => this.toastr.error("No se pudo generar el recibo"),
-      });
+    abrirPdf(this.http, `/api/v1/unit-sales/payments/${p.id}/recibo`, {
+      filename: "recibo.pdf",
+      onError: () => this.toastr.error("No se pudo generar el recibo"),
+    });
   }
 
   /** Envía el recibo por correo (PDF adjunto). Vacío usa el correo del cliente. */

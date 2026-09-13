@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { abrirPdf } from "../../../shared/utils/abrir-pdf";
 
 import { CotizacionesService } from "../cotizaciones.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
@@ -34,16 +35,10 @@ export class CotizacionDetail implements OnInit {
 
   /** Abre la cotización en PDF (blob, para que lleve la credencial). */
   verPdf(id: string): void {
-    this.http
-      .get(`/api/v1/quotations/${id}/pdf`, { responseType: "blob" })
-      .subscribe({
-        next: (pdf) => {
-          const url = URL.createObjectURL(pdf);
-          window.open(url, "_blank", "noopener");
-          setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        },
-        error: () => this.toastr.error("No se pudo generar el PDF"),
-      });
+    abrirPdf(this.http, `/api/v1/quotations/${id}/pdf`, {
+      filename: "cotizacion.pdf",
+      onError: () => this.toastr.error("No se pudo generar el PDF"),
+    });
   }
 
   /** Envía la cotización por correo (PDF adjunto). Vacío usa el correo del cliente. */

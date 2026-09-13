@@ -73,6 +73,7 @@ import {
 import { RedisModule } from './common/redis/redis.module';
 import { StorageModule } from './common/storage/storage.module';
 import { DocumentMailModule } from './common/document-mail/document-mail.module';
+import { DocumentTemplatesModule } from './modules/document-templates/document-templates.module';
 import { QueuesModule } from './queues/queues.module';
 import { EventsModule } from './events/events.module';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -119,6 +120,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     IdempotencyModule,
     StorageModule,
     DocumentMailModule,
+    DocumentTemplatesModule,
     QueuesModule,
     EventsModule,
     ThrottlerModule.forRootAsync({

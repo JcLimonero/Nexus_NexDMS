@@ -1,8 +1,10 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { abrirPdf } from "../../../shared/utils/abrir-pdf";
 
 import { VentasUnidadesService } from "../ventas-unidades.service";
 import { UnitSale, UnitSaleStatus } from "../models/unit-sale.model";
@@ -31,6 +33,31 @@ export class VentaUnidadDetail implements OnInit {
   private ventasService = inject(VentasUnidadesService);
   private toastr = inject(ToastrService);
   private auth = inject(AuthService);
+  private http = inject(HttpClient);
+
+  /** Abre el contrato de compraventa en PDF. */
+  verContrato(id: string): void {
+    abrirPdf(this.http, `/api/v1/unit-sales/${id}/contrato`, {
+      filename: "contrato.pdf",
+      onError: () => this.toastr.error("No se pudo generar el contrato"),
+    });
+  }
+
+  /** Envía el contrato por correo (PDF adjunto). */
+  enviarContrato(id: string): void {
+    const email = window.prompt(
+      "Enviar el contrato por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/unit-sales/${id}/contrato/email`, body).subscribe({
+      next: () => this.toastr.success("Contrato enviado por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
+  }
 
   /** Quién puede aprobar o rechazar documentos del expediente. */
   puedeRevisar = (this.auth.getUser()?.roles ?? []).some((r) =>

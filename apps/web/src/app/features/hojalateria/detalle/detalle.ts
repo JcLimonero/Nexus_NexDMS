@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { abrirPdf } from "../../../shared/utils/abrir-pdf";
 import {
   BodyworkItem,
   BodyworkItemStatus,
@@ -37,16 +38,10 @@ export class Detalle implements OnInit {
 
   /** Abre el presupuesto de colisión en PDF (blob, para llevar la credencial). */
   verPdf(id: string): void {
-    this.http
-      .get(`/api/v1/bodywork/${id}/pdf`, { responseType: "blob" })
-      .subscribe({
-        next: (pdf) => {
-          const url = URL.createObjectURL(pdf);
-          window.open(url, "_blank", "noopener");
-          setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        },
-        error: () => this.toastr.error("No se pudo generar el presupuesto"),
-      });
+    abrirPdf(this.http, `/api/v1/bodywork/${id}/pdf`, {
+      filename: "presupuesto.pdf",
+      onError: () => this.toastr.error("No se pudo generar el presupuesto"),
+    });
   }
 
   /** Envía el presupuesto por correo (PDF adjunto). */

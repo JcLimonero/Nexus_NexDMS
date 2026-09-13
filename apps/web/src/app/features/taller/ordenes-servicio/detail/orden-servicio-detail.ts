@@ -4,6 +4,7 @@ import { HttpClient } from "@angular/common/http";
 import { FormsModule } from "@angular/forms";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
+import { abrirPdf } from "../../../../shared/utils/abrir-pdf";
 import { forkJoin } from "rxjs";
 
 import { TallerService } from "../../taller.service";
@@ -203,18 +204,10 @@ export class OrdenServicioDetail implements OnInit {
    * 401 en vez del documento—. El interceptor sí la pone en esta petición.
    */
   imprimir(id: string): void {
-    this.http
-      .get(`/api/v1/service-orders/${id}/pdf`, { responseType: "blob" })
-      .subscribe({
-        next: (pdf) => {
-          const url = URL.createObjectURL(pdf);
-          window.open(url, "_blank", "noopener");
-          // Se libera con holgura: revocarla de inmediato deja la pestaña
-          // nueva sin nada que mostrar.
-          setTimeout(() => URL.revokeObjectURL(url), 60_000);
-        },
-        error: () => this.toastr.error("No se pudo generar el PDF de la orden"),
-      });
+    abrirPdf(this.http, `/api/v1/service-orders/${id}/pdf`, {
+      filename: "orden.pdf",
+      onError: () => this.toastr.error("No se pudo generar el PDF de la orden"),
+    });
   }
 
   /**
@@ -246,17 +239,10 @@ export class OrdenServicioDetail implements OnInit {
       .subscribe({
         next: (venta) => {
           this.toastr.success(`Cobrada · ticket ${venta.ticketNumber}`);
-          // Abre el recibo de la venta recién creada.
-          this.http
-            .get(`/api/v1/sales/${venta.id}/recibo`, { responseType: "blob" })
-            .subscribe({
-              next: (pdf) => {
-                const url = URL.createObjectURL(pdf);
-                window.open(url, "_blank", "noopener");
-                setTimeout(() => URL.revokeObjectURL(url), 60_000);
-              },
-              error: () => {},
-            });
+          // Abre (o descarga) el recibo de la venta recién creada.
+          abrirPdf(this.http, `/api/v1/sales/${venta.id}/recibo`, {
+            filename: `recibo-${venta.ticketNumber}.pdf`,
+          });
         },
         error: (e) =>
           this.toastr.error(e?.error?.message || "No se pudo cobrar la orden"),

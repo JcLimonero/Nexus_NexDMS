@@ -1,0 +1,26 @@
+<div class="editor-html">
+  <div class="editor-toolbar" role="toolbar">
+    <button type="button" title="Negrita" (click)="comando('bold')"><b>B</b></button>
+    <button type="button" title="Cursiva" (click)="comando('italic')"><i>I</i></button>
+    <button type="button" title="Subrayado" (click)="comando('underline')"><u>U</u></button>
+    <span class="sep"></span>
+    <button type="button" title="Título" (click)="bloque('h2')">T</button>
+    <button type="button" title="Subtítulo" (click)="bloque('h3')">t</button>
+    <button type="button" title="Párrafo" (click)="bloque('p')">¶</button>
+    <span class="sep"></span>
+    <button type="button" title="Lista con viñetas" (click)="comando('insertUnorderedList')">• —</button>
+    <button type="button" title="Lista numerada" (click)="comando('insertOrderedList')">1.</button>
+    <span class="sep"></span>
+    <button type="button" title="Enlace" (click)="enlace()">🔗</button>
+    <button type="button" title="Quitar formato" (click)="comando('removeFormat')">✕</button>
+  </div>
+
+  <div
+    #area
+    class="editor-area"
+    contenteditable="true"
+    [attr.data-placeholder]="placeholder()"
+    (input)="alEscribir()"
+    (blur)="alSalir()"
+  ></div>
+</div>

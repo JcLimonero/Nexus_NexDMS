@@ -16,6 +16,7 @@ import { UnitSalePayment } from './entities/unit-sale-payment.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
 import { ReciboPagoPdfService } from './recibo-pago-pdf.service';
+import { ContratoCompraventaPdfService } from './contrato-compraventa-pdf.service';
 import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { StorageModule } from '../../common/storage/storage.module';
@@ -45,7 +46,12 @@ import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
     SaleSurveysModule,
   ],
   controllers: [UnitSalesController],
-  providers: [UnitSalesService, UnitSalePaymentsService, ReciboPagoPdfService],
+  providers: [
+    UnitSalesService,
+    UnitSalePaymentsService,
+    ReciboPagoPdfService,
+    ContratoCompraventaPdfService,
+  ],
   exports: [UnitSalesService],
 })
 export class UnitSalesModule {}

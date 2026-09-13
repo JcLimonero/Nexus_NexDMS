@@ -14,6 +14,17 @@ export const unitSalesRoutes: Routes = [
     data: { title: "Nueva venta", breadcrumb: "Nueva" },
   },
   {
+    path: "plantilla-contrato",
+    loadComponent: () =>
+      import("./plantilla-contrato/plantilla-contrato").then(
+        (m) => m.PlantillaContrato,
+      ),
+    data: {
+      title: "Plantilla de contrato",
+      breadcrumb: "Plantilla de contrato",
+    },
+  },
+  {
     path: ":id",
     loadComponent: () =>
       import("./detail/venta-unidad-detail").then((m) => m.VentaUnidadDetail),
