@@ -15,6 +15,9 @@ import { UnitSaleExtra } from '../unit-sale-extras/entities/unit-sale-extra.enti
 import { UnitSalePayment } from './entities/unit-sale-payment.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
+import { ReciboPagoPdfService } from './recibo-pago-pdf.service';
+import { Branch } from '../branches/entities/branch.entity';
+import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { StorageModule } from '../../common/storage/storage.module';
 import { SaleDocumentsModule } from '../sale-documents/sale-documents.module';
 import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
@@ -32,6 +35,8 @@ import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
       UnitSaleExtra,
       UnitSalePayment,
       Tenant,
+      Branch,
+      LegalEntity,
     ]),
     CfdiModule,
     UnitAccessoriesModule,
@@ -40,7 +45,7 @@ import { SaleSurveysModule } from '../sale-surveys/sale-surveys.module';
     SaleSurveysModule,
   ],
   controllers: [UnitSalesController],
-  providers: [UnitSalesService, UnitSalePaymentsService],
+  providers: [UnitSalesService, UnitSalePaymentsService, ReciboPagoPdfService],
   exports: [UnitSalesService],
 })
 export class UnitSalesModule {}

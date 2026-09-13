@@ -180,7 +180,13 @@ export class OrdenPdfService {
   async generar(
     tenantId: string,
     serviceOrderId: string,
-  ): Promise<{ buffer: Buffer; filename: string }> {
+  ): Promise<{
+    buffer: Buffer;
+    filename: string;
+    folio: string;
+    negocio: string;
+    clientEmail: string | null;
+  }> {
     const so = await this.soRepo.findOne({
       where: { id: serviceOrderId, tenantId },
       relations: ['vehicle', 'owner', 'user', 'mechanic'],
@@ -269,7 +275,13 @@ export class OrdenPdfService {
     this.pieDePagina(doc);
 
     doc.end();
-    return { buffer: await fin, filename: `${so.folio}.pdf` };
+    return {
+      buffer: await fin,
+      filename: `${so.folio}.pdf`,
+      folio: so.folio,
+      negocio: razon?.name ?? sucursal?.name ?? 'Taller',
+      clientEmail: so.owner?.email ?? null,
+    };
   }
 
   // ─── Bloques del documento ───────────────────────

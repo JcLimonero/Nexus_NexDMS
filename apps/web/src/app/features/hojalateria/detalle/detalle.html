@@ -14,6 +14,12 @@
         <p class="hp-sub">Hojalatería y Pintura</p>
       </div>
       <div class="hp-head-acc">
+        @if (orden(); as o) {
+          <button class="hp-btn hp-btn--primary" (click)="verPdf(o.id)">Ver PDF</button>
+          <button class="hp-btn hp-btn--ghost" (click)="enviarCorreo(o.id)">
+            Enviar por correo
+          </button>
+        }
         <a class="hp-btn hp-btn--ghost" routerLink="/bodywork">Volver</a>
       </div>
     </div>

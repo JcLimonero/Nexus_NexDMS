@@ -72,6 +72,7 @@ import {
 } from './common/throttler/throttler-tracker.util';
 import { RedisModule } from './common/redis/redis.module';
 import { StorageModule } from './common/storage/storage.module';
+import { DocumentMailModule } from './common/document-mail/document-mail.module';
 import { QueuesModule } from './queues/queues.module';
 import { EventsModule } from './events/events.module';
 import { ThrottlerModule } from '@nestjs/throttler';
@@ -117,6 +118,7 @@ import { WhatsappBotModule } from './modules/whatsapp-bot/whatsapp-bot.module';
     RedisModule,
     IdempotencyModule,
     StorageModule,
+    DocumentMailModule,
     QueuesModule,
     EventsModule,
     ThrottlerModule.forRootAsync({

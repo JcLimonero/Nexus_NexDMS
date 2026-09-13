@@ -217,6 +217,68 @@ export class OrdenServicioDetail implements OnInit {
       });
   }
 
+  /**
+   * Cobra la orden: genera la venta ligada (entra al corte de caja) y abre el
+   * recibo. Requiere caja abierta en la sucursal.
+   */
+  cobrar(id: string): void {
+    const metodo = window.prompt(
+      "Método de cobro: escribe EFECTIVO, TARJETA o TRANSFERENCIA",
+      "EFECTIVO",
+    );
+    if (metodo === null) return;
+    const map: Record<string, string> = {
+      EFECTIVO: "CASH",
+      TARJETA: "CARD",
+      TRANSFERENCIA: "TRANSFER",
+    };
+    const method = map[metodo.trim().toUpperCase()];
+    if (!method) {
+      this.toastr.warning("Método inválido (EFECTIVO, TARJETA o TRANSFERENCIA)");
+      return;
+    }
+    this.toastr.info("Cobrando…");
+    this.http
+      .post<{ id: string; ticketNumber: string }>(
+        `/api/v1/service-orders/${id}/cobrar`,
+        { method },
+      )
+      .subscribe({
+        next: (venta) => {
+          this.toastr.success(`Cobrada · ticket ${venta.ticketNumber}`);
+          // Abre el recibo de la venta recién creada.
+          this.http
+            .get(`/api/v1/sales/${venta.id}/recibo`, { responseType: "blob" })
+            .subscribe({
+              next: (pdf) => {
+                const url = URL.createObjectURL(pdf);
+                window.open(url, "_blank", "noopener");
+                setTimeout(() => URL.revokeObjectURL(url), 60_000);
+              },
+              error: () => {},
+            });
+        },
+        error: (e) =>
+          this.toastr.error(e?.error?.message || "No se pudo cobrar la orden"),
+      });
+  }
+
+  /** Envía la orden por correo (PDF adjunto). Vacío usa el correo del cliente. */
+  enviarCorreo(id: string): void {
+    const email = window.prompt(
+      "Enviar la orden por correo a (déjalo vacío para usar el del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/service-orders/${id}/email`, body).subscribe({
+      next: () => this.toastr.success("Orden enviada por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
+  }
+
   ngOnInit(): void {
     this.branchesService.getAll().subscribe({
       next: (res) =>

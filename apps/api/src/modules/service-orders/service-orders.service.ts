@@ -51,6 +51,8 @@ import { CfdiService } from '../cfdi/cfdi.service';
 import { FinanceService } from '../finance/finance.service';
 import { SurveysService } from '../surveys/surveys.service';
 import { FleetsService } from '../fleets/fleets.service';
+import { SalesService } from '../sales/sales.service';
+import { SalePaymentMethodEnum } from '../sales/entities/sale-payment.entity';
 import { SurveyAreaEnum } from '../surveys/entities/survey-config.entity';
 import { BranchesService } from '../branches/branches.service';
 import { StorageService } from '../../common/storage/storage.service';
@@ -143,7 +145,52 @@ export class ServiceOrdersService {
     private readonly financeService: FinanceService,
     private readonly surveysService: SurveysService,
     private readonly fleets: FleetsService,
+    private readonly sales: SalesService,
   ) {}
+
+  /**
+   * Cobra la orden: crea una venta (`sale_type = SERVICE_ORDER`) ligada, en la
+   * caja abierta, para que el ingreso entre al corte. No mueve inventario (las
+   * refacciones ya se consumieron en la orden). Idempotente: si ya se cobró,
+   * devuelve la venta existente.
+   */
+  async cobrar(
+    user: UserPayload,
+    id: string,
+    dto: { method: SalePaymentMethodEnum; reference?: string | null },
+  ) {
+    const so = await this.soRepo.findOne({
+      where: { id, tenantId: user.tenantId },
+    });
+    if (!so) throw new NotFoundException('Orden no encontrada');
+
+    const branch = await this.branchRepo.findOne({
+      where: { id: so.branchId },
+    });
+    const taxRate = Number(branch?.taxRate ?? 0.16);
+    const subtotal =
+      (Number(so.laborCost) || 0) +
+      (Number(so.partsCost) || 0) -
+      (Number(so.discount) || 0);
+    if (subtotal <= 0) {
+      throw new BadRequestException(
+        'La orden no tiene importe por cobrar (mano de obra + refacciones).',
+      );
+    }
+    const taxAmount = Math.round(subtotal * taxRate * 100) / 100;
+    const total = subtotal + taxAmount;
+
+    return this.sales.registrarVentaOrden(user, {
+      branchId: so.branchId,
+      clientId: so.ownerId ?? null,
+      serviceOrderId: so.id,
+      subtotal,
+      discount: Number(so.discount) || 0,
+      taxAmount,
+      total,
+      payments: [{ method: dto.method, amount: total, reference: dto.reference }],
+    });
+  }
 
   /**
    * Recalcula partsCost y total de la orden, aplicando el descuento de flotilla

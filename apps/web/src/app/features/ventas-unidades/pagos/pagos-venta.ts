@@ -2,6 +2,7 @@ import { MoneyPipe } from "../../../shared/pipes/money.pipe";
 import { Component, computed, effect, inject, input, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { ToastrService } from "ngx-toastr";
 
 import {
@@ -34,6 +35,41 @@ import {
 export class PagosVenta {
   private srv = inject(PagosVentaService);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
+
+  /** Abre el recibo del pago en PDF (blob, para que lleve la credencial). */
+  verRecibo(p: PagoVenta): void {
+    this.http
+      .get(`/api/v1/unit-sales/payments/${p.id}/recibo`, {
+        responseType: "blob",
+      })
+      .subscribe({
+        next: (pdf) => {
+          const url = URL.createObjectURL(pdf);
+          window.open(url, "_blank", "noopener");
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        },
+        error: () => this.toastr.error("No se pudo generar el recibo"),
+      });
+  }
+
+  /** Envía el recibo por correo (PDF adjunto). Vacío usa el correo del cliente. */
+  enviarRecibo(p: PagoVenta): void {
+    const email = window.prompt(
+      "Enviar el recibo por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http
+      .post(`/api/v1/unit-sales/payments/${p.id}/recibo/email`, body)
+      .subscribe({
+        next: () => this.toastr.success("Recibo enviado por correo"),
+        error: (e) =>
+          this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+      });
+  }
 
   unitSaleId = input.required<string>();
   /** Solo en una venta en proceso se registran o borran pagos. */

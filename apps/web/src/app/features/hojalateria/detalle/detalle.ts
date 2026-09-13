@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import {
@@ -32,6 +33,37 @@ export class Detalle implements OnInit {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
+
+  /** Abre el presupuesto de colisión en PDF (blob, para llevar la credencial). */
+  verPdf(id: string): void {
+    this.http
+      .get(`/api/v1/bodywork/${id}/pdf`, { responseType: "blob" })
+      .subscribe({
+        next: (pdf) => {
+          const url = URL.createObjectURL(pdf);
+          window.open(url, "_blank", "noopener");
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        },
+        error: () => this.toastr.error("No se pudo generar el presupuesto"),
+      });
+  }
+
+  /** Envía el presupuesto por correo (PDF adjunto). */
+  enviarCorreo(id: string): void {
+    const email = window.prompt(
+      "Enviar el presupuesto por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/bodywork/${id}/email`, body).subscribe({
+      next: () => this.toastr.success("Presupuesto enviado por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
+  }
 
   readonly estados = ESTADOS;
   readonly flujo = FLUJO;

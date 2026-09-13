@@ -60,7 +60,13 @@ export class CotizacionPdfService {
   async generar(
     tenantId: string,
     quotationId: string,
-  ): Promise<{ buffer: Buffer; filename: string }> {
+  ): Promise<{
+    buffer: Buffer;
+    filename: string;
+    folio: string;
+    negocio: string;
+    clientEmail: string | null;
+  }> {
     const q = await this.quotationRepo.findOne({
       where: { id: quotationId, tenantId },
       relations: ['client', 'user'],
@@ -228,6 +234,12 @@ export class CotizacionPdfService {
 
     pdf.pieDePagina(`Cotización ${q.folio}`);
 
-    return { buffer: await pdf.finalizar(), filename: `${q.folio}.pdf` };
+    return {
+      buffer: await pdf.finalizar(),
+      filename: `${q.folio}.pdf`,
+      folio: q.folio,
+      negocio: razon?.name ?? sucursal?.name ?? 'Negocio',
+      clientEmail: cli?.email ?? null,
+    };
   }
 }

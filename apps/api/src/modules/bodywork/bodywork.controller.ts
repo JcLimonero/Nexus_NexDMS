@@ -24,6 +24,7 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { ModuleGuard, RequiresModule } from '../modules/modules.module';
 import { BodyworkService } from './bodywork.service';
 import { BodyworkPdfService } from './bodywork-pdf.service';
+import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import type {
   ActualizarOrdenDto,
   CrearOrdenDto,
@@ -56,7 +57,28 @@ export class BodyworkController {
   constructor(
     private readonly bodywork: BodyworkService,
     private readonly bodyworkPdf: BodyworkPdfService,
+    private readonly correo: DocumentoCorreoService,
   ) {}
+
+  /** Envía el presupuesto de colisión por correo al cliente con el PDF adjunto. */
+  @Post(':id/email')
+  @Roles(...OPERATIVOS)
+  async enviarCorreo(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.bodyworkPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Presupuesto de colisión',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
+  }
 
   /** Presupuesto de colisión en PDF, con la identidad de la sucursal. */
   @Get(':id/pdf')

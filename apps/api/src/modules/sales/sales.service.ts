@@ -16,6 +16,7 @@ import {
   SaleStatusEnum,
   SaleTypeEnum,
   PaymentMethodEnum,
+  PriceListEnum,
 } from './entities/sale.entity';
 import { SaleItem } from './entities/sale-item.entity';
 import {
@@ -307,6 +308,120 @@ export class SalesService {
         }
         return this.findOne(user, id);
       });
+  }
+
+  /**
+   * Registra la venta que genera el cobro de una ORDEN DE SERVICIO.
+   *
+   * A diferencia de la venta de mostrador, no lleva líneas de refacción (ya se
+   * consumieron en la orden) ni mueve inventario: solo asienta el ingreso en la
+   * caja abierta para que entre al corte, ligado a la orden. Idempotente por
+   * `serviceOrderId`: si la orden ya se cobró, devuelve la venta existente.
+   */
+  async registrarVentaOrden(
+    user: UserPayload,
+    p: {
+      branchId: string;
+      clientId: string | null;
+      serviceOrderId: string;
+      subtotal: number;
+      discount: number;
+      taxAmount: number;
+      total: number;
+      payments: {
+        method: SalePaymentMethodEnum;
+        amount: number;
+        reference?: string | null;
+      }[];
+    },
+  ): Promise<Sale> {
+    this.assertCanWrite(user);
+
+    // Si ya se cobró esta orden, no duplicar el ingreso.
+    const previa = await this.saleRepo.findOne({
+      where: {
+        tenantId: user.tenantId,
+        serviceOrderId: p.serviceOrderId,
+        status: SaleStatusEnum.PAID,
+      },
+    });
+    if (previa) return this.findOne(user, previa.id);
+
+    if (!p.payments?.length) {
+      throw new BadRequestException('Debe incluir al menos un pago');
+    }
+    const cashSession = await this.cashSessionRepo.findOne({
+      where: {
+        tenantId: user.tenantId,
+        branchId: p.branchId,
+        status: CashSessionStatusEnum.OPEN,
+      },
+    });
+    if (!cashSession) {
+      throw new BadRequestException('No hay caja abierta para esta sucursal');
+    }
+    const paymentsSum = p.payments.reduce((s, x) => s + x.amount, 0);
+    if (Math.abs(paymentsSum - p.total) > 0.01) {
+      throw new BadRequestException(
+        `Los pagos ($${paymentsSum.toFixed(2)}) no suman el total de la orden ($${p.total.toFixed(2)})`,
+      );
+    }
+    const paymentMethod =
+      p.payments.length === 1
+        ? this.mapPaymentToSaleMethod(p.payments[0].method)
+        : PaymentMethodEnum.MIXED;
+
+    const id = await this.dataSource.transaction(async (em) => {
+      const ticketNumber = await this.generateTicketNumber(user.tenantId, em);
+      const sale = em.create(Sale, {
+        tenantId: user.tenantId,
+        branchId: p.branchId,
+        cashSessionId: cashSession.id,
+        clientId: p.clientId ?? null,
+        serviceOrderId: p.serviceOrderId,
+        userId: user.sub,
+        saleType: SaleTypeEnum.SERVICE_ORDER,
+        status: SaleStatusEnum.PAID,
+        paymentMethod,
+        priceList: PriceListEnum.PUBLIC,
+        subtotal: p.subtotal,
+        discount: p.discount,
+        taxAmount: p.taxAmount,
+        total: p.total,
+        ticketNumber,
+      });
+      const saved = await em.save(sale);
+
+      for (const pay of p.payments) {
+        await em.save(
+          em.create(SalePayment, {
+            saleId: saved.id,
+            method: pay.method,
+            amount: pay.amount,
+            reference: pay.reference ?? null,
+          }),
+        );
+      }
+
+      const session = await em.findOne(CashSession, {
+        where: { id: cashSession.id },
+      });
+      if (!session) throw new NotFoundException('Sesión de caja no encontrada');
+      const monto = (m: SalePaymentMethodEnum) =>
+        p.payments.filter((x) => x.method === m).reduce((s, x) => s + x.amount, 0);
+      session.totalCash =
+        Number(session.totalCash) + monto(SalePaymentMethodEnum.CASH);
+      session.totalCard =
+        Number(session.totalCard) + monto(SalePaymentMethodEnum.CARD);
+      session.totalTransfer =
+        Number(session.totalTransfer) + monto(SalePaymentMethodEnum.TRANSFER);
+      session.totalSales = Number(session.totalSales) + p.total;
+      await em.save(session);
+
+      return saved.id;
+    });
+
+    return this.findOne(user, id);
   }
 
   private mapPaymentToSaleMethod(

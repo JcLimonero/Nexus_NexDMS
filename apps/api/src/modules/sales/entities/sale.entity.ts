@@ -63,6 +63,10 @@ export class Sale {
   @Column({ name: 'client_id', type: 'uuid', nullable: true })
   clientId: string | null;
 
+  /** Orden de servicio que originó la venta (solo en `sale_type=SERVICE_ORDER`). */
+  @Column({ name: 'service_order_id', type: 'uuid', nullable: true })
+  serviceOrderId: string | null;
+
   @Column({ name: 'user_id', type: 'uuid' })
   userId: string;
 

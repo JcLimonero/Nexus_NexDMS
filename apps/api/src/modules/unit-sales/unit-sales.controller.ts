@@ -6,6 +6,7 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -13,8 +14,11 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
+import type { Response } from 'express';
 import { UnitSalesService } from './unit-sales.service';
 import { UnitSalePaymentsService } from './unit-sale-payments.service';
+import { ReciboPagoPdfService } from './recibo-pago-pdf.service';
+import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import type { RegistrarPagoDto } from './unit-sale-payments.service';
 import { CreateUnitSaleDto } from './dto/create-unit-sale.dto';
 import { CreatePaymentPlanDto } from './dto/create-payment-plan.dto';
@@ -38,7 +42,49 @@ export class UnitSalesController {
   constructor(
     private readonly unitSalesService: UnitSalesService,
     private readonly pagos: UnitSalePaymentsService,
+    private readonly reciboPdf: ReciboPagoPdfService,
+    private readonly correo: DocumentoCorreoService,
   ) {}
+
+  /** Envía el recibo de pago por correo al cliente con el PDF adjunto. */
+  @Post('payments/:paymentId/recibo/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER', 'EXECUTIVE')
+  async enviarRecibo(
+    @CurrentUser() user: UserPayload,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.reciboPdf.generar(user.tenantId, paymentId);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Recibo de pago',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
+  }
+
+  /** Recibo de pago (abono/enganche) en PDF, con la identidad del negocio. */
+  @Get('payments/:paymentId/recibo')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER', 'EXECUTIVE')
+  async recibo(
+    @CurrentUser() user: UserPayload,
+    @Param('paymentId', ParseUUIDPipe) paymentId: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.reciboPdf.generar(
+      user.tenantId,
+      paymentId,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'SELLER', 'EXECUTIVE')

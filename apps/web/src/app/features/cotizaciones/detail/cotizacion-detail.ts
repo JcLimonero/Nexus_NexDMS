@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
@@ -29,6 +30,37 @@ export class CotizacionDetail implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
+
+  /** Abre la cotización en PDF (blob, para que lleve la credencial). */
+  verPdf(id: string): void {
+    this.http
+      .get(`/api/v1/quotations/${id}/pdf`, { responseType: "blob" })
+      .subscribe({
+        next: (pdf) => {
+          const url = URL.createObjectURL(pdf);
+          window.open(url, "_blank", "noopener");
+          setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        },
+        error: () => this.toastr.error("No se pudo generar el PDF"),
+      });
+  }
+
+  /** Envía la cotización por correo (PDF adjunto). Vacío usa el correo del cliente. */
+  enviarCorreo(id: string): void {
+    const email = window.prompt(
+      "Enviar la cotización por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/quotations/${id}/email`, body).subscribe({
+      next: () => this.toastr.success("Cotización enviada por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
+  }
 
   cotizacion = signal<Quotation | null>(null);
   branches = signal<{ id: string; name: string }[]>([]);

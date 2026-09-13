@@ -43,6 +43,7 @@ import { OrdenPdfService } from './orden-pdf.service';
 import { FinanceModule } from '../finance/finance.module';
 import { FleetsModule } from '../fleets/fleets.module';
 import { SurveysModule } from '../surveys/surveys.module';
+import { SalesModule } from '../sales/sales.module';
 import { ServiceOrderPromiseChange } from './entities/service-order-promise-change.entity';
 import { PurchaseRequisition } from '../purchase-requisitions/entities/purchase-requisition.entity';
 
@@ -84,6 +85,7 @@ import { PurchaseRequisition } from '../purchase-requisitions/entities/purchase-
     FinanceModule,
     SurveysModule,
     FleetsModule,
+    SalesModule,
   ],
   controllers: [
     ServiceOrdersController,

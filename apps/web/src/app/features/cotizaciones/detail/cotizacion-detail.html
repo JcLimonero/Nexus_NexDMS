@@ -5,6 +5,17 @@
         <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h5>Presupuesto {{ cotizacion()?.folio }}</h5>
           <div class="d-flex gap-2">
+            @if (cotizacion(); as c) {
+              <button class="btn btn-primary btn-sm" (click)="verPdf(c.id)">
+                Ver PDF
+              </button>
+              <button
+                class="btn btn-outline-primary btn-sm"
+                (click)="enviarCorreo(c.id)"
+              >
+                <i class="icofont icofont-email me-1"></i> Enviar por correo
+              </button>
+            }
             @if (canEdit()) {
               <a
                 class="btn btn-warning btn-sm"

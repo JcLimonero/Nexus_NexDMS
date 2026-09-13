@@ -17,6 +17,7 @@ import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import type { Response } from 'express';
 import { QuotationsService } from './quotations.service';
 import { CotizacionPdfService } from './cotizacion-pdf.service';
+import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { FilterQuotationsDto } from './dto/filter-quotations.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
@@ -37,7 +38,28 @@ export class QuotationsController {
   constructor(
     private readonly quotationsService: QuotationsService,
     private readonly cotizacionPdf: CotizacionPdfService,
+    private readonly correo: DocumentoCorreoService,
   ) {}
+
+  /** Envía la cotización por correo al cliente con el PDF adjunto. */
+  @Post(':id/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  async enviarCorreo(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.cotizacionPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Cotización',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
+  }
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')

@@ -69,6 +69,12 @@
                   }
                 </td>
                 <td class="text-end">
+                  <button class="btn btn-light btn-sm" (click)="verRecibo(p)">
+                    Recibo
+                  </button>
+                  <button class="btn btn-outline-primary btn-sm" (click)="enviarRecibo(p)">
+                    <i class="icofont icofont-email"></i>
+                  </button>
                   @if (editable()) {
                     <button class="table-action-btn table-action-btn-danger" (click)="eliminar(p)">
                       Borrar

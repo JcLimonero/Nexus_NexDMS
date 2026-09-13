@@ -19,6 +19,8 @@ import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ServiceOrdersService } from './service-orders.service';
 import { OrdenPdfService } from './orden-pdf.service';
+import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
+import type { SalePaymentMethodEnum } from '../sales/entities/sale-payment.entity';
 import { CreateServiceOrderDto } from './dto/create-service-order.dto';
 import { FilterServiceOrdersDto } from './dto/filter-service-orders.dto';
 import { UpdateServiceOrderDto } from './dto/update-service-order.dto';
@@ -52,7 +54,42 @@ export class ServiceOrdersController {
     private readonly serviceOrdersService: ServiceOrdersService,
     private readonly ordenPdf: OrdenPdfService,
     private readonly mechanicChecklistService: MechanicChecklistService,
+    private readonly correo: DocumentoCorreoService,
   ) {}
+
+  /**
+   * Cobra la orden: genera una venta ligada en la caja abierta (entra al corte).
+   * Body: `{ method: 'CASH'|'CARD'|'TRANSFER', reference? }`.
+   */
+  @Post(':id/cobrar')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  cobrar(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: { method: SalePaymentMethodEnum; reference?: string | null },
+  ) {
+    return this.serviceOrdersService.cobrar(user, id, dto);
+  }
+
+  /** Envía la orden de servicio por correo al cliente con el PDF adjunto. */
+  @Post(':id/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'RECEPTIONIST')
+  async enviarCorreo(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.ordenPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Orden de servicio',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
+  }
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'MECHANIC', 'AUDITOR')

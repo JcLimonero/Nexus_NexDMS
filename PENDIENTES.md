@@ -36,12 +36,26 @@ Pendiente real: vertical maquinaria, preset de módulos, PDF de cotización, PLD
 - [x] **Homologados** orden de servicio, corte de caja y listados de export sobre la plantilla/paleta.
 - [x] **Varían por sucursal** — encabezado con la **razón social, RFC y domicilio de la sucursal** (cada sucursal puede tener su propia entidad legal). El logo es a nivel tenant.
 - [x] **Bug de hoja extra** — el pie ya no genera una segunda hoja vacía.
-- [ ] **Logo por tenant** — hoy `logo_key` suele estar vacío (se muestra el nombre). Subir el logo del tenant (Total One, etc.) para que salga en los PDF. Falta el flujo de carga de logo en el admin.
-- [ ] **Consistencia de folios** — usar el código legible en todos (ya se usa el folio propio en orden/cotización).
-- [ ] **Entrega** — descargar / imprimir / adjuntar a WhatsApp o correo desde la misma acción (hoy es `inline`).
-- [ ] **Faltantes por definir** — presupuesto de colisión (H&P), recibo/comprobante de pago operativo. (El CFDI lo entrega el PAC.)
-- [ ] **Excel del export** — la fila de encabezado sigue en navy fijo; homologar al color de marca (menor).
+- [x] **Logo por tenant Y por sucursal** — flujo de subida ya existía (ficha de marca del tenant); agregado el de **sucursal** (diálogo "Editar sucursal": subir / usar el de la empresa). Prioridad en PDF: sucursal → tenant → nombre.
+- [x] **Presupuesto de colisión (H&P)** — `bodywork/bodywork-pdf.service.ts` + `GET /bodywork/:id/pdf`.
+- [x] **Recibo de pago** — `unit-sales/recibo-pago-pdf.service.ts` + `GET /unit-sales/payments/:paymentId/recibo`.
+- [x] **Excel del export** — encabezado con el color de marca del tenant.
+- [x] **Entrega por correo** — `common/document-mail/` (servicio global `DocumentoCorreoService`, reusa el proveedor con adjuntos). Endpoints `POST :id/email` en cotización, orden, recibo (`.../recibo/email`) y H&P. Manda el PDF adjunto al correo del cliente (o el que se indique). Falta el botón "Enviar por correo" en el front.
+- [x] **Recibo/Ticket de venta** — `sales/recibo-venta-pdf.service.ts` + `GET /sales/:id/recibo?formato=carta|ticket` (carta y ticket 80 mm) + envío por correo.
+- [x] **Cobrar OS → generar venta (`Sale`)** — implementado: `POST /service-orders/:id/cobrar` crea un `Sale` con `sale_type = SERVICE_ORDER` ligado a la orden (columna `service_order_id`, migración `1792600000000`), con su `SalePayment` en la caja abierta, sumando a los totales del corte. Idempotente (no cobra dos veces). Botón **"Cobrar"** en el detalle de la OS que abre el recibo. El recibo de venta muestra una línea resumen para ventas de OS.
+- [ ] **Entrega por WhatsApp** — pendiente (requiere credenciales de WhatsApp Business del tenant y enviar el PDF como documento).
+- [ ] **Botones "Enviar/Imprimir" en el front** — en cada documento (hoy el PDF es `inline` y el envío se hace por API).
+- [ ] **Consistencia de folios** — usar el código legible en todos (ya se usa el folio propio en orden/cotización/recibo/H&P).
 - [ ] **Opcional a futuro** — evaluar HTML→PDF (Puppeteer) si el mantenimiento con `pdfkit` crece.
+
+### Correo saliente con el DOMINIO DEL CLIENTE (por definir)
+Hoy el remitente es el dominio de la plataforma. Para que cada correo salga como
+`algo@dominio-del-cliente.mx` **no basta con cambiar el `from`**: SPF/DKIM/DMARC exigen
+verificar el dominio. Propuesta:
+- [ ] **Dominio verificado por tenant en el ESP (Resend).** Al dar de alta un tenant, se crea su "domain" en Resend → devuelve registros DNS (DKIM + Return-Path/SPF). El cliente los agrega a su DNS; al verificar, se envía con su `from` y pasa autenticación.
+- [ ] **Guardar en el tenant** el dominio saliente + estado de verificación; al enviar, elegir el `from` del tenant si está verificado, si no, caer al dominio de la plataforma.
+- [ ] **UI de onboarding** ("Correo saliente"): el cliente captura su dominio, ve los registros DNS a agregar y un botón "Verificar" (consulta la API de dominios del ESP).
+- [ ] **Interino sin DNS del cliente:** enviar desde el dominio de la plataforma pero con **nombre del negocio** en el `from` y **`reply-to` = correo del cliente** (se ve el negocio, aunque no su dominio). Alternativa: subdominio delegado (`mail.sudominio.mx`).
 
 ## CRM — roadmap y empaquetado
 Hoy existe: `leads` (etapas, actividades, convertir a cliente), `surveys`/`sale-surveys`,

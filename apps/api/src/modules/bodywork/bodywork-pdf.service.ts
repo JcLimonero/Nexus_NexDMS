@@ -58,7 +58,13 @@ export class BodyworkPdfService {
   async generar(
     tenantId: string,
     orderId: string,
-  ): Promise<{ buffer: Buffer; filename: string }> {
+  ): Promise<{
+    buffer: Buffer;
+    filename: string;
+    folio: string;
+    negocio: string;
+    clientEmail: string | null;
+  }> {
     const o = await this.orderRepo.findOne({
       where: { id: orderId, tenantId },
     });
@@ -229,6 +235,12 @@ export class BodyworkPdfService {
 
     pdf.pieDePagina(`Presupuesto ${o.folio}`);
 
-    return { buffer: await pdf.finalizar(), filename: `${o.folio}.pdf` };
+    return {
+      buffer: await pdf.finalizar(),
+      filename: `${o.folio}.pdf`,
+      folio: o.folio,
+      negocio: razon?.name ?? sucursal?.name ?? 'Hojalatería y pintura',
+      clientEmail: null,
+    };
   }
 }
