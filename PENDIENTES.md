@@ -1,4 +1,4 @@
-# Pendientes — NexQSystem
+# Pendientes — NexQS
 
 Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo hecho.
 
@@ -14,6 +14,17 @@ Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo 
 - [ ] **Asistente IA sobre sus datos** — agente que responde sobre ventas/taller/inventario del tenant, usando **su propia cuenta de OpenRouter** (bring-your-own-key). Ya anunciado en la landing.
 - [ ] **Monitor de citas (producto)** — ya existe `/monitor/citas`; validar/ampliar si hace falta.
 - [ ] **Contabilidad / integración contable** — **alcance decidido: opción (a) exportar** (no contabilidad propia ni API por ahora). Generar pólizas, catálogo de cuentas y reportes en los **formatos de importación** que aceptan las paqueterías más comunes (CONTPAQi Contabilidad, ASPEL SAE/COI, etc.): archivos XML/TXT que el contador sube a su sistema. Primer paso al retomarlo: relevar el formato exacto de importación de cada paquetería.
+
+## Documentos / PDF (cotizaciones, órdenes de servicio, etc.)
+Revisar y homologar **cómo se generan los PDF** del sistema. Estado actual: se arman
+**ad-hoc con `pdfkit`**, un servicio por documento y sin plantilla común.
+- Hoy existe: `service-orders/orden-pdf.service.ts` (orden de servicio) y `cash-register/corte-pdf.service.ts` (corte de caja).
+- [ ] **Cotización sin PDF** — el módulo `quotations` no genera PDF todavía; agregarlo (es de los documentos que más se imprime/manda al cliente).
+- [ ] **Revisar el enfoque de generación** — decidir si seguimos con `pdfkit` (dibujo manual, difícil de mantener/estilizar) o pasamos a **HTML → PDF** (plantilla + motor tipo Puppeteer/renderer) para poder maquetar con CSS y reutilizar diseño.
+- [ ] **Plantilla común + branding del tenant** — encabezado con **logo, colores y datos fiscales** del tenant (ya hay `tenants/branding.paletas.ts`); que cotización, orden de servicio, corte, etc. compartan cabecera/pie y estilo.
+- [ ] **Cobertura por módulo** — definir qué documentos deben tener PDF: cotización, orden de servicio (taller y H&P), presupuesto de colisión, corte de caja, y comprobantes/recibos. (El CFDI ya lo entrega el PAC; aquí es el PDF **operativo/interno**, no el fiscal.)
+- [ ] **Consistencia de folios** — usar el código legible (prefijo empresa + objeto + consecutivo) en el PDF, no el GUID.
+- [ ] **Entrega** — descargar / imprimir / adjuntar a WhatsApp o correo desde la misma acción.
 
 ## CRM — roadmap y empaquetado
 Hoy existe: `leads` (etapas, actividades, convertir a cliente), `surveys`/`sale-surveys`,
@@ -44,7 +55,7 @@ Hoy existe: `leads` (etapas, actividades, convertir a cliente), `surveys`/`sale-
 
 Orden sugerido para empezar: (1) Vista 360, (2) WhatsApp/bandeja en CRM, (3) Embudo Kanban, (4) seguimiento/tareas.
 
-## Rebrand a NexQSystem
+## Rebrand a NexQS
 - [x] Landing renombrada + logo nuevo + sin referencias a "DMS".
 - [ ] **Apps renombradas** (admin/web/pwa/recepción) — textos visibles (en progreso).
 - [ ] **Logo definitivo en las apps** cuando esté disponible.
