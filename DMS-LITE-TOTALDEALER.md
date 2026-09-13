@@ -4,8 +4,14 @@ Requerimiento de **Total Dealer**: un "DMS Lite" en modalidad SaaS, operado bajo
 arquitectura de NexDMS/NexQS, para **talleres, loteros y comercializadores de maquinaria**.
 Objetivo: un MVP para instalar un piloto o arrancar un taller.
 
-> **Nombre comercial de la edición de Total Dealer: "Total One".** (Validar marca registrada
+> **Nombre comercial de la edición de Total Dealer: "Total Go".** (Validar marca registrada
 > y dominio; recomendado servirla en subdominio de `totaldealer.com`, ej. `app.totaldealer.com`.)
+>
+> **Soporte (reglas):** Nivel 1 (uso, capacitación, cobranza) lo da Total Dealer; Nivel 2
+> (bugs, datos, estabilidad/infraestructura de la plataforma) lo da Nexus por escalamiento.
+> SLA de primera respuesta por plan: Básico 8 h, Intermedio 4 h, Premium 2 h hábiles.
+> Horario L–V 9:00–18:00 (centro); caídas críticas de plataforma, atención de Nexus fuera de
+> horario. Desarrollos a la medida se cotizan aparte (no son soporte).
 
 > **Conclusión rápida:** lo que piden **ya existe casi en su totalidad** en la plataforma.
 > No es "construir módulos", es **empaquetar una edición Lite** (preset de módulos + afinar
