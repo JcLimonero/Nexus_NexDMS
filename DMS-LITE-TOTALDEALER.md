@@ -4,6 +4,9 @@ Requerimiento de **Total Dealer**: un "DMS Lite" en modalidad SaaS, operado bajo
 arquitectura de NexDMS/NexQS, para **talleres, loteros y comercializadores de maquinaria**.
 Objetivo: un MVP para instalar un piloto o arrancar un taller.
 
+> **Nombre comercial de la edición de Total Dealer: "Total One".** (Validar marca registrada
+> y dominio; recomendado servirla en subdominio de `totaldealer.com`, ej. `app.totaldealer.com`.)
+
 > **Conclusión rápida:** lo que piden **ya existe casi en su totalidad** en la plataforma.
 > No es "construir módulos", es **empaquetar una edición Lite** (preset de módulos + afinar
 > el vertical de maquinaria). Ver recomendación al final: **edición/preset, no producto forkeado**.
