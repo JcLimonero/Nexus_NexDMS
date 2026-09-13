@@ -96,7 +96,8 @@ UPDATE service_orders so SET
   owner_id       = pl.owner_id,
   km_in          = (pl.pos * 10000)::int,
   reported_fault = 'Servicio de ' || (pl.pos * 10)::text || ',000 km',
-  folio          = 'TDM-' || to_char(pl.rec, 'YYYY') || '-' || lpad(pl.seq::text, 4, '0'),
+  -- 5 dígitos para no chocar con los folios viejos (4 dígitos) durante el UPDATE.
+  folio          = 'TDM-' || to_char(pl.rec, 'YYYY') || '-' || lpad(pl.seq::text, 5, '0'),
   received_at    = pl.rec,
   promised_at    = pl.rec + interval '5 hours',
   status = (CASE WHEN pl.rec::date <= (SELECT hoy FROM ref) - 5 THEN 'DELIVERED'
