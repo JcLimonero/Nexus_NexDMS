@@ -57,15 +57,19 @@ DELETE FROM suppliers             WHERE tenant_id = (SELECT tenant_id FROM ref);
 DELETE FROM vehicle_ownerships    WHERE tenant_id = (SELECT tenant_id FROM ref);
 DELETE FROM customer_vehicles     WHERE tenant_id = (SELECT tenant_id FROM ref);
 DELETE FROM clients               WHERE tenant_id = (SELECT tenant_id FROM ref);
--- Personal sembrado por este script (no borra al admin del wizard).
-DELETE FROM users                 WHERE tenant_id = (SELECT tenant_id FROM ref) AND email LIKE '%@taller-demo.local';
+-- Personal sembrado por este script (no borra al admin del wizard). Primero
+-- sus filas en las tablas de enlace (rol y sucursal), luego el usuario.
+DELETE FROM user_roles    WHERE user_id IN (SELECT id FROM users WHERE tenant_id = (SELECT tenant_id FROM ref) AND email LIKE '%@taller-demo.local');
+DELETE FROM user_branches WHERE user_id IN (SELECT id FROM users WHERE tenant_id = (SELECT tenant_id FROM ref) AND email LIKE '%@taller-demo.local');
+DELETE FROM users         WHERE tenant_id = (SELECT tenant_id FROM ref) AND email LIKE '%@taller-demo.local';
 
 -- ── Personal: asesores y mecánicos ───────────────────────────────────
--- password_hash = 'demo123' (bcrypt cost 12). Pueden entrar al app del taller.
-INSERT INTO users (id, tenant_id, branch_id, first_name, last_name, email, password_hash, role, scope, phone, is_active)
-SELECT gen_random_uuid(), r.tenant_id, r.matriz, u.nombre, u.apellido, u.correo,
+-- Esquema actual: users NO tiene branch_id ni columna role. El rol va en
+-- user_roles y la sucursal en user_branches. password_hash = 'demo123'.
+INSERT INTO users (id, tenant_id, first_name, last_name, email, password_hash, scope, phone, is_active)
+SELECT gen_random_uuid(), r.tenant_id, u.nombre, u.apellido, u.correo,
        '$2b$12$jmkMZjoY/hKN.bKJoDwQLuLauOn0SyrHsREeRvjwAH98n7veAaYf2',
-       u.rol::users_role_enum, 'SUCURSAL'::users_scope_enum, u.tel, true
+       'SUCURSAL'::users_scope_enum, u.tel, true
 FROM ref r, (VALUES
   ('Marisol', 'Vega Ríos',      'marisol@taller-demo.local',  'RECEPTIONIST', '7712000101'),
   ('Diego',   'Fuentes Lara',   'asesor2@taller-demo.local',  'RECEPTIONIST', '7712000102'),
@@ -73,6 +77,25 @@ FROM ref r, (VALUES
   ('Karina',  'Soto Medina',    'mecanico2@taller-demo.local','MECHANIC',     '7712000112'),
   ('Pedro',   'Gómez Nava',     'mecanico3@taller-demo.local','MECHANIC',     '7712000113')
 ) AS u(nombre, apellido, correo, rol, tel);
+
+-- Rol de cada uno (user_roles).
+INSERT INTO user_roles (user_id, role)
+SELECT us.id, v.rol::users_role_enum
+FROM users us
+JOIN (VALUES
+  ('marisol@taller-demo.local',  'RECEPTIONIST'),
+  ('asesor2@taller-demo.local',  'RECEPTIONIST'),
+  ('mecanico1@taller-demo.local','MECHANIC'),
+  ('mecanico2@taller-demo.local','MECHANIC'),
+  ('mecanico3@taller-demo.local','MECHANIC')
+) AS v(correo, rol) ON us.email = v.correo
+WHERE us.tenant_id = (SELECT tenant_id FROM ref);
+
+-- Asignación a la sucursal Matriz (user_branches) para que aparezcan en agenda.
+INSERT INTO user_branches (user_id, branch_id, is_default)
+SELECT us.id, (SELECT matriz FROM ref), true
+FROM users us
+WHERE us.tenant_id = (SELECT tenant_id FROM ref) AND us.email LIKE '%@taller-demo.local';
 
 -- ── Clientes ─────────────────────────────────────────────────────────
 INSERT INTO clients (id, tenant_id, client_type, is_company, first_name, last_name,
@@ -212,11 +235,13 @@ CREATE TEMP TABLE t_veh AS
   SELECT row_number() OVER (ORDER BY plate) rn, id, owner_id, mileage
   FROM customer_vehicles WHERE tenant_id = (SELECT tenant_id FROM ref);
 CREATE TEMP TABLE t_mech AS
-  SELECT row_number() OVER (ORDER BY email) rn, id
-  FROM users WHERE tenant_id = (SELECT tenant_id FROM ref) AND role = 'MECHANIC';
+  SELECT row_number() OVER (ORDER BY u.email) rn, u.id
+  FROM users u JOIN user_roles ur ON ur.user_id = u.id
+  WHERE u.tenant_id = (SELECT tenant_id FROM ref) AND ur.role = 'MECHANIC';
 CREATE TEMP TABLE t_adv AS
-  SELECT row_number() OVER (ORDER BY email) rn, id
-  FROM users WHERE tenant_id = (SELECT tenant_id FROM ref) AND role = 'RECEPTIONIST';
+  SELECT row_number() OVER (ORDER BY u.email) rn, u.id
+  FROM users u JOIN user_roles ur ON ur.user_id = u.id
+  WHERE u.tenant_id = (SELECT tenant_id FROM ref) AND ur.role = 'RECEPTIONIST';
 CREATE TEMP TABLE t_svc AS
   SELECT row_number() OVER (ORDER BY code) rn, id, name, duration_min
   FROM service_types WHERE tenant_id = (SELECT tenant_id FROM ref);
