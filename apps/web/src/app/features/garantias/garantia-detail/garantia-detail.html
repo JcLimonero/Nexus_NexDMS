@@ -9,7 +9,15 @@
               <span class="badge bg-light text-dark font-monospace">{{ w.folio || '—' }}</span>
             }
           </h5>
-          <a class="btn btn-outline-secondary btn-sm" routerLink="/warranties">Volver</a>
+          <div class="d-flex gap-2 flex-wrap">
+            <button type="button" class="btn btn-outline-primary btn-sm" (click)="verCarta()">
+              Ver carta
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" (click)="enviarCarta()">
+              Enviar al cliente
+            </button>
+            <a class="btn btn-outline-secondary btn-sm" routerLink="/warranties">Volver</a>
+          </div>
         </div>
         <div class="card-body">
           @if (error()) {

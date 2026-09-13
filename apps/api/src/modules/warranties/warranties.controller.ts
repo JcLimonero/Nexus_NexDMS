@@ -5,11 +5,15 @@ import {
   Param,
   Post,
   Query,
+  Res,
   UseGuards,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { WarrantiesService } from './warranties.service';
+import { CartaGarantiaPdfService } from './carta-garantia-pdf.service';
+import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import { CreateWarrantyDto } from './dto/create-warranty.dto';
 import { FilterWarrantiesDto } from './dto/filter-warranties.dto';
 import { AuthorizeWarrantyDto } from './dto/authorize-warranty.dto';
@@ -26,7 +30,11 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('warranties')
 export class WarrantiesController {
-  constructor(private readonly warrantiesService: WarrantiesService) {}
+  constructor(
+    private readonly warrantiesService: WarrantiesService,
+    private readonly cartaGarantiaPdf: CartaGarantiaPdfService,
+    private readonly correo: DocumentoCorreoService,
+  ) {}
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
@@ -35,6 +43,49 @@ export class WarrantiesController {
     @Query() filters: FilterWarrantiesDto,
   ) {
     return this.warrantiesService.findAll(user, filters);
+  }
+
+  /**
+   * La carta de garantía en papel: el certificado que se entrega al cliente.
+   * Va `inline` para revisarla antes de imprimirla o hacer que la firme.
+   */
+  @Get(':id/pdf')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  async pdf(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.cartaGarantiaPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
+
+  /** Envía la carta de garantía por correo al cliente con el PDF adjunto. */
+  @Post(':id/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
+  async enviarCorreo(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.cartaGarantiaPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Carta de garantía',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
   }
 
   @Get(':id')

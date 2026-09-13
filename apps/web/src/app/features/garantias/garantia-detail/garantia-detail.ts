@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
+import { abrirPdf } from "../../../shared/utils/abrir-pdf";
 import { GarantiasService } from "../garantias.service";
 import { BranchesService } from "../../inventario-refacciones/services/branches.service";
 import { Warranty, WarrantyStatus } from "../models/warranty.model";
@@ -22,6 +24,7 @@ export class GarantiaDetail implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
 
   garantia = signal<Warranty | null>(null);
   fases = [
@@ -80,6 +83,34 @@ export class GarantiaDetail implements OnInit {
     const v = w.vehicle;
     if (!v) return "—";
     return `${v.year} ${v.make} ${v.model}` + (v.plate ? ` (${v.plate})` : "");
+  }
+
+  /** Abre la carta de garantía en PDF (blob, para imprimir o entregar). */
+  verCarta(): void {
+    const w = this.garantia();
+    if (!w) return;
+    abrirPdf(this.http, `/api/v1/warranties/${w.id}/pdf`, {
+      filename: `garantia-${w.folio ?? w.id.slice(0, 8)}.pdf`,
+      onError: () => this.toastr.error("No se pudo generar la carta"),
+    });
+  }
+
+  /** Envía la carta de garantía por correo (PDF adjunto) al cliente. */
+  enviarCarta(): void {
+    const w = this.garantia();
+    if (!w) return;
+    const email = window.prompt(
+      "Enviar la carta por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/warranties/${w.id}/email`, body).subscribe({
+      next: () => this.toastr.success("Carta enviada por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
   }
 
   getStatusLabel(status: string): string {
