@@ -1,10 +1,15 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, HttpCode, Post, Res } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { IsEmail, IsString, MinLength } from 'class-validator';
+import type { Response } from 'express';
 import { LIMITE_ACCESO } from '../../common/throttler/limites';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminForgotPasswordDto } from './dto/forgot-password.dto';
 import { AdminResetPasswordDto } from './dto/reset-password.dto';
+import {
+  limpiarCookiesSesion,
+  ponerCookiesSesion,
+} from '../../common/auth/cookies';
 
 class AdminLoginDto {
   @IsEmail()
@@ -22,8 +27,20 @@ export class AdminAuthController {
   /** Acceso al portal de administración del SaaS (identidad admin_users). */
   @Post('login')
   @Throttle(LIMITE_ACCESO)
-  login(@Body() dto: AdminLoginDto) {
-    return this.service.login(dto);
+  async login(
+    @Body() dto: AdminLoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const r = await this.service.login(dto);
+    if (r?.accessToken) ponerCookiesSesion(res, r.accessToken);
+    return r;
+  }
+
+  /** Cierra la sesión del portal admin: borra la cookie httpOnly. */
+  @Post('logout')
+  @HttpCode(204)
+  logout(@Res({ passthrough: true }) res: Response) {
+    limpiarCookiesSesion(res);
   }
 
   /** Solicita el correo de recuperación de contraseña del portal admin. */

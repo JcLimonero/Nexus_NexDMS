@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -14,6 +15,11 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ApiBearerAuth, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Response } from 'express';
+import {
+  limpiarCookiesSesion,
+  ponerCookiesSesion,
+} from '../../common/auth/cookies';
 import { Throttle } from '@nestjs/throttler';
 import { LIMITE_ACCESO } from '../../common/throttler/limites';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -41,8 +47,17 @@ export class AuthController {
   @Throttle(LIMITE_ACCESO)
   @ApiResponse({ status: 200, description: 'Login exitoso' })
   @ApiResponse({ status: 401, description: 'Credenciales inválidas' })
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const r = await this.authService.login(dto);
+    // El token también viaja en cookie httpOnly; el cuerpo se conserva para las
+    // apps aún no migradas (modo dual durante la migración).
+    if ('accessToken' in r && r.accessToken) {
+      ponerCookiesSesion(res, r.accessToken);
+    }
+    return r;
   }
 
   /** Solicita el correo de recuperación de contraseña (público). */
@@ -81,16 +96,25 @@ export class AuthController {
     status: 401,
     description: 'Refresh token inválido o expirado',
   })
-  refresh(@Body('refreshToken') refreshToken: string) {
-    return this.authService.refresh(refreshToken);
+  async refresh(
+    @Body('refreshToken') refreshToken: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const r = await this.authService.refresh(refreshToken);
+    if (r?.accessToken) ponerCookiesSesion(res, r.accessToken);
+    return r;
   }
 
   @Post('logout')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @HttpCode(204)
-  logout(@CurrentUser() user: UserPayload) {
-    return this.authService.logout(user.sub);
+  async logout(
+    @CurrentUser() user: UserPayload,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    limpiarCookiesSesion(res);
+    await this.authService.logout(user.sub);
   }
 
   /**
@@ -145,18 +169,27 @@ export class AuthController {
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @HttpCode(200)
-  switchBranch(@CurrentUser() user: UserPayload, @Body() dto: SwitchBranchDto) {
-    return this.authService.switchBranch(user, dto.branchId);
+  async switchBranch(
+    @CurrentUser() user: UserPayload,
+    @Body() dto: SwitchBranchDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const r = await this.authService.switchBranch(user, dto.branchId);
+    if (r?.accessToken) ponerCookiesSesion(res, r.accessToken);
+    return r;
   }
 
   @Post('switch-legal-entity')
   @UseGuards(AuthGuard)
   @ApiBearerAuth()
   @HttpCode(200)
-  switchLegalEntity(
+  async switchLegalEntity(
     @CurrentUser() user: UserPayload,
     @Body() dto: SwitchLegalEntityDto,
+    @Res({ passthrough: true }) res: Response,
   ) {
-    return this.authService.switchLegalEntity(user, dto.legalEntityId);
+    const r = await this.authService.switchLegalEntity(user, dto.legalEntityId);
+    if (r?.accessToken) ponerCookiesSesion(res, r.accessToken);
+    return r;
   }
 }
