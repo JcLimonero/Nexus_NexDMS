@@ -240,6 +240,8 @@ export class LoginPage implements OnInit {
 
   ngOnInit(): void {
     const slug = this.tenant.slug;
+    // En local (dev) el formulario ya viene lleno para entrar directo.
+    if (this.modoDemo) this.prefillDemo(this.tecnicosDemo()[0]);
     if (!slug) return;
     this.auth.brandingPublica(slug).subscribe({
       next: (b) => {
@@ -263,12 +265,22 @@ export class LoginPage implements OnInit {
           email: u.email,
           password: "demo123",
         }));
-        if (lista.length) this.tecnicosDemo.set(lista);
+        if (lista.length) {
+          this.tecnicosDemo.set(lista);
+          if (this.modoDemo) this.prefillDemo(lista[0]);
+        }
       },
       error: () => {
         /* sin cuentas del cliente: quedan las genéricas */
       },
     });
+  }
+
+  /** Llena el formulario sin enviarlo (para entrar con un solo clic en local). */
+  private prefillDemo(t?: { email: string; password: string }): void {
+    if (!t) return;
+    this.email = t.email;
+    this.password = t.password;
   }
 
   /** Etiqueta legible del rol para el panel de cuentas. */

@@ -569,3 +569,17 @@
   font-size: 13px;
   padding-bottom: 8px;
 }
+
+/* Ficha del cliente a pantalla (más aire que un diálogo): alto completo y más
+   ancha, centrada, con el velo a los lados para cerrar. */
+.dialogo.pantalla {
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1120px, 100vw);
+  max-height: 100vh;
+  height: 100vh;
+  border-radius: 0;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}

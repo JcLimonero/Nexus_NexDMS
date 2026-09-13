@@ -35,6 +35,15 @@ export class Acceso {
     password: "00@Limonero",
   };
 
+  constructor() {
+    // En local (dev) los campos ya vienen llenos para entrar directo, sin
+    // teclear en cada demo. En producción quedan vacíos.
+    if (this.modoDemo) {
+      this.email = this.cuentaDemo.email;
+      this.password = this.cuentaDemo.password;
+    }
+  }
+
   /** Llena el formulario y entra, para no teclearlo en cada demostración. */
   usarDemo(): void {
     this.email = this.cuentaDemo.email;

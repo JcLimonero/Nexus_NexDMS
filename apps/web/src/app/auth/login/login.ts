@@ -241,6 +241,12 @@ export class Login implements OnInit {
       this.router.navigateByUrl(this.destino());
     }
 
+    // En local (dev) el formulario ya viene lleno con una cuenta demo para
+    // entrar directo; en producción queda vacío.
+    if (this.demoMode) {
+      this.usarCuenta(this.demoCuentas()[0]);
+    }
+
     // Si se entró por la liga de un cliente, se viste el acceso con su marca y
     // se acota el login a ese cliente.
     const slug = this.tenant.slug;
@@ -268,6 +274,10 @@ export class Login implements OnInit {
                 detalle: u.nombre,
               })),
             );
+            // Prefill con la primera cuenta del cliente en local.
+            if (this.demoMode) {
+              this.usarCuenta(this.demoCuentas()[0]);
+            }
           }
         },
         error: () => {
