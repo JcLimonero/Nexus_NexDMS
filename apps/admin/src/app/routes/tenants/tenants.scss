@@ -1,92 +1,13 @@
 /**
- * Lo propio de la pantalla de clientes. El panel, la tabla, los botones, el
- * armazón del diálogo y la lista de módulos son comunes y están en
- * `styles/_panel.scss`. Aquí tampoco hay colores a mano: todo sale de los
- * tokens de marca.
+ * Lo propio de la lista de empresas. El panel, la tabla, los botones y el
+ * armazón del diálogo (alta rápida / wizard) son comunes y están en
+ * `styles/_panel.scss`. La ficha de empresa y sus estilos viven aparte
+ * (ficha-empresa). Aquí no hay colores a mano: todo sale de los tokens.
  */
 
-.precio-extra {
-  font-size: var(--text-caption);
-  color: var(--primary);
-  font-variant-numeric: tabular-nums;
-}
-
-/* El de fuera de plan se ofrece, no se atenúa como antes: ahora se vende. */
-.modulo.extra {
-  border-style: dashed;
-}
-
-/* ── Ficha del cliente ── */
+/* El diálogo del wizard (alta guiada) va más ancho que el de alta rápida. */
 .dialogo.ancho {
   width: min(920px, calc(100vw - var(--space-32)));
-}
-
-.indicadores.compactos {
-  margin-bottom: var(--space-16);
-
-  .indicador {
-    padding: var(--space-12);
-    background: var(--bg);
-    box-shadow: none;
-  }
-
-  .cifra {
-    font-size: var(--text-xl);
-  }
-}
-
-.pestanas {
-  display: flex;
-  gap: var(--space-4);
-  border-bottom: 1px solid var(--border);
-  margin-bottom: var(--space-16);
-
-  button {
-    padding: var(--space-8) 14px;
-    border: none;
-    border-bottom: 2px solid transparent;
-    background: none;
-    font-family: inherit;
-    font-size: var(--text-body);
-    color: var(--text-secondary);
-    cursor: pointer;
-  }
-
-  button.activa {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-    font-weight: var(--font-semibold);
-  }
-}
-
-/* La fila con la que se registra el cobro se separa de la tabla de abajo. */
-.rejilla.cobro {
-  align-items: end;
-  padding-bottom: var(--space-16);
-  margin-bottom: var(--space-8);
-  border-bottom: 1px solid var(--border);
-}
-
-.cobro-estado {
-  display: inline-block;
-  padding: 2px var(--space-8);
-  border-radius: var(--radius-pill);
-  font-size: var(--text-caption);
-  background: var(--bg);
-  color: var(--text-secondary);
-
-  &[data-estado="PAGADO"] {
-    background: var(--success-bg);
-    color: var(--success);
-  }
-  &[data-estado="VENCIDO"] {
-    background: var(--danger-bg);
-    color: var(--danger);
-  }
-  &[data-estado="PENDIENTE"] {
-    background: var(--warning-bg);
-    color: var(--warning);
-  }
 }
 
 /* ── Aviso de clientes en mora por pago ───────────── */
@@ -137,7 +58,7 @@
   }
 }
 
-/* ── Lista de clientes: alineación y columnas ─────────── */
+/* ── Lista de empresas: alineación y columnas ─────────── */
 /* Las celdas se mantienen como celdas de tabla; el flex vive en un <div>
    interno. Antes el `display:flex` estaba en el <td>, lo que rompía
    `border-collapse` y desalineaba las filas. */
@@ -218,9 +139,30 @@
   gap: 3px;
   align-items: flex-start;
 }
-.cobro-estado[data-estado="SIN"] {
+.cobro-estado {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
   background: var(--bg);
   color: var(--text-secondary);
+
+  &[data-estado="PAGADO"] {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  &[data-estado="VENCIDO"] {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  &[data-estado="PENDIENTE"] {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+  &[data-estado="SIN"] {
+    background: var(--bg);
+    color: var(--text-secondary);
+  }
 }
 .pagos-meta {
   color: var(--text-secondary);
@@ -231,292 +173,11 @@
   color: var(--text-secondary);
 }
 
-/* ── Barra de acciones de la ficha (Entrar / Módulos) ── */
-.ficha-acciones {
-  display: flex;
-  gap: var(--space-8);
-  flex-wrap: wrap;
-  margin: var(--space-8) 0 var(--space-16);
-}
-
-/* ── Bitácora de estatus (en la ficha) ────────────────── */
-.historial {
-  margin-top: var(--space-16);
-  padding-top: var(--space-16);
-  border-top: 1px solid var(--borde, #e5e7eb);
-}
-.historial-titulo {
-  margin: 0 0 var(--space-8);
-  font-size: var(--text-body);
-}
-.historial-cabecera {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-8);
-  flex-wrap: wrap;
-  margin-bottom: var(--space-16);
-}
-.historial-estatus {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-
-  .historial-titulo {
-    margin: 0;
-  }
-}
-.historial-subtitulo {
-  font-size: var(--text-caption);
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.btn-estatus {
-  white-space: nowrap;
-}
-.historial-lista {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-8);
-}
-.historial-item {
-  display: flex;
-  align-items: baseline;
-  gap: var(--space-8);
-  flex-wrap: wrap;
-  font-size: var(--text-caption);
-}
-.historial-fecha {
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-.historial-motivo {
-  flex: 1 1 200px;
-  color: var(--text-primary, #1f2937);
-}
-
-/* Diálogo angosto para confirmaciones cortas. */
-.dialogo.angosto {
-  max-width: 460px;
-}
-
-/* Los estilos del tab de marca viven en ficha-marca.scss (autocontenido). */
-
-/* "Entrar" al DMS del cliente: acción destacada entre las de la fila. */
-.btn-chico.entrar {
-  border-color: var(--primary);
-  color: var(--primary);
-  font-weight: 600;
-
-  &:disabled {
-    opacity: 0.45;
-    cursor: not-allowed;
-  }
-}
-
-/* Liga de acceso del cliente en la ficha. */
-.liga-acceso {
-  margin: 0 0 1rem;
-
-  .etiqueta {
-    display: block;
-    font-size: var(--text-caption);
-    color: var(--text-secondary);
-    margin-bottom: 0.35rem;
-    font-weight: 600;
-  }
-  .liga-fila {
-    display: flex;
-    gap: 0.4rem;
-    align-items: center;
-
-    input {
-      flex: 1;
-      background: var(--input-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.45rem 0.6rem;
-      color: var(--text-primary);
-    }
-    a.btn-chico { text-decoration: none; display: inline-flex; align-items: center; }
-  }
-  .ayuda {
-    margin: 0.35rem 0 0;
-    font-size: var(--text-caption);
-    color: var(--text-muted);
-  }
-}
-
-.liga-acceso .liga-fila { margin-bottom: 0.4rem; }
-.liga-acceso .liga-rotulo {
-  min-width: 78px;
-  font-size: var(--text-caption);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-/* ── Tab de usuarios ── */
-.alta-usuario {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-16);
-  margin-bottom: var(--space-32);
-  background: var(--bg-elevated);
-}
+/* Monoespaciado para identificadores/slugs en la tabla. */
 .mono {
   font-family: var(--font-mono);
   color: var(--text-secondary);
 }
 .ancho-total {
   grid-column: 1 / -1;
-}
-.acciones-fila {
-  display: flex;
-  gap: var(--space-8);
-  flex-wrap: wrap;
-}
-.pass-inline {
-  display: flex;
-  gap: var(--space-8);
-  align-items: center;
-  flex-wrap: wrap;
-}
-.pass-inline input {
-  flex: 1;
-  min-width: 160px;
-}
-.pill {
-  display: inline-block;
-  padding: 2px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 600;
-  background: var(--bg);
-  color: var(--text-secondary);
-  border: 1px solid var(--border);
-}
-.pill-ok {
-  background: var(--success-bg);
-  color: var(--success);
-  border-color: transparent;
-}
-.pill-alerta {
-  background: var(--danger-bg);
-  color: var(--danger);
-  border-color: transparent;
-}
-
-.filtros-usuarios {
-  display: flex;
-  gap: var(--space-12);
-  align-items: flex-end;
-  flex-wrap: wrap;
-  margin-bottom: var(--space-16);
-}
-.filtros-usuarios .campo {
-  min-width: 180px;
-}
-.filtro-conteo {
-  color: var(--text-secondary);
-  font-size: 13px;
-  padding-bottom: 8px;
-}
-
-/* Ficha del cliente a pantalla (más aire que un diálogo): alto completo y más
-   ancha, centrada, con el velo a los lados para cerrar. */
-.dialogo.pantalla {
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(1120px, 100vw);
-  max-height: 100vh;
-  height: 100vh;
-  border-radius: 0;
-  border-left: 1px solid var(--border);
-  border-right: 1px solid var(--border);
-}
-
-/* ── Ficha: encabezado con acciones a la derecha ── */
-.ficha-header {
-  align-items: center;
-}
-.ficha-ident h2 {
-  margin: 0;
-}
-.ficha-header-acc {
-  display: flex;
-  align-items: center;
-  gap: var(--space-8);
-}
-
-/* Grupos de campos en el tab de datos (menos "muro de inputs") */
-.datos-grupos {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-24);
-}
-.grupo-titulo {
-  margin: 0 0 var(--space-12);
-  font-size: var(--text-caption);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  padding-bottom: var(--space-4);
-  border-bottom: 1px solid var(--border);
-}
-
-/* Ligas de acceso colapsables */
-.liga-acceso-det {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-8) var(--space-12);
-  margin-bottom: var(--space-16);
-  background: var(--bg);
-}
-.liga-acceso-det > summary {
-  cursor: pointer;
-  font-size: var(--text-caption);
-  font-weight: var(--font-semibold);
-  color: var(--text-secondary);
-}
-.liga-acceso-det[open] > summary {
-  margin-bottom: var(--space-12);
-}
-
-/* ── Panel de KPIs de la ficha ── */
-.kpis {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: var(--space-12);
-}
-.kpi {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: var(--space-16);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.kpi-label {
-  font-size: var(--text-caption);
-  font-weight: var(--font-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--text-secondary);
-}
-.kpi-cifra {
-  font-size: var(--text-xl);
-  font-weight: var(--font-semibold);
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-.kpi-pie {
-  font-size: var(--text-caption);
-  color: var(--text-muted);
 }
