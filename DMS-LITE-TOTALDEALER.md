@@ -4,8 +4,8 @@ Requerimiento de **Total Dealer**: un "DMS Lite" en modalidad SaaS, operado bajo
 arquitectura de NexDMS/NexQS, para **talleres, loteros y comercializadores de maquinaria**.
 Objetivo: un MVP para instalar un piloto o arrancar un taller.
 
-> **Nombre comercial de la edición de Total Dealer: "Total Go".** (Validar marca registrada
-> y dominio; recomendado servirla en subdominio de `totaldealer.com`, ej. `app.totaldealer.com`.)
+> **Nombre comercial de la edición de Total Dealer: "Total One".** Dominio: **`totalone.com.mx`**
+> (validar marca registrada / IMPI). Alternativa para el piloto: subdominio de `totaldealer.com`.
 >
 > **Soporte (reglas):** Nivel 1 (uso, capacitación, cobranza) lo da Total Dealer; Nivel 2
 > (bugs, datos, estabilidad/infraestructura de la plataforma) lo da Nexus por escalamiento.
@@ -96,11 +96,11 @@ Objetivo: un MVP para instalar un piloto o arrancar un taller.
 
 **Postura recomendada:** el vehículo se acepta; los términos se negocian **desde la fuerza** (el producto ya existe, es el activo de Nexus). Contrapropuesta: (1) IP del core = Nexus; (2) 50/50 de utilidad condicionado a **mínimos de ventas de TD**; (3) desarrollo facturado correctamente; (4) alcance del PO acotado al Lite; (5) finanzas re-modeladas con *ramp* y todos los costos; (6) cláusula 07 fuerte y con IP claro.
 
-## Alcance de features: roadmap = NexQS; Total Go = alcance actual
+## Alcance de features: roadmap = NexQS; Total One = alcance actual
 - **El plan de features nuevos (`PENDIENTES.md`) es de NexQS**, la versión independiente de Nexus (cláusula 07).
-- **Total Go = el producto que tenemos hoy** (el alcance DMS Lite ya construido). No hereda automáticamente el roadmap de NexQS.
-- Lo que el Product Owner de Total Dealer solicite para Total Go se construye **a petición y por acuerdo**; se factura como desarrollo (no es soporte) y Nexus decide si además lo incorpora a NexQS.
-- Los *feature flags* por edición son los que permiten que una función viva en NexQS y no en Total Go (o viceversa) desde una sola base de código.
+- **Total One = el producto que tenemos hoy** (el alcance DMS Lite ya construido). No hereda automáticamente el roadmap de NexQS.
+- Lo que el Product Owner de Total Dealer solicite para Total One se construye **a petición y por acuerdo**; se factura como desarrollo (no es soporte) y Nexus decide si además lo incorpora a NexQS.
+- Los *feature flags* por edición son los que permiten que una función viva en NexQS y no en Total One (o viceversa) desde una sola base de código.
 
 ## Arquitectura de despliegue (dos ediciones, una base de código)
 El frontend llama al API con rutas **relativas** (`/api/...`) y cada `vercel.json` reescribe `/api/*`
@@ -113,10 +113,10 @@ nivel en cada dominio** (no se cruzan) → base para administraciones independie
 - En Vercel: nuevo proyecto desde el mismo repo, Root Directory `apps/web`, dominio `app.totaldealer.com` (CNAME en el DNS de Total Dealer).
 - Funciona contra el mismo API, pero se ve con marca NexQS y sin separación de administración.
 
-**Fase 2 — edición real Total Go (dev pendiente):**
-- **Kit de marca ya en el repo:** `apps/web/public/brand-totalgo/` y `apps/admin/public/brand-totalgo/` (logos, isotipo, favicons, CSS y manifiesto). Paleta Total Go: gris azulado `#2B4149`, naranja `#EA4B17`, blanco `#FFFFFF`.
-- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total Go (desde `brand-totalgo/`) en lugar de los de NexQS (`brand/`).
-- **Preset de módulos Total Go:** encender solo los del alcance, ocultar el resto (feature flags/edición).
+**Fase 2 — edición real Total One (dev pendiente):**
+- **Kit de marca en el repo:** `apps/web/public/brand-totalgo/` y `apps/admin/public/brand-totalgo/` (logos, isotipo, favicons, CSS y manifiesto). Paleta: gris azulado `#2B4149`, naranja `#EA4B17`, blanco `#FFFFFF`. ⚠️ **Este kit es visualmente "Total Go"** (el wordmark/isotipo dicen "Total Go", isotipo = "G"); **pendiente reemplazarlo por el kit de "Total One"** que enviará el cliente. Al llegar, sustituir estos assets (y renombrar la carpeta a `brand-totalone/`).
+- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total One (desde `brand-totalgo/`) en lugar de los de NexQS (`brand/`).
+- **Preset de módulos Total One:** encender solo los del alcance, ocultar el resto (feature flags/edición).
 - **Scope por socio (admin independiente):** el admin de TD ve solo sus tenants; Nexus conserva vista maestra para conciliar el 50/50 y dar soporte. Repetir el despliegue con `apps/admin` en `admin.totaldealer.com`.
 
 > Nota: `apps/citas` no tiene `package.json`/`angular.json` propio (solo `dist/` prebuild); si se quiere como portal aparte, primero hay que darle build propio.

@@ -3,7 +3,7 @@
 Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo hecho.
 
 > **Alcance:** este roadmap de features es de **NexQS** (la versión independiente de Nexus).
-> **Total Go** (edición de Total Dealer) = el alcance actual/DMS Lite; lo que el PO de TD pida se
+> **Total One** (edición de Total Dealer) = el alcance actual/DMS Lite; lo que el PO de TD pida se
 > construye por acuerdo y se separa por *feature flags*. Ver [DMS-LITE-TOTALDEALER.md](DMS-LITE-TOTALDEALER.md).
 
 ## Landing (`apps/landing`)
