@@ -134,9 +134,13 @@ export class MasterCatalogsService {
 
   entradas(key: string): Promise<ObjectLiteral[]> {
     const d = this.def(key);
+    // No todos los catálogos tienen columna `name` (p. ej. UnitLocation usa
+    // `code`); se ordena por el campo `name` si existe, o por el primero.
+    const ordenProp =
+      d.fields.find((f) => f.prop === 'name')?.prop ?? d.fields[0].prop;
     return this.dataSource.getRepository(d.entity).find({
       where: { tenantId: MASTER_TENANT_ID },
-      order: { name: 'ASC' } as never,
+      order: { [ordenProp]: 'ASC' } as never,
     });
   }
 
