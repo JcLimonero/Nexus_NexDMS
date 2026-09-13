@@ -45,7 +45,7 @@ DELETE FROM warranties            WHERE tenant_id = (SELECT tenant_id FROM ref);
 
 -- ── Auxiliares ───────────────────────────────────────────────────────
 CREATE TEMP TABLE t_part AS
-  SELECT row_number() OVER (ORDER BY sku) rn, id, public_price, purchase_price
+  SELECT row_number() OVER (ORDER BY sku) rn, id, name, public_price, purchase_price
   FROM parts WHERE tenant_id = (SELECT tenant_id FROM ref);
 CREATE TEMP TABLE t_cli AS
   SELECT row_number() OVER (ORDER BY created_at) rn, id, coalesce(company_name, first_name||' '||last_name) AS nombre, phone
@@ -121,7 +121,7 @@ SELECT gen_random_uuid(), (SELECT tenant_id FROM ref), (SELECT matriz FROM ref),
        2000, 0, 0, 0, 0,
        d::date + time '08:00',
        CASE WHEN d::date < (SELECT hoy FROM ref) THEN d::date + time '18:00' END,
-       CASE WHEN d::date < (SELECT hoy FROM ref) THEN 'CLOSED' ELSE 'OPEN' END
+       (CASE WHEN d::date < (SELECT hoy FROM ref) THEN 'CLOSED' ELSE 'OPEN' END)::cash_sessions_status_enum
 FROM generate_series((SELECT hoy FROM ref) - 44, (SELECT hoy FROM ref), interval '1 day') d
 WHERE extract(dow FROM d) <> 0;
 
