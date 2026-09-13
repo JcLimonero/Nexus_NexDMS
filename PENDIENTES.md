@@ -13,6 +13,7 @@ Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo 
 - [ ] **Pasarela de pago self-service** — el tenant elige su plataforma de pago y la **configura él mismo** desde su panel (hoy solo Conekta). Backend + UI.
 - [ ] **Asistente IA sobre sus datos** — agente que responde sobre ventas/taller/inventario del tenant, usando **su propia cuenta de OpenRouter** (bring-your-own-key). Ya anunciado en la landing.
 - [ ] **Monitor de citas (producto)** — ya existe `/monitor/citas`; validar/ampliar si hace falta.
+- [ ] **Contabilidad / integración contable** — investigar cómo llevar la contabilidad o, al menos, poder conectarnos o **exportar reportes compatibles con las paqueterías más comunes** (CONTPAQi Contabilidad, ASPEL SAE/COI, etc.): pólizas, catálogo de cuentas y formatos de importación (XML/TXT) que esos sistemas aceptan.
 
 ## Rebrand a NexQSystem
 - [x] Landing renombrada + logo nuevo + sin referencias a "DMS".
