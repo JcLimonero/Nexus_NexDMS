@@ -2,7 +2,6 @@ import { HostListener, Injectable } from "@angular/core";
 
 import { BehaviorSubject } from "rxjs";
 
-import { inDemoMode } from "../utils/demo-mode";
 
 // Menu
 export interface Menu {
@@ -94,17 +93,8 @@ export class NavService {
             { path: "/workshop/whatsapp/consumo", title: "Consumo y facturación", type: "link", modules: ["wa-service-due", "wa-appointment-reminder", "wa-conversational-agent"] },
           ],
         },
-        // Demo screen: hidden by the same switch that governs the rest of
-        // the made-up data.
-        ...(inDemoMode()
-          ? [
-              {
-                path: "/workshop/conversaciones",
-                title: "Conversaciones",
-                type: "link",
-              },
-            ]
-          : []),
+        // "Conversaciones" (demo) se retiró: la reemplaza WhatsApp → Agente
+        // conversacional, que es su evolución (Flow, reagendar/cancelar, etc.).
         { path: "/workshop/agenda", title: "Agenda", type: "link" },
         { path: "/quotes/servicio", title: "Presupuestos de servicio", type: "link" },
         { path: "/workshop/service-orders", title: "Órdenes de servicio", type: "link" },
