@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 import { Subject, debounceTime } from "rxjs";
+import { abrirPdf } from "../../shared/utils/abrir-pdf";
 
 import {
   EntregasService,
@@ -30,6 +32,7 @@ export class Entregas implements OnInit {
   private taller = inject(TallerService);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
 
   cargando = signal(true);
   guardando = signal(false);
@@ -135,6 +138,30 @@ export class Entregas implements OnInit {
     const total = d.checklist.length;
     const ok = d.checklist.filter((i) => i.done).length;
     return `${ok}/${total}`;
+  }
+
+  /** Abre el comprobante de entrega en PDF (blob, para imprimir o firmar). */
+  verComprobante(d: Delivery): void {
+    abrirPdf(this.http, `/api/v1/deliveries/${d.id}/pdf`, {
+      filename: `entrega-${d.folio}.pdf`,
+      onError: () => this.toastr.error("No se pudo generar el comprobante"),
+    });
+  }
+
+  /** Envía el comprobante por correo (PDF adjunto). */
+  enviarComprobante(d: Delivery): void {
+    const email = window.prompt(
+      "Enviar el comprobante por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/deliveries/${d.id}/email`, body).subscribe({
+      next: () => this.toastr.success("Comprobante enviado por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
   }
 
   guardar(): void {
