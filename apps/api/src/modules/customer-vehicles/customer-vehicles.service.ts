@@ -94,16 +94,19 @@ export class CustomerVehiclesService {
       status: ServiceOrderStatusEnum;
       reportedFailure: string;
       total: number;
-      createdAt: Date;
+      kmIn: number;
+      serviceDate: Date;
     }>
   > {
     await this.findOne(user, clientId, vehicleId);
+    // La fecha relevante es cuándo entró la unidad (received_at), no cuándo se
+    // insertó el registro; se ordena y se muestra por esa fecha.
     const orders = await this.serviceOrderRepo.find({
       where: {
         vehicleId,
         tenantId: user.tenantId,
       },
-      order: { createdAt: 'DESC' },
+      order: { receivedAt: 'DESC' },
       take: 50,
     });
     return orders.map((o) => ({
@@ -112,7 +115,8 @@ export class CustomerVehiclesService {
       status: o.status,
       reportedFailure: o.reportedFault,
       total: Number(o.total),
-      createdAt: o.createdAt,
+      kmIn: o.kmIn,
+      serviceDate: o.receivedAt,
     }));
   }
 

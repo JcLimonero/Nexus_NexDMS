@@ -77,7 +77,8 @@
                   <thead>
                     <tr>
                       <th class="text-nowrap">Folio</th>
-                      <th>Falla reportada</th>
+                      <th>Servicio</th>
+                      <th class="text-end">Km</th>
                       <th>Estado</th>
                       <th class="text-nowrap">Fecha</th>
                       <th class="text-end">Total</th>
@@ -91,6 +92,7 @@
                           <a [routerLink]="['/workshop/service-orders', o.id]">{{ o.folio }}</a>
                         </td>
                         <td>{{ o.reportedFailure || '—' }}</td>
+                        <td class="text-end">{{ o.kmIn | number }}</td>
                         <td>
                           <span class="badge"
                             [class.bg-secondary]="o.status === 'RECEIVED'"
@@ -102,7 +104,7 @@
                             {{ getStatusLabel(o.status) }}
                           </span>
                         </td>
-                        <td class="text-nowrap">{{ o.createdAt | date: 'dd/MM/yyyy' }}</td>
+                        <td class="text-nowrap">{{ o.serviceDate | date: 'dd/MM/yyyy' }}</td>
                         <td class="text-end">{{ o.total | currency: 'MXN':'symbol-narrow' }}</td>
                         <td class="text-end">
                           <a

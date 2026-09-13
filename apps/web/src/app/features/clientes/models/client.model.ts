@@ -74,7 +74,9 @@ export interface VehicleServiceHistoryItem {
   status: string;
   reportedFailure: string;
   total: number;
-  createdAt: string;
+  kmIn: number;
+  /** Fecha real del servicio (recepción de la unidad). */
+  serviceDate: string;
 }
 
 export interface ClientDetail extends Client {
