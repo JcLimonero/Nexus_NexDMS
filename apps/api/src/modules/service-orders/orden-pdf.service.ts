@@ -192,6 +192,17 @@ export class OrdenPdfService {
     const paleta = paletaPorId(t?.palette);
     const c: ColoresMarca = { tinta: paleta.tinta, marca: paleta.primary };
 
+    // Logotipo del tenant para el encabezado (best-effort: si no baja, se usa
+    // el nombre en grande como siempre).
+    let logo: Buffer | null = null;
+    if (t?.logoKey) {
+      try {
+        logo = await this.storage.download(t.logoKey);
+      } catch {
+        logo = null;
+      }
+    }
+
     const sucursal = await this.branchRepo.findOne({
       where: { id: so.branchId },
     });
@@ -246,7 +257,7 @@ export class OrdenPdfService {
 
     const ancho = doc.page.width - M * 2;
 
-    this.encabezado(doc, ancho, c, so, sucursal, razon);
+    this.encabezado(doc, ancho, c, so, sucursal, razon, logo);
     this.cliente(doc, ancho, c, so);
     this.unidad(doc, ancho, c, so, checklist);
     this.conceptos(
@@ -321,11 +332,29 @@ export class OrdenPdfService {
     so: ServiceOrder,
     sucursal: Branch | null,
     razon: LegalEntity | null,
+    logo: Buffer | null = null,
   ): void {
-    doc.fontSize(14).font('Helvetica-Bold').fillColor(c.marca);
-    doc.text(razon?.name ?? sucursal?.name ?? 'Taller', M, M, {
-      width: ancho * 0.6,
-    });
+    let logoOk = false;
+    if (logo) {
+      try {
+        doc.image(logo, M, M, { fit: [150, 44] });
+        logoOk = true;
+      } catch {
+        logoOk = false;
+      }
+    }
+    if (logoOk) {
+      // Con logo, el nombre va pequeño debajo (o se omite si es el mismo).
+      doc.fontSize(9).font('Helvetica-Bold').fillColor(c.tinta);
+      doc.text(razon?.name ?? sucursal?.name ?? 'Taller', M, M + 48, {
+        width: ancho * 0.6,
+      });
+    } else {
+      doc.fontSize(14).font('Helvetica-Bold').fillColor(c.marca);
+      doc.text(razon?.name ?? sucursal?.name ?? 'Taller', M, M, {
+        width: ancho * 0.6,
+      });
+    }
 
     doc.fontSize(8).font('Helvetica').fillColor(TENUE);
     const señas = [

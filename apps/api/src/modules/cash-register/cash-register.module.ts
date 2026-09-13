@@ -6,9 +6,12 @@ import { CortePdfService } from './corte-pdf.service';
 import { CashSession } from './entities/cash-session.entity';
 import { CashMovement } from './entities/cash-movement.entity';
 import { Branch } from '../branches/entities/branch.entity';
+import { Tenant } from '../tenants/entities/tenant.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([CashSession, CashMovement, Branch])],
+  imports: [
+    TypeOrmModule.forFeature([CashSession, CashMovement, Branch, Tenant]),
+  ],
   controllers: [CashRegisterController],
   providers: [CashRegisterService, CortePdfService],
   exports: [CashRegisterService],
