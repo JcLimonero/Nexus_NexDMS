@@ -4,7 +4,8 @@ import { Router } from "@angular/router";
 import { Observable, tap } from "rxjs";
 import { BrandingService } from "./branding.service";
 
-const STORAGE_TOKEN = "nexdms_pwa_token";
+// El token vive en cookie httpOnly (a prueba de XSS), no en localStorage.
+// Aquí solo se guarda el perfil (dato no sensible) para saber quién entró.
 const STORAGE_USER = "nexdms_pwa_user";
 
 export interface PwaUser {
@@ -39,12 +40,8 @@ export class AuthService {
     }
   }
 
-  get token(): string | null {
-    return localStorage.getItem(STORAGE_TOKEN);
-  }
-
   get isLoggedIn(): boolean {
-    return !!this.token;
+    return !!this.user();
   }
 
   login(
@@ -56,7 +53,7 @@ export class AuthService {
       .post<LoginResponse>("/api/v1/auth/login", { email, password, tenantId })
       .pipe(
         tap((res) => {
-          localStorage.setItem(STORAGE_TOKEN, res.accessToken);
+          // El token lo fija el backend como cookie httpOnly; aquí solo el perfil.
           localStorage.setItem(STORAGE_USER, JSON.stringify(res.user));
           this.user.set(res.user);
           this.branding.establecer(res.branding);
@@ -83,9 +80,16 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(STORAGE_TOKEN);
-    localStorage.removeItem(STORAGE_USER);
-    this.user.set(null);
-    void this.router.navigate(["/login"]);
+    // Solo el backend puede borrar la cookie httpOnly; se pide y pase lo que
+    // pase se limpia el estado local y se manda al login.
+    const cerrar = () => {
+      localStorage.removeItem(STORAGE_USER);
+      this.user.set(null);
+      void this.router.navigate(["/login"]);
+    };
+    this.http.post("/api/v1/auth/logout", {}).subscribe({
+      next: cerrar,
+      error: cerrar,
+    });
   }
 }
