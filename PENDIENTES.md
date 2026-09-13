@@ -15,6 +15,11 @@ Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo 
 - [ ] **Monitor de citas (producto)** — ya existe `/monitor/citas`; validar/ampliar si hace falta.
 - [ ] **Contabilidad / integración contable** — **alcance decidido: opción (a) exportar** (no contabilidad propia ni API por ahora). Generar pólizas, catálogo de cuentas y reportes en los **formatos de importación** que aceptan las paqueterías más comunes (CONTPAQi Contabilidad, ASPEL SAE/COI, etc.): archivos XML/TXT que el contador sube a su sistema. Primer paso al retomarlo: relevar el formato exacto de importación de cada paquetería.
 
+## DMS Lite (Total Dealer)
+Spec de Total Dealer + análisis de brecha en **[DMS-LITE-TOTALDEALER.md](DMS-LITE-TOTALDEALER.md)**.
+Resumen: ~95% de los módulos ya existen; es empaquetar una **edición Lite** (preset), no forkear.
+Pendiente real: vertical maquinaria, preset de módulos, PDF de cotización, PLD importes altos, onboarding Lite.
+
 ## Liberación de orden de servicio — QR al cliente
 - [ ] Al **liberar** una orden de servicio / taller, ofrecer **enviar un QR al cliente** con dos usos:
   - **Salida del taller** — el cliente/valet muestra el QR y el guardia/recepción valida que la unidad está liberada (pagada o autorizada su salida). Registrar quién y cuándo escaneó.
