@@ -18,6 +18,7 @@ export interface WarrantyVehicle {
   year: number;
   color: string | null;
   plate: string | null;
+  vin: string | null;
   mileage: number;
 }
 

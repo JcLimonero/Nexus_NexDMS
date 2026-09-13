@@ -13,7 +13,7 @@
         </div>
         <div class="card-body">
           <div class="row g-2">
-            <div class="col-md-4">
+            <div class="col-12 col-lg-3">
               <input
                 type="search"
                 class="form-control"
@@ -22,7 +22,7 @@
                 (ngModelChange)="searchFilter.set($event); onFilterChange()"
               />
             </div>
-            <div class="col-md-2">
+            <div class="col-sm-6 col-lg-3">
               <select
                 class="form-select"
                 [ngModel]="statusFilter()"
@@ -35,7 +35,7 @@
                 <option value="REJECTED">Rechazada</option>
               </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-sm-6 col-lg-3">
               <select
                 class="form-select"
                 [ngModel]="typeFilter()"
@@ -47,7 +47,7 @@
                 <option value="SERVICE">Servicio</option>
               </select>
             </div>
-            <div class="col-md-2">
+            <div class="col-sm-6 col-lg-3">
               <select
                 class="form-select"
                 [ngModel]="branchFilter()"
@@ -96,7 +96,12 @@
                     <tr>
                       <td><span class="font-monospace">{{ w.folio || '—' }}</span></td>
                       <td>{{ getClientName(w) }}</td>
-                      <td>{{ getVehicleLabel(w) }}</td>
+                      <td>
+                        <div>{{ getVehicleLabel(w) }}</div>
+                        @if (w.vehicle?.vin) {
+                          <small class="text-muted">VIN: {{ w.vehicle?.vin }}</small>
+                        }
+                      </td>
                       <td>{{ getTypeLabel(w.type) }}</td>
                       <td>{{ getBranchName(w.branchId) }}</td>
                       <td class="col-descripcion">{{ w.description | slice:0:40 }}{{ w.description.length > 40 ? '...' : '' }}</td>
