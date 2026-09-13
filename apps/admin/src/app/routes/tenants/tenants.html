@@ -9,24 +9,8 @@
   }
 
   @if (panorama(); as p) {
-    <section class="indicadores">
-      <div class="indicador">
-        <span class="etiqueta">Ingreso mensual</span>
-        <strong class="cifra">{{ p.ingresoMensual | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
-        <span class="pie">{{ p.activos }} de {{ p.clientes }} clientes activos</span>
-      </div>
-      <div class="indicador" [class.alerta]="p.adeudoTotal > 0">
-        <span class="etiqueta">Adeudo</span>
-        <strong class="cifra">{{ p.adeudoTotal | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
-        <span class="pie">{{ p.clientesConAdeudo }} clientes con saldo vencido</span>
-      </div>
-      <div class="indicador">
-        <span class="etiqueta">Suspendidos</span>
-        <strong class="cifra">{{ p.suspendidos }}</strong>
-        <span class="pie">Sin acceso al sistema</span>
-      </div>
-    </section>
-
+    <!-- Los indicadores (ingreso, adeudo, suspendidos) viven en el Dashboard;
+         aquí solo queda la alerta accionable de mora. -->
     <!-- Aviso a Nexus: clientes que el reloj del impago dejó en solo-lectura o
          ya bloqueó, para actuar antes de que reclamen. -->
     @if (p.morosos.length) {

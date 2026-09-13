@@ -36,7 +36,8 @@ export class Perfiles implements OnInit {
   cargando = signal(true);
   aviso = signal<{ texto: string; tono: "bien" | "mal" } | null>(null);
 
-  // Formulario
+  // Formulario (en diálogo)
+  formAbierto = signal(false);
   editandoId = signal<string | null>(null);
   nombre = "";
   descripcion = "";
@@ -115,6 +116,7 @@ export class Perfiles implements OnInit {
     this.nombre = "";
     this.descripcion = "";
     this.seleccion.set(new Set());
+    this.formAbierto.set(true);
   }
 
   editar(p: CustomRole): void {
@@ -122,9 +124,11 @@ export class Perfiles implements OnInit {
     this.nombre = p.name;
     this.descripcion = p.description ?? "";
     this.seleccion.set(new Set(p.baseRoles));
+    this.formAbierto.set(true);
   }
 
   cancelar(): void {
+    this.formAbierto.set(false);
     this.editandoId.set(null);
     this.nombre = "";
     this.descripcion = "";

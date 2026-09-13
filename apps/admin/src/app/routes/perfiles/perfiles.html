@@ -27,95 +27,98 @@
       </div>
     }
 
-    <div class="perfiles-layout">
-      <section class="lista-perfiles">
-        <div class="encabezado">
-          <h2>Perfiles del cliente</h2>
-          <button type="button" class="btn" (click)="nuevo()">Nuevo perfil</button>
-        </div>
+    <section class="lista-perfiles">
+      <div class="encabezado">
+        <h2>Perfiles del cliente</h2>
+        <button type="button" class="btn-principal" (click)="nuevo()">Nuevo perfil</button>
+      </div>
 
-        @if (perfiles().length === 0) {
-          <p class="vacio">Este cliente aún no tiene perfiles a medida.</p>
-        } @else {
-          @for (p of perfiles(); track p.id) {
-            <article class="tarjeta-perfil" [class.editando]="editandoId() === p.id">
-              <div class="linea">
-                <div>
-                  <h3>{{ p.name }}</h3>
-                  @if (p.description) {
-                    <p class="desc">{{ p.description }}</p>
-                  }
-                </div>
-                <div class="acciones">
-                  <button type="button" class="btn-texto" (click)="editar(p)">Editar</button>
-                  <button type="button" class="btn-texto peligro" (click)="eliminar(p)">Eliminar</button>
-                </div>
-              </div>
-              <div class="bases">
-                @for (r of p.baseRoles; track r) {
-                  <span class="pastilla">{{ etiqueta(r) }}</span>
+      @if (perfiles().length === 0) {
+        <p class="vacio">Este cliente aún no tiene perfiles a medida.</p>
+      } @else {
+        @for (p of perfiles(); track p.id) {
+          <article class="tarjeta-perfil">
+            <div class="linea">
+              <div>
+                <h3>{{ p.name }}</h3>
+                @if (p.description) {
+                  <p class="desc">{{ p.description }}</p>
                 }
               </div>
-              <p class="cobertura">
-                Alcanza {{ p.resolvedModules.length }} módulo(s) · {{ p.operationCount }} operaciones
-              </p>
-            </article>
-          }
-        }
-      </section>
-
-      <section class="editor">
-        <h2>{{ editandoId() ? "Editar perfil" : "Nuevo perfil" }}</h2>
-
-        <label class="campo">
-          <span>Nombre</span>
-          <input type="text" [(ngModel)]="nombre" placeholder="p. ej. Mostrador plus" />
-        </label>
-
-        <label class="campo">
-          <span>Descripción (opcional)</span>
-          <input type="text" [(ngModel)]="descripcion" placeholder="Para qué sirve este perfil" />
-        </label>
-
-        <div class="campo">
-          <span>Roles base que lo componen</span>
-          <div class="bases-grid">
-            @for (r of basesDisponibles(); track r.role) {
-              <button
-                type="button"
-                class="base-op"
-                [class.activa]="seleccionado(r.role)"
-                (click)="toggleBase(r.role)"
-              >
-                <strong>{{ etiqueta(r.role) }}</strong>
-                <small>{{ r.modules.length }} mód</small>
-              </button>
-            }
-          </div>
-        </div>
-
-        <div class="preview">
-          <span class="titulo">Cobertura del perfil</span>
-          @if (vistaPrevia().length === 0) {
-            <p class="vacio">Selecciona roles base para ver qué módulos cubre.</p>
-          } @else {
-            <div class="chips">
-              @for (m of vistaPrevia(); track m) {
-                <span class="chip">{{ m }}</span>
+              <div class="acciones">
+                <button type="button" class="btn-texto" (click)="editar(p)">Editar</button>
+                <button type="button" class="btn-texto peligro" (click)="eliminar(p)">Eliminar</button>
+              </div>
+            </div>
+            <div class="bases">
+              @for (r of p.baseRoles; track r) {
+                <span class="pastilla">{{ etiqueta(r) }}</span>
               }
             </div>
-          }
-        </div>
+            <p class="cobertura">
+              Alcanza {{ p.resolvedModules.length }} módulo(s) · {{ p.operationCount }} operaciones
+            </p>
+          </article>
+        }
+      }
+    </section>
+  }
 
-        <div class="botones">
-          @if (editandoId()) {
-            <button type="button" class="btn-texto" (click)="cancelar()">Cancelar</button>
+  <!-- Formulario de perfil en diálogo (por encima de la ficha) -->
+  @if (formAbierto()) {
+    <div class="fondo sobre" (click)="cancelar()"></div>
+    <div class="dialogo sobre" role="dialog" aria-modal="true">
+      <header class="dialogo-top">
+        <h2>{{ editandoId() ? "Editar perfil" : "Nuevo perfil" }}</h2>
+        <button type="button" class="btn-cerrar" (click)="cancelar()">×</button>
+      </header>
+
+      <label class="campo">
+        <span>Nombre</span>
+        <input type="text" [(ngModel)]="nombre" placeholder="p. ej. Mostrador plus" />
+      </label>
+
+      <label class="campo">
+        <span>Descripción (opcional)</span>
+        <input type="text" [(ngModel)]="descripcion" placeholder="Para qué sirve este perfil" />
+      </label>
+
+      <div class="campo">
+        <span>Roles base que lo componen</span>
+        <div class="bases-grid">
+          @for (r of basesDisponibles(); track r.role) {
+            <button
+              type="button"
+              class="base-op"
+              [class.activa]="seleccionado(r.role)"
+              (click)="toggleBase(r.role)"
+            >
+              <strong>{{ etiqueta(r.role) }}</strong>
+              <small>{{ r.modules.length }} mód</small>
+            </button>
           }
-          <button type="button" class="btn" (click)="guardar()" [disabled]="guardando()">
-            {{ editandoId() ? "Guardar cambios" : "Crear perfil" }}
-          </button>
         </div>
-      </section>
+      </div>
+
+      <div class="preview">
+        <span class="titulo">Cobertura del perfil</span>
+        @if (vistaPrevia().length === 0) {
+          <p class="vacio">Selecciona roles base para ver qué módulos cubre.</p>
+        } @else {
+          <div class="chips">
+            @for (m of vistaPrevia(); track m) {
+              <span class="chip">{{ m }}</span>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="dialogo-pie">
+        <button type="button" class="btn-secundario" (click)="cancelar()">Cancelar</button>
+        <button type="button" class="btn-principal" (click)="guardar()" [disabled]="guardando()">
+          {{ editandoId() ? "Guardar cambios" : "Crear perfil" }}
+        </button>
+      </div>
     </div>
   }
 </div>
