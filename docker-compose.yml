@@ -2,13 +2,16 @@ services:
 
   # ─── Base de datos ────────────────────────────────────────────
   postgres:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     container_name: nexDMS_postgres
     restart: unless-stopped
     environment:
       POSTGRES_DB: nexdms
       POSTGRES_USER: nexdms
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-nexdms_dev}
+      # PG18 cambió la ruta de datos por defecto; se fija a un subdirectorio
+      # para seguir usando el volumen montado en /var/lib/postgresql/data.
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro

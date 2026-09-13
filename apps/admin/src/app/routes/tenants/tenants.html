@@ -823,6 +823,32 @@
         } @else if (usuarios().length === 0) {
           <p class="vacio">Aún no hay usuarios. Crea el primero arriba.</p>
         } @else {
+          <div class="filtros-usuarios">
+            <label class="campo">
+              <span>Perfil</span>
+              <select [ngModel]="filtroRol()" (ngModelChange)="filtroRol.set($event)">
+                <option value="">Todos los perfiles</option>
+                @for (r of rolesDisponibles(); track r) {
+                  <option [value]="r">{{ etiquetaRoles([r]) }}</option>
+                }
+              </select>
+            </label>
+            <label class="campo">
+              <span>Estado</span>
+              <select [ngModel]="filtroEstado()" (ngModelChange)="filtroEstado.set($event)">
+                <option value="">Todos</option>
+                <option value="activos">Activos</option>
+                <option value="inactivos">Inactivos</option>
+              </select>
+            </label>
+            <span class="filtro-conteo">
+              {{ usuariosFiltrados().length }} de {{ usuarios().length }}
+            </span>
+          </div>
+
+          @if (usuariosFiltrados().length === 0) {
+            <p class="vacio">Ningún usuario con estos filtros.</p>
+          } @else {
           <table class="tabla">
             <thead>
               <tr>
@@ -834,7 +860,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (u of usuarios(); track u.id) {
+              @for (u of usuariosFiltrados(); track u.id) {
                 <tr>
                   <td>{{ u.firstName }} {{ u.lastName }}</td>
                   <td class="mono">{{ u.email }}</td>
@@ -879,6 +905,7 @@
               }
             </tbody>
           </table>
+          }
         }
       }
     } @else {

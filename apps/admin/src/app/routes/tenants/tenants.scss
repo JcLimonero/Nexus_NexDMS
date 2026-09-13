@@ -553,3 +553,19 @@
   color: var(--danger);
   border-color: transparent;
 }
+
+.filtros-usuarios {
+  display: flex;
+  gap: var(--space-12);
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+.filtros-usuarios .campo {
+  min-width: 180px;
+}
+.filtro-conteo {
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding-bottom: 8px;
+}

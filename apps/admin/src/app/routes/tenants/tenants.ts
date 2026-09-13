@@ -469,6 +469,28 @@ export class Tenants implements OnInit {
   /** userId cuya contraseña se está cambiando (para mostrar el campo inline). */
   cambiandoPass = signal<string | null>(null);
   passNueva = signal("");
+  /** Filtros del listado de usuarios. */
+  filtroRol = signal<string>("");
+  filtroEstado = signal<"" | "activos" | "inactivos">("");
+
+  /** Roles presentes entre los usuarios del cliente (para el filtro). */
+  rolesDisponibles = computed<string[]>(() => {
+    const set = new Set<string>();
+    for (const u of this.usuarios()) for (const r of u.roles) set.add(r);
+    return [...set].sort();
+  });
+
+  /** Usuarios tras aplicar filtro de perfil y de estado. */
+  usuariosFiltrados = computed<UsuarioTenant[]>(() => {
+    const rol = this.filtroRol();
+    const est = this.filtroEstado();
+    return this.usuarios().filter((u) => {
+      if (rol && !u.roles.includes(rol)) return false;
+      if (est === "activos" && !u.isActive) return false;
+      if (est === "inactivos" && u.isActive) return false;
+      return true;
+    });
+  });
 
   // ── Marca del cliente ──
   paletas = signal<PaletaMarca[]>([]);
