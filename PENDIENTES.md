@@ -15,6 +15,12 @@ Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo 
 - [ ] **Monitor de citas (producto)** — ya existe `/monitor/citas`; validar/ampliar si hace falta.
 - [ ] **Contabilidad / integración contable** — **alcance decidido: opción (a) exportar** (no contabilidad propia ni API por ahora). Generar pólizas, catálogo de cuentas y reportes en los **formatos de importación** que aceptan las paqueterías más comunes (CONTPAQi Contabilidad, ASPEL SAE/COI, etc.): archivos XML/TXT que el contador sube a su sistema. Primer paso al retomarlo: relevar el formato exacto de importación de cada paquetería.
 
+## Liberación de orden de servicio — QR al cliente
+- [ ] Al **liberar** una orden de servicio / taller, ofrecer **enviar un QR al cliente** con dos usos:
+  - **Salida del taller** — el cliente/valet muestra el QR y el guardia/recepción valida que la unidad está liberada (pagada o autorizada su salida). Registrar quién y cuándo escaneó.
+  - **Pago** — el QR lleva a la pantalla de pago en línea (ligado a la pasarela self-service del tenant) para liquidar antes de salir.
+  - Consideraciones: QR con token firmado y caducidad, un solo uso para salida; validación desde recepción/PWA; que funcione aunque el cliente no tenga la app (link web). Ligar con [documentos/PDF] y con la pasarela de pago.
+
 ## Documentos / PDF (cotizaciones, órdenes de servicio, etc.)
 Revisar y homologar **cómo se generan los PDF** del sistema. Estado actual: se arman
 **ad-hoc con `pdfkit`**, un servicio por documento y sin plantilla común.
