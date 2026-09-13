@@ -210,7 +210,7 @@ INSERT INTO sale_documents (id, tenant_id, unit_sale_id, document_type_id, name,
 SELECT gen_random_uuid(), (SELECT tenant_id FROM ref), us.id, dt.id,
        dt.name || '.pdf',
        'demo/sale-docs/' || us.id || '/' || dt.key || '.pdf',
-       'application/pdf', 102400, 'VALIDATED',
+       'application/pdf', 102400, 'APPROVED',
        (SELECT hoy FROM ref), (SELECT admin FROM ref)
 FROM unit_sales us
 CROSS JOIN sale_document_types dt
@@ -224,9 +224,9 @@ SELECT gen_random_uuid(), (SELECT tenant_id FROM ref), us.id, p.kind, p.amount, 
        (SELECT hoy FROM ref) - p.days, p.note
 FROM unit_sales us
 JOIN LATERAL (VALUES
-  ('DOWN_PAYMENT', 40000.0, 'TRANSFER', 'SPEI-778001', 45, 'Enganche'),
-  ('INSTALLMENT',  8500.0,  'TRANSFER', 'SPEI-778002', 15, 'Mensualidad 1'),
-  ('INSTALLMENT',  8500.0,  'CASH',     NULL,          0,  'Mensualidad 2')
+  ('ENGANCHE', 40000.0, 'TRANSFER', 'SPEI-778001', 45, 'Enganche'),
+  ('PARCIAL',  8500.0,  'TRANSFER', 'SPEI-778002', 15, 'Mensualidad 1'),
+  ('PARCIAL',  8500.0,  'CASH',     NULL,          0,  'Mensualidad 2')
 ) AS p(kind, amount, method, ref, days, note) ON true
 WHERE us.tenant_id = (SELECT tenant_id FROM ref) AND us.financing_type = 'BANK_CREDIT';
 
