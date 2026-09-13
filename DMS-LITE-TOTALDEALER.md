@@ -154,8 +154,8 @@ nivel en cada dominio** (no se cruzan) → base para administraciones independie
 - Funciona contra el mismo API, pero se ve con marca NexQS y sin separación de administración.
 
 **Fase 2 — edición real Total One (dev pendiente):**
-- **Kit de marca en el repo:** `apps/web/public/brand-totalgo/` y `apps/admin/public/brand-totalgo/` (logos, isotipo, favicons, CSS y manifiesto). Paleta: gris azulado `#2B4149`, naranja `#EA4B17`, blanco `#FFFFFF`. ⚠️ **Este kit es visualmente "Total Go"** (el wordmark/isotipo dicen "Total Go", isotipo = "G"); **pendiente reemplazarlo por el kit de "Total One"** que enviará el cliente. Al llegar, sustituir estos assets (y renombrar la carpeta a `brand-totalone/`).
-- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total One (desde `brand-totalgo/`) en lugar de los de NexQS (`brand/`).
+- **Kit de marca en el repo:** `apps/web/public/brand-totalone/` y `apps/admin/public/brand-totalone/` (logos horizontal/vertical/wordmark, isotipo "O", favicons, CSS y manifiesto). Paleta Total One: gris azulado `#2B4149`, naranja `#EA4B17`, blanco `#FFFFFF`.
+- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total One (desde `brand-totalone/`) en lugar de los de NexQS (`brand/`).
 - **Preset de módulos Total One:** encender solo los del alcance, ocultar el resto (feature flags/edición).
 - **Scope por socio (admin independiente):** el admin de TD ve solo sus tenants; Nexus conserva vista maestra para conciliar el 50/50 y dar soporte. Repetir el despliegue con `apps/admin` en `admin.totaldealer.com`.
 

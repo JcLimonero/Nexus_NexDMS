@@ -1,0 +1,21 @@
+TOTAL ONE - KIT DE IDENTIDAD VISUAL
+
+01-logos: horizontal, vertical y wordmark. SVG de trazos y PNG transparente.
+02-isotipo: O independiente, 1024 px y SVG.
+03-favicons: color, negro y blanco; ICO, SVG, PNG de 16 a 512 px.
+04-aplicaciones: avatar, portada 1600x600 y tarjeta frente/reverso. SVG y PNG.
+05-web: CSS, manifiesto, integración HTML y firma de correo.
+06-guia: guía de marca PDF.
+
+PALETA
+Gris azulado #2B4149 / Naranja #EA4B17 / Blanco #FFFFFF.
+
+Los logotipos son vectorizaciones del diseño aprobado con colores planos y contornos suavizados. Los SVG de logo e isotipo no requieren fuentes. Las plantillas usan Arial/Helvetica como apoyo y campos editables.
+
+La versión blanca se usa sobre fondos oscuros. PNG de logos e isotipos con alfa transparente. Avatar, portada y tarjetas incluyen fondo intencional.
+
+Firma de correo: sustituir los campos y alojar el PNG del logo en una URL pública HTTPS; cambiar la ruta relativa antes de instalarla. Los clientes de correo varían en su compatibilidad.
+
+La tarjeta es una plantilla visual de proporción 90 x 50 mm. Antes de imprimir, agregar el sangrado solicitado por la imprenta y comprobar CMYK.
+
+La portada es genérica; adaptar el recorte a la red social elegida. No se han inventado datos de contacto ni mensajes comerciales.
