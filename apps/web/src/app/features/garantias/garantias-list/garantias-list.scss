@@ -11,4 +11,23 @@
       opacity: 0.8;
     }
   }
+
+  // La tabla tiene muchas columnas: que no se empalmen. Cada celda en una sola
+  // línea y, si no cabe, el contenedor `.table-responsive` hace scroll lateral.
+  .table {
+    min-width: 980px;
+
+    th,
+    td {
+      white-space: nowrap;
+      vertical-align: middle;
+    }
+
+    // La descripción sí puede truncarse para no estirar la fila.
+    .col-descripcion {
+      max-width: 240px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
 }

@@ -99,7 +99,7 @@
                       <td>{{ getVehicleLabel(w) }}</td>
                       <td>{{ getTypeLabel(w.type) }}</td>
                       <td>{{ getBranchName(w.branchId) }}</td>
-                      <td>{{ w.description | slice:0:40 }}{{ w.description.length > 40 ? '...' : '' }}</td>
+                      <td class="col-descripcion">{{ w.description | slice:0:40 }}{{ w.description.length > 40 ? '...' : '' }}</td>
                       <td>{{ w.startDate | date:'shortDate' }} - {{ w.endDate | date:'shortDate' }}</td>
                       <td class="text-center">
                         <span class="badge"
