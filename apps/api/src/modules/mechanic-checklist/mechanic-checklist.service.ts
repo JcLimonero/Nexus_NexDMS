@@ -60,6 +60,23 @@ export class MechanicChecklistService {
     return this.itemRepo.save(item);
   }
 
+  async deleteItem(user: UserPayload, id: string): Promise<{ ok: true }> {
+    const allowed = ['SUPERADMIN', 'ADMIN', 'MANAGER'];
+    if (!allowed.some((r) => user.roles?.includes(r))) {
+      throw new ForbiddenException(
+        'Solo ADMIN, MANAGER pueden borrar ítems del checklist',
+      );
+    }
+    const item = await this.itemRepo.findOne({
+      where: { id, tenantId: user.tenantId },
+    });
+    if (!item) throw new NotFoundException('Ítem no encontrado');
+    // Las evaluaciones ya hechas conservan el nombre por su relación; borrar el
+    // punto del catálogo solo lo quita de futuras revisiones.
+    await this.itemRepo.delete({ id: item.id });
+    return { ok: true };
+  }
+
   async saveSafetyChecklist(
     user: UserPayload,
     serviceOrderId: string,

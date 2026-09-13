@@ -10,6 +10,7 @@ import { forkJoin } from "rxjs";
 import { TallerService } from "../../taller.service";
 import { PanelServicio } from "./panel-servicio";
 import { EvidenciaRecepcion } from "../../../../shared/components/evidencia-recepcion/evidencia-recepcion";
+import { RevisionSeguridad } from "../revision-seguridad/revision-seguridad";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import { InventarioRefaccionesService } from "../../../inventario-refacciones/inventario-refacciones.service";
 import { Part } from "../../../inventario-refacciones/models/part.model";
@@ -44,6 +45,7 @@ const NEXT_STATUS: Partial<Record<ServiceOrderStatus, ServiceOrderStatus[]>> = {
     RouterModule,
     PanelServicio,
     EvidenciaRecepcion,
+    RevisionSeguridad,
     PhaseTracker,
   ],
   templateUrl: "./orden-servicio-detail.html",

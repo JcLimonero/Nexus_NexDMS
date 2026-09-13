@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { MechanicChecklistService } from './mechanic-checklist.service';
 import { CreateChecklistItemDto } from './dto/create-checklist-item.dto';
@@ -30,5 +39,14 @@ export class MechanicChecklistController {
     @Body() dto: CreateChecklistItemDto,
   ) {
     return this.mechanicChecklistService.createItem(user, dto);
+  }
+
+  @Delete('items/:id')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER')
+  deleteItem(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
+    return this.mechanicChecklistService.deleteItem(user, id);
   }
 }

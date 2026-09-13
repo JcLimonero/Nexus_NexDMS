@@ -1,0 +1,104 @@
+<div class="card mt-4">
+  <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <div>
+      <h6 class="mb-0">Revisión de puntos (semáforo)</h6>
+      <small class="text-muted">
+        Marca el estado de cada punto; el informe de revisión se arma con esto.
+      </small>
+    </div>
+    <button type="button" class="btn btn-outline-secondary btn-sm" (click)="adminAbierto.set(!adminAbierto())">
+      {{ adminAbierto() ? "Cerrar catálogo" : "Administrar puntos" }}
+    </button>
+  </div>
+
+  <div class="card-body">
+    <!-- Alta/baja de puntos del catálogo -->
+    @if (adminAbierto()) {
+      <div class="border rounded p-3 mb-3 bg-light">
+        <div class="row g-2 align-items-end">
+          <div class="col-sm-3">
+            <label class="form-label mb-1">Clave</label>
+            <input class="form-control form-control-sm" placeholder="LLANTAS"
+              [ngModel]="nuevoCode()" (ngModelChange)="nuevoCode.set($event)" />
+          </div>
+          <div class="col-sm-6">
+            <label class="form-label mb-1">Nombre del punto</label>
+            <input class="form-control form-control-sm" placeholder="Llantas (vida útil)"
+              [ngModel]="nuevoName()" (ngModelChange)="nuevoName.set($event)" />
+          </div>
+          <div class="col-sm-3">
+            <button type="button" class="btn btn-primary btn-sm w-100" [disabled]="agregando()" (click)="agregarPunto()">
+              @if (agregando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+              Agregar punto
+            </button>
+          </div>
+        </div>
+        @if (hayPuntos()) {
+          <div class="mt-3 d-flex flex-wrap gap-2">
+            @for (p of puntos(); track p.id) {
+              <span class="badge bg-secondary d-inline-flex align-items-center gap-1">
+                {{ p.name }}
+                <button type="button" class="btn-close btn-close-white btn-sm" style="font-size:.6rem"
+                  (click)="eliminarPunto(p)"></button>
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (cargando()) {
+      <div class="spinner-border" role="status"></div>
+    } @else if (!hayPuntos()) {
+      <p class="text-muted mb-0">
+        No hay puntos en el catálogo.
+        <a href="javascript:void(0)" (click)="adminAbierto.set(true)">Agrega el primero</a>
+        (por ejemplo: Llantas, Balatas, Frenos, Niveles, Luces…).
+      </p>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <thead>
+            <tr>
+              <th style="min-width:160px">Punto</th>
+              <th style="min-width:280px">Estado</th>
+              <th style="min-width:220px">Observaciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (p of puntos(); track p.id) {
+              <tr>
+                <td>{{ p.name }}</td>
+                <td>
+                  <div class="btn-group btn-group-sm flex-wrap" role="group">
+                    @for (e of estados; track e.value) {
+                      <button type="button" class="btn"
+                        [class.btn-outline-secondary]="form()[p.id]?.status !== e.value"
+                        [style.background]="form()[p.id]?.status === e.value ? e.color : null"
+                        [style.color]="form()[p.id]?.status === e.value ? '#fff' : null"
+                        [style.border-color]="form()[p.id]?.status === e.value ? e.color : null"
+                        (click)="setStatus(p.id, e.value)">
+                        {{ e.label }}
+                      </button>
+                    }
+                  </div>
+                </td>
+                <td>
+                  <input class="form-control form-control-sm"
+                    placeholder="Opcional"
+                    [ngModel]="form()[p.id]?.notes || ''"
+                    (ngModelChange)="setNotes(p.id, $event)" />
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <button type="button" class="btn btn-primary btn-sm mt-2" [disabled]="guardando()" (click)="guardar()">
+        @if (guardando()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        Guardar revisión
+      </button>
+    }
+  </div>
+</div>
