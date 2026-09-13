@@ -136,13 +136,13 @@ export class UsersService {
         : `${base}/auth/reset-password?token=${token}`;
       const body =
         `<p>Hola ${nombre ?? ''},</p>` +
-        `<p>Se creó tu cuenta en <strong>${tenant?.name ?? 'NexDMS'}</strong>. ` +
+        `<p>Se creó tu cuenta en <strong>${tenant?.name ?? 'NexQSystem'}</strong>. ` +
         `Para entrar, primero crea tu contraseña:</p>` +
         emailButton('Crear mi contraseña', url) +
         `<p style="color:#94a3b8">Tu usuario es <strong>${email}</strong>. El enlace vence en 1 hora; si expira, usa "¿Olvidaste tu contraseña?" en el acceso.</p>`;
       const html = await this.composer.brandedClient(
         tenantId,
-        'Bienvenido a NexDMS',
+        'Bienvenido a NexQSystem',
         body,
         'Tu cuenta',
       );

@@ -187,7 +187,7 @@ export class OrdenPdfService {
     if (!so) throw new NotFoundException('Orden no encontrada');
 
     // La marca del cliente tiñe la tinta y las bandas del documento, para que
-    // el papel se vea como el resto de su NexDMS.
+    // el papel se vea como el resto de su NexQSystem.
     const t = await this.tenantRepo.findOne({ where: { id: tenantId } });
     const paleta = paletaPorId(t?.palette);
     const c: ColoresMarca = { tinta: paleta.tinta, marca: paleta.primary };

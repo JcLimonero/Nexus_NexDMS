@@ -178,19 +178,19 @@ export class ProvisioningService {
     const inviteUrl = `${base}/${slug}/auth/reset-password?token=${token}`;
     try {
       const body =
-        `<p>¡Bienvenido a NexDMS! Se creó la cuenta de <strong>${empresa}</strong> ` +
+        `<p>¡Bienvenido a NexQSystem! Se creó la cuenta de <strong>${empresa}</strong> ` +
         `y eres su administrador.</p>` +
         `<p>Define tu contraseña para entrar (el enlace vence en 1 hora):</p>` +
         emailButton('Definir mi contraseña', inviteUrl) +
         `<p style="color:#94a3b8">Si no esperabas este correo, ignóralo.</p>`;
       const html = await this.composer.brandedClient(
         tenantId,
-        'Tu cuenta de NexDMS está lista',
+        'Tu cuenta de NexQSystem está lista',
         body,
         'Bienvenida',
       );
       await this.emailjs.enviar({
-        subject: 'Tu cuenta de NexDMS está lista',
+        subject: 'Tu cuenta de NexQSystem está lista',
         html,
         to: email,
       });

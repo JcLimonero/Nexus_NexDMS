@@ -3,10 +3,10 @@ import { Title } from "@angular/platform-browser";
 import { RouterStateSnapshot, TitleStrategy } from "@angular/router";
 import { BrandingService } from "./branding.service";
 
-const APP_TITLE = "NexDMS";
+const APP_TITLE = "NexQSystem";
 
 /**
- * Pone en la pestaña el cliente y la pantalla: "AutoPlaza · NexDMS - Inicio".
+ * Pone en la pestaña el cliente y la pantalla: "AutoPlaza · NexQSystem - Inicio".
  *
  * El nombre del cliente va al frente porque es lo que queda visible cuando la
  * pestaña se angosta, y es justo lo que distingue una sesión de otra cuando el
@@ -15,10 +15,10 @@ const APP_TITLE = "NexDMS";
  * El decorador no es opcional: al heredar de `TitleStrategy`, que sí es
  * inyectable, la clase heredaba su metadata y `useClass` resolvía por la
  * fábrica del padre. El resultado era que este `updateTitle` no llegaba a
- * ejecutarse nunca y todas las pestañas del DMS decían solo "NexDMS".
+ * ejecutarse nunca y todas las pestañas del DMS decían solo "NexQSystem".
  */
 @Injectable({ providedIn: "root" })
-export class NexDMSTitleStrategy extends TitleStrategy {
+export class NexQSystemTitleStrategy extends TitleStrategy {
   private title = inject(Title);
   private brandingSrv = inject(BrandingService);
   private ultimaPantalla: string | undefined;

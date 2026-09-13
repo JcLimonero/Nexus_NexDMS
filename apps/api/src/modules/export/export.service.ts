@@ -171,7 +171,7 @@ export class ExportService {
     const filas = await this.filas(dataset, tenantId);
 
     const wb = new ExcelJS.Workbook();
-    wb.creator = 'NexDMS';
+    wb.creator = 'NexQSystem';
     wb.created = new Date();
     const ws = wb.addWorksheet(d.titulo.slice(0, 31));
     ws.columns = d.columnas.map((c) => ({
@@ -222,7 +222,7 @@ export class ExportService {
       .fontSize(8)
       .fillColor('#5A6B78')
       .text(
-        `NexDMS · generado el ${new Date().toLocaleString('es-MX')} · ${filas.length} registros`,
+        `NexQSystem · generado el ${new Date().toLocaleString('es-MX')} · ${filas.length} registros`,
       );
     doc.moveDown(0.8);
 

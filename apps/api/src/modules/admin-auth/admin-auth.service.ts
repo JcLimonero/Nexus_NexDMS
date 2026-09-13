@@ -62,7 +62,7 @@ export class AdminAuthService {
         'Seguridad',
       );
       await this.emailjs.enviar({
-        subject: 'Restablece tu contraseña · NexDMS Admin',
+        subject: 'Restablece tu contraseña · NexQSystem Admin',
         html,
         to: admin.email,
       });
@@ -100,7 +100,7 @@ export class AdminAuthService {
     );
     await this.emailjs
       .enviar({
-        subject: 'Tu contraseña cambió · NexDMS Admin',
+        subject: 'Tu contraseña cambió · NexQSystem Admin',
         html,
         to: admin.email,
       })

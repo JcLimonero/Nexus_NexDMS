@@ -32,7 +32,7 @@ interface DatosPerfil {
   legalEntities?: { id: string; name: string }[];
 }
 
-/** Lo que el grupo paga por usar NexDMS. */
+/** Lo que el grupo paga por usar NexQSystem. */
 interface Suscripcion {
   tenant: { name: string; billingDay: number | null };
   cobro: {
@@ -92,7 +92,7 @@ export class Perfil implements OnInit {
   /**
    * La suscripción al SaaS, aquí y no en el menú.
    *
-   * Lo que el grupo paga por usar NexDMS no es operación del taller: no le
+   * Lo que el grupo paga por usar NexQSystem no es operación del taller: no le
    * incumbe a quien factura a un cliente o recibe una unidad, y mezclarlo
    * con la facturación del concesionario confundía las dos cosas. Solo lo
    * ve quien administra la cuenta.

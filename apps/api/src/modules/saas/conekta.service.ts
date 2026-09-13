@@ -77,13 +77,13 @@ export class ConektaService {
     const body = {
       currency: 'MXN',
       customer_info: {
-        name: input.cliente.nombre || 'Cliente NexDMS',
+        name: input.cliente.nombre || 'Cliente NexQSystem',
         email: input.cliente.email,
         phone: input.cliente.telefono || undefined,
       },
       line_items: [
         {
-          name: `Suscripción NexDMS${periodos ? ` (${periodos})` : ''}`,
+          name: `Suscripción NexQSystem${periodos ? ` (${periodos})` : ''}`,
           unit_price: centavos,
           quantity: 1,
         },

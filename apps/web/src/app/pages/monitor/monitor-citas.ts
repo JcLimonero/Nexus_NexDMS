@@ -317,6 +317,6 @@ export class MonitorCitas implements OnInit, OnDestroy {
    */
   private ponerTitulo(): void {
     const suc = this.nombreSucursal();
-    this.titulo.setTitle(suc ? `Citas · ${suc} — NexDMS` : `Citas — NexDMS`);
+    this.titulo.setTitle(suc ? `Citas · ${suc} — NexQSystem` : `Citas — NexQSystem`);
   }
 }

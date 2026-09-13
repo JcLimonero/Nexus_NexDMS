@@ -1,7 +1,7 @@
 import { TenantPlanEnum } from '../tenants/entities/tenant.entity';
 
 /**
- * Registro único de módulos de NexDMS.
+ * Registro único de módulos de NexQSystem.
  *
  * Es la fuente de verdad para: el menú del web, los guards de licencia
  * (API y rutas), los dashboards por módulo y la pantalla de administración.
@@ -310,7 +310,7 @@ export const MODULE_REGISTRY: ModuleDef[] = [
   {
     key: 'billing',
     name: 'Facturación',
-    description: 'Facturación del negocio y plan NexDMS.',
+    description: 'Facturación del negocio y plan NexQSystem.',
     icon: 'credit-card',
     route: '/billing',
     minPlan: TenantPlanEnum.ENTERPRISE,

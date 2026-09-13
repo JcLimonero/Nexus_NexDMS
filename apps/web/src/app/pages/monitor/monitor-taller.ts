@@ -364,7 +364,7 @@ export class MonitorTaller implements OnInit, OnDestroy {
   private ponerTitulo(): void {
     const suc = this.nombreSucursal();
     this.titulo.setTitle(
-      suc ? `Taller · ${suc} — NexDMS` : `Taller — NexDMS`,
+      suc ? `Taller · ${suc} — NexQSystem` : `Taller — NexQSystem`,
     );
   }
 

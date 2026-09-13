@@ -29,7 +29,7 @@ import { provideToastr } from "ngx-toastr";
 
 import { authInterceptor } from "./auth/auth.interceptor";
 import { routes } from "./app.routes";
-import { NexDMSTitleStrategy } from "./shared/services/nexdms-title.strategy";
+import { NexQSystemTitleStrategy } from "./shared/services/nexdms-title.strategy";
 import { BrandingService } from "./shared/services/branding.service";
 import { AuthService } from "./auth/auth.service";
 import { baseHrefDeTenant, slugDeLaUrl } from "./shared/tenant/tenant-context";
@@ -61,7 +61,7 @@ export const appConfig: ApplicationConfig = {
         scrollPositionRestoration: "top",
       }),
     ),
-    { provide: TitleStrategy, useClass: NexDMSTitleStrategy },
+    { provide: TitleStrategy, useClass: NexQSystemTitleStrategy },
     // El cliente en la ruta (`/<slug>/…`) se vuelve la raíz de la app: así el
     // slug se mantiene en toda la navegación sin tocar rutas ni routerLinks.
     { provide: APP_BASE_HREF, useFactory: baseHrefDeTenant },

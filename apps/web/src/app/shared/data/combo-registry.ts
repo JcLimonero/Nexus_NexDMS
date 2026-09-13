@@ -1,5 +1,5 @@
 /**
- * Registro centralizado de combos (dropdowns/selects) en NexDMS.
+ * Registro centralizado de combos (dropdowns/selects) en NexQSystem.
  * Mapea cada combo a su servicio y API correspondiente.
  * Usado por el skill validate-combo-loading para auditoría.
  *

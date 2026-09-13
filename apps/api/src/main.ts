@@ -78,7 +78,7 @@ async function bootstrap() {
 
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
-      .setTitle('NexDMS API')
+      .setTitle('NexQSystem API')
       .setDescription('Dealer Management System — Nexus Q Tech')
       .setVersion('1.0')
       .addBearerAuth()

@@ -176,7 +176,7 @@ export class MonitorAcceso {
       const p = this.pantalla();
       // El título se pone aquí y no en `ngOnInit` porque la estrategia de
       // títulos lo reescribe en cada navegación, incluida la del rechazo.
-      this.titulo.setTitle(`Acceso · ${p.nombre} — NexDMS`);
+      this.titulo.setTitle(`Acceso · ${p.nombre} — NexQSystem`);
 
       // Si el guard rechazó por rol se dice cuál hace falta, en vez de
       // devolver al acceso sin explicación y dejar probando la misma cuenta.

@@ -44,7 +44,7 @@ export class EmailComposer {
       }
     }
     return wrapClientEmail({
-      brandName: t?.name || 'NexDMS',
+      brandName: t?.name || 'NexQSystem',
       accent,
       logoUrl,
       title: subject,

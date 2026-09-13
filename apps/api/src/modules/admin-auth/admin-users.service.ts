@@ -82,14 +82,14 @@ export class AdminUsersService {
       const html = this.composer.brandedAdmin(
         'Acceso al portal de administración',
         `<p>Hola ${nombre ?? ''},</p>` +
-          `<p>Se creó tu cuenta en el portal de administración de NexDMS. ` +
+          `<p>Se creó tu cuenta en el portal de administración de NexQSystem. ` +
           `Crea tu contraseña para entrar:</p>` +
           emailButton('Crear mi contraseña', url) +
           `<p style="color:#94a3b8">Tu usuario es <strong>${email}</strong>. El enlace vence en 1 hora.</p>`,
         'Bienvenido',
       );
       await this.emailjs.enviar({
-        subject: 'Tu acceso al portal admin de NexDMS',
+        subject: 'Tu acceso al portal admin de NexQSystem',
         html,
         to: email,
       });
