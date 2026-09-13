@@ -1,0 +1,21 @@
+NexQS — Kit para portal
+
+Formatos: SVG vectorial con trazos (sin fuentes externas), PNG transparente e ICO.
+Variantes: color, negro y blanco. La versión blanca requiere fondo oscuro.
+
+logo-completo: incluye by Nexus Q Tech. PNG de 2400 px de ancho.
+logo: sin leyenda, recomendado para encabezados pequeños. PNG de 2400 px.
+isotipo: Q y flecha extraídas del diseño aprobado. PNG de 1024 x 1024.
+favicon: SVG, ICO multirresolución y PNG 16, 32, 48, 64, 180, 192 y 512 px.
+
+Paleta: azul #174EA6, turquesa #00AFA0, gris #526581.
+Negro #111111 y blanco #FFFFFF.
+
+El SVG es una vectorización del concepto aprobado, con contornos suavizados.
+Usar el SVG para máxima nitidez. Todos los PNG tienen canal alfa transparente.
+
+Ejemplo de integración (ajustar rutas):
+<link rel="icon" type="image/svg+xml" href="/brand/nexqs-favicon-color.svg">
+<link rel="icon" sizes="32x32" href="/brand/nexqs-favicon-color-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/brand/nexqs-favicon-color-180.png">
+<img src="/brand/nexqs-logo-color.svg" alt="NexQS" width="180">

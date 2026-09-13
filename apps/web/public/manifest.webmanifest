@@ -3,17 +3,17 @@
   "short_name": "NexQS",
   "icons": [
     {
-      "src": "brand/icon-192.png",
+      "src": "brand/nexqs-favicon-color-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "brand/icon-512.png",
+      "src": "brand/nexqs-favicon-color-512.png",
       "sizes": "512x512",
       "type": "image/png"
     },
     {
-      "src": "brand/maskable-512.png",
+      "src": "brand/nexqs-favicon-color-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"

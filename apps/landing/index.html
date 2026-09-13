@@ -5,10 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="NexQS — la plataforma automotriz para concesionarios, talleres (mecánica, hojalatería y pintura) y lotes de seminuevos, de autos y motos en México: ventas, taller, refacciones, CRM y facturación CFDI 4.0 en un solo lugar.">
 <meta name="theme-color" content="#105078">
-<link rel="icon" href="/brand/favicon.ico" sizes="any">
-<link rel="icon" type="image/png" sizes="32x32" href="/brand/favicon-32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/brand/favicon-16.png">
-<link rel="apple-touch-icon" href="/brand/apple-touch-icon.png">
+<link rel="icon" href="/brand/nexqs-favicon-color.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/brand/nexqs-favicon-color-32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/brand/nexqs-favicon-color-16.png">
+<link rel="apple-touch-icon" href="/brand/nexqs-favicon-color-180.png">
 <title>NexQS · Plataforma para agencias, talleres y lotes en México</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -193,6 +193,14 @@
     width: auto;
     display: block;
   }
+  /* En fondo oscuro se usa la variante blanca del logo. */
+  .brand-logo--dark { display: none; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .brand-logo--light { display: none; }
+    :root:not([data-theme="light"]) .brand-logo--dark { display: block; }
+  }
+  :root[data-theme="dark"] .brand-logo--light { display: none; }
+  :root[data-theme="dark"] .brand-logo--dark { display: block; }
   .brand small {
     font-family: var(--font-mono);
     font-weight: 500;
@@ -717,7 +725,8 @@
 <header class="nav">
   <div class="wrap nav-in">
     <a class="brand" href="#top" aria-label="NexQS, inicio">
-      <img class="brand-logo" src="/brand/logo.png" alt="NexQS" />
+      <img class="brand-logo brand-logo--light" src="/brand/nexqs-logo-completo-color.svg" alt="NexQS" />
+      <img class="brand-logo brand-logo--dark" src="/brand/nexqs-logo-completo-blanco.svg" alt="NexQS" />
     </a>
     <nav class="nav-links" aria-label="Secciones">
       <a href="#flujo">El flujo</a>
@@ -1195,7 +1204,8 @@
     <div class="foot-grid">
       <div class="foot-brand">
         <a class="brand" href="#top" aria-label="NexQS">
-          <img class="brand-logo" src="/brand/logo.png" alt="NexQS" />
+          <img class="brand-logo brand-logo--light" src="/brand/nexqs-logo-completo-color.svg" alt="NexQS" />
+      <img class="brand-logo brand-logo--dark" src="/brand/nexqs-logo-completo-blanco.svg" alt="NexQS" />
         </a>
         <p>La plataforma automotriz para concesionarios, talleres —mecánica,
            hojalatería y pintura— y lotes de seminuevos, de autos y motos en
