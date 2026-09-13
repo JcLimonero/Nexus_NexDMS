@@ -1,25 +1,17 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { RouterLink } from "@angular/router";
 import { Barra } from "../../shared/barra/barra";
-import { Perfiles } from "../perfiles/perfiles";
 import { WizardAlta } from "../wizard-alta/wizard-alta";
-import { FichaUsuarios } from "./ficha-usuarios/ficha-usuarios";
-import { FichaMarca } from "./ficha-marca/ficha-marca";
-import { FichaSucursales } from "./ficha-sucursales/ficha-sucursales";
-import { ConfirmService } from "../../shared/services/confirm.service";
 import { EscDirective } from "../../shared/directives/esc.directive";
 import {
-  CambioEstatus,
-  Ficha,
   Modulo,
   PlanPrecio,
   NuevoTenant,
   PLANES,
-  Pago,
   Panorama,
   Plan,
-  PrecioModulo,
   ResumenCobro,
   SaasService,
   Tenant,
@@ -27,23 +19,21 @@ import {
 } from "./tenants.service";
 
 /**
- * Portal de administración del SaaS: los grupos que usan NexDMS.
- *
- * El alta, el plan y la suspensión viven en la pantalla; los datos del cliente
- * y sus cobros, en un diálogo aparte: se consultan de vez en cuando y son
- * demasiados para meterlos en una fila de la tabla.
+ * Lista de empresas del SaaS: quién usa NexDMS, su plan, sus módulos y sus
+ * cobros de un vistazo. El alta (rápida o guiada) vive aquí en diálogos; la
+ * ficha de cada empresa —datos, cobros, marca, sucursales, usuarios, roles—
+ * tiene su propia ruta (`/tenants/:id`, ver FichaEmpresa).
  */
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, FichaUsuarios, FichaMarca, FichaSucursales, EscDirective],
+  imports: [CommonModule, FormsModule, RouterLink, Barra, WizardAlta, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
 export class Tenants implements OnInit {
   private srv = inject(TenantsService);
   private saas = inject(SaasService);
-  private confirm = inject(ConfirmService);
 
   readonly planes = PLANES;
 
@@ -53,10 +43,9 @@ export class Tenants implements OnInit {
   tenants = signal<Tenant[]>([]);
   catalogo = signal<Modulo[]>([]);
   panorama = signal<Panorama | null>(null);
-  precios = signal<PrecioModulo[]>([]);
   /** Último pago y próximo cobro por cliente (id → resumen), para la tabla. */
   cobros = signal<Map<string, ResumenCobro>>(new Map());
-  /** Paquetes comerciales; el alta y la ficha eligen de aquí. */
+  /** Paquetes comerciales; el alta elige de aquí. */
   planesComerciales = signal<PlanPrecio[]>([]);
 
   /** Los retirados no se ofrecen en un alta, pero siguen vigentes en su ficha. */
@@ -75,35 +64,11 @@ export class Tenants implements OnInit {
    */
   planId = "";
 
-  /** Tenant cuyos módulos se están ajustando. */
-  moduloDe = signal<Tenant | null>(null);
-  seleccion = signal<Set<string>>(new Set());
-
-  /**
-   * Módulos que el plan del tenant permite. El plan es el tope; dentro de él
-   * se puede apagar lo que el cliente no contrató.
-   */
-  modulosDelPlan = computed(() => {
-    const t = this.moduloDe();
-    if (!t) return [];
-    const tope = this.ordenPlan(t.plan);
-    return this.catalogo().filter((m) => this.ordenPlan(m.minPlan) <= tope);
-  });
-
-  /** Los que quedan fuera por plan: se muestran para poder venderlos. */
-  modulosFueraDePlan = computed(() => {
-    const t = this.moduloDe();
-    if (!t) return [];
-    const tope = this.ordenPlan(t.plan);
-    return this.catalogo().filter((m) => this.ordenPlan(m.minPlan) > tope);
-  });
-
   ngOnInit(): void {
     this.cargar();
     this.srv.catalogo().subscribe({
       next: (c) => this.catalogo.set(c.modules ?? []),
     });
-    this.saas.preciosDeModulos().subscribe({ next: (p) => this.precios.set(p) });
     this.saas.planes().subscribe({
       next: (p) => {
         this.planesComerciales.set(p);
@@ -120,11 +85,6 @@ export class Tenants implements OnInit {
     return p?.name ?? this.etiquetaPlan(t.plan);
   }
 
-  /** Lo que cuesta al mes un módulo fuera de plan, para poder ofrecerlo. */
-  precioDe(key: string): number {
-    return this.precios().find((p) => p.key === key)?.monthlyPrice ?? 0;
-  }
-
   private ordenPlan(p: Plan): number {
     return this.planes.find((x) => x.value === p)?.orden ?? 0;
   }
@@ -136,41 +96,6 @@ export class Tenants implements OnInit {
   private avisar(texto: string, tono: "ok" | "error" = "ok"): void {
     this.aviso.set({ texto, tono });
     setTimeout(() => this.aviso.set(null), 3500);
-  }
-
-  /** La última liga copiada, para el acuse "¡Copiada!" en el botón. */
-  copiado = signal<string | null>(null);
-
-  /** Copia la liga de acceso al portapapeles. */
-  copiar(texto: string): void {
-    navigator.clipboard?.writeText(texto).then(
-      () => {
-        this.copiado.set(texto);
-        setTimeout(() => this.copiado.set(null), 2000);
-      },
-      () => this.avisar("No se pudo copiar", "error"),
-    );
-  }
-
-  /** Abre el DMS del cliente con la sesión ya puesta, en otra pestaña. */
-  entrar(t: Tenant): void {
-    if (!t.isActive) {
-      this.avisar("La empresa está suspendida; reactívala para entrar", "error");
-      return;
-    }
-    // La pestaña se abre antes de la respuesta para no toparse con el bloqueo
-    // de pop-ups (debe salir del gesto del clic).
-    const tab = window.open("", "_blank");
-    this.srv.entrarComo(t.id).subscribe({
-      next: (res) => {
-        if (tab) tab.location.href = res.url;
-        else window.location.href = res.url;
-      },
-      error: (err) => {
-        tab?.close();
-        this.avisar(err?.error?.message || "No se pudo entrar a la empresa", "error");
-      },
-    });
   }
 
   cargar(): void {
@@ -196,7 +121,20 @@ export class Tenants implements OnInit {
     return this.cobros().get(t.id);
   }
 
-  // ─── Alta y edición ─────────────────────────────────────────
+  /**
+   * Módulos que el cliente tiene por encima de su plan (contratados aparte).
+   * Un `enabledModules` nulo significa "solo lo del plan": sin extras.
+   */
+  extrasDe(t: Tenant): Modulo[] {
+    const enabled = t.enabledModules;
+    if (!enabled) return [];
+    const tope = this.ordenPlan(t.plan);
+    return this.catalogo().filter(
+      (m) => enabled.includes(m.key) && this.ordenPlan(m.minPlan) > tope,
+    );
+  }
+
+  // ─── Alta ───────────────────────────────────────────────────
 
   /** Marca si el admin ya tecleó el prefijo a mano (para no pisárselo). */
   private prefijoTocado = false;
@@ -316,338 +254,6 @@ export class Tenants implements OnInit {
           "error",
         );
       },
-    });
-  }
-
-  // ─── Suspender / reactivar (con motivo y bitácora) ──────────
-
-  /** Cliente cuyo cambio de estatus se está confirmando; null = ninguno. */
-  suspensionDe = signal<Tenant | null>(null);
-  motivoSuspension = signal("");
-
-  pedirSuspension(t: Tenant): void {
-    this.suspensionDe.set(t);
-    this.motivoSuspension.set("");
-  }
-
-  cerrarSuspension(): void {
-    this.suspensionDe.set(null);
-  }
-
-  confirmarSuspension(): void {
-    const t = this.suspensionDe();
-    if (!t) return;
-    const motivo = this.motivoSuspension().trim();
-    if (!motivo) {
-      this.avisar("Escribe el motivo del cambio de estatus", "error");
-      return;
-    }
-    this.guardando.set(true);
-    this.srv.suspender(t.id, motivo).subscribe({
-      next: (actualizado) => {
-        this.guardando.set(false);
-        this.avisar(t.isActive ? "Empresa suspendida" : "Empresa reactivada");
-        this.cerrarSuspension();
-        this.cargar();
-        // Si la ficha del mismo cliente está abierta, refresca su estatus y su
-        // bitácora sin cerrarla, para poder alternar de nuevo desde ahí mismo.
-        if (this.fichaDe()?.id === t.id) {
-          this.fichaDe.set(actualizado);
-          this.cargarHistorial(t.id);
-        }
-      },
-      error: (e) => {
-        this.guardando.set(false);
-        this.avisar(e?.error?.message || "No se pudo cambiar", "error");
-      },
-    });
-  }
-
-  // ─── Módulos ────────────────────────────────────────────────
-
-  abrirModulos(t: Tenant): void {
-    this.moduloDe.set(t);
-    this.srv.modulosDe(t.id).subscribe({
-      next: (r) => {
-        // `null` significa "todo lo que el plan permite": se marca completo
-        // para que el superadmin vea el estado real, no una lista vacía.
-        const permitidos = this.catalogo()
-          .filter((m) => this.ordenPlan(m.minPlan) <= this.ordenPlan(t.plan))
-          .map((m) => m.key);
-        this.seleccion.set(new Set(r.enabledModules ?? permitidos));
-      },
-    });
-  }
-
-  cerrarModulos(): void {
-    this.moduloDe.set(null);
-  }
-
-  activo(m: Modulo): boolean {
-    return m.core || this.seleccion().has(m.key);
-  }
-
-  alternarModulo(m: Modulo): void {
-    if (m.core) return;
-    this.seleccion.update((s) => {
-      const n = new Set(s);
-      if (n.has(m.key)) n.delete(m.key);
-      else n.add(m.key);
-      return n;
-    });
-  }
-
-  /**
-   * Guarda los módulos en dos pasos porque son dos decisiones distintas: los
-   * del plan se encienden o apagan, y los de fuera se contratan (y se cobran).
-   * Primero la lista del plan y después los extras, porque el segundo parte de
-   * lo que dejó el primero.
-   */
-  guardarModulos(): void {
-    const t = this.moduloDe();
-    if (!t) return;
-    this.guardando.set(true);
-
-    const dentro = new Set<string>();
-    for (const m of this.modulosDelPlan()) {
-      if (m.core || this.seleccion().has(m.key)) dentro.add(m.key);
-    }
-    const extras = this.modulosFueraDePlan()
-      .filter((m) => this.seleccion().has(m.key))
-      .map((m) => m.key);
-
-    this.srv.guardarModulos(t.id, [...dentro]).subscribe({
-      next: () => {
-        this.saas.guardarFicha(t.id, { extraModules: extras }).subscribe({
-          next: () => {
-            this.guardando.set(false);
-            this.avisar(`Módulos de ${t.name} actualizados`);
-            this.cerrarModulos();
-            this.cargar();
-          },
-          error: (e) => {
-            this.guardando.set(false);
-            this.avisar(
-              e?.error?.message || "No se pudieron contratar los extras",
-              "error",
-            );
-          },
-        });
-      },
-      error: (e) => {
-        this.guardando.set(false);
-        this.avisar(e?.error?.message || "No se pudo guardar", "error");
-      },
-    });
-  }
-
-  /**
-   * Módulos que el cliente tiene por encima de su plan (contratados aparte).
-   * Un `enabledModules` nulo significa "solo lo del plan": sin extras.
-   */
-  extrasDe(t: Tenant): Modulo[] {
-    const enabled = t.enabledModules;
-    if (!enabled) return [];
-    const tope = this.ordenPlan(t.plan);
-    return this.catalogo().filter(
-      (m) => enabled.includes(m.key) && this.ordenPlan(m.minPlan) > tope,
-    );
-  }
-
-  // ─── Ficha del cliente ──────────────────────────────────────
-
-  /** Cliente cuya ficha se está viendo; null = ninguna abierta. */
-  fichaDe = signal<Tenant | null>(null);
-  ficha = signal<Ficha | null>(null);
-  /** Qué se ve dentro de la ficha: sus datos, sus cobros o su marca. */
-  pestana = signal<
-    "datos" | "sucursales" | "pagos" | "marca" | "usuarios" | "perfiles"
-  >("datos");
-
-  // Los tabs Usuarios y Marca viven en <app-ficha-usuarios> y <app-ficha-marca>
-  // (autocontenidos): reciben el id de la empresa y se cargan solos.
-
-  datos = {
-    name: "",
-    slug: "",
-    saasPlanId: "" as string | null,
-    contactName: "",
-    contactEmail: "",
-    contactPhone: "",
-    rfc: "",
-    billingEmail: "",
-    address: "",
-    notes: "",
-    subscriptionStart: "",
-    billingDay: null as number | null,
-  };
-
-  pago = {
-    period: "",
-    amount: 0,
-    status: "PAGADO" as Pago["status"],
-    dueDate: "",
-    method: "",
-    reference: "",
-    concept: "",
-  };
-
-  /** Bitácora de cambios de estatus del cliente de la ficha. */
-  historial = signal<CambioEstatus[]>([]);
-
-  private cargarHistorial(id: string): void {
-    this.srv.historialEstatus(id).subscribe({
-      next: (h) => this.historial.set(h),
-      error: () => this.historial.set([]),
-    });
-  }
-
-  /** Tabs cuyos datos ya se cargaron (lazy: se traen al abrir cada pestaña). */
-  private tabsCargados = new Set<string>();
-
-  /** Cambia de pestaña y carga sus datos la primera vez que se visualiza. */
-  verPestana(
-    tab: "datos" | "sucursales" | "pagos" | "marca" | "usuarios" | "perfiles",
-  ): void {
-    this.pestana.set(tab);
-    const t = this.fichaDe();
-    if (!t || this.tabsCargados.has(tab)) return;
-    this.tabsCargados.add(tab);
-    if (tab === "datos") this.cargarHistorial(t.id);
-    // 'usuarios' y 'marca' se autocargan en sus componentes; 'perfiles' también
-    // (embebido); 'pagos' viene en ficha().
-  }
-
-  abrirFicha(t: Tenant): void {
-    this.fichaDe.set(t);
-    this.ficha.set(null);
-    this.pestana.set("datos");
-    this.historial.set([]);
-    this.tabsCargados.clear();
-    // El tab por defecto (datos) carga su historial de una vez.
-    this.tabsCargados.add("datos");
-    this.cargarHistorial(t.id);
-    this.saas.ficha(t.id).subscribe({
-      next: (f) => {
-        this.ficha.set(f);
-        this.datos = {
-          name: f.tenant.name,
-          slug: f.tenant.slug,
-          // Si no tiene plan comercial ligado, se propone el que corresponde a
-          // su nivel (BASIC/PRO/…) para que no abra en "Sin plan asignado".
-          saasPlanId:
-            f.tenant.saasPlanId ||
-            this.planesComerciales().find((p) => p.key === f.tenant.plan)?.id ||
-            "",
-          contactName: f.tenant.contactName ?? "",
-          contactEmail: f.tenant.contactEmail ?? "",
-          contactPhone: f.tenant.contactPhone ?? "",
-          rfc: f.tenant.rfc ?? "",
-          billingEmail: f.tenant.billingEmail ?? "",
-          address: f.tenant.address ?? "",
-          notes: f.tenant.notes ?? "",
-          subscriptionStart: f.tenant.subscriptionStart ?? "",
-          billingDay: f.tenant.billingDay,
-        };
-        // El cobro nuevo se propone con el mes en curso y lo que le toca
-        // pagar: lo habitual es confirmarlo, no capturarlo entero.
-        this.pago = {
-          period: this.mesActual(),
-          amount: f.cobro.total,
-          status: "PAGADO",
-          dueDate: "",
-          method: "TRANSFERENCIA",
-          reference: "",
-          concept: "",
-        };
-      },
-      error: () => this.avisar("No se pudo cargar la ficha", "error"),
-    });
-  }
-
-  private mesActual(): string {
-    const h = new Date();
-    return `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, "0")}`;
-  }
-
-  cerrarFicha(): void {
-    this.fichaDe.set(null);
-    this.ficha.set(null);
-  }
-
-  guardarDatos(): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    this.guardando.set(true);
-    this.saas
-      .guardarFicha(t.id, {
-        ...this.datos,
-        // El día de cobro vacío es "sin definir", no el día cero.
-        billingDay: this.datos.billingDay || null,
-        subscriptionStart: this.datos.subscriptionStart || null,
-        saasPlanId: this.datos.saasPlanId || null,
-      })
-      .subscribe({
-        next: () => {
-          this.guardando.set(false);
-          this.avisar("Datos de la empresa guardados");
-          this.abrirFicha(t);
-        },
-        error: (e) => {
-          this.guardando.set(false);
-          this.avisar(e?.error?.message || "No se pudo guardar", "error");
-        },
-      });
-  }
-
-  registrarPago(): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    if (!/^\d{4}-\d{2}$/.test(this.pago.period)) {
-      this.avisar("El periodo va como 2026-08", "error");
-      return;
-    }
-    this.guardando.set(true);
-    this.saas
-      .registrarPago(t.id, {
-        ...this.pago,
-        amount: Number(this.pago.amount),
-        dueDate: this.pago.dueDate || null,
-        method: this.pago.method || null,
-        reference: this.pago.reference || null,
-        concept: this.pago.concept || null,
-      })
-      .subscribe({
-        next: () => {
-          this.guardando.set(false);
-          this.avisar(`Cobro de ${this.pago.period} registrado`);
-          this.abrirFicha(t);
-          this.pestana.set("pagos");
-        },
-        error: (e) => {
-          this.guardando.set(false);
-          this.avisar(e?.error?.message || "No se pudo registrar", "error");
-        },
-      });
-  }
-
-  async eliminarPago(p: Pago): Promise<void> {
-    const t = this.fichaDe();
-    if (!t) return;
-    const ok = await this.confirm.pedir({
-      titulo: "Borrar cobro",
-      mensaje: `¿Borrar el cobro de ${p.period}?`,
-      confirmar: "Borrar",
-      peligro: true,
-    });
-    if (!ok) return;
-    this.saas.eliminarPago(p.id).subscribe({
-      next: () => {
-        this.avisar("Cobro eliminado");
-        this.abrirFicha(t);
-        this.pestana.set("pagos");
-      },
-      error: () => this.avisar("No se pudo eliminar", "error"),
     });
   }
 }

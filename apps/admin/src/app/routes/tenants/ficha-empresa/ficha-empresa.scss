@@ -1,0 +1,297 @@
+/**
+ * Estilos propios de la ficha de empresa. El panel, la tabla, los botones, el
+ * armazón del diálogo (módulos/suspensión) y la lista de módulos son comunes y
+ * viven en `styles/_panel.scss`. Aquí no hay colores a mano: todo por tokens.
+ */
+
+/* Volver a la lista de empresas */
+.volver {
+  display: inline-block;
+  margin-bottom: var(--space-12);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--primary);
+  }
+}
+
+.precio-extra {
+  font-size: var(--text-caption);
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* El de fuera de plan se ofrece, no se atenúa: ahora se vende. */
+.modulo.extra {
+  border-style: dashed;
+}
+
+.indicadores.compactos {
+  margin-bottom: var(--space-16);
+
+  .indicador {
+    padding: var(--space-12);
+    background: var(--bg);
+    box-shadow: none;
+  }
+
+  .cifra {
+    font-size: var(--text-xl);
+  }
+}
+
+.pestanas {
+  display: flex;
+  gap: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-16);
+  flex-wrap: wrap;
+
+  button {
+    padding: var(--space-8) 14px;
+    border: none;
+    border-bottom: 2px solid transparent;
+    background: none;
+    font-family: inherit;
+    font-size: var(--text-body);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  button.activa {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    font-weight: var(--font-semibold);
+  }
+}
+
+/* La fila con la que se registra el cobro se separa de la tabla de abajo. */
+.rejilla.cobro {
+  align-items: end;
+  padding-bottom: var(--space-16);
+  margin-bottom: var(--space-8);
+  border-bottom: 1px solid var(--border);
+}
+
+.cobro-estado {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  background: var(--bg);
+  color: var(--text-secondary);
+
+  &[data-estado="PAGADO"] {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+  &[data-estado="VENCIDO"] {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  &[data-estado="PENDIENTE"] {
+    background: var(--warning-bg);
+    color: var(--warning);
+  }
+}
+
+/* ── Ficha: encabezado con acciones a la derecha ── */
+.ficha-header {
+  align-items: center;
+}
+.ficha-ident h2 {
+  margin: 0;
+}
+.ficha-header-acc {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+/* Grupos de campos en el tab de datos (menos "muro de inputs") */
+.datos-grupos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+.grupo-titulo {
+  margin: 0 0 var(--space-12);
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Ligas de acceso colapsables */
+.liga-acceso-det {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-8) var(--space-12);
+  margin-bottom: var(--space-16);
+  background: var(--bg);
+}
+.liga-acceso-det > summary {
+  cursor: pointer;
+  font-size: var(--text-caption);
+  font-weight: var(--font-semibold);
+  color: var(--text-secondary);
+}
+.liga-acceso-det[open] > summary {
+  margin-bottom: var(--space-12);
+}
+.liga-acceso {
+  margin: 0 0 1rem;
+
+  .liga-fila {
+    display: flex;
+    gap: 0.4rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+
+    input {
+      flex: 1;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.45rem 0.6rem;
+      color: var(--text-primary);
+    }
+    a.btn-chico {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+}
+.liga-acceso .liga-rotulo {
+  min-width: 78px;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ── Bitácora de estatus (en la ficha) ── */
+.historial {
+  margin-top: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--border);
+}
+.historial-titulo {
+  margin: 0 0 var(--space-8);
+  font-size: var(--text-body);
+}
+.historial-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+.historial-estatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+
+  .historial-titulo {
+    margin: 0;
+  }
+}
+.historial-subtitulo {
+  font-size: var(--text-caption);
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.btn-estatus {
+  white-space: nowrap;
+}
+.historial-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+.historial-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+  font-size: var(--text-caption);
+}
+.historial-fecha {
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+.historial-motivo {
+  flex: 1 1 200px;
+  color: var(--text-primary);
+}
+
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pastilla {
+  display: inline-block;
+  padding: 2px var(--space-8);
+  margin-right: 4px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  background: var(--warning-bg);
+  color: var(--warning);
+
+  &[data-estado="BLOQUEADO"] {
+    background: var(--danger-bg);
+    color: var(--danger);
+  }
+  &[data-estado="ACTIVO"] {
+    background: var(--success-bg);
+    color: var(--success);
+  }
+}
+
+/* Diálogo angosto para confirmaciones cortas. */
+.dialogo.angosto {
+  max-width: 460px;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.ancho-total {
+  grid-column: 1 / -1;
+}
+.acciones-fila {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.pill-alerta {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: transparent;
+}

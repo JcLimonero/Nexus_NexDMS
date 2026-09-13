@@ -31,7 +31,16 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import("./routes/tenants/tenants").then((m) => m.Tenants),
-    title: "Clientes — Administración NexDMS",
+    title: "Empresas — Administración NexDMS",
+  },
+  {
+    path: "tenants/:id",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./routes/tenants/ficha-empresa/ficha-empresa").then(
+        (m) => m.FichaEmpresa,
+      ),
+    title: "Ficha de empresa — Administración NexDMS",
   },
   {
     path: "precios",
