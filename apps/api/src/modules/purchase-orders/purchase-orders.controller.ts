@@ -6,9 +6,11 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
@@ -18,6 +20,8 @@ import { IdempotencyGuard } from '../../common/guards/idempotency.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { IdempotencyInterceptor } from '../../common/interceptors/idempotency.interceptor';
 import { PurchaseOrdersService } from './purchase-orders.service';
+import { OrdenCompraPdfService } from './orden-compra-pdf.service';
+import { DocumentoCorreoService } from '../../common/document-mail/documento-correo.service';
 import { CreatePurchaseOrderDto } from './dto/create-purchase-order.dto';
 import { UpdatePurchaseOrderDto } from './dto/update-purchase-order.dto';
 import { ReceivePurchaseOrderDto } from './dto/receive-purchase-order.dto';
@@ -31,7 +35,54 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('purchase-orders')
 export class PurchaseOrdersController {
-  constructor(private readonly purchaseOrdersService: PurchaseOrdersService) {}
+  constructor(
+    private readonly purchaseOrdersService: PurchaseOrdersService,
+    private readonly ordenCompraPdf: OrdenCompraPdfService,
+    private readonly correo: DocumentoCorreoService,
+  ) {}
+
+  /**
+   * La orden de compra en papel: es lo que se manda al proveedor para autorizar
+   * el surtido. Va `inline` para revisarla antes de enviarla o imprimirla.
+   */
+  @Get(':id/pdf')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')
+  async pdf(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.ordenCompraPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
+  }
+
+  /** Envía la orden de compra por correo al proveedor con el PDF adjunto. */
+  @Post(':id/email')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE')
+  async enviarCorreo(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() body: { email?: string; mensaje?: string },
+  ) {
+    const doc = await this.ordenCompraPdf.generar(user.tenantId, id);
+    return this.correo.enviar({
+      to: body.email || doc.clientEmail || '',
+      negocio: doc.negocio,
+      tipo: 'Orden de compra',
+      folio: doc.folio,
+      filename: doc.filename,
+      buffer: doc.buffer,
+      mensaje: body.mensaje,
+    });
+  }
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'WAREHOUSE', 'CASHIER', 'SELLER')

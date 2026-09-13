@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
+import { abrirPdf } from "../../../../shared/utils/abrir-pdf";
 import { ComprasService } from "../../compras.service";
 import { BranchesService } from "../../../inventario-refacciones/services/branches.service";
 import {
@@ -28,6 +30,7 @@ export class OrdenCompraDetail implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
 
   fases = [
     { key: "DRAFT", label: "Borrador" },
@@ -229,6 +232,34 @@ export class OrdenCompraDetail implements OnInit {
         this.pagando.set(false);
         this.toastr.error(err?.error?.message || "No se pudo actualizar");
       },
+    });
+  }
+
+  /** Abre la orden de compra en PDF (blob, para imprimir o mandar al proveedor). */
+  verPdf(): void {
+    const o = this.orden();
+    if (!o) return;
+    abrirPdf(this.http, `/api/v1/purchase-orders/${o.id}/pdf`, {
+      filename: `${o.folio}.pdf`,
+      onError: () => this.toastr.error("No se pudo generar el PDF"),
+    });
+  }
+
+  /** Envía la orden de compra por correo (PDF adjunto) al proveedor. */
+  enviarCorreo(): void {
+    const o = this.orden();
+    if (!o) return;
+    const email = window.prompt(
+      "Enviar la orden por correo a (vacío = correo del proveedor):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/purchase-orders/${o.id}/email`, body).subscribe({
+      next: () => this.toastr.success("Orden enviada por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
     });
   }
 
