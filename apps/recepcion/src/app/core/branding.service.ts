@@ -74,7 +74,7 @@ export class BrandingService {
   }
 
   /** Usa el isotipo del cliente como favicon de la pestaña, si lo tiene.
-   * Sobrescribe TODOS los links de icono (hay un default NexQSystem en el HTML)
+   * Sobrescribe TODOS los links de icono (hay un default NexQS en el HTML)
    * y les quita el type para que ninguno le gane por formato. */
   private pintarFavicon(iconUrl: string | null): void {
     if (!iconUrl) return;
@@ -96,7 +96,7 @@ export class BrandingService {
     localStorage.setItem(CLAVE, JSON.stringify(b));
     this.branding.set(b);
     // El cliente al frente de la pestaña, para no confundir portales abiertos.
-    if (b.nombre) document.title = `${b.nombre} · NexQSystem Recepción`;
+    if (b.nombre) document.title = `${b.nombre} · NexQS Recepción`;
     this.pintarFavicon(b.iconUrl ?? null);
     const r = document.documentElement.style;
     const p = b.paleta;

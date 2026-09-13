@@ -15,7 +15,7 @@ import {
 } from "../tenants/tenants.service";
 
 /**
- * Lo que cuesta NexQSystem: los paquetes que se venden y el precio de los módulos
+ * Lo que cuesta NexQS: los paquetes que se venden y el precio de los módulos
  * que se contratan aparte.
  *
  * Se editan juntos porque se deciden juntos: cuánto vale un paquete depende de

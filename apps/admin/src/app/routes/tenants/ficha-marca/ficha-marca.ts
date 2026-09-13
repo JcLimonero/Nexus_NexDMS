@@ -6,7 +6,7 @@ import { NotificacionService } from "../../../shared/services/notificacion.servi
 
 /**
  * Tab de la ficha: la marca de la empresa (logotipo, isotipo y paleta), que se
- * aplica en todo su NexQSystem y en lo que imprime. Autocontenido: recibe el id de
+ * aplica en todo su NexQS y en lo que imprime. Autocontenido: recibe el id de
  * la empresa y carga su branding y las paletas disponibles.
  */
 @Component({

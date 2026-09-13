@@ -19,7 +19,7 @@ import {
 } from "./tenants.service";
 
 /**
- * Lista de empresas del SaaS: quién usa NexQSystem, su plan, sus módulos y sus
+ * Lista de empresas del SaaS: quién usa NexQS, su plan, sus módulos y sus
  * cobros de un vistazo. El alta (rápida o guiada) vive aquí en diálogos; la
  * ficha de cada empresa —datos, cobros, marca, sucursales, usuarios, roles—
  * tiene su propia ruta (`/tenants/:id`, ver FichaEmpresa).

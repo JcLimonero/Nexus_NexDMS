@@ -26,7 +26,7 @@ import {
     <div class="container-fluid">
       <app-ui-page-header
         title="Facturación"
-        description="Resumen de uso y planes de NexQSystem"
+        description="Resumen de uso y planes de NexQS"
       >
         <div actions>
           <app-ui-button variant="primary" routerLink="/configuracion">

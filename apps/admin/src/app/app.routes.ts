@@ -5,33 +5,33 @@ export const routes: Routes = [
   {
     path: "acceso",
     loadComponent: () => import("./routes/acceso/acceso").then((m) => m.Acceso),
-    title: "Acceso — Administración NexQSystem",
+    title: "Acceso — Administración NexQS",
   },
   {
     path: "auth/forgot-password",
     loadComponent: () =>
       import("./routes/recuperar/recuperar").then((m) => m.Recuperar),
-    title: "Recuperar contraseña — NexQSystem Admin",
+    title: "Recuperar contraseña — NexQS Admin",
   },
   {
     path: "auth/reset-password",
     loadComponent: () =>
       import("./routes/restablecer/restablecer").then((m) => m.Restablecer),
-    title: "Nueva contraseña — NexQSystem Admin",
+    title: "Nueva contraseña — NexQS Admin",
   },
   {
     path: "dashboard",
     canActivate: [authGuard],
     loadComponent: () =>
       import("./routes/dashboard/dashboard").then((m) => m.Dashboard),
-    title: "Panel de control — Administración NexQSystem",
+    title: "Panel de control — Administración NexQS",
   },
   {
     path: "tenants",
     canActivate: [authGuard],
     loadComponent: () =>
       import("./routes/tenants/tenants").then((m) => m.Tenants),
-    title: "Empresas — Administración NexQSystem",
+    title: "Empresas — Administración NexQS",
   },
   {
     path: "tenants/:id",
@@ -40,14 +40,14 @@ export const routes: Routes = [
       import("./routes/tenants/ficha-empresa/ficha-empresa").then(
         (m) => m.FichaEmpresa,
       ),
-    title: "Ficha de empresa — Administración NexQSystem",
+    title: "Ficha de empresa — Administración NexQS",
   },
   {
     path: "precios",
     canActivate: [authGuard],
     loadComponent: () =>
       import("./routes/precios/precios").then((m) => m.Precios),
-    title: "Planes y precios — Administración NexQSystem",
+    title: "Planes y precios — Administración NexQS",
   },
   {
     path: "catalogos-maestros",
@@ -56,20 +56,20 @@ export const routes: Routes = [
       import("./routes/catalogos-maestros/catalogos-maestros").then(
         (m) => m.CatalogosMaestros,
       ),
-    title: "Catálogos maestros — Administración NexQSystem",
+    title: "Catálogos maestros — Administración NexQS",
   },
   {
     path: "roles",
     canActivate: [authGuard],
     loadComponent: () => import("./routes/roles/roles").then((m) => m.Roles),
-    title: "Catálogo de roles — Administración NexQSystem",
+    title: "Catálogo de roles — Administración NexQS",
   },
   {
     path: "usuarios",
     canActivate: [authGuard],
     loadComponent: () =>
       import("./routes/usuarios/usuarios").then((m) => m.Usuarios),
-    title: "Usuarios del portal — Administración NexQSystem",
+    title: "Usuarios del portal — Administración NexQS",
   },
   {
     // Raíz del dominio: con sesión → panel; sin sesión → landing pública.

@@ -36,7 +36,7 @@ export class Header implements OnInit, OnDestroy {
   private translate = inject(TranslateService);
   private brandingService = inject(BrandingService);
 
-  /** Logotipo del cliente para la cabecera; si no hay, cae al de NexQSystem. */
+  /** Logotipo del cliente para la cabecera; si no hay, cae al de NexQS. */
   readonly logoUrl = computed(
     () => this.brandingService.branding()?.logoUrl ?? null,
   );

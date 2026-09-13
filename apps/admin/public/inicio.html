@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="NexQSystem — la plataforma automotriz para concesionarios y talleres (mecánica, hojalatería y pintura) de autos y motos en México: ventas, taller, refacciones, CRM y facturación CFDI 4.0 en un solo lugar.">
+<meta name="description" content="NexQS — la plataforma automotriz para concesionarios y talleres (mecánica, hojalatería y pintura) de autos y motos en México: ventas, taller, refacciones, CRM y facturación CFDI 4.0 en un solo lugar.">
 <meta name="theme-color" content="#105078">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23105078'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='6.6'/%3E%3Cpath d='M15.4 15.4 18.4 18.4'/%3E%3Cpath d='M12 7v3.2M13.1 12.9l3 1.7M10.9 12.9l-3 1.7'/%3E%3C/g%3E%3Cg fill='%23fff'%3E%3Ccircle cx='12' cy='12' r='1.5'/%3E%3Ccircle cx='12' cy='5.4' r='1.3'/%3E%3Ccircle cx='6.3' cy='15.6' r='1.3'/%3E%3Ccircle cx='17.7' cy='15.6' r='1.3'/%3E%3C/g%3E%3C/svg%3E">
-<title>NexQSystem · Plataforma para agencias y talleres en México</title>
+<title>NexQS · Plataforma para agencias y talleres en México</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -431,19 +431,44 @@
   .chat-in .send { margin-left: auto; color: #9fd0e6; }
   .chat-in .send svg { width: 17px; height: 17px; display: block; }
 
-  /* ── Banda de monitores (citas) ── */
-  .mon-band {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 56px;
-    align-items: center;
+  /* ── App window (visual del hero: vista tipo panel) ── */
+  .appwin {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
   }
-  .mon-copy .eyebrow { color: var(--accent-ink); }
-  .mon-copy h2 { font-size: clamp(28px, 3.6vw, 42px); font-weight: 700; margin-top: 12px; }
-  .mon-copy p { font-size: 18px; color: var(--body); margin: 16px 0 0; max-width: 34em; }
-  .mon-list { margin: 22px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
-  .mon-list li { display: flex; gap: 11px; align-items: flex-start; font-size: 15px; color: var(--body); }
-  .mon-list svg { width: 19px; height: 19px; color: var(--navy); flex-shrink: 0; margin-top: 3px; }
+  .appwin-bar {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 12px 16px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+  }
+  .appwin-bar .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--line-strong); }
+  .appwin-bar .t { margin-left: 10px; font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+  .appwin-body { padding: 18px; }
+  .appwin-kpis { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .appwin-kpi { border: 1px solid var(--line); border-radius: 10px; padding: 13px 14px; background: var(--surface-2); }
+  .appwin-kpi .k-ic { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; background: var(--navy-tint); color: var(--navy); margin-bottom: 9px; }
+  .appwin-kpi .k-ic svg { width: 17px; height: 17px; }
+  .appwin-kpi .k-num { font-family: var(--font-display); font-weight: 700; font-size: 23px; color: var(--ink); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .appwin-kpi .k-lbl { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .appwin-chart { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+  .appwin-chart .c-title { font-family: var(--font-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 11px; }
+  .bar-row { display: grid; grid-template-columns: 112px 1fr 22px; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 12.5px; color: var(--body); }
+  .bar-track { height: 8px; background: var(--bg); border: 1px solid var(--line); border-radius: 5px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 5px; background: var(--navy); }
+  .bar-fill.ok { background: var(--ok); }
+  .bar-fill.warn { background: var(--warn); }
+  .bar-row .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--ink); font-weight: 600; }
+
+  /* ── Sección de monitores (taller + citas, lado a lado) ── */
+  .monitores-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .mon-item .mon-h { font-size: 18px; font-weight: 600; color: var(--ink); }
+  .mon-item .mon-d { font-size: 14px; color: var(--muted); margin: 6px 0 16px; max-width: 42ch; }
 
   /* ── Section scaffolding ── */
   section { padding: clamp(56px, 8vw, 92px) 0; }
@@ -527,7 +552,7 @@
   .roles-sec { background: var(--surface-2); }
   .roles {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 16px;
   }
   .role {
@@ -677,7 +702,7 @@
     .steps { grid-template-columns: repeat(2, 1fr); }
     .benes { grid-template-columns: 1fr 1fr; }
     .cumpl-grid { grid-template-columns: 1fr; }
-    .mon-band { grid-template-columns: 1fr; gap: 36px; }
+    .monitores-2 { grid-template-columns: 1fr; }
     .nav-links { display: none; }
   }
   @media (max-width: 560px) {
@@ -693,16 +718,17 @@
 <!-- ══════════════════ NAV ══════════════════ -->
 <header class="nav">
   <div class="wrap nav-in">
-    <a class="brand" href="#top" aria-label="NexQSystem, inicio">
+    <a class="brand" href="#top" aria-label="NexQS, inicio">
       <span class="glyph" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.6" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 15.4 18.4 18.4M12 7v3.2M13.1 12.9l3 1.7M10.9 12.9l-3 1.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><g fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.4" r="1.3"/><circle cx="6.3" cy="15.6" r="1.3"/><circle cx="17.7" cy="15.6" r="1.3"/></g></svg>
       </span>
-      <span>NexQSystem<small>Plataforma automotriz</small></span>
+      <span>NexQS<small>Plataforma automotriz</small></span>
     </a>
     <nav class="nav-links" aria-label="Secciones">
       <a href="#flujo">El flujo</a>
       <a href="#modulos">Módulos</a>
       <a href="#roles">Plataformas</a>
+      <a href="#monitores">Monitores</a>
       <a href="#ia">Asistente IA</a>
       <a href="#cumplimiento">Cumplimiento</a>
     </nav>
@@ -725,7 +751,7 @@
         <p class="eyebrow">Plataforma automotriz · agencias y talleres</p>
         <h1>Todo tu negocio automotriz en <span class="hl">un solo sistema.</span></h1>
         <p class="lead">
-          NexQSystem conecta ventas, taller, refacciones y facturación en una sola
+          NexQS conecta ventas, taller, refacciones y facturación en una sola
           plataforma — con <strong>CFDI&nbsp;4.0</strong> y cumplimiento
           <strong>PLD</strong> listos para el SAT. Para concesionarios y talleres
           —mecánica, hojalatería y pintura— de autos y motos en México.
@@ -742,40 +768,44 @@
         </div>
       </div>
 
-      <!-- Monitor de taller: la pieza más característica del producto -->
-      <div class="monitor" role="img" aria-label="Monitor de taller mostrando órdenes de servicio con semáforo de tiempos: en tiempo, por vencer y retrasada.">
-        <div class="monitor-top">
-          <div>
-            <div class="m-title">Monitor de taller</div>
-            <div class="m-sub">Sucursal Centro</div>
+      <!-- Vista tipo panel: el resumen del negocio de un vistazo -->
+      <div class="appwin" role="img" aria-label="Panel del negocio con indicadores: órdenes activas, citas de hoy, ingresos del día y unidades vendidas, más órdenes de taller por estatus.">
+        <div class="appwin-bar">
+          <span class="dot" aria-hidden="true"></span>
+          <span class="dot" aria-hidden="true"></span>
+          <span class="dot" aria-hidden="true"></span>
+          <span class="t">Panel · Sucursal Centro</span>
+        </div>
+        <div class="appwin-body">
+          <div class="appwin-kpis">
+            <div class="appwin-kpi">
+              <span class="k-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.3L3 18l3 3 6.4-6.3a4 4 0 0 0 5.3-5.4l-2.6 2.6-2-2z"/></svg></span>
+              <div class="k-num">8</div>
+              <div class="k-lbl">Órdenes activas</div>
+            </div>
+            <div class="appwin-kpi">
+              <span class="k-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg></span>
+              <div class="k-num">5</div>
+              <div class="k-lbl">Citas de hoy</div>
+            </div>
+            <div class="appwin-kpi">
+              <span class="k-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>
+              <div class="k-num">$48,200</div>
+              <div class="k-lbl">Ingresos del día</div>
+            </div>
+            <div class="appwin-kpi">
+              <span class="k-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 13l2-5a2 2 0 0 1 1.9-1.4h10.2A2 2 0 0 1 19 8l2 5"/><path d="M5 13h14v4h-2v-1H7v1H5z"/><circle cx="7.5" cy="15.5" r="1"/><circle cx="16.5" cy="15.5" r="1"/></svg></span>
+              <div class="k-num">3</div>
+              <div class="k-lbl">Unidades vendidas (mes)</div>
+            </div>
           </div>
-          <span class="m-clock" id="clock">08:42</span>
-        </div>
-
-        <div class="m-row">
-          <span class="m-dot ok" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">OS AUT00001042</span><div class="veh">Honda CR-V · Servicio 40,000 km</div></div>
-          <span class="m-tag ok">En tiempo</span>
-        </div>
-        <div class="m-row">
-          <span class="m-dot ok" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">OS AUT00001048</span><div class="veh">Nissan Versa · Afinación mayor</div></div>
-          <span class="m-tag ok">En tiempo</span>
-        </div>
-        <div class="m-row">
-          <span class="m-dot warn" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">OS AUT00001039</span><div class="veh">NP300 · Frenos y balatas</div></div>
-          <span class="m-tag warn">Por vencer</span>
-        </div>
-        <div class="m-row">
-          <span class="m-dot crit" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">OS AUT00001051</span><div class="veh">Honda CB500F · Esp. refacciones</div></div>
-          <span class="m-tag crit">Retrasada</span>
-        </div>
-
-        <div class="monitor-foot">
-          <span>4 órdenes activas</span>
-          <span><b>2</b> en tiempo · <b>1</b> por vencer · <b>1</b> retrasada</span>
+          <div class="appwin-chart">
+            <div class="c-title">Taller — órdenes por estatus</div>
+            <div class="bar-row"><span>Recibida</span><span class="bar-track"><span class="bar-fill" style="width:70%"></span></span><span class="n">3</span></div>
+            <div class="bar-row"><span>En progreso</span><span class="bar-track"><span class="bar-fill warn" style="width:55%"></span></span><span class="n">3</span></div>
+            <div class="bar-row"><span>Esp. refacciones</span><span class="bar-track"><span class="bar-fill" style="width:22%"></span></span><span class="n">1</span></div>
+            <div class="bar-row"><span>Listas</span><span class="bar-track"><span class="bar-fill ok" style="width:22%"></span></span><span class="n">1</span></div>
+          </div>
         </div>
       </div>
     </div>
@@ -787,7 +817,7 @@
       <div class="sec-head">
         <p class="eyebrow">El proceso completo de tu negocio</p>
         <h2>De la pre-venta al posventa, sin cambiar de sistema.</h2>
-        <p>NexQSystem sigue el flujo real de una agencia. Cada etapa hereda los datos
+        <p>NexQS sigue el flujo real de una agencia. Cada etapa hereda los datos
            de la anterior: el prospecto se vuelve venta, la venta abre expediente,
            la unidad entra a servicio y todo alimenta al CRM.</p>
       </div>
@@ -906,66 +936,96 @@
           <p>El mecánico ve su agenda y sus órdenes activas desde el celular, sin instalar nada.</p>
           <span class="host">pwa.nexusqsystem.com</span>
         </div>
-        <div class="role">
-          <span class="tag">Pantallas</span>
-          <h3>Monitor de taller</h3>
-          <p>Pantallas en el taller con el semáforo de tiempos: qué está en tiempo, por vencer o retrasado.</p>
-          <span class="host">Monitor de citas y de servicio</span>
-        </div>
       </div>
     </div>
   </section>
 
-  <!-- ══════════════════ MONITOR DE CITAS ══════════════════ -->
-  <section class="mon-band-sec">
-    <div class="wrap mon-band">
-      <div class="mon-copy">
+  <!-- ══════════════════ MONITORES ══════════════════ -->
+  <section id="monitores">
+    <div class="wrap">
+      <div class="sec-head">
         <p class="eyebrow">Pantallas en tu agencia o taller</p>
-        <h2>La agenda del día, en la pared.</h2>
-        <p>Junto al monitor de taller, el <strong>monitor de citas</strong> pone
-           las citas de hoy en una pantalla a la vista de recepción y del taller:
-           quién llega, a qué hora y para qué — sin preguntar ni buscar en papel.</p>
-        <ul class="mon-list">
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> Citas del día por sucursal, ordenadas por hora.</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Estado de cada cita: confirmada o pendiente de confirmar.</li>
-          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg> Se actualiza sola; pensada para una pantalla siempre encendida.</li>
-        </ul>
+        <h2>Los tiempos y las citas, a la vista de todos.</h2>
+        <p>Dos pantallas pensadas para colgarse en recepción y en el taller. Se
+           actualizan solas y no necesitan que nadie las opere.</p>
       </div>
-
-      <!-- Mock del monitor de citas -->
-      <div class="monitor" role="img" aria-label="Monitor de citas del día con horarios, cliente, servicio y estado (confirmada o pendiente).">
-        <div class="monitor-top">
-          <div>
-            <div class="m-title">Monitor de citas</div>
-            <div class="m-sub">Hoy · Sucursal Centro</div>
+      <div class="monitores-2">
+        <!-- Monitor de taller -->
+        <div class="mon-item">
+          <h3 class="mon-h">Monitor de taller</h3>
+          <p class="mon-d">Órdenes en servicio con semáforo de tiempos: en tiempo, por vencer o retrasada.</p>
+          <div class="monitor" role="img" aria-label="Monitor de taller con órdenes de servicio y semáforo de tiempos: en tiempo, por vencer y retrasada.">
+            <div class="monitor-top">
+              <div>
+                <div class="m-title">Monitor de taller</div>
+                <div class="m-sub">Sucursal Centro</div>
+              </div>
+              <span class="m-clock" id="clock">08:42</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot ok" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">OS AUT00001042</span><div class="veh">Honda CR-V · Servicio 40,000 km</div></div>
+              <span class="m-tag ok">En tiempo</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot ok" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">OS AUT00001048</span><div class="veh">Nissan Versa · Afinación mayor</div></div>
+              <span class="m-tag ok">En tiempo</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot warn" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">OS AUT00001039</span><div class="veh">NP300 · Frenos y balatas</div></div>
+              <span class="m-tag warn">Por vencer</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot crit" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">OS AUT00001051</span><div class="veh">Honda CB500F · Esp. refacciones</div></div>
+              <span class="m-tag crit">Retrasada</span>
+            </div>
+            <div class="monitor-foot">
+              <span>4 órdenes activas</span>
+              <span><b>2</b> en tiempo · <b>1</b> por vencer · <b>1</b> retrasada</span>
+            </div>
           </div>
-          <span class="m-clock" id="clock-citas">08:42</span>
         </div>
 
-        <div class="m-row">
-          <span class="m-dot ok" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">09:00</span><div class="veh">Familia García · Servicio 20,000 km</div></div>
-          <span class="m-tag ok">Confirmada</span>
-        </div>
-        <div class="m-row">
-          <span class="m-dot ok" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">10:30</span><div class="veh">Motos del Valle · Afinación</div></div>
-          <span class="m-tag ok">Confirmada</span>
-        </div>
-        <div class="m-row">
-          <span class="m-dot warn" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">12:00</span><div class="veh">Laura Ríos · Diagnóstico eléctrico</div></div>
-          <span class="m-tag warn">Pendiente</span>
-        </div>
-        <div class="m-row">
-          <span class="m-dot ok" aria-hidden="true"></span>
-          <div class="m-info"><span class="os">13:30</span><div class="veh">Flotillas Norte · Verificación</div></div>
-          <span class="m-tag ok">Confirmada</span>
-        </div>
-
-        <div class="monitor-foot">
-          <span>4 citas hoy</span>
-          <span><b>3</b> confirmadas · <b>1</b> pendiente</span>
+        <!-- Monitor de citas -->
+        <div class="mon-item">
+          <h3 class="mon-h">Monitor de citas</h3>
+          <p class="mon-d">La agenda del día por sucursal: quién llega, a qué hora y el estado de cada cita.</p>
+          <div class="monitor" role="img" aria-label="Monitor de citas del día con horarios, cliente, servicio y estado (confirmada o pendiente).">
+            <div class="monitor-top">
+              <div>
+                <div class="m-title">Monitor de citas</div>
+                <div class="m-sub">Hoy · Sucursal Centro</div>
+              </div>
+              <span class="m-clock" id="clock-citas">08:42</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot ok" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">09:00</span><div class="veh">Familia García · Servicio 20,000 km</div></div>
+              <span class="m-tag ok">Confirmada</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot ok" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">10:30</span><div class="veh">Motos del Valle · Afinación</div></div>
+              <span class="m-tag ok">Confirmada</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot warn" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">12:00</span><div class="veh">Laura Ríos · Diagnóstico eléctrico</div></div>
+              <span class="m-tag warn">Pendiente</span>
+            </div>
+            <div class="m-row">
+              <span class="m-dot ok" aria-hidden="true"></span>
+              <div class="m-info"><span class="os">13:30</span><div class="veh">Flotillas Norte · Verificación</div></div>
+              <span class="m-tag ok">Confirmada</span>
+            </div>
+            <div class="monitor-foot">
+              <span>4 citas hoy</span>
+              <span><b>3</b> confirmadas · <b>1</b> pendiente</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -979,7 +1039,7 @@
         <h2 style="font-size:clamp(28px,3.6vw,42px);font-weight:700;margin-top:12px;">Pregúntale a tus datos.</h2>
         <p style="font-size:18px;color:var(--body);margin:16px 0 0;max-width:34em;">
           En lugar de armar un reporte, pregunta en tus palabras. El agente de
-          NexQSystem entiende tus ventas, tu taller y tu inventario, y responde con
+          NexQS entiende tus ventas, tu taller y tu inventario, y responde con
           los números de tu propia agencia.
         </p>
         <div class="byok">
@@ -998,7 +1058,7 @@
         <div class="chat-top">
           <span class="spark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M18 6l-2.5 2.5M8.5 15.5 6 18"/></svg></span>
           <div>
-            <div class="t">Asistente NexQSystem</div>
+            <div class="t">Asistente NexQS</div>
             <div class="m">vía OpenRouter</div>
           </div>
         </div>
@@ -1024,7 +1084,7 @@
       <div class="sec-head">
         <p class="eyebrow">Hecho para las reglas de México</p>
         <h2>Cumplimiento fiscal, sin hojas de cálculo aparte.</h2>
-        <p>Lo que en otros sistemas es un pegote, en NexQSystem es parte del flujo:
+        <p>En otros sistemas la facturación y el cumplimiento son un añadido; en NexQS son parte del flujo:
            facturas y cumplimiento nacen de la misma operación.</p>
       </div>
       <div class="cumpl-grid">
@@ -1045,7 +1105,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.5 8.5 8 11 4.5-2.5 8-6 8-11V5z"/></svg>
             Cumplimiento PLD
           </h3>
-          <p>La venta de unidades es actividad vulnerable. NexQSystem arma el expediente y detecta cuándo hay que avisar.</p>
+          <p>La venta de unidades es actividad vulnerable. NexQS arma el expediente y detecta cuándo hay que avisar.</p>
           <ul>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Identificación de operaciones vulnerables por umbral</li>
             <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Expedientes de identificación del cliente</li>
@@ -1060,7 +1120,7 @@
   <section class="roles-sec">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">Por qué NexQSystem</p>
+        <p class="eyebrow">Por qué NexQS</p>
         <h2>Un sistema, no doce.</h2>
       </div>
       <div class="benes">
@@ -1080,7 +1140,7 @@
     <div class="wrap cta-grid">
       <div>
         <p class="eyebrow">Solicita una demostración</p>
-        <h2>Veamos NexQSystem con los datos de tu negocio.</h2>
+        <h2>Veamos NexQS con los datos de tu negocio.</h2>
         <p class="lead">Te mostramos cómo se vería tu negocio dentro del
            sistema y armamos el plan a la medida de tus sucursales.</p>
         <ul class="cta-points">
@@ -1138,11 +1198,11 @@
   <div class="wrap">
     <div class="foot-grid">
       <div class="foot-brand">
-        <a class="brand" href="#top" aria-label="NexQSystem">
+        <a class="brand" href="#top" aria-label="NexQS">
           <span class="glyph" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.6" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 15.4 18.4 18.4M12 7v3.2M13.1 12.9l3 1.7M10.9 12.9l-3 1.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><g fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.4" r="1.3"/><circle cx="6.3" cy="15.6" r="1.3"/><circle cx="17.7" cy="15.6" r="1.3"/></g></svg>
           </span>
-          <span>NexQSystem<small>Plataforma automotriz</small></span>
+          <span>NexQS<small>Plataforma automotriz</small></span>
         </a>
         <p>La plataforma automotriz para concesionarios y talleres —mecánica,
            hojalatería y pintura— de autos y motos en México: ventas, taller,
@@ -1167,7 +1227,7 @@
       </div>
     </div>
     <div class="foot-bottom">
-      <span>© <span id="year">2026</span> NexQSystem · Nexus Q Tech</span>
+      <span>© <span id="year">2026</span> NexQS · Nexus Q Tech</span>
       <span>Hecho en México · CFDI 4.0 · PLD</span>
     </div>
   </div>

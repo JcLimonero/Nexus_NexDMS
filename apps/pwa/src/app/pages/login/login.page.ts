@@ -26,7 +26,7 @@ import { TenantContext } from "../../core/tenant-context";
             <span class="brand-mark">N</span>
           }
           <div>
-            <div class="brand-name">{{ clienteNombre() || "NexQSystem" }}</div>
+            <div class="brand-name">{{ clienteNombre() || "NexQS" }}</div>
             <div class="brand-sub">Técnico</div>
           </div>
         </div>

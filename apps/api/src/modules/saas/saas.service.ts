@@ -389,7 +389,7 @@ export class SaasService {
       ),
     });
     const enviado = await this.email.enviar({
-      subject: `NexQSystem · ${morosos.length} cliente(s) en mora — ${hoy}`,
+      subject: `NexQS · ${morosos.length} cliente(s) en mora — ${hoy}`,
       html,
     });
     return { enviado, morosos: morosos.length };
@@ -983,7 +983,7 @@ export class SaasService {
         ),
       });
       await this.email.enviar({
-        subject: `NexQSystem · Pago recibido — ${t.name}`,
+        subject: `NexQS · Pago recibido — ${t.name}`,
         html,
       });
     } catch {

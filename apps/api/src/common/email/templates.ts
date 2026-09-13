@@ -3,7 +3,7 @@
  * fuentes web-safe). Son la referencia para TODOS los correos del sistema:
  *
  * - {@link wrapAdminEmail}: avisos internos de Nexus (morosos, alertas del
- *   SaaS). Marca Nexus Q Tech / NexQSystem.
+ *   SaaS). Marca Nexus Q Tech / NexQS.
  * - {@link wrapClientEmail}: correos que el concesionario manda a su cliente
  *   final; toma el nombre, color y logo del propio concesionario.
  *
@@ -64,7 +64,7 @@ interface AdminOpts {
   preheader?: string;
 }
 
-/** Cascarón de correo interno de Nexus (NexQSystem Administración). */
+/** Cascarón de correo interno de Nexus (NexQS Administración). */
 export function wrapAdminEmail(opts: AdminOpts): string {
   const year = new Date().getFullYear();
   const accent = '#38bdf8';
@@ -77,12 +77,12 @@ export function wrapAdminEmail(opts: AdminOpts): string {
     accent,
     brand: marca,
     brandRight: `<span style="font-family:${FONT};font-size:11px;font-weight:600;color:#7c8aa5;letter-spacing:.14em;text-transform:uppercase">Administración</span>`,
-    eyebrow: opts.eyebrow ?? 'Nexus Q Tech · NexQSystem',
+    eyebrow: opts.eyebrow ?? 'Nexus Q Tech · NexQS',
     eyebrowColor: accent,
     title: opts.title,
     titleColor: '#0b1220',
     content: opts.content,
-    footer: `Aviso automático de <strong style="color:#64748b">NexQSystem</strong> · Nexus Q Tech · ${year}<br>Este es un correo automático; no es necesario responder.`,
+    footer: `Aviso automático de <strong style="color:#64748b">NexQS</strong> · Nexus Q Tech · ${year}<br>Este es un correo automático; no es necesario responder.`,
   });
 }
 
@@ -118,7 +118,7 @@ export function wrapClientEmail(opts: ClientOpts): string {
     footer:
       `Este correo te lo env&iacute;a <strong style="color:#64748b">${escape(opts.brandName)}</strong>.` +
       (opts.contactLine ? `<br>${escape(opts.contactLine)}` : '') +
-      `<br><span style="color:#b6c0cd">Enviado con NexQSystem · ${year}</span>`,
+      `<br><span style="color:#b6c0cd">Enviado con NexQS · ${year}</span>`,
   });
 }
 
@@ -167,7 +167,7 @@ function baseShell(o: ShellOpts): string {
         </td></tr>
         <tr><td style="padding:22px 40px;background:#f8fafc;border-top:1px solid #e6ebf1;font-family:${FONT};font-size:12px;line-height:1.6;color:#94a3b8">${o.footer}</td></tr>
       </table>
-      <p style="margin:16px 0 0;font-family:${FONT};font-size:11px;color:#b6c0cd">NexQSystem · Sistema de gestión para concesionarios</p>
+      <p style="margin:16px 0 0;font-family:${FONT};font-size:11px;color:#b6c0cd">NexQS · Sistema de gestión para concesionarios</p>
     </td></tr>
   </table>
 </body></html>`;

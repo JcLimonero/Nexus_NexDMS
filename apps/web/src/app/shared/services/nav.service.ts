@@ -192,7 +192,7 @@ export class NavService {
     },
     {
       // Solo los CFDI que el concesionario emite a sus clientes. Lo que el
-      // grupo paga por usar NexQSystem es otra cosa y vive en el perfil: no le
+      // grupo paga por usar NexQS es otra cosa y vive en el perfil: no le
       // incumbe a quien factura a un cliente, y juntarlos hacía pensar que
       // "Facturación" era la cuenta del sistema.
       title: "Facturación",

@@ -68,7 +68,7 @@ export class TenantsService {
     });
     const guardado = await this.tenantRepo.save(tenant);
     void this.avisarNexus(
-      `NexQSystem · Nuevo cliente: ${guardado.name}`,
+      `NexQS · Nuevo cliente: ${guardado.name}`,
       `<p>Se dio de alta un nuevo cliente en el SaaS.</p>` +
         `<p>Nombre: <strong>${guardado.name}</strong><br>` +
         `Identificador: ${guardado.slug}<br>Plan: ${guardado.plan}</p>`,
@@ -122,7 +122,7 @@ export class TenantsService {
     );
     const accion = guardado.isActive ? 'reactivado' : 'suspendido';
     void this.avisarNexus(
-      `NexQSystem · Cliente ${accion}: ${guardado.name}`,
+      `NexQS · Cliente ${accion}: ${guardado.name}`,
       `<p>Se ${accion} al cliente <strong>${guardado.name}</strong>.</p>` +
         `<p>Motivo: ${motivo}</p>`,
     );

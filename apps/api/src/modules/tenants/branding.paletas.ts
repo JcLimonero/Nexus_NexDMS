@@ -1,5 +1,5 @@
 /**
- * Paletas de marca que un cliente puede elegir para su NexQSystem.
+ * Paletas de marca que un cliente puede elegir para su NexQS.
  *
  * Viven aquí, en el servidor, y no en cada aplicación: el mismo azul tiene que
  * salir igual en el DMS, en el portal de recepción del iPad, en los monitores
