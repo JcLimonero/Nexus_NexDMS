@@ -42,15 +42,16 @@
         <div class="wz-grid">
           <label class="c">
             <span>Nombre de la empresa *</span>
-            <input [ngModel]="form().name" (ngModelChange)="alEscribirNombre($event)" />
+            <input autocomplete="off" [ngModel]="form().name" (ngModelChange)="alEscribirNombre($event)" />
           </label>
           <label class="c">
             <span>Identificador *</span>
-            <input [ngModel]="form().slug" (ngModelChange)="set('slug', $event)" />
+            <input autocomplete="off" [ngModel]="form().slug" (ngModelChange)="set('slug', $event)" />
           </label>
           <label class="c">
             <span>Prefijo de códigos *</span>
             <input
+              autocomplete="off"
               [ngModel]="form().codePrefix"
               (ngModelChange)="alEscribirPrefijo($event)"
               maxlength="3"

@@ -174,15 +174,16 @@
     <div class="rejilla">
         <label class="campo">
           <span>Nombre del grupo</span>
-          <input [(ngModel)]="form.name" (input)="alEscribirNombre()" />
+          <input autocomplete="off" [(ngModel)]="form.name" (input)="alEscribirNombre()" />
         </label>
         <label class="campo">
           <span>Identificador</span>
-          <input [(ngModel)]="form.slug" />
+          <input autocomplete="off" [(ngModel)]="form.slug" />
         </label>
         <label class="campo">
           <span>Prefijo de códigos</span>
           <input
+            autocomplete="off"
             [(ngModel)]="form.codePrefix"
             (input)="alEscribirPrefijo()"
             maxlength="3"
@@ -434,11 +435,11 @@
             <div class="rejilla">
               <label class="campo">
                 <span>Nombre del grupo</span>
-                <input [(ngModel)]="datos.name" />
+                <input autocomplete="off" [(ngModel)]="datos.name" />
               </label>
               <label class="campo">
                 <span>Identificador (liga de acceso)</span>
-                <input [(ngModel)]="datos.slug" />
+                <input autocomplete="off" [(ngModel)]="datos.slug" />
               </label>
               <label class="campo ancho-total">
                 <span>Plan contratado</span>
