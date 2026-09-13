@@ -67,7 +67,9 @@
         <button type="button" class="btn-secundario" (click)="nuevo()">
           Alta rápida
         </button>
-        <a class="btn-principal" routerLink="/alta-empresa">Nueva empresa</a>
+        <button type="button" class="btn-principal" (click)="abrirWizard()">
+          Nueva empresa
+        </button>
       </div>
     </div>
 
@@ -534,7 +536,7 @@
               class="btn-estatus"
               (click)="pedirSuspension(t)"
             >
-              {{ t.isActive ? "Suspender cliente" : "Reactivar cliente" }}
+              {{ t.isActive ? "Suspender empresa" : "Reactivar empresa" }}
             </button>
           </div>
 
@@ -972,8 +974,20 @@
         [disabled]="guardando()"
         (click)="confirmarSuspension()"
       >
-        {{ t.isActive ? "Suspender cliente" : "Reactivar cliente" }}
+        {{ t.isActive ? "Suspender empresa" : "Reactivar empresa" }}
       </button>
     </footer>
+  </div>
+}
+
+<!-- Alta guiada de empresa (wizard) en diálogo -->
+@if (wizardAbierto()) {
+  <div class="fondo" (click)="cerrarWizard()"></div>
+  <div class="dialogo pantalla" role="dialog" aria-modal="true" appEsc (esc)="cerrarWizard()">
+    <header class="dialogo-top">
+      <h2>Nueva empresa</h2>
+      <button type="button" class="btn-cerrar" (click)="cerrarWizard()">×</button>
+    </header>
+    <app-wizard-alta [embebido]="true" (creado)="cargar()" (cerrar)="cerrarWizard()" />
   </div>
 }

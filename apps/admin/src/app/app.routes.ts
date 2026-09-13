@@ -41,13 +41,6 @@ export const routes: Routes = [
     title: "Planes y precios — Administración NexDMS",
   },
   {
-    path: "alta-empresa",
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import("./routes/wizard-alta/wizard-alta").then((m) => m.WizardAlta),
-    title: "Alta de empresa — Administración NexDMS",
-  },
-  {
     path: "catalogos-maestros",
     canActivate: [authGuard],
     loadComponent: () =>

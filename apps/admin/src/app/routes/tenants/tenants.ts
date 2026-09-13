@@ -1,9 +1,9 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
-import { RouterLink } from "@angular/router";
 import { Barra } from "../../shared/barra/barra";
 import { Perfiles } from "../perfiles/perfiles";
+import { WizardAlta } from "../wizard-alta/wizard-alta";
 import { ConfirmService } from "../../shared/services/confirm.service";
 import { EscDirective } from "../../shared/directives/esc.directive";
 import {
@@ -36,7 +36,7 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, Barra, Perfiles, EscDirective],
+  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
@@ -217,6 +217,15 @@ export class Tenants implements OnInit {
 
   cerrarForm(): void {
     this.formAbierto.set(false);
+  }
+
+  /** Alta guiada (wizard) en diálogo. */
+  wizardAbierto = signal(false);
+  abrirWizard(): void {
+    this.wizardAbierto.set(true);
+  }
+  cerrarWizard(): void {
+    this.wizardAbierto.set(false);
   }
 
   /** El identificador y el prefijo salen del nombre; se pueden corregir. */

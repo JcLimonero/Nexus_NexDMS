@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, input, output, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Router } from "@angular/router";
@@ -34,6 +34,11 @@ export class WizardAlta implements OnInit {
   private srv = inject(WizardAltaService);
   private catSrv = inject(CatalogosMaestrosService);
   private router = inject(Router);
+
+  /** Embebido en un diálogo: oculta barra/panel y notifica en vez de navegar. */
+  embebido = input(false);
+  readonly cerrar = output<void>();
+  readonly creado = output<void>();
 
   readonly paletas = PALETAS;
   readonly pasos = [
@@ -260,6 +265,8 @@ export class WizardAlta implements OnInit {
       next: (r) => {
         this.guardando.set(false);
         this.resultado.set(r);
+        // Avisa al contenedor (p. ej. la lista de empresas) para que recargue.
+        this.creado.emit();
       },
       error: (e) => {
         this.guardando.set(false);
@@ -274,6 +281,10 @@ export class WizardAlta implements OnInit {
   }
 
   irATenants(): void {
+    if (this.embebido()) {
+      this.cerrar.emit();
+      return;
+    }
     void this.router.navigate(["/tenants"]);
   }
 }
