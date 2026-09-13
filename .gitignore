@@ -50,3 +50,7 @@ temp/
 
 # El .env de cada aplicación lleva credenciales y no se versiona.
 apps/*/.env
+
+# Config de despliegue y de tooling local.
+.vercel/
+.claude/
