@@ -287,6 +287,10 @@ export class PdfDoc {
     const paginas = doc.bufferedPageRange();
     for (let i = 0; i < paginas.count; i++) {
       doc.switchToPage(paginas.start + i);
+      // El pie va bajo el margen inferior: sin anularlo, pdfkit trata esa `y`
+      // como desborde y crea una hoja extra solo con el pie.
+      const bottom = doc.page.margins.bottom;
+      doc.page.margins.bottom = 0;
       const texto = leyenda
         ? `${leyenda}  ·  Página ${i + 1} de ${paginas.count}`
         : `Página ${i + 1} de ${paginas.count}`;
@@ -294,10 +298,11 @@ export class PdfDoc {
         .fontSize(7)
         .font('Helvetica')
         .fillColor(PDF_TENUE)
-        .text(texto, M, doc.page.height - 28, {
+        .text(texto, M, doc.page.height - 24, {
           width: doc.page.width - M * 2,
           align: 'center',
         });
+      doc.page.margins.bottom = bottom;
     }
   }
 

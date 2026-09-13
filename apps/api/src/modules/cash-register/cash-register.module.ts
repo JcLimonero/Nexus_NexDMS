@@ -7,10 +7,17 @@ import { CashSession } from './entities/cash-session.entity';
 import { CashMovement } from './entities/cash-movement.entity';
 import { Branch } from '../branches/entities/branch.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([CashSession, CashMovement, Branch, Tenant]),
+    TypeOrmModule.forFeature([
+      CashSession,
+      CashMovement,
+      Branch,
+      Tenant,
+      LegalEntity,
+    ]),
   ],
   controllers: [CashRegisterController],
   providers: [CashRegisterService, CortePdfService],

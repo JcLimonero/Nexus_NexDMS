@@ -8,6 +8,7 @@ import {
   CashMovementKindEnum,
 } from './entities/cash-movement.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
+import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { StorageService } from '../../common/storage/storage.service';
 import { PdfDoc, PDF_TENUE, PDF_LINEA } from '../../common/pdf/pdf-doc';
 
@@ -35,6 +36,8 @@ export class CortePdfService {
     private readonly movementRepo: Repository<CashMovement>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    @InjectRepository(LegalEntity)
+    private readonly legalRepo: Repository<LegalEntity>,
     private readonly storage: StorageService,
   ) {}
 
@@ -53,6 +56,11 @@ export class CortePdfService {
     });
 
     const t = await this.tenantRepo.findOne({ where: { id: user.tenantId } });
+    // Razón social de la SUCURSAL: las impresiones varían por sucursal (cada
+    // una puede tener su propia entidad legal, RFC y domicilio).
+    const razon = s.branch?.legalEntityId
+      ? await this.legalRepo.findOne({ where: { id: s.branch.legalEntityId } })
+      : null;
     let logo: Buffer | null = null;
     if (t?.logoKey) {
       try {
@@ -70,9 +78,11 @@ export class CortePdfService {
       ? `${s.user.firstName ?? ''} ${s.user.lastName ?? ''}`.trim()
       : '';
     const senas = [
+      s.branch?.name,
       s.branch?.address,
       [s.branch?.city, s.branch?.state].filter(Boolean).join(', '),
       s.branch?.counterPhone ? `Tel. ${s.branch.counterPhone}` : null,
+      razon?.rfc ? `RFC ${razon.rfc}` : null,
     ]
       .filter(Boolean)
       .join(' · ');
@@ -80,7 +90,7 @@ export class CortePdfService {
     pdf.encabezado({
       titulo: 'Corte de caja',
       estatus: s.status === 'OPEN' ? 'ABIERTA' : 'Cerrada',
-      entidad: s.branch?.name ?? 'Caja',
+      entidad: razon?.name ?? s.branch?.name ?? 'Caja',
       senas,
       logo,
       meta: [

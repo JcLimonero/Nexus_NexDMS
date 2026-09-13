@@ -3,6 +3,7 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
+import { paletaPorId } from '../tenants/branding.paletas';
 
 interface Columna {
   header: string;
@@ -87,7 +88,7 @@ const DATASETS: Record<string, Dataset> = {
     ],
     sql: `
       SELECT coalesce(c.company_name, trim(coalesce(c.first_name,'') || ' ' || coalesce(c.last_name,''))) AS nombre,
-             c.rfc, c.phone AS telefono, c.email AS correo, c.type AS tipo
+             c.rfc, c.phone AS telefono, c.email AS correo, c.client_type AS tipo
         FROM clients c
        WHERE c.tenant_id = $1
        ORDER BY nombre
@@ -205,6 +206,13 @@ export class ExportService {
     const d = this.definicion(dataset);
     const filas = await this.filas(dataset, tenantId);
 
+    // Color de marca del tenant, para homologar con el resto de las impresiones.
+    const fila0 = await this.dataSource.query(
+      'SELECT palette FROM tenants WHERE id = $1',
+      [tenantId],
+    );
+    const marca = paletaPorId(fila0?.[0]?.palette ?? null).primary;
+
     // Apaisado: estos listados son anchos y en vertical se cortan.
     const doc = new PDFDocument({ size: 'LETTER', layout: 'landscape', margin: 36 });
     const chunks: Buffer[] = [];
@@ -217,7 +225,7 @@ export class ExportService {
     const total = d.columnas.reduce((a, c) => a + (c.width ?? 18), 0);
     const anchos = d.columnas.map((c) => ((c.width ?? 18) / total) * anchoUtil);
 
-    doc.fontSize(16).fillColor('#203848').text(d.titulo, { align: 'left' });
+    doc.fontSize(16).fillColor(marca).text(d.titulo, { align: 'left' });
     doc
       .fontSize(8)
       .fillColor('#5A6B78')
@@ -228,7 +236,7 @@ export class ExportService {
 
     const cabecera = (y: number) => {
       doc.fontSize(8).fillColor('#FFFFFF');
-      doc.rect(36, y - 3, anchoUtil, 16).fill('#203848');
+      doc.rect(36, y - 3, anchoUtil, 16).fill(marca);
       let x = 36;
       doc.fillColor('#FFFFFF');
       d.columnas.forEach((c, i) => {
