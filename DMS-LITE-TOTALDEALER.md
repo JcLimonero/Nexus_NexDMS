@@ -114,7 +114,8 @@ nivel en cada dominio** (no se cruzan) → base para administraciones independie
 - Funciona contra el mismo API, pero se ve con marca NexQS y sin separación de administración.
 
 **Fase 2 — edición real Total Go (dev pendiente):**
-- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total Go.
+- **Kit de marca ya en el repo:** `apps/web/public/brand-totalgo/` y `apps/admin/public/brand-totalgo/` (logos, isotipo, favicons, CSS y manifiesto). Paleta Total Go: gris azulado `#2B4149`, naranja `#EA4B17`, blanco `#FFFFFF`.
+- **Marca por dominio:** en el arranque, según `window.location.hostname`, cargar logo/colores/favicon/título de Total Go (desde `brand-totalgo/`) en lugar de los de NexQS (`brand/`).
 - **Preset de módulos Total Go:** encender solo los del alcance, ocultar el resto (feature flags/edición).
 - **Scope por socio (admin independiente):** el admin de TD ve solo sus tenants; Nexus conserva vista maestra para conciliar el 50/50 y dar soporte. Repetir el despliegue con `apps/admin` en `admin.totaldealer.com`.
 

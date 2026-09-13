@@ -1,0 +1,12 @@
+:root {
+  --tg-slate: #2B4149;
+  --tg-orange: #EA4B17;
+  --tg-orange-accessible: #B93610;
+  --tg-white: #FFFFFF;
+  --tg-surface: #F3F5F6;
+  --tg-ink: #111111;
+  --tg-font: Arial, Helvetica, sans-serif;
+}
+.tg-logo { display:block; width:180px; max-width:100%; height:auto; }
+.tg-button { background:var(--tg-slate); color:white; border:0; border-radius:8px; padding:12px 20px; font-family:var(--tg-font); }
+.tg-link { color:var(--tg-orange-accessible); }

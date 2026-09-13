@@ -1,0 +1,21 @@
+{
+  "name": "Total Go",
+  "short_name": "Total Go",
+  "icons": [
+    {
+      "src": "../03-favicons/favicon-color-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "../03-favicons/favicon-color-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "theme_color": "#2B4149",
+  "background_color": "#FFFFFF",
+  "display": "standalone"
+}
