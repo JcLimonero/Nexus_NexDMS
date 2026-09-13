@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { Barra } from "../../shared/barra/barra";
 import {
   CampoDef,
   CatalogoMaestro,
@@ -16,7 +17,7 @@ import {
 @Component({
   selector: "app-catalogos-maestros",
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, Barra],
   templateUrl: "./catalogos-maestros.html",
   styleUrls: ["./catalogos-maestros.scss"],
 })
