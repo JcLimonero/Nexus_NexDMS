@@ -37,12 +37,31 @@ CREATE TEMP TABLE t_cli AS
   SELECT row_number() OVER (ORDER BY created_at) rn, id
   FROM clients WHERE tenant_id = (SELECT tenant_id FROM ref);
 
--- Hasta 6 modelos globales existentes (sean autos o los que haya).
+-- Asegura la marca Honda y modelos de AUTO en el catálogo GLOBAL (compartido),
+-- para que el piso sean autos y no motos. Aditivo e idempotente. Reusa un
+-- vehicle_type_id existente (el tipo es cosmético para el demo).
+INSERT INTO global_brands (id, name, is_active)
+SELECT gen_random_uuid(), 'Honda', true
+WHERE NOT EXISTS (SELECT 1 FROM global_brands WHERE name = 'Honda');
+
+INSERT INTO global_models (id, brand_id, vehicle_type_id, model, version, year, is_active)
+SELECT gen_random_uuid(),
+       (SELECT id FROM global_brands WHERE name = 'Honda' LIMIT 1),
+       (SELECT vehicle_type_id FROM global_models WHERE vehicle_type_id IS NOT NULL LIMIT 1),
+       m.model, 'Base', 2024, true
+FROM (VALUES ('Civic'), ('CR-V'), ('HR-V'), ('City'), ('Accord'), ('BR-V')) AS m(model)
+WHERE NOT EXISTS (
+  SELECT 1 FROM global_models gm2
+  JOIN global_brands gb2 ON gb2.id = gm2.brand_id
+  WHERE gb2.name = 'Honda' AND gm2.model = m.model
+);
+
+-- 6 modelos de auto Honda para el piso.
 CREATE TEMP TABLE t_gm AS
-  SELECT row_number() OVER (ORDER BY gm.created_at) rn, gm.id AS gm_id, gb.name AS marca, gm.model AS modelo
+  SELECT row_number() OVER (ORDER BY gm.model) rn, gm.id AS gm_id, gb.name AS marca, gm.model AS modelo
   FROM global_models gm
   JOIN global_brands gb ON gb.id = gm.brand_id
-  ORDER BY gm.created_at
+  WHERE gb.name = 'Honda' AND gm.model IN ('Civic','CR-V','HR-V','City','Accord','BR-V')
   LIMIT 6;
 
 DO $$
