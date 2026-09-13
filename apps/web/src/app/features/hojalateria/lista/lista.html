@@ -45,7 +45,13 @@
             (cdkDropListDropped)="soltar($event, col.value)"
           >
             @for (o of col.items; track o.id) {
-              <div class="kb-card" cdkDrag>
+              <div
+                class="kb-card"
+                cdkDrag
+                (cdkDragStarted)="onDragStart()"
+                (cdkDragEnded)="onDragEnd()"
+                (click)="abrir(o)"
+              >
                 <div class="kb-card-top">
                   <span class="hp-mono">{{ o.folio }}</span>
                   <span class="kb-total">
@@ -64,7 +70,7 @@
                   } @else {
                     <span class="hp-badge">Particular</span>
                   }
-                  <a class="kb-abrir" [routerLink]="[o.id]">Abrir →</a>
+                  <span class="kb-abrir">Ver detalle →</span>
                 </div>
               </div>
             }

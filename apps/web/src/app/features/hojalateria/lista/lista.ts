@@ -1,6 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
-import { RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import {
   CdkDragDrop,
   DragDropModule,
@@ -32,6 +32,8 @@ interface Columna {
 export class Lista implements OnInit {
   private srv = inject(HojalateriaService);
   private toastr = inject(ToastrService);
+  private router = inject(Router);
+  private route = inject(ActivatedRoute);
 
   readonly estados = ESTADOS;
 
@@ -39,6 +41,8 @@ export class Lista implements OnInit {
   cargando = signal(true);
   vista = signal<Vista>("tablero");
   filtro = signal<BodyworkStatus | "">("");
+  /** Evita que un arrastre termine navegando al detalle. */
+  private arrastrando = false;
 
   /** Columnas del tablero, una por estado, con sus órdenes. */
   columnas = computed<Columna[]>(() =>
@@ -84,6 +88,21 @@ export class Lista implements OnInit {
 
   listaId(status: BodyworkStatus): string {
     return "col-" + status;
+  }
+
+  onDragStart(): void {
+    this.arrastrando = true;
+  }
+
+  onDragEnd(): void {
+    // El click de fin de arrastre llega justo después; se ignora con este flag.
+    setTimeout(() => (this.arrastrando = false), 60);
+  }
+
+  /** Click en una tarjeta → abre el detalle (salvo que haya sido un arrastre). */
+  abrir(o: OrdenLista): void {
+    if (this.arrastrando) return;
+    this.router.navigate([o.id], { relativeTo: this.route });
   }
 
   /** Suelta una tarjeta en otra columna → cambia el estado de la orden. */
