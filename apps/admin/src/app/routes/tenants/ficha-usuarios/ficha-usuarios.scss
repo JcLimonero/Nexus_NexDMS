@@ -1,0 +1,75 @@
+.marca-intro {
+  font-size: var(--text-body);
+  color: var(--text-secondary);
+  margin-bottom: var(--space-16);
+}
+.marca-titulo {
+  font-size: var(--text-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: var(--space-16) 0 var(--space-8);
+}
+.alta-usuario {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-16);
+  margin-bottom: var(--space-32);
+  background: var(--bg-elevated);
+}
+.filtros-usuarios {
+  display: flex;
+  gap: var(--space-12);
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: var(--space-16);
+}
+.filtros-usuarios .campo {
+  min-width: 180px;
+}
+.filtro-conteo {
+  color: var(--text-secondary);
+  font-size: 13px;
+  padding-bottom: 8px;
+}
+.ancho-total {
+  grid-column: 1 / -1;
+}
+.acciones-fila {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+.pass-inline {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pass-inline input {
+  flex: 1;
+  min-width: 160px;
+}
+.mono {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.pill-ok {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: transparent;
+}
+.pill-alerta {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: transparent;
+}

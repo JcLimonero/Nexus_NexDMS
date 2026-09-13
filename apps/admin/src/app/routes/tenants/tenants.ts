@@ -4,6 +4,7 @@ import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
 import { Perfiles } from "../perfiles/perfiles";
 import { WizardAlta } from "../wizard-alta/wizard-alta";
+import { FichaUsuarios } from "./ficha-usuarios/ficha-usuarios";
 import { ConfirmService } from "../../shared/services/confirm.service";
 import { EscDirective } from "../../shared/directives/esc.directive";
 import {
@@ -23,7 +24,6 @@ import {
   TenantsService,
   PaletaMarca,
   Branding,
-  UsuarioTenant,
 } from "./tenants.service";
 
 /**
@@ -36,7 +36,7 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, EscDirective],
+  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, FichaUsuarios, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
@@ -465,48 +465,7 @@ export class Tenants implements OnInit {
     "datos" | "pagos" | "marca" | "usuarios" | "perfiles"
   >("datos");
 
-  // ── Usuarios base del cliente (por plataforma) ──
-  usuarios = signal<UsuarioTenant[]>([]);
-  cargandoUsuarios = signal(false);
-  /** Plataforma elegida en el alta → determina el rol de la cuenta. */
-  readonly plataformas: { value: string; label: string; role: string; hint: string }[] = [
-    { value: "portal", label: "Portal / DMS (administrador)", role: "ADMIN", hint: "app.nexusqsystem.com" },
-    { value: "recepcion", label: "Recepción de unidades", role: "RECEPTIONIST", hint: "recepcion.nexusqsystem.com" },
-    { value: "tecnico", label: "Técnico (PWA)", role: "MECHANIC", hint: "pwa.nexusqsystem.com" },
-  ];
-  nuevoUsuario = signal<{
-    firstName: string;
-    lastName: string;
-    email: string;
-    password: string;
-    plataforma: string;
-  }>({ firstName: "", lastName: "", email: "", password: "", plataforma: "portal" });
-  creandoUsuario = signal(false);
-  /** userId cuya contraseña se está cambiando (para mostrar el campo inline). */
-  cambiandoPass = signal<string | null>(null);
-  passNueva = signal("");
-  /** Filtros del listado de usuarios. */
-  filtroRol = signal<string>("");
-  filtroEstado = signal<"" | "activos" | "inactivos">("");
-
-  /** Roles presentes entre los usuarios del cliente (para el filtro). */
-  rolesDisponibles = computed<string[]>(() => {
-    const set = new Set<string>();
-    for (const u of this.usuarios()) for (const r of u.roles) set.add(r);
-    return [...set].sort();
-  });
-
-  /** Usuarios tras aplicar filtro de perfil y de estado. */
-  usuariosFiltrados = computed<UsuarioTenant[]>(() => {
-    const rol = this.filtroRol();
-    const est = this.filtroEstado();
-    return this.usuarios().filter((u) => {
-      if (rol && !u.roles.includes(rol)) return false;
-      if (est === "activos" && !u.isActive) return false;
-      if (est === "inactivos" && u.isActive) return false;
-      return true;
-    });
-  });
+  // El tab de Usuarios vive en <app-ficha-usuarios> (autocontenido).
 
   // ── Marca del cliente ──
   paletas = signal<PaletaMarca[]>([]);
@@ -560,7 +519,7 @@ export class Tenants implements OnInit {
     if (!t || this.tabsCargados.has(tab)) return;
     this.tabsCargados.add(tab);
     if (tab === "datos") this.cargarHistorial(t.id);
-    else if (tab === "usuarios") this.cargarUsuarios(t.id);
+    // El tab 'usuarios' se autocarga dentro de <app-ficha-usuarios>.
     else if (tab === "marca") {
       this.saas.branding(t.id).subscribe({
         next: (b) => {
@@ -578,8 +537,6 @@ export class Tenants implements OnInit {
     this.pestana.set("datos");
     this.branding.set(null);
     this.historial.set([]);
-    this.usuarios.set([]);
-    this.cambiandoPass.set(null);
     this.tabsCargados.clear();
     // El tab por defecto (datos) carga su historial de una vez.
     this.tabsCargados.add("datos");
@@ -630,117 +587,6 @@ export class Tenants implements OnInit {
   cerrarFicha(): void {
     this.fichaDe.set(null);
     this.ficha.set(null);
-  }
-
-  // ── Usuarios base del cliente ──
-  cargarUsuarios(tenantId: string): void {
-    this.cargandoUsuarios.set(true);
-    this.saas.usuarios(tenantId).subscribe({
-      next: (u) => {
-        this.usuarios.set(u);
-        this.cargandoUsuarios.set(false);
-      },
-      error: () => {
-        this.cargandoUsuarios.set(false);
-        this.avisar("No se pudieron cargar los usuarios", "error");
-      },
-    });
-  }
-
-  etiquetaRoles(roles: string[]): string {
-    const map: Record<string, string> = {
-      ADMIN: "Administrador",
-      MANAGER: "Gerente",
-      RECEPTIONIST: "Recepción",
-      MECHANIC: "Técnico",
-      CASHIER: "Cajero",
-      WAREHOUSE: "Almacén",
-      SELLER: "Vendedor",
-    };
-    return roles.map((r) => map[r] ?? r).join(", ") || "—";
-  }
-
-  crearUsuario(): void {
-    const t = this.fichaDe();
-    const n = this.nuevoUsuario();
-    if (!t) return;
-    if (!n.firstName.trim() || !n.email.trim() || n.password.length < 8) {
-      this.avisar(
-        "Nombre, correo y contraseña (mín. 8) son obligatorios",
-        "error",
-      );
-      return;
-    }
-    const plat = this.plataformas.find((p) => p.value === n.plataforma);
-    if (!plat) return;
-    this.creandoUsuario.set(true);
-    this.saas
-      .crearUsuario(t.id, {
-        firstName: n.firstName.trim(),
-        lastName: n.lastName.trim(),
-        email: n.email.trim().toLowerCase(),
-        password: n.password,
-        roles: [plat.role],
-        scope: "SUCURSAL",
-      })
-      .subscribe({
-        next: () => {
-          this.creandoUsuario.set(false);
-          this.avisar("Usuario creado", "ok");
-          this.nuevoUsuario.set({
-            firstName: "",
-            lastName: "",
-            email: "",
-            password: "",
-            plataforma: n.plataforma,
-          });
-          this.cargarUsuarios(t.id);
-        },
-        error: (e) => {
-          this.creandoUsuario.set(false);
-          this.avisar(
-            e?.error?.message || "No se pudo crear el usuario",
-            "error",
-          );
-        },
-      });
-  }
-
-  iniciarCambioPass(userId: string): void {
-    this.cambiandoPass.set(userId);
-    this.passNueva.set("");
-  }
-
-  confirmarCambioPass(u: UsuarioTenant): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    const pass = this.passNueva();
-    if (pass.length < 8) {
-      this.avisar("La contraseña debe tener al menos 8 caracteres", "error");
-      return;
-    }
-    this.saas.cambiarContrasena(t.id, u.id, pass).subscribe({
-      next: () => {
-        this.cambiandoPass.set(null);
-        this.passNueva.set("");
-        this.avisar(`Contraseña actualizada para ${u.email}`, "ok");
-      },
-      error: (e) =>
-        this.avisar(
-          e?.error?.message || "No se pudo cambiar la contraseña",
-          "error",
-        ),
-    });
-  }
-
-  alternarUsuario(u: UsuarioTenant): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    this.saas.alternarUsuario(t.id, u.id).subscribe({
-      next: () => this.cargarUsuarios(t.id),
-      error: (e) =>
-        this.avisar(e?.error?.message || "No se pudo cambiar el estado", "error"),
-    });
   }
 
   guardarDatos(): void {
