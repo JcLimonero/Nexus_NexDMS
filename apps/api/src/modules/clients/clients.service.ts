@@ -4,6 +4,7 @@ import { DataSource, Repository } from 'typeorm';
 import { Client } from './entities/client.entity';
 import { Contact } from '../contacts/entities/contact.entity';
 import { CustomerVehicle } from '../customer-vehicles/entities/customer-vehicle.entity';
+import { ServiceOrder } from '../service-orders/entities/service-order.entity';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
 import { FilterClientsDto } from './dto/filter-clients.dto';
@@ -58,7 +59,13 @@ export class ClientsService {
     user: UserPayload,
     filters: FilterClientsDto,
   ): Promise<{
-    data: Client[];
+    data: Array<
+      Client & {
+        dataQuality: DataQualityScore;
+        vehicleCount: number;
+        isServiceClient: boolean;
+      }
+    >;
     meta: { total: number; page: number; limit: number; totalPages: number };
   }> {
     const page = filters.page ?? 1;
@@ -110,18 +117,21 @@ export class ClientsService {
       .take(limit)
       .getManyAndCount();
 
-    const vehicleCounts = await this.getVehicleCountsForClients(
-      user.tenantId,
-      clients.map((c) => c.id),
-    );
+    const clientIds = clients.map((c) => c.id);
+    const [vehicleCounts, serviceClientIds] = await Promise.all([
+      this.getVehicleCountsForClients(user.tenantId, clientIds),
+      this.getServiceClientIds(user.tenantId, clientIds),
+    ]);
 
-    const data = clients.map((client) => ({
-      ...client,
-      dataQuality: this.computeDataQuality(
-        client,
-        vehicleCounts[client.id] ?? 0,
-      ),
-    }));
+    const data = clients.map((client) => {
+      const vehicleCount = vehicleCounts[client.id] ?? 0;
+      return {
+        ...client,
+        vehicleCount,
+        isServiceClient: serviceClientIds.has(client.id),
+        dataQuality: this.computeDataQuality(client, vehicleCount),
+      };
+    });
 
     return {
       data,
@@ -150,6 +160,26 @@ export class ClientsService {
     return Object.fromEntries(
       rows.map((r) => [r.ownerId, parseInt(r.count, 10) || 0]),
     );
+  }
+
+  /**
+   * Clientes que ya tienen al menos una orden de servicio (cualquiera de sus
+   * vehículos ha pasado por el taller). Marca al cliente como "de servicios".
+   */
+  private async getServiceClientIds(
+    tenantId: string,
+    clientIds: string[],
+  ): Promise<Set<string>> {
+    if (clientIds.length === 0) return new Set();
+    const rows = await this.dataSource
+      .createQueryBuilder()
+      .select('so.owner_id', 'ownerId')
+      .from(ServiceOrder, 'so')
+      .where('so.owner_id IN (:...ids)', { ids: clientIds })
+      .andWhere('so.tenant_id = :tenantId', { tenantId })
+      .groupBy('so.owner_id')
+      .getRawMany<{ ownerId: string }>();
+    return new Set(rows.map((r) => r.ownerId));
   }
 
   private computeDataQuality(

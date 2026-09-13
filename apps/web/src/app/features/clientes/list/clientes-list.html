@@ -66,6 +66,7 @@
                     <th>Teléfono</th>
                     <th>Tipo</th>
                     <th>Correo</th>
+                    <th class="text-center">Vehículos</th>
                     <th class="text-center">Calidad</th>
                     <th class="text-end">Acciones</th>
                   </tr>
@@ -84,6 +85,27 @@
                       <td>{{ client.phone }}</td>
                       <td>{{ getTypeLabel(client.clientType) }}</td>
                       <td>{{ client.email || "—" }}</td>
+                      <td class="text-center text-nowrap">
+                        @if (client.vehicleCount) {
+                          <a
+                            [routerLink]="['/clients', client.id]"
+                            class="badge bg-light text-secondary border text-decoration-none"
+                            [title]="client.vehicleCount + ' vehículo(s) relacionado(s)'"
+                          >
+                            <app-feather-icons [icon]="'truck'" /> {{ client.vehicleCount }}
+                          </a>
+                        } @else {
+                          <span class="text-muted">—</span>
+                        }
+                        @if (client.isServiceClient) {
+                          <span
+                            class="badge bg-success-subtle text-success border border-success-subtle ms-1"
+                            title="Cliente de servicios: alguno de sus vehículos ha entrado al taller"
+                          >
+                            <app-feather-icons [icon]="'tool'" /> Servicios
+                          </span>
+                        }
+                      </td>
                       <td class="text-center">
                         @if (client.dataQuality; as dq) {
                           <span class="badge" [ngClass]="getQualityBadgeClass(dq.level)" [title]="'Faltan: ' + (dq.missingFields.join(', ') || '')">
@@ -122,7 +144,7 @@
                     </tr>
                   } @empty {
                     <tr>
-                      <td colspan="7" class="text-center text-muted py-4">
+                      <td colspan="8" class="text-center text-muted py-4">
                         No hay clientes. <a routerLink="/clients/nuevo">Crear el primero</a>
                       </td>
                     </tr>

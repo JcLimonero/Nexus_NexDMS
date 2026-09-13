@@ -67,6 +67,16 @@ export interface DataQuality {
   missingFields: string[];
 }
 
+/** Una orden de servicio en el historial de una unidad. */
+export interface VehicleServiceHistoryItem {
+  id: string;
+  folio: string;
+  status: string;
+  reportedFailure: string;
+  total: number;
+  createdAt: string;
+}
+
 export interface ClientDetail extends Client {
   contacts: Contact[];
   vehicles: CustomerVehicle[];
@@ -82,6 +92,10 @@ export interface ClientFilters {
 
 export interface ClientListItem extends Client {
   dataQuality?: DataQuality;
+  /** Cuántos vehículos tiene relacionados el cliente. */
+  vehicleCount?: number;
+  /** Si alguno de sus vehículos ha tenido órdenes de servicio. */
+  isServiceClient?: boolean;
 }
 
 export interface ClientsResponse {

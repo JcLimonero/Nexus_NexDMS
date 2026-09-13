@@ -38,7 +38,7 @@ export class ClienteDetail implements OnInit {
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get("id");
     if (!id) {
-      this.router.navigate(["/clientes"]);
+      this.router.navigate(["/clients"]);
       return;
     }
 
@@ -95,7 +95,7 @@ export class ClienteDetail implements OnInit {
     this.clientesService.delete(c.id).subscribe({
       next: () => {
         this.toastr.success("Cliente eliminado");
-        this.router.navigate(["/clientes"]);
+        this.router.navigate(["/clients"]);
       },
       error: (err) =>
         this.toastr.error(err?.error?.message || "Error al eliminar"),

@@ -1,0 +1,128 @@
+<div class="container-fluid">
+  @if (error()) {
+    <div class="alert alert-danger" role="alert">
+      {{ error() }}
+      <a [routerLink]="['/clients', clientId()]" class="alert-link ms-2">Volver al cliente</a>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="text-center py-5">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+    </div>
+  }
+
+  @if (vehicle(); as v) {
+    <div class="row">
+      <div class="col-sm-12">
+        <div class="card">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0">
+              {{ v.make }} {{ v.model }} <span class="text-muted">({{ v.year }})</span>
+            </h5>
+            <a class="btn btn-outline-secondary btn-sm" [routerLink]="['/clients', clientId()]">
+              Volver al cliente
+            </a>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <table class="table table-sm table-borderless mb-0">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">Placa</th>
+                      <td class="fw-semibold">{{ v.plate || '—' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Color</th>
+                      <td>{{ v.color || '—' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Kilometraje</th>
+                      <td>{{ v.mileage | number }} km</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="col-md-6">
+                <table class="table table-sm table-borderless mb-0">
+                  <tbody>
+                    <tr>
+                      <th class="text-muted" style="width: 140px">VIN</th>
+                      <td class="font-monospace">{{ v.vin || '—' }}</td>
+                    </tr>
+                    <tr>
+                      <th class="text-muted">Tipo</th>
+                      <td>{{ v.vehicleType }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-12 mt-3">
+        <div class="card">
+          <div class="card-header">
+            <h6 class="mb-0">Servicios de esta unidad ({{ orders().length }})</h6>
+          </div>
+          <div class="card-body">
+            @if (orders().length) {
+              <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                  <thead>
+                    <tr>
+                      <th class="text-nowrap">Folio</th>
+                      <th>Falla reportada</th>
+                      <th>Estado</th>
+                      <th class="text-nowrap">Fecha</th>
+                      <th class="text-end">Total</th>
+                      <th class="text-end">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (o of orders(); track o.id) {
+                      <tr>
+                        <td class="text-nowrap fw-semibold font-monospace">
+                          <a [routerLink]="['/workshop/service-orders', o.id]">{{ o.folio }}</a>
+                        </td>
+                        <td>{{ o.reportedFailure || '—' }}</td>
+                        <td>
+                          <span class="badge"
+                            [class.bg-secondary]="o.status === 'RECEIVED'"
+                            [class.bg-info]="o.status === 'DIAGNOSIS'"
+                            [class.bg-primary]="o.status === 'IN_PROGRESS'"
+                            [class.bg-warning]="o.status === 'WAITING_PARTS'"
+                            [class.bg-success]="o.status === 'READY' || o.status === 'DELIVERED'"
+                            [class.bg-danger]="o.status === 'CANCELLED'">
+                            {{ getStatusLabel(o.status) }}
+                          </span>
+                        </td>
+                        <td class="text-nowrap">{{ o.createdAt | date: 'dd/MM/yyyy' }}</td>
+                        <td class="text-end">{{ o.total | currency: 'MXN':'symbol-narrow' }}</td>
+                        <td class="text-end">
+                          <a
+                            class="btn btn-outline-secondary btn-sm"
+                            [routerLink]="['/workshop/service-orders', o.id]"
+                          >
+                            Ver orden
+                          </a>
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            } @else {
+              <p class="text-muted small mb-0">Esta unidad aún no tiene órdenes de servicio.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

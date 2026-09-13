@@ -39,6 +39,12 @@ export const clientsRoutes: Routes = [
         data: { title: "Editar cliente", breadcrumb: "Editar" },
       },
       {
+        path: "vehicles/:vehicleId",
+        loadComponent: () =>
+          import("./unidad/unidad-detail").then((m) => m.UnidadDetail),
+        data: { title: "Detalle de unidad", breadcrumb: "Unidad" },
+      },
+      {
         path: "contacts",
         loadComponent: () =>
           import("./contactos/list/contactos-list").then((m) => m.ContactosList),

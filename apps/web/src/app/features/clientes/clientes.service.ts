@@ -7,6 +7,8 @@ import {
   ClientFilters,
   ClientsResponse,
   CreateClientDto,
+  CustomerVehicle,
+  VehicleServiceHistoryItem,
 } from "./models/client.model";
 
 const API_URL = "/api/v1/clients";
@@ -50,6 +52,24 @@ export class ClientesService {
 
   getById(id: string): Observable<ClientDetail> {
     return this.http.get<ClientDetail>(`${API_URL}/${id}`);
+  }
+
+  getVehicle(
+    clientId: string,
+    vehicleId: string,
+  ): Observable<CustomerVehicle> {
+    return this.http.get<CustomerVehicle>(
+      `${API_URL}/${clientId}/vehicles/${vehicleId}`,
+    );
+  }
+
+  getVehicleServiceHistory(
+    clientId: string,
+    vehicleId: string,
+  ): Observable<VehicleServiceHistoryItem[]> {
+    return this.http.get<VehicleServiceHistoryItem[]>(
+      `${API_URL}/${clientId}/vehicles/${vehicleId}/service-history`,
+    );
   }
 
   create(dto: CreateClientDto): Observable<Client> {

@@ -45,6 +45,15 @@ export class CustomerVehiclesController {
     return this.customerVehiclesService.create(user, clientId, dto);
   }
 
+  @Get(':vehicleId')
+  findOne(
+    @CurrentUser() user: UserPayload,
+    @Param('clientId', ParseUUIDPipe) clientId: string,
+    @Param('vehicleId', ParseUUIDPipe) vehicleId: string,
+  ) {
+    return this.customerVehiclesService.findOne(user, clientId, vehicleId);
+  }
+
   @Get(':vehicleId/service-history')
   getServiceHistory(
     @CurrentUser() user: UserPayload,
