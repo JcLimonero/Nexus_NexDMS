@@ -1,6 +1,7 @@
 import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { RouterLink } from "@angular/router";
 import { Barra } from "../../shared/barra/barra";
 import { Perfiles } from "../perfiles/perfiles";
 import { ConfirmService } from "../../shared/services/confirm.service";
@@ -35,7 +36,7 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra, Perfiles, EscDirective],
+  imports: [CommonModule, FormsModule, RouterLink, Barra, Perfiles, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
@@ -155,7 +156,7 @@ export class Tenants implements OnInit {
   /** Abre el DMS del cliente con la sesión ya puesta, en otra pestaña. */
   entrar(t: Tenant): void {
     if (!t.isActive) {
-      this.avisar("El cliente está suspendido; reactívalo para entrar", "error");
+      this.avisar("La empresa está suspendida; reactívala para entrar", "error");
       return;
     }
     // La pestaña se abre antes de la respuesta para no toparse con el bloqueo
@@ -168,7 +169,7 @@ export class Tenants implements OnInit {
       },
       error: (err) => {
         tab?.close();
-        this.avisar(err?.error?.message || "No se pudo entrar al cliente", "error");
+        this.avisar(err?.error?.message || "No se pudo entrar a la empresa", "error");
       },
     });
   }
@@ -182,7 +183,7 @@ export class Tenants implements OnInit {
       },
       error: () => {
         this.cargando.set(false);
-        this.avisar("No se pudo cargar la lista de clientes", "error");
+        this.avisar("No se pudo cargar la lista de empresas", "error");
       },
     });
     this.saas.panorama().subscribe({ next: (p) => this.panorama.set(p) });
@@ -292,10 +293,10 @@ export class Tenants implements OnInit {
         this.saas.guardarFicha(t.id, { saasPlanId: plan.id }).subscribe({
           next: () => this.cargar(),
           error: () =>
-            this.avisar("Se dio de alta el cliente, pero no su plan", "error"),
+            this.avisar("Se dio de alta la empresa, pero no su plan", "error"),
         });
         this.guardando.set(false);
-        this.avisar("Cliente dado de alta");
+        this.avisar("Empresa dada de alta");
         this.cerrarForm();
         this.cargar();
       },
@@ -337,7 +338,7 @@ export class Tenants implements OnInit {
     this.srv.suspender(t.id, motivo).subscribe({
       next: (actualizado) => {
         this.guardando.set(false);
-        this.avisar(t.isActive ? "Cliente suspendido" : "Cliente reactivado");
+        this.avisar(t.isActive ? "Empresa suspendida" : "Empresa reactivada");
         this.cerrarSuspension();
         this.cargar();
         // Si la ficha del mismo cliente está abierta, refresca su estatus y su
@@ -748,7 +749,7 @@ export class Tenants implements OnInit {
       .subscribe({
         next: () => {
           this.guardando.set(false);
-          this.avisar("Datos del cliente guardados");
+          this.avisar("Datos de la empresa guardados");
           this.abrirFicha(t);
         },
         error: (e) => {

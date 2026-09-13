@@ -13,12 +13,12 @@
       <div class="indicador">
         <span class="etiqueta">Ingreso mensual</span>
         <strong class="cifra">{{ p.ingresoMensual | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
-        <span class="pie">{{ p.activos }} clientes activos</span>
+        <span class="pie">{{ p.activos }} empresas activas</span>
       </div>
       <div class="indicador" [class.alerta]="p.adeudoTotal > 0">
         <span class="etiqueta">Adeudo</span>
         <strong class="cifra">{{ p.adeudoTotal | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
-        <span class="pie">{{ p.clientesConAdeudo }} clientes con saldo vencido</span>
+        <span class="pie">{{ p.clientesConAdeudo }} empresas con saldo vencido</span>
       </div>
       <div class="indicador">
         <span class="etiqueta">Planes</span>
@@ -60,7 +60,7 @@
               <span>Nivel que otorga</span>
               @if (p.isSystem) {
                 <!-- En los de origen el nivel es la clave misma: cambiarlo
-                     dejaría a sus clientes con un plan que ya no significa
+                     dejaría a sus empresas con un plan que ya no significa
                      lo que decía. -->
                 <span class="fijo">
                   {{ etiquetaNivel(p.tier) }} — plan base del sistema
@@ -119,7 +119,7 @@
   <section class="tarjeta">
     <h2>Módulos contratados aparte</h2>
     <p class="explica">
-      Precio del módulo cuando el cliente lo contrata sin cambiar de plan. Se
+      Precio del módulo cuando la empresa lo contrata sin cambiar de plan. Se
       cobra además de su plan y se le activa al asignárselo en su ficha.
     </p>
 

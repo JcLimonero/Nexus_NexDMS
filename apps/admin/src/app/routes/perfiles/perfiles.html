@@ -2,7 +2,7 @@
   @if (!embebido()) {
     <app-barra
       titulo="Roles a medida"
-      subtitulo="Perfiles con nombre propio que cada cliente arma con los roles base"
+      subtitulo="Perfiles con nombre propio que cada empresa arma con los roles base"
     />
   }
 
@@ -15,7 +15,7 @@
   } @else {
     @if (!embebido()) {
       <div class="selector-tenant">
-        <label>Cliente</label>
+        <label>Empresa</label>
         <select
           [ngModel]="tenantId()"
           (ngModelChange)="onTenantChange($event)"
@@ -29,12 +29,12 @@
 
     <section class="lista-perfiles">
       <div class="encabezado">
-        <h2>Perfiles del cliente</h2>
+        <h2>Perfiles de la empresa</h2>
         <button type="button" class="btn-principal" (click)="nuevo()">Nuevo perfil</button>
       </div>
 
       @if (perfiles().length === 0) {
-        <p class="vacio">Este cliente aún no tiene perfiles a medida.</p>
+        <p class="vacio">Esta empresa aún no tiene perfiles a medida.</p>
       } @else {
         @for (p of perfiles(); track p.id) {
           <article class="tarjeta-perfil">

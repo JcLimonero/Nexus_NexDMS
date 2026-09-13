@@ -1,7 +1,7 @@
 <div class="panel">
   <app-barra
-    titulo="Clientes del SaaS"
-    subtitulo="Grupos que operan con NexDMS, su plan, sus módulos y sus cobros"
+    titulo="Empresas"
+    subtitulo="Empresas que operan con NexDMS, su plan, sus módulos y sus cobros"
   />
 
   @if (aviso(); as a) {
@@ -16,7 +16,7 @@
     @if (p.morosos.length) {
       <section class="mora">
         <div class="mora-cabecera">
-          <h2>Clientes en mora por pago</h2>
+          <h2>Empresas en mora por pago</h2>
           <span class="mora-resumen">
             {{ p.enSoloLectura }} en solo lectura ·
             {{ p.bloqueadosPorPago }} bloqueados
@@ -25,7 +25,7 @@
         <table class="tabla">
           <thead>
             <tr>
-              <th>Grupo</th>
+              <th>Empresa</th>
               <th>Estado</th>
               <th>Días de mora</th>
               <th>Adeudo</th>
@@ -62,21 +62,24 @@
   <!-- Listado -->
   <section class="tarjeta">
     <div class="titulo-fila">
-      <h2>Clientes</h2>
-      <button type="button" class="btn-principal" (click)="nuevo()">
-        Nuevo cliente
-      </button>
+      <h2>Empresas</h2>
+      <div class="acciones">
+        <button type="button" class="btn-secundario" (click)="nuevo()">
+          Alta rápida
+        </button>
+        <a class="btn-principal" routerLink="/alta-empresa">Nueva empresa</a>
+      </div>
     </div>
 
     @if (cargando()) {
       <p class="vacio">Cargando…</p>
     } @else if (tenants().length === 0) {
-      <p class="vacio">Todavía no hay clientes dados de alta.</p>
+      <p class="vacio">Todavía no hay empresas dadas de alta.</p>
     } @else {
       <table class="tabla">
         <thead>
           <tr>
-            <th>Grupo</th>
+            <th>Empresa</th>
             <th>Identificador</th>
             <th>Plan</th>
             <th>Módulos extra</th>
@@ -165,15 +168,15 @@
   <div class="dialogo" role="dialog" aria-modal="true" appEsc (esc)="cerrarForm()">
     <header class="dialogo-top">
       <div>
-        <h2>Nuevo cliente</h2>
-        <p>Un grupo nuevo con el plan que contrata</p>
+        <h2>Alta rápida de empresa</h2>
+        <p>Una empresa nueva con el plan que contrata</p>
       </div>
       <button type="button" class="btn-cerrar" (click)="cerrarForm()">×</button>
     </header>
 
     <div class="rejilla">
         <label class="campo">
-          <span>Nombre del grupo</span>
+          <span>Nombre de la empresa</span>
           <input autocomplete="off" [(ngModel)]="form.name" (input)="alEscribirNombre()" />
         </label>
         <label class="campo">
@@ -396,7 +399,7 @@
           [class.activa]="pestana() === 'datos'"
           (click)="verPestana('datos')"
         >
-          Datos del cliente
+          Datos de la empresa
         </button>
         <button
           type="button"
@@ -434,7 +437,7 @@
             <h4 class="grupo-titulo">Identidad y plan</h4>
             <div class="rejilla">
               <label class="campo">
-                <span>Nombre del grupo</span>
+                <span>Nombre de la empresa</span>
                 <input autocomplete="off" [(ngModel)]="datos.name" />
               </label>
               <label class="campo">
@@ -831,7 +834,7 @@
           </button>
         </div>
 
-        <h4 class="marca-titulo">Cuentas del cliente</h4>
+        <h4 class="marca-titulo">Cuentas de la empresa</h4>
         @if (cargandoUsuarios()) {
           <p class="vacio">Cargando usuarios…</p>
         } @else if (usuarios().length === 0) {
