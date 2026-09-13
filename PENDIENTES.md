@@ -34,6 +34,13 @@ Hoy existe: `leads` (etapas, actividades, convertir a cliente), `surveys`/`sale-
 - [ ] **Encuestas / NPS** — ya existe `surveys`; ofrecerlo como módulo y mostrar resultados en la ficha 360.
 - [ ] **Asignación avanzada / SLA** (opcional) — round-robin y SLA de primer contacto, como "CRM Pro".
 
+**Agente conversacional (WhatsApp) — arquitectura:**
+- [ ] **Runtime: un solo agente orquestador** (un WhatsApp por tenant/línea). Detecta la intención y la manda a la **habilidad** correcta: Citas, Estatus de servicio, Cotización, Ventas, Hojalatería, + escalar a humano. Contexto compartido (cliente, vehículo, orden).
+- [ ] **Habilidades activas según los módulos contratados** (un taller mecánico no ve "Ventas"; una agencia sí).
+- [ ] **Admin: habilidades SEPARADAS** — cada habilidad con su switch, prompt/mensajes, horarios y escalamiento, y **contratable/cobrable por separado** (como hoy los complementos de WhatsApp del Taller). Unificado para el cliente, separado para configurar y cobrar.
+- [ ] Opción de **líneas por departamento** (ventas/servicio con número propio): mismo agente configurado por línea, no bots distintos.
+- [ ] **No confundir con el asistente de datos** (staff, OpenRouter, "pregúntale a tus datos") — ese es interno/analítico y va aparte.
+
 Orden sugerido para empezar: (1) Vista 360, (2) WhatsApp/bandeja en CRM, (3) Embudo Kanban, (4) seguimiento/tareas.
 
 ## Rebrand a NexQSystem
