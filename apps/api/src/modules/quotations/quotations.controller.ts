@@ -6,6 +6,7 @@ import {
   Patch,
   Post,
   Query,
+  Res,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -13,7 +14,9 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { ParseUUIDPipe } from '@nestjs/common/pipes';
+import type { Response } from 'express';
 import { QuotationsService } from './quotations.service';
+import { CotizacionPdfService } from './cotizacion-pdf.service';
 import { CreateQuotationDto } from './dto/create-quotation.dto';
 import { FilterQuotationsDto } from './dto/filter-quotations.dto';
 import { UpdateQuotationDto } from './dto/update-quotation.dto';
@@ -31,7 +34,10 @@ import type { UserPayload } from '../auth/strategies/jwt.strategy';
 @UseGuards(AuthGuard, RolesGuard)
 @Controller('quotations')
 export class QuotationsController {
-  constructor(private readonly quotationsService: QuotationsService) {}
+  constructor(
+    private readonly quotationsService: QuotationsService,
+    private readonly cotizacionPdf: CotizacionPdfService,
+  ) {}
 
   @Get()
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
@@ -49,6 +55,30 @@ export class QuotationsController {
     @Param('id', ParseUUIDPipe) id: string,
   ) {
     return this.quotationsService.findOne(user, id);
+  }
+
+  /**
+   * La cotización en papel: el documento que más se imprime y se manda al
+   * cliente. Va como PDF (no pantalla imprimible) para que salga igual desde el
+   * DMS, la tableta y el correo, con la misma identidad que el resto.
+   */
+  @Get(':id/pdf')
+  @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER', 'SELLER')
+  async pdf(
+    @CurrentUser() user: UserPayload,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res() res: Response,
+  ) {
+    const { buffer, filename } = await this.cotizacionPdf.generar(
+      user.tenantId,
+      id,
+    );
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `inline; filename="${filename}"`,
+      'Content-Length': String(buffer.length),
+    });
+    res.end(buffer);
   }
 
   @Post()
