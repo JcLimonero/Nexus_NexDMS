@@ -17,11 +17,33 @@
   </nav>
 
   <div class="usuario">
-    <span class="chip" [title]="auth.usuario()?.email">
+    <button
+      type="button"
+      class="chip"
+      [class.abierto]="menuAbierto()"
+      (click)="alternarMenu($event)"
+      aria-haspopup="menu"
+      [attr.aria-expanded]="menuAbierto()"
+      [title]="auth.usuario()?.email"
+    >
       <span class="avatar">{{ (auth.usuario()?.email || "?").charAt(0).toUpperCase() }}</span>
       <span class="email">{{ auth.usuario()?.email }}</span>
-    </span>
-    <button type="button" class="btn-salir" (click)="auth.salir()">Salir</button>
+      <span class="caret" aria-hidden="true">▾</span>
+    </button>
+
+    @if (menuAbierto()) {
+      <div class="menu" role="menu" (click)="$event.stopPropagation()">
+        <div class="menu-usuario">
+          <span class="menu-nombre">
+            {{ auth.usuario()?.firstName }} {{ auth.usuario()?.lastName }}
+          </span>
+          <span class="menu-email">{{ auth.usuario()?.email }}</span>
+        </div>
+        <button type="button" class="menu-item peligro" role="menuitem" (click)="salir()">
+          Salir
+        </button>
+      </div>
+    }
   </div>
 </header>
 

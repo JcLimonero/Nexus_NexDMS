@@ -81,12 +81,13 @@
 
 /* ── Usuario y sesión ── */
 .usuario {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-8);
   flex-shrink: 0;
 }
 
+/* El chip es un botón: al pulsarlo cuelga el menú de sesión. */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -95,7 +96,19 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-pill);
   background: var(--card);
-  max-width: 220px;
+  max-width: 240px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.12s, background 0.12s;
+
+  &:hover {
+    border-color: var(--border-strong);
+    background: var(--bg);
+  }
+  &.abierto {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+  }
 
   .avatar {
     width: 26px;
@@ -117,14 +130,56 @@
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  .caret {
+    font-size: 10px;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
 }
 
-.btn-salir {
-  height: 34px;
-  padding: 0 14px;
+/* Menú de sesión colgado del chip. */
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  padding: var(--space-8);
+  background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  background: var(--card);
+  box-shadow: var(--shadow-md, 0 8px 24px rgba(0, 0, 0, 0.12));
+  z-index: 40;
+}
+
+.menu-usuario {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-8) var(--space-8) var(--space-12);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: var(--space-8);
+}
+.menu-nombre {
+  font-size: var(--text-sm);
+  font-weight: var(--font-semibold);
+  color: var(--text-primary);
+}
+.menu-email {
+  font-size: var(--text-xs, 12px);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--space-8) var(--space-8);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
   color: var(--text-secondary);
   font-family: inherit;
   font-size: var(--text-sm);
@@ -132,9 +187,12 @@
   cursor: pointer;
 
   &:hover {
-    border-color: var(--danger);
-    color: var(--danger);
+    background: var(--bg);
+    color: var(--text-primary);
+  }
+  &.peligro:hover {
     background: var(--danger-bg);
+    color: var(--danger);
   }
 }
 
