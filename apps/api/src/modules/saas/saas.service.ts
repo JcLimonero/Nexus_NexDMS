@@ -28,6 +28,10 @@ import {
 import { ConektaService, CheckoutSalida } from './conekta.service';
 import { EmailjsService } from '../../common/email/emailjs.service';
 import { statusPill, wrapAdminEmail } from '../../common/email/templates';
+import { UsersService } from '../users/users.service';
+import { Branch } from '../branches/entities/branch.entity';
+import { ScopeEnum } from '../users/entities/user.entity';
+import { CreateUserDto } from '../users/dto/create-user.dto';
 
 export interface ResumenCobroCliente {
   tenantId: string;
@@ -54,12 +58,70 @@ export class SaasService {
     private readonly pagoRepo: Repository<SaasPayment>,
     @InjectRepository(Tenant)
     private readonly tenantRepo: Repository<Tenant>,
+    @InjectRepository(Branch)
+    private readonly branchRepo: Repository<Branch>,
     private readonly storage: StorageService,
     private readonly config: ConfigService,
     private readonly billing: BillingStatusService,
     private readonly conekta: ConektaService,
     private readonly email: EmailjsService,
+    private readonly users: UsersService,
   ) {}
+
+  // ─── Usuarios base del cliente (por plataforma) ──────────────────────
+  //
+  // Desde la administración se dan de alta y se gestionan las cuentas con las
+  // que el cliente entra a cada plataforma: DMS/portal (ADMIN, MANAGER…),
+  // Recepción (RECEPTIONIST) y PWA de técnicos (MECHANIC).
+
+  /** Cuentas del cliente, con sus roles, para el tab de Usuarios. */
+  async listarUsuarios(tenantId: string) {
+    await this.tenantOrFail(tenantId);
+    return this.users.listar(tenantId);
+  }
+
+  /** Alta de una cuenta del cliente. Si no se indica sucursal, usa la matriz. */
+  async crearUsuario(tenantId: string, dto: CreateUserDto) {
+    await this.tenantOrFail(tenantId);
+    const datos: CreateUserDto = { ...dto };
+    if (!datos.scope) datos.scope = ScopeEnum.SUCURSAL;
+    if (!datos.branchIds || datos.branchIds.length === 0) {
+      const matriz = await this.branchRepo.findOne({
+        where: { tenantId },
+        order: { isPrimary: 'DESC', createdAt: 'ASC' },
+      });
+      if (!matriz) {
+        throw new BadRequestException(
+          'El cliente aún no tiene sucursal; crea una antes de dar de alta usuarios.',
+        );
+      }
+      datos.branchIds = [matriz.id];
+    }
+    return this.users.create(tenantId, datos);
+  }
+
+  /** Cambia la contraseña de una cuenta del cliente. */
+  async cambiarContrasenaUsuario(
+    tenantId: string,
+    userId: string,
+    password: string,
+  ) {
+    await this.tenantOrFail(tenantId);
+    await this.users.restablecerContrasena(tenantId, userId, password);
+    return { ok: true };
+  }
+
+  /** Activa o desactiva una cuenta del cliente. */
+  async alternarUsuario(tenantId: string, userId: string) {
+    await this.tenantOrFail(tenantId);
+    return this.users.alternarActivo(tenantId, userId);
+  }
+
+  private async tenantOrFail(tenantId: string): Promise<Tenant> {
+    const tenant = await this.tenantRepo.findOne({ where: { id: tenantId } });
+    if (!tenant) throw new NotFoundException('Cliente no encontrado');
+    return tenant;
+  }
 
   /**
    * Arma y envía a compras de Nexus el resumen de clientes en mora (aviso de

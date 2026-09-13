@@ -502,3 +502,54 @@
   font-weight: 600;
   color: var(--text-secondary);
 }
+
+/* ── Tab de usuarios ── */
+.alta-usuario {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--space-16);
+  margin-bottom: var(--space-32);
+  background: var(--bg-elevated);
+}
+.mono {
+  font-family: var(--font-mono);
+  color: var(--text-secondary);
+}
+.ancho-total {
+  grid-column: 1 / -1;
+}
+.acciones-fila {
+  display: flex;
+  gap: var(--space-8);
+  flex-wrap: wrap;
+}
+.pass-inline {
+  display: flex;
+  gap: var(--space-8);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.pass-inline input {
+  flex: 1;
+  min-width: 160px;
+}
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  background: var(--bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+}
+.pill-ok {
+  background: var(--success-bg);
+  color: var(--success);
+  border-color: transparent;
+}
+.pill-alerta {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: transparent;
+}

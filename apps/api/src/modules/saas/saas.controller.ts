@@ -18,10 +18,18 @@ import { Roles } from '../../common/decorators/roles.decorator';
 import { AuthGuard } from '../../common/guards/auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { PlatformAdminGuard } from '../../common/guards/platform-admin.guard';
+import { IsString, MinLength } from 'class-validator';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { SaasService } from './saas.service';
 import { PALETAS } from '../tenants/branding.paletas';
 import { SaasPayment, SaasPlan } from './entities/saas.entities';
+import { CreateUserDto } from '../users/dto/create-user.dto';
+
+class CambiarContrasenaDto {
+  @IsString()
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
+  password: string;
+}
 
 /**
  * Administración del SaaS: lo que ve Nexus Q Tech, no el concesionario.
@@ -162,5 +170,37 @@ export class SaasController {
   @Delete('payments/:id')
   eliminarPago(@Param('id', ParseUUIDPipe) id: string) {
     return this.saas.eliminarPago(id);
+  }
+
+  // ─── Usuarios base del cliente (por plataforma) ──────────────────────
+
+  @Get('tenants/:id/users')
+  usuarios(@Param('id', ParseUUIDPipe) id: string) {
+    return this.saas.listarUsuarios(id);
+  }
+
+  @Post('tenants/:id/users')
+  crearUsuario(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateUserDto,
+  ) {
+    return this.saas.crearUsuario(id, dto);
+  }
+
+  @Patch('tenants/:id/users/:userId/password')
+  cambiarContrasenaUsuario(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+    @Body() dto: CambiarContrasenaDto,
+  ) {
+    return this.saas.cambiarContrasenaUsuario(id, userId, dto.password);
+  }
+
+  @Patch('tenants/:id/users/:userId/active')
+  alternarUsuario(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('userId', ParseUUIDPipe) userId: string,
+  ) {
+    return this.saas.alternarUsuario(id, userId);
   }
 }

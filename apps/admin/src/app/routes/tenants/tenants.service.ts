@@ -332,6 +332,66 @@ export class SaasService {
       form,
     );
   }
+
+  // ─── Usuarios base del cliente ───────────────────────
+  usuarios(tenantId: string): Observable<UsuarioTenant[]> {
+    return this.http.get<UsuarioTenant[]>(
+      `/api/v1/saas/tenants/${tenantId}/users`,
+    );
+  }
+
+  crearUsuario(
+    tenantId: string,
+    dto: NuevoUsuarioTenant,
+  ): Observable<UsuarioTenant> {
+    return this.http.post<UsuarioTenant>(
+      `/api/v1/saas/tenants/${tenantId}/users`,
+      dto,
+    );
+  }
+
+  cambiarContrasena(
+    tenantId: string,
+    userId: string,
+    password: string,
+  ): Observable<{ ok: boolean }> {
+    return this.http.patch<{ ok: boolean }>(
+      `/api/v1/saas/tenants/${tenantId}/users/${userId}/password`,
+      { password },
+    );
+  }
+
+  alternarUsuario(
+    tenantId: string,
+    userId: string,
+  ): Observable<{ id: string; isActive: boolean }> {
+    return this.http.patch<{ id: string; isActive: boolean }>(
+      `/api/v1/saas/tenants/${tenantId}/users/${userId}/active`,
+      {},
+    );
+  }
+}
+
+/** Cuenta de acceso de un cliente (para el tab de Usuarios). */
+export interface UsuarioTenant {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  roles: string[];
+  scope: string;
+  isActive: boolean;
+  bloqueado: boolean;
+  lastLoginAt: string | null;
+}
+
+export interface NuevoUsuarioTenant {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  roles: string[];
+  scope: string;
 }
 
 export interface PaletaMarca {

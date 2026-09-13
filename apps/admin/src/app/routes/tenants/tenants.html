@@ -428,6 +428,13 @@
         >
           Marca
         </button>
+        <button
+          type="button"
+          [class.activa]="pestana() === 'usuarios'"
+          (click)="pestana.set('usuarios')"
+        >
+          Usuarios ({{ usuarios().length }})
+        </button>
       </nav>
 
       @if (pestana() === "datos") {
@@ -635,7 +642,7 @@
             </tbody>
           </table>
         }
-      } @else {
+      } @else if (pestana() === "marca") {
         <!-- ── Marca del cliente ── -->
         <p class="marca-intro">
           El logotipo y los colores se aplican en todo su NexDMS y en lo que
@@ -746,6 +753,133 @@
             {{ guardando() ? "Guardando…" : "Aplicar paleta" }}
           </button>
         </footer>
+      } @else if (pestana() === "usuarios") {
+        <!-- ── Usuarios base del cliente ── -->
+        <p class="marca-intro">
+          Cuentas con las que el cliente entra a cada plataforma. El rol define a
+          dónde puede entrar: <strong>Portal/DMS</strong> (administrador),
+          <strong>Recepción</strong> y <strong>Técnico (PWA)</strong>.
+        </p>
+
+        <div class="alta-usuario">
+          <h4 class="marca-titulo">Nuevo usuario</h4>
+          <div class="rejilla">
+            <label class="campo">
+              <span>Nombre</span>
+              <input
+                [ngModel]="nuevoUsuario().firstName"
+                (ngModelChange)="nuevoUsuario.set({ ...nuevoUsuario(), firstName: $event })"
+              />
+            </label>
+            <label class="campo">
+              <span>Apellido</span>
+              <input
+                [ngModel]="nuevoUsuario().lastName"
+                (ngModelChange)="nuevoUsuario.set({ ...nuevoUsuario(), lastName: $event })"
+              />
+            </label>
+            <label class="campo">
+              <span>Correo (usuario de acceso)</span>
+              <input
+                type="email"
+                [ngModel]="nuevoUsuario().email"
+                (ngModelChange)="nuevoUsuario.set({ ...nuevoUsuario(), email: $event })"
+              />
+            </label>
+            <label class="campo">
+              <span>Contraseña (mín. 8)</span>
+              <input
+                type="text"
+                [ngModel]="nuevoUsuario().password"
+                (ngModelChange)="nuevoUsuario.set({ ...nuevoUsuario(), password: $event })"
+                placeholder="La define aquí"
+              />
+            </label>
+            <label class="campo ancho-total">
+              <span>Plataforma</span>
+              <select
+                [ngModel]="nuevoUsuario().plataforma"
+                (ngModelChange)="nuevoUsuario.set({ ...nuevoUsuario(), plataforma: $event })"
+              >
+                @for (p of plataformas; track p.value) {
+                  <option [value]="p.value">{{ p.label }} — {{ p.hint }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <button
+            type="button"
+            class="btn-principal"
+            [disabled]="creandoUsuario()"
+            (click)="crearUsuario()"
+          >
+            {{ creandoUsuario() ? "Creando…" : "Crear usuario" }}
+          </button>
+        </div>
+
+        <h4 class="marca-titulo">Cuentas del cliente</h4>
+        @if (cargandoUsuarios()) {
+          <p class="vacio">Cargando usuarios…</p>
+        } @else if (usuarios().length === 0) {
+          <p class="vacio">Aún no hay usuarios. Crea el primero arriba.</p>
+        } @else {
+          <table class="tabla">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (u of usuarios(); track u.id) {
+                <tr>
+                  <td>{{ u.firstName }} {{ u.lastName }}</td>
+                  <td class="mono">{{ u.email }}</td>
+                  <td>{{ etiquetaRoles(u.roles) }}</td>
+                  <td>
+                    @if (u.bloqueado) {
+                      <span class="pill pill-alerta">Bloqueado</span>
+                    } @else if (u.isActive) {
+                      <span class="pill pill-ok">Activo</span>
+                    } @else {
+                      <span class="pill">Inactivo</span>
+                    }
+                  </td>
+                  <td>
+                    @if (cambiandoPass() === u.id) {
+                      <div class="pass-inline">
+                        <input
+                          type="text"
+                          [ngModel]="passNueva()"
+                          (ngModelChange)="passNueva.set($event)"
+                          placeholder="Nueva contraseña"
+                        />
+                        <button type="button" class="btn-principal" (click)="confirmarCambioPass(u)">
+                          Guardar
+                        </button>
+                        <button type="button" class="btn-secundario" (click)="cambiandoPass.set(null)">
+                          Cancelar
+                        </button>
+                      </div>
+                    } @else {
+                      <div class="acciones-fila">
+                        <button type="button" class="btn-secundario" (click)="iniciarCambioPass(u.id)">
+                          Cambiar contraseña
+                        </button>
+                        <button type="button" class="btn-secundario" (click)="alternarUsuario(u)">
+                          {{ u.isActive ? "Desactivar" : "Activar" }}
+                        </button>
+                      </div>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
       }
     } @else {
       <p class="vacio">Cargando ficha…</p>

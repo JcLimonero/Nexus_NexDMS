@@ -14,12 +14,21 @@ import {
 } from './entities/saas.entities';
 import { StorageModule } from '../../common/storage/storage.module';
 import { EmailModule } from '../../common/email/email.module';
+import { UsersModule } from '../users/users.module';
+import { Branch } from '../branches/entities/branch.entity';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SaasPlan, SaasModulePrice, SaasPayment, Tenant]),
+    TypeOrmModule.forFeature([
+      SaasPlan,
+      SaasModulePrice,
+      SaasPayment,
+      Tenant,
+      Branch,
+    ]),
     StorageModule,
     EmailModule,
+    UsersModule,
   ],
   controllers: [SaasController, MiCobroController, SaasWebhookController],
   providers: [SaasService, BillingStatusService, ConektaService],
