@@ -6,7 +6,8 @@ Lista viva de lo que falta, para no perderlo entre sesiones. Marca con `[x]` lo 
 - [ ] **Monitor de citas** — agregar el mock/sección en la landing.
 - [ ] **Plataforma de pago configurable** — beneficio en la landing (el cliente elige y configura su pasarela).
 - [ ] **Logo definitivo** — reemplazar el placeholder (barra, footer, favicon) cuando llegue de la IA de imágenes.
-- [ ] **Desplegar en Vercel** — proyecto nuevo con Root Directory `apps/landing` y dominio `nexusqsystem.com` + `www`.
+- [x] **Landing en la raíz** — se sirve desde el admin como `/inicio.html`; la raíz sin sesión cae ahí y con sesión va al panel. Sin tocar Vercel.
+- [ ] **Ojo: hay dos copias** de la landing — `apps/admin/public/inicio.html` (la que está en vivo) y `apps/landing/index.html` (standalone). Mantenerlas en sync o consolidar en una sola.
 
 ## Producto (features nuevos)
 - [ ] **Pasarela de pago self-service** — el tenant elige su plataforma de pago y la **configura él mismo** desde su panel (hoy solo Conekta). Backend + UI.

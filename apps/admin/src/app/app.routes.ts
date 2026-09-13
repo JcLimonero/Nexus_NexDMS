@@ -71,6 +71,11 @@ export const routes: Routes = [
       import("./routes/usuarios/usuarios").then((m) => m.Usuarios),
     title: "Usuarios del portal — Administración NexQSystem",
   },
-  { path: "", pathMatch: "full", redirectTo: "dashboard" },
+  {
+    // Raíz del dominio: con sesión → panel; sin sesión → landing pública.
+    path: "",
+    pathMatch: "full",
+    loadComponent: () => import("./routes/inicio/inicio").then((m) => m.Inicio),
+  },
   { path: "**", redirectTo: "dashboard" },
 ];
