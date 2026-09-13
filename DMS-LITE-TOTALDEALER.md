@@ -96,6 +96,46 @@ Objetivo: un MVP para instalar un piloto o arrancar un taller.
 
 **Postura recomendada:** el vehículo se acepta; los términos se negocian **desde la fuerza** (el producto ya existe, es el activo de Nexus). Contrapropuesta: (1) IP del core = Nexus; (2) 50/50 de utilidad condicionado a **mínimos de ventas de TD**; (3) desarrollo facturado correctamente; (4) alcance del PO acotado al Lite; (5) finanzas re-modeladas con *ramp* y todos los costos; (6) cláusula 07 fuerte y con IP claro.
 
+## Clasificación de módulos por edición (visibilidad / feature flags)
+Cada módulo se marca como visible en **Total One (TO)**, **NexQS (NX)** o **Ambos**. NexQS es el
+superset; Total One es el subconjunto operativo (talleres/loteros/maquinaria). El core lo comparten
+ambos. Esta tabla es la base para los *feature flags* por edición.
+
+| Módulo / Área | Total One | NexQS | Nota |
+|---|:---:|:---:|---|
+| Clientes, vehículos/unidades | ✅ | ✅ | Core |
+| Usuarios, roles, sucursales | ✅ | ✅ | Core |
+| Caja (apertura/movimientos/corte) | ✅ | ✅ | Core |
+| Facturación CFDI (Mega Invoice) | ✅ | ✅ | Core |
+| Presupuestos / cotizaciones | ✅ | ✅ | Core |
+| Ventas / punto de venta | ✅ | ✅ | Core |
+| Almacén y refacciones (compras, traspasos, ajustes, devoluciones) | ✅ | ✅ | Core |
+| Servicio / órdenes / citas / garantías | ✅ | ✅ | Core |
+| Venta de unidades (nuevos, usados, recompra) | ✅ | ✅ | Core |
+| Compliance / PLD / legalidad | ✅ | ✅ | Core |
+| CRM básico (leads pre-venta) | ✅ | ✅ | Core |
+| Encuestas post-venta | ✅ | ✅ | Core |
+| Dashboard / reportes | ✅ | ✅ | Core |
+| Motor de suscripción + bloqueo escalonado | ✅ | ✅ | Nace por Total One; útil para ambos |
+| Vertical maquinaria agrícola | ✅ | ➕ | Impulsado por Total One; NexQS lo puede ofrecer |
+| Hojalatería y pintura (colisión) | ❌ | ✅ | Oculto en TO (salvo que el PO lo pida) |
+| Monitores (taller / citas) | ❌ | ✅ | Oculto en TO |
+| Asistente IA (OpenRouter) | ❌ | ✅ | Oculto en TO |
+| WhatsApp / bandeja de conversaciones | ❌ | ✅ | Oculto en TO |
+| CRM avanzado (embudo Kanban, campañas, retención, NPS, SLA) | ❌ | ✅ | Oculto en TO |
+| Agente conversacional (orquestador) | ❌ | ✅ | Oculto en TO |
+| Contabilidad / export (CONTPAQi/ASPEL) | ❌ | ✅ | Oculto en TO |
+| Pasarela de pago self-service | ❌ | ✅ | En TO, solo lo básico para cobro (p. ej. QR de pago) |
+| F&I avanzado (financiamiento/seguros) | ❌ | ✅ | Oculto en TO |
+| Multimarca / consolidado de grupo | ❌ | ✅ | Oculto en TO |
+| Flotillas (fleets) | ❌ | ✅ | Oculto en TO |
+| Portal de cliente / portal público | ❌ | ✅ | Oculto en TO (evaluar) |
+| Features exclusivas a petición del PO de TD | ✅ | ❔ | Solo TO por defecto; Nexus decide si además van a NexQS (cláusula 07) |
+
+Leyenda: ✅ visible · ❌ oculto · ➕ disponible/opcional · ❔ a decisión de Nexus.
+**Regla:** un feature que el PO de TD pida vive en Total One por *feature flag*; que además aparezca
+en NexQS lo decide Nexus (dueño del código).
+
 ## Alcance de features: roadmap = NexQS; Total One = alcance actual
 - **El plan de features nuevos (`PENDIENTES.md`) es de NexQS**, la versión independiente de Nexus (cláusula 07).
 - **Total One = el producto que tenemos hoy** (el alcance DMS Lite ya construido). No hereda automáticamente el roadmap de NexQS.
