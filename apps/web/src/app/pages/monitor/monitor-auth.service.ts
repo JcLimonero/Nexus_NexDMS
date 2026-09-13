@@ -50,6 +50,9 @@ export class MonitorAuthService {
       .post<RespuestaLogin | { requiresTotp: true; message: string }>(
         `${API_URL}/login`,
         { email, password },
+        // El monitor lleva su sesión por Bearer y comparte origen con el DMS:
+        // pide no fijar la cookie para no pisar la sesión del DMS.
+        { headers: { "X-No-Session-Cookie": "1" } },
       )
       .pipe(
         tap((r) => {
@@ -92,7 +95,11 @@ export class MonitorAuthService {
     const refreshToken = localStorage.getItem(REFRESCO);
     if (!refreshToken) return of(false);
     return this.http
-      .post<{ accessToken: string }>(`${API_URL}/refresh`, { refreshToken })
+      .post<{ accessToken: string }>(
+        `${API_URL}/refresh`,
+        { refreshToken },
+        { headers: { "X-No-Session-Cookie": "1" } },
+      )
       .pipe(
         tap((r) => localStorage.setItem(ACCESO, r.accessToken)),
         map(() => true),

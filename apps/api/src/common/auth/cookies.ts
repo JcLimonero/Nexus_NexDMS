@@ -19,6 +19,17 @@ export const ACCESS_COOKIE = 'nex_at';
 export const CSRF_COOKIE = 'nex_csrf';
 /** Header por el que el frontend reenvía el token CSRF. */
 export const CSRF_HEADER = 'x-csrf-token';
+/**
+ * Header con el que un cliente pide NO fijar la cookie de sesión al autenticar.
+ * Lo usa el monitor del taller: comparte origen y endpoint con el DMS, pero
+ * lleva su propia sesión por Bearer y no debe pisar la cookie del DMS.
+ */
+export const NO_COOKIE_HEADER = 'x-no-session-cookie';
+
+/** ¿El request pidió explícitamente no fijar la cookie de sesión? */
+export function optaPorNoCookie(req: Request): boolean {
+  return req.headers?.[NO_COOKIE_HEADER] === '1';
+}
 
 const esProd = (): boolean => process.env.NODE_ENV === 'production';
 

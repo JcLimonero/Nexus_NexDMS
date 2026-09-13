@@ -142,12 +142,11 @@ export class AuthService {
   }
 
   logout(): void {
-    const token = this.getAccessToken();
-    if (token) {
-      this.http.post(`${API_URL}/logout`, {}, {
-        headers: { Authorization: `Bearer ${token}` },
-      }).subscribe({ error: () => {} });
-    }
+    // La sesión va por cookie httpOnly; el interceptor adjunta credenciales y
+    // CSRF, así que basta pegarle a /logout para que el backend la borre. (En
+    // impersonación, donde la sesión va por Bearer local, el interceptor también
+    // adjunta ese token.)
+    this.http.post(`${API_URL}/logout`, {}).subscribe({ error: () => {} });
     this.clearSession();
     this.branding.limpiar();
     this.router.navigate(["/auth/login"]);
@@ -159,7 +158,13 @@ export class AuthService {
     return this.http
       .post<{ accessToken: string }>(`${API_URL}/refresh`, { refreshToken })
       .pipe(
-        tap((res) => localStorage.setItem(STORAGE_ACCESS, res.accessToken)),
+        tap((res) => {
+          // La sesión normal ya recibió la cookie nueva del backend; solo la
+          // sesión por Bearer (impersonación) necesita refrescar el token local.
+          if (localStorage.getItem(STORAGE_ACCESS)) {
+            localStorage.setItem(STORAGE_ACCESS, res.accessToken);
+          }
+        }),
         catchError(() => {
           this.clearSession();
           return of(null);
@@ -167,6 +172,7 @@ export class AuthService {
       );
   }
 
+  /** Token local; solo existe en sesiones por Bearer (impersonación). */
   getAccessToken(): string | null {
     return localStorage.getItem(STORAGE_ACCESS);
   }
@@ -182,11 +188,14 @@ export class AuthService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getAccessToken();
+    // La sesión normal ya no guarda el token (vive en cookie httpOnly); se sabe
+    // que hay sesión por el perfil guardado. En impersonación además hay token.
+    return !!this.getUser();
   }
 
   private setSession(res: LoginResponse): void {
-    localStorage.setItem(STORAGE_ACCESS, res.accessToken);
+    // El token de acceso lo fija el backend como cookie httpOnly (a prueba de
+    // XSS); aquí solo el refresh (para renovar sesión) y el perfil.
     localStorage.setItem(STORAGE_REFRESH, res.refreshToken);
     localStorage.setItem(STORAGE_USER, JSON.stringify(res.user));
   }

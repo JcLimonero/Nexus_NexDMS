@@ -21,12 +21,15 @@ export interface UserPayload {
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
   constructor(config: ConfigService) {
     super({
-      // El token se busca primero en la cookie httpOnly de sesión y, si no está,
-      // en el header Authorization: Bearer. El fallback deja migrar app por app
-      // sin romper las que todavía mandan el token por header.
+      // Se prioriza el header Authorization: Bearer y, si no está, la cookie
+      // httpOnly de sesión. El orden importa en el mismo origen (app web): el
+      // monitor del taller manda su token por Bearer y así gana aunque la cookie
+      // del DMS "se cuele" en la petición; la sesión normal (sin Bearer) usa la
+      // cookie. El fallback deja convivir apps migradas y no migradas.
       jwtFromRequest: (req: Request): string | null =>
+        ExtractJwt.fromAuthHeaderAsBearerToken()(req) ??
         leerCookie(req, ACCESS_COOKIE) ??
-        ExtractJwt.fromAuthHeaderAsBearerToken()(req),
+        null,
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
     });

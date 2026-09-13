@@ -20,6 +20,36 @@ function esRutaDeSesion(url: string): boolean {
   );
 }
 
+/** Lee una cookie legible (no httpOnly) del documento. */
+function leerCookie(nombre: string): string | null {
+  const par = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${nombre}=`));
+  return par ? decodeURIComponent(par.slice(nombre.length + 1)) : null;
+}
+
+const METODOS_MUTANTES = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * Prepara los encabezados/credenciales de la sesión del DMS (cookie httpOnly):
+ * manda la cookie (withCredentials), reenvía el token CSRF en métodos que mutan
+ * y, si hay token local (impersonación "entrar como cliente"), lo adjunta por
+ * Bearer —que el backend prioriza sobre la cookie—.
+ */
+function conSesionDms(
+  req: import("@angular/common/http").HttpRequest<unknown>,
+  auth: AuthService,
+) {
+  const headers: Record<string, string> = {};
+  if (METODOS_MUTANTES.has(req.method.toUpperCase())) {
+    const csrf = leerCookie("nex_csrf");
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+  }
+  const impersonacion = auth.getAccessToken();
+  if (impersonacion) headers["Authorization"] = `Bearer ${impersonacion}`;
+  return req.clone({ withCredentials: true, setHeaders: headers });
+}
+
 /**
  * Elige con qué sesión va cada petición y reacciona cuando la sesión venció.
  *
@@ -42,11 +72,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const billing = inject(BillingStateService);
 
   const enMonitor = location.pathname.startsWith("/monitor");
-  const token = enMonitor ? monitor.token() : auth.getAccessToken();
-
-  const conAuth = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+  // Monitor: sesión propia por Bearer (localStorage), sin cookie. DMS: cookie
+  // httpOnly (+ CSRF, + Bearer solo en impersonación).
+  const conAuth = enMonitor
+    ? (() => {
+        const token = monitor.token();
+        return token
+          ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+          : req;
+      })()
+    : conSesionDms(req, auth);
 
   return next(conAuth).pipe(
     catchError((err: unknown) => {
@@ -95,11 +130,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
             cerrarYaAlLogin(auth, router);
             return throwError(() => err);
           }
-          // Reintenta la petición original con el token nuevo.
-          const reintento = req.clone({
-            setHeaders: { Authorization: `Bearer ${res.accessToken}` },
-          });
-          return next(reintento);
+          // Reintenta con la sesión renovada: la cookie ya viene actualizada del
+          // backend (y en impersonación, el Bearer local también).
+          return next(conSesionDms(req, auth));
         }),
         catchError((e) => {
           refreshEnCurso = null;

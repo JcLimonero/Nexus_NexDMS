@@ -87,9 +87,10 @@ export class SelectorContexto implements OnInit {
       .post<{ accessToken?: string }>("/api/v1/auth/switch-branch", { branchId })
       .subscribe({
         next: (r) => {
-          // El token nuevo lleva la sucursal y la razón social recalculadas:
-          // sin reemplazarlo, el resto de pantallas seguiría con el anterior.
-          if (r?.accessToken) {
+          // El token nuevo lleva la sucursal y la razón social recalculadas. En
+          // sesión normal ya viene en la cookie que fijó el backend; solo la
+          // sesión por Bearer (impersonación) necesita reemplazar el token local.
+          if (r?.accessToken && localStorage.getItem("nexdms_accessToken")) {
             localStorage.setItem("nexdms_accessToken", r.accessToken);
           }
           const destino = this.sucursales().find((s) => s.branchId === branchId);
