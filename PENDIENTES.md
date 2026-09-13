@@ -31,15 +31,17 @@ Pendiente real: vertical maquinaria, preset de módulos, PDF de cotización, PLD
   - Consideraciones: QR con token firmado y caducidad, un solo uso para salida; validación desde recepción/PWA; que funcione aunque el cliente no tenga la app (link web). Ligar con [documentos/PDF] y con la pasarela de pago.
 
 ## Documentos / PDF (cotizaciones, órdenes de servicio, etc.)
-Revisar y homologar **cómo se generan los PDF** del sistema. Estado actual: se arman
-**ad-hoc con `pdfkit`**, un servicio por documento y sin plantilla común.
-- Hoy existe: `service-orders/orden-pdf.service.ts` (orden de servicio) y `cash-register/corte-pdf.service.ts` (corte de caja).
-- [ ] **Cotización sin PDF** — el módulo `quotations` no genera PDF todavía; agregarlo (es de los documentos que más se imprime/manda al cliente).
-- [ ] **Revisar el enfoque de generación** — decidir si seguimos con `pdfkit` (dibujo manual, difícil de mantener/estilizar) o pasamos a **HTML → PDF** (plantilla + motor tipo Puppeteer/renderer) para poder maquetar con CSS y reutilizar diseño.
-- [ ] **Plantilla común + branding del tenant** — encabezado con **logo, colores y datos fiscales** del tenant (ya hay `tenants/branding.paletas.ts`); que cotización, orden de servicio, corte, etc. compartan cabecera/pie y estilo.
-- [ ] **Cobertura por módulo** — definir qué documentos deben tener PDF: cotización, orden de servicio (taller y H&P), presupuesto de colisión, corte de caja, y comprobantes/recibos. (El CFDI ya lo entrega el PAC; aquí es el PDF **operativo/interno**, no el fiscal.)
-- [ ] **Consistencia de folios** — usar el código legible (prefijo empresa + objeto + consecutivo) en el PDF, no el GUID.
-- [ ] **Entrega** — descargar / imprimir / adjuntar a WhatsApp o correo desde la misma acción.
+- [x] **Plantilla común (`common/pdf/pdf-doc.ts`)** — `PdfDoc`: encabezado con **logo del tenant** (fallback al nombre/razón social), colores de la paleta, secciones, campos, totales, firmas y pie. Fuente única de la identidad.
+- [x] **Cotización con PDF** — `quotations/cotizacion-pdf.service.ts` + `GET /quotations/:id/pdf`.
+- [x] **Homologados** orden de servicio, corte de caja y listados de export sobre la plantilla/paleta.
+- [x] **Varían por sucursal** — encabezado con la **razón social, RFC y domicilio de la sucursal** (cada sucursal puede tener su propia entidad legal). El logo es a nivel tenant.
+- [x] **Bug de hoja extra** — el pie ya no genera una segunda hoja vacía.
+- [ ] **Logo por tenant** — hoy `logo_key` suele estar vacío (se muestra el nombre). Subir el logo del tenant (Total One, etc.) para que salga en los PDF. Falta el flujo de carga de logo en el admin.
+- [ ] **Consistencia de folios** — usar el código legible en todos (ya se usa el folio propio en orden/cotización).
+- [ ] **Entrega** — descargar / imprimir / adjuntar a WhatsApp o correo desde la misma acción (hoy es `inline`).
+- [ ] **Faltantes por definir** — presupuesto de colisión (H&P), recibo/comprobante de pago operativo. (El CFDI lo entrega el PAC.)
+- [ ] **Excel del export** — la fila de encabezado sigue en navy fijo; homologar al color de marca (menor).
+- [ ] **Opcional a futuro** — evaluar HTML→PDF (Puppeteer) si el mantenimiento con `pdfkit` crece.
 
 ## CRM — roadmap y empaquetado
 Hoy existe: `leads` (etapas, actividades, convertir a cliente), `surveys`/`sale-surveys`,
