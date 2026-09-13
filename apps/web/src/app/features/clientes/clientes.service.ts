@@ -1,6 +1,6 @@
 import { Injectable, inject } from "@angular/core";
 import { HttpClient, HttpParams } from "@angular/common/http";
-import { Observable, map, tap } from "rxjs";
+import { Observable, map } from "rxjs";
 import {
   Client,
   ClientDetail,
@@ -18,12 +18,6 @@ const API_URL = "/api/v1/clients";
 })
 export class ClientesService {
   private http = inject(HttpClient);
-  // #region agent log
-  private _dbgReqCount = 0;
-  private _dbgLog(msg: string, data: Record<string, unknown>) {
-    fetch('http://127.0.0.1:7581/ingest/bcde24cd-a710-4919-a588-2e9c9447588e', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'b8cd5e' }, body: JSON.stringify({ sessionId: 'b8cd5e', location: 'clientes.service.ts', message: msg, data, timestamp: Date.now() }) }).catch(() => {});
-  }
-  // #endregion
 
   getAll(filters: ClientFilters = {}): Observable<ClientsResponse> {
     let params = new HttpParams();
@@ -32,15 +26,7 @@ export class ClientesService {
     if (filters.page) params = params.set("page", filters.page.toString());
     if (filters.limit) params = params.set("limit", filters.limit.toString());
 
-    const reqSeq = ++this._dbgReqCount;
-    return this.http.get<ClientsResponse>(API_URL, { params }).pipe(
-      // #region agent log
-      tap({
-        next: () => this._dbgLog('clientes getAll success', { reqSeq }),
-        error: (err) => this._dbgLog('clientes getAll error', { reqSeq, error: err?.message || String(err) }),
-      }),
-      // #endregion
-    );
+    return this.http.get<ClientsResponse>(API_URL, { params });
   }
 
   search(q: string, limit = 8): Observable<Client[]> {
