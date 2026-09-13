@@ -325,6 +325,31 @@ JOIN t_adv a ON a.rn = ((g.seq - 1) % (SELECT max(rn) FROM t_adv)) + 1
 JOIN t_svc s ON s.rn = ((g.seq - 1) % (SELECT max(rn) FROM t_svc)) + 1
 JOIN clients cl ON cl.id = v.owner_id;
 
+-- ── Códigos legibles de cliente (client_code) ────────────────────────
+-- Los clientes se insertan por SQL sin código; la app normalmente lo genera.
+-- Aquí se asignan con el formato prefijo + 'C' + consecutivo(8) y se ajusta la
+-- secuencia document_code_seq, para que la lista muestre TDMC00000001, etc.
+DO $$
+DECLARE v_tenant uuid; v_prefix text; v_base int;
+BEGIN
+  SELECT id, COALESCE(NULLIF(trim(code_prefix), ''), 'XXX') INTO v_tenant, v_prefix
+  FROM tenants WHERE slug = 'taller-demo';
+  SELECT COALESCE(last_value, 0) INTO v_base
+  FROM document_code_seq WHERE tenant_id = v_tenant AND object_code = 'C';
+  IF v_base IS NULL THEN v_base := 0; END IF;
+  WITH faltan AS (
+    SELECT id, row_number() OVER (ORDER BY created_at, id) AS n
+    FROM clients WHERE tenant_id = v_tenant AND (client_code IS NULL OR client_code = '')
+  )
+  UPDATE clients c
+  SET client_number = v_base + f.n,
+      client_code   = v_prefix || 'C' || lpad((v_base + f.n)::text, 8, '0')
+  FROM faltan f WHERE c.id = f.id;
+  INSERT INTO document_code_seq (tenant_id, object_code, last_value)
+  VALUES (v_tenant, 'C', (SELECT COALESCE(max(client_number), 0) FROM clients WHERE tenant_id = v_tenant))
+  ON CONFLICT (tenant_id, object_code) DO UPDATE SET last_value = EXCLUDED.last_value;
+END $$;
+
 COMMIT;
 
 -- Resumen (informativo).
