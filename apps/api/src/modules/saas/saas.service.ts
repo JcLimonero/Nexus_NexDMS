@@ -123,6 +123,85 @@ export class SaasService {
     return tenant;
   }
 
+  /** Agregados operativos de TODA la plataforma, para el dashboard del admin. */
+  async opsGlobales(): Promise<{
+    ops: Record<string, number>;
+    planes: { plan: string; total: number }[];
+  }> {
+    const [ops] = await this.tenantRepo.manager.query(
+      `SELECT
+         (SELECT count(*) FROM clients WHERE deleted_at IS NULL)::int AS clientes,
+         (SELECT count(*) FROM customer_vehicles)::int AS vehiculos,
+         (SELECT count(*) FROM service_orders WHERE received_at >= date_trunc('month', now()))::int AS ordenes_mes,
+         (SELECT count(*) FROM service_orders WHERE status NOT IN ('DELIVERED','CANCELLED'))::int AS ordenes_activas,
+         (SELECT count(*) FROM appointments WHERE scheduled_at >= date_trunc('month', now()) AND scheduled_at < date_trunc('month', now()) + interval '1 month')::int AS citas_mes,
+         (SELECT count(*) FROM unit_sales WHERE created_at >= date_trunc('month', now()))::int AS ventas_mes,
+         (SELECT count(*) FROM users WHERE is_active AND deleted_at IS NULL)::int AS usuarios`,
+    );
+    const planes = await this.tenantRepo.manager.query(
+      `SELECT plan, count(*)::int AS total FROM tenants GROUP BY plan ORDER BY plan`,
+    );
+    return {
+      ops: {
+        clientes: Number(ops?.clientes ?? 0),
+        vehiculos: Number(ops?.vehiculos ?? 0),
+        ordenesMes: Number(ops?.ordenes_mes ?? 0),
+        ordenesActivas: Number(ops?.ordenes_activas ?? 0),
+        citasMes: Number(ops?.citas_mes ?? 0),
+        ventasMes: Number(ops?.ventas_mes ?? 0),
+        usuarios: Number(ops?.usuarios ?? 0),
+      },
+      planes: planes.map((p: { plan: string; total: number }) => ({
+        plan: p.plan,
+        total: Number(p.total),
+      })),
+    };
+  }
+
+  /** KPIs operativos del cliente para el panel de su ficha. */
+  async estadisticas(tenantId: string): Promise<Record<string, number>> {
+    await this.tenantOrFail(tenantId);
+    const [row] = await this.tenantRepo.manager.query(
+      `SELECT
+         (SELECT count(*) FROM clients WHERE tenant_id=$1 AND deleted_at IS NULL)::int AS clientes,
+         (SELECT count(*) FROM customer_vehicles WHERE tenant_id=$1)::int AS vehiculos,
+         (SELECT count(*) FROM service_orders WHERE tenant_id=$1)::int AS ordenes,
+         (SELECT count(*) FROM service_orders WHERE tenant_id=$1 AND status NOT IN ('DELIVERED','CANCELLED'))::int AS ordenes_activas,
+         (SELECT count(*) FROM service_orders WHERE tenant_id=$1 AND received_at >= date_trunc('month', now()))::int AS ordenes_mes,
+         (SELECT count(*) FROM appointments WHERE tenant_id=$1 AND scheduled_at >= now() - interval '56 days' AND scheduled_at < now())::int AS citas_8sem,
+         (SELECT count(*) FROM appointments WHERE tenant_id=$1 AND scheduled_at >= now())::int AS citas_futuras,
+         (SELECT count(*) FROM catalog_units WHERE tenant_id=$1)::int AS unidades_piso,
+         (SELECT count(*) FROM unit_sales WHERE tenant_id=$1)::int AS ventas_unidades,
+         (SELECT count(*) FROM users WHERE tenant_id=$1 AND is_active AND deleted_at IS NULL)::int AS usuarios,
+         (SELECT count(DISTINCT u.id) FROM users u JOIN user_roles r ON r.user_id=u.id WHERE u.tenant_id=$1 AND r.role='MECHANIC' AND u.is_active AND u.deleted_at IS NULL)::int AS tecnicos,
+         (SELECT coalesce(round(avg(total)),0) FROM service_orders WHERE tenant_id=$1 AND status='DELIVERED')::int AS ticket_promedio,
+         (SELECT count(*) FROM quotations WHERE tenant_id=$1)::int AS cotizaciones,
+         (SELECT count(*) FROM sales WHERE tenant_id=$1)::int AS ventas_mostrador,
+         (SELECT count(*) FROM service_orders WHERE tenant_id=$1 AND status='DELIVERED' AND delivered_at >= date_trunc('month', now()))::int AS entregadas_mes,
+         (SELECT coalesce(sum(total),0) FROM service_orders WHERE tenant_id=$1 AND status='DELIVERED' AND delivered_at >= date_trunc('month', now()))::int AS ingreso_taller_mes`,
+      [tenantId],
+    );
+    const citas8 = Number(row?.citas_8sem ?? 0);
+    return {
+      clientes: Number(row?.clientes ?? 0),
+      vehiculos: Number(row?.vehiculos ?? 0),
+      ordenes: Number(row?.ordenes ?? 0),
+      ordenesActivas: Number(row?.ordenes_activas ?? 0),
+      ordenesMes: Number(row?.ordenes_mes ?? 0),
+      entregadasMes: Number(row?.entregadas_mes ?? 0),
+      citasPorSemana: Math.round((citas8 / 8) * 10) / 10,
+      citasFuturas: Number(row?.citas_futuras ?? 0),
+      unidadesPiso: Number(row?.unidades_piso ?? 0),
+      ventasUnidades: Number(row?.ventas_unidades ?? 0),
+      ventasMostrador: Number(row?.ventas_mostrador ?? 0),
+      cotizaciones: Number(row?.cotizaciones ?? 0),
+      usuarios: Number(row?.usuarios ?? 0),
+      tecnicos: Number(row?.tecnicos ?? 0),
+      ticketPromedio: Number(row?.ticket_promedio ?? 0),
+      ingresoTallerMes: Number(row?.ingreso_taller_mes ?? 0),
+    };
+  }
+
   /**
    * Arma y envía a compras de Nexus el resumen de clientes en mora (aviso de
    * #36 vía EmailJS). Devuelve cuántos morosos había y si se envió. No manda

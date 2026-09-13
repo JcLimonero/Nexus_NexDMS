@@ -20,6 +20,13 @@ export const routes: Routes = [
     title: "Nueva contraseña — NexDMS Admin",
   },
   {
+    path: "dashboard",
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import("./routes/dashboard/dashboard").then((m) => m.Dashboard),
+    title: "Panel de control — Administración NexDMS",
+  },
+  {
     path: "tenants",
     canActivate: [authGuard],
     loadComponent: () =>
@@ -56,19 +63,12 @@ export const routes: Routes = [
     title: "Catálogo de roles — Administración NexDMS",
   },
   {
-    path: "perfiles",
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import("./routes/perfiles/perfiles").then((m) => m.Perfiles),
-    title: "Roles a medida — Administración NexDMS",
-  },
-  {
     path: "usuarios",
     canActivate: [authGuard],
     loadComponent: () =>
       import("./routes/usuarios/usuarios").then((m) => m.Usuarios),
     title: "Usuarios del portal — Administración NexDMS",
   },
-  { path: "", pathMatch: "full", redirectTo: "tenants" },
-  { path: "**", redirectTo: "tenants" },
+  { path: "", pathMatch: "full", redirectTo: "dashboard" },
+  { path: "**", redirectTo: "dashboard" },
 ];

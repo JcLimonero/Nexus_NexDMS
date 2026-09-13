@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from "@angular/core";
+import { Component, OnInit, computed, inject, input, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
@@ -23,6 +23,11 @@ export class Perfiles implements OnInit {
   private tenantsSrv = inject(TenantsService);
   private rolesSrv = inject(RolesService);
   private srv = inject(PerfilesService);
+
+  /** Cuando se embebe en la ficha del cliente: el tenant viene fijo y se
+   *  ocultan la barra y el selector de cliente. */
+  tenantFijo = input<string | null>(null);
+  embebido = computed(() => !!this.tenantFijo());
 
   tenants = signal<Tenant[]>([]);
   tenantId = signal<string>("");
@@ -60,6 +65,15 @@ export class Perfiles implements OnInit {
     this.rolesSrv.getRoleMap().subscribe({
       next: (m) => this.mapa.set(m),
     });
+    // Embebido en la ficha: el cliente viene fijo, no se carga la lista ni el
+    // selector.
+    const fijo = this.tenantFijo();
+    if (fijo) {
+      this.tenantId.set(fijo);
+      this.cargando.set(false);
+      this.cargarPerfiles();
+      return;
+    }
     this.tenantsSrv.listar().subscribe({
       next: (list) => {
         this.tenants.set(list);

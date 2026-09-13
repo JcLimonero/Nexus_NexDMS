@@ -222,6 +222,19 @@ export interface ClienteMoroso {
   suspendidoManual: boolean;
 }
 
+export interface DashboardOps {
+  ops: {
+    clientes: number;
+    vehiculos: number;
+    ordenesMes: number;
+    ordenesActivas: number;
+    citasMes: number;
+    ventasMes: number;
+    usuarios: number;
+  };
+  planes: { plan: string; total: number }[];
+}
+
 export interface Panorama {
   clientes: number;
   activos: number;
@@ -240,6 +253,11 @@ export class SaasService {
 
   panorama(): Observable<Panorama> {
     return this.http.get<Panorama>("/api/v1/saas/overview");
+  }
+
+  /** Agregados operativos de toda la plataforma (dashboard del admin). */
+  dashboardOps(): Observable<DashboardOps> {
+    return this.http.get<DashboardOps>("/api/v1/saas/dashboard-ops");
   }
 
   /** Último pago y próximo cobro de cada cliente, para la lista. */
@@ -333,6 +351,13 @@ export class SaasService {
     );
   }
 
+  /** KPIs operativos del cliente para el panel de la ficha. */
+  estadisticas(tenantId: string): Observable<EstadisticasTenant> {
+    return this.http.get<EstadisticasTenant>(
+      `/api/v1/saas/tenants/${tenantId}/stats`,
+    );
+  }
+
   // ─── Usuarios base del cliente ───────────────────────
   usuarios(tenantId: string): Observable<UsuarioTenant[]> {
     return this.http.get<UsuarioTenant[]>(
@@ -370,6 +395,21 @@ export class SaasService {
       {},
     );
   }
+}
+
+/** KPIs operativos del cliente (panel de la ficha). */
+export interface EstadisticasTenant {
+  clientes: number;
+  vehiculos: number;
+  ordenes: number;
+  ordenesActivas: number;
+  ordenesMes: number;
+  citasPorSemana: number;
+  citasFuturas: number;
+  unidadesPiso: number;
+  ventasUnidades: number;
+  usuarios: number;
+  ticketPromedio: number;
 }
 
 /** Cuenta de acceso de un cliente (para el tab de Usuarios). */

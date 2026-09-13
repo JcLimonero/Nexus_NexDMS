@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
+import { Perfiles } from "../perfiles/perfiles";
 import {
   CambioEstatus,
   Ficha,
@@ -32,7 +33,7 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra],
+  imports: [CommonModule, FormsModule, Barra, Perfiles],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
@@ -447,7 +448,9 @@ export class Tenants implements OnInit {
   fichaDe = signal<Tenant | null>(null);
   ficha = signal<Ficha | null>(null);
   /** Qué se ve dentro de la ficha: sus datos, sus cobros o su marca. */
-  pestana = signal<"datos" | "pagos" | "marca" | "usuarios">("datos");
+  pestana = signal<
+    "datos" | "pagos" | "marca" | "usuarios" | "perfiles"
+  >("datos");
 
   // ── Usuarios base del cliente (por plataforma) ──
   usuarios = signal<UsuarioTenant[]>([]);
@@ -534,6 +537,28 @@ export class Tenants implements OnInit {
     });
   }
 
+  /** Tabs cuyos datos ya se cargaron (lazy: se traen al abrir cada pestaña). */
+  private tabsCargados = new Set<string>();
+
+  /** Cambia de pestaña y carga sus datos la primera vez que se visualiza. */
+  verPestana(tab: "datos" | "pagos" | "marca" | "usuarios" | "perfiles"): void {
+    this.pestana.set(tab);
+    const t = this.fichaDe();
+    if (!t || this.tabsCargados.has(tab)) return;
+    this.tabsCargados.add(tab);
+    if (tab === "datos") this.cargarHistorial(t.id);
+    else if (tab === "usuarios") this.cargarUsuarios(t.id);
+    else if (tab === "marca") {
+      this.saas.branding(t.id).subscribe({
+        next: (b) => {
+          this.branding.set(b);
+          this.paletaElegida.set(b.paletaId);
+        },
+      });
+    }
+    // 'perfiles' se carga solo (componente embebido); 'pagos' viene en ficha().
+  }
+
   abrirFicha(t: Tenant): void {
     this.fichaDe.set(t);
     this.ficha.set(null);
@@ -542,14 +567,10 @@ export class Tenants implements OnInit {
     this.historial.set([]);
     this.usuarios.set([]);
     this.cambiandoPass.set(null);
+    this.tabsCargados.clear();
+    // El tab por defecto (datos) carga su historial de una vez.
+    this.tabsCargados.add("datos");
     this.cargarHistorial(t.id);
-    this.cargarUsuarios(t.id);
-    this.saas.branding(t.id).subscribe({
-      next: (b) => {
-        this.branding.set(b);
-        this.paletaElegida.set(b.paletaId);
-      },
-    });
     this.saas.ficha(t.id).subscribe({
       next: (f) => {
         this.ficha.set(f);

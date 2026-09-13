@@ -68,7 +68,7 @@ export class Acceso {
           this.error.set("Esta cuenta no administra el SaaS");
           return;
         }
-        void this.router.navigate(["/tenants"]);
+        void this.router.navigate(["/dashboard"]);
       },
       error: (e) => {
         this.entrando.set(false);

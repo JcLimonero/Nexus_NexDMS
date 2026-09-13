@@ -1,0 +1,116 @@
+<div class="panel">
+  <app-barra
+    titulo="Panel de control"
+    subtitulo="Salud del SaaS: cobros, cartera y operación de todos los clientes"
+  />
+
+  @if (cargando()) {
+    <p class="vacio">Cargando indicadores…</p>
+  } @else {
+    <!-- Financiero / negocio -->
+    <h4 class="grupo-titulo">Negocio</h4>
+    @if (panorama(); as p) {
+      <div class="kpis">
+        <div class="kpi">
+          <span class="kpi-label">Ingreso mensual</span>
+          <strong class="kpi-cifra">{{ p.ingresoMensual | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+          <span class="kpi-pie">{{ p.activos }} de {{ p.clientes }} clientes activos</span>
+        </div>
+        <div class="kpi" [class.alerta]="p.adeudoTotal > 0">
+          <span class="kpi-label">Adeudo total</span>
+          <strong class="kpi-cifra">{{ p.adeudoTotal | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</strong>
+          <span class="kpi-pie">{{ p.clientesConAdeudo }} clientes con saldo</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Clientes</span>
+          <strong class="kpi-cifra">{{ p.clientes }}</strong>
+          <span class="kpi-pie">{{ p.activos }} activos · {{ p.suspendidos }} suspendidos</span>
+        </div>
+        <div class="kpi" [class.alerta]="p.bloqueadosPorPago > 0">
+          <span class="kpi-label">Acceso restringido</span>
+          <strong class="kpi-cifra">{{ p.enSoloLectura + p.bloqueadosPorPago }}</strong>
+          <span class="kpi-pie">{{ p.enSoloLectura }} solo lectura · {{ p.bloqueadosPorPago }} bloqueados</span>
+        </div>
+      </div>
+    }
+
+    <!-- Operación agregada -->
+    <h4 class="grupo-titulo">Operación (todos los clientes)</h4>
+    @if (ops(); as o) {
+      <div class="kpis">
+        <div class="kpi">
+          <span class="kpi-label">Clientes finales</span>
+          <strong class="kpi-cifra">{{ o.ops.clientes }}</strong>
+          <span class="kpi-pie">en la cartera de todos</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Unidades</span>
+          <strong class="kpi-cifra">{{ o.ops.vehiculos }}</strong>
+          <span class="kpi-pie">vehículos gestionados</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Órdenes del mes</span>
+          <strong class="kpi-cifra">{{ o.ops.ordenesMes }}</strong>
+          <span class="kpi-pie">{{ o.ops.ordenesActivas }} activas ahora</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Citas del mes</span>
+          <strong class="kpi-cifra">{{ o.ops.citasMes }}</strong>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Ventas de unidades</span>
+          <strong class="kpi-cifra">{{ o.ops.ventasMes }}</strong>
+          <span class="kpi-pie">este mes</span>
+        </div>
+        <div class="kpi">
+          <span class="kpi-label">Usuarios activos</span>
+          <strong class="kpi-cifra">{{ o.ops.usuarios }}</strong>
+          <span class="kpi-pie">en la plataforma</span>
+        </div>
+      </div>
+
+      <!-- Distribución por plan -->
+      <h4 class="grupo-titulo">Clientes por plan</h4>
+      <div class="planes-dist">
+        @for (pl of o.planes; track pl.plan) {
+          <span class="plan-pill" [attr.data-plan]="pl.plan">
+            {{ planLabel[pl.plan] || pl.plan }}: <strong>{{ pl.total }}</strong>
+          </span>
+        }
+      </div>
+    }
+
+    <!-- Cartera en mora -->
+    @if (panorama(); as p) {
+      @if (p.morosos.length) {
+        <h4 class="grupo-titulo">Clientes en mora</h4>
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>Cliente</th>
+              <th>Estado</th>
+              <th class="num">Adeudo</th>
+              <th class="num">Días de mora</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (m of p.morosos; track m.tenantId) {
+              <tr>
+                <td>{{ m.nombre }}</td>
+                <td>
+                  <span class="pill" [class.pill-alerta]="m.estado === 'BLOQUEADO'">
+                    {{ m.estado === 'BLOQUEADO' ? 'Bloqueado' : 'Solo lectura' }}
+                  </span>
+                </td>
+                <td class="num">{{ m.adeudo | currency: "MXN" : "symbol-narrow" : "1.0-0" }}</td>
+                <td class="num">{{ m.diasMora }}</td>
+                <td><a class="btn-chico" routerLink="/tenants">Ver clientes</a></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+    }
+  }
+</div>

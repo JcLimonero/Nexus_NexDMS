@@ -1,8 +1,10 @@
-<div class="panel">
-  <app-barra
-    titulo="Roles a medida"
-    subtitulo="Perfiles con nombre propio que cada cliente arma con los roles base"
-  />
+<div [class.panel]="!embebido()">
+  @if (!embebido()) {
+    <app-barra
+      titulo="Roles a medida"
+      subtitulo="Perfiles con nombre propio que cada cliente arma con los roles base"
+    />
+  }
 
   @if (aviso(); as a) {
     <p class="aviso" [attr.data-tono]="a.tono">{{ a.texto }}</p>
@@ -11,17 +13,19 @@
   @if (cargando()) {
     <p class="aviso">Cargando…</p>
   } @else {
-    <div class="selector-tenant">
-      <label>Cliente</label>
-      <select
-        [ngModel]="tenantId()"
-        (ngModelChange)="onTenantChange($event)"
-      >
-        @for (t of tenants(); track t.id) {
-          <option [value]="t.id">{{ t.name }}</option>
-        }
-      </select>
-    </div>
+    @if (!embebido()) {
+      <div class="selector-tenant">
+        <label>Cliente</label>
+        <select
+          [ngModel]="tenantId()"
+          (ngModelChange)="onTenantChange($event)"
+        >
+          @for (t of tenants(); track t.id) {
+            <option [value]="t.id">{{ t.name }}</option>
+          }
+        </select>
+      </div>
+    }
 
     <div class="perfiles-layout">
       <section class="lista-perfiles">

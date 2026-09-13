@@ -409,30 +409,37 @@
         <button
           type="button"
           [class.activa]="pestana() === 'datos'"
-          (click)="pestana.set('datos')"
+          (click)="verPestana('datos')"
         >
           Datos del cliente
         </button>
         <button
           type="button"
           [class.activa]="pestana() === 'pagos'"
-          (click)="pestana.set('pagos')"
+          (click)="verPestana('pagos')"
         >
           Cobros ({{ f.pagos.length }})
         </button>
         <button
           type="button"
           [class.activa]="pestana() === 'marca'"
-          (click)="pestana.set('marca')"
+          (click)="verPestana('marca')"
         >
           Marca
         </button>
         <button
           type="button"
           [class.activa]="pestana() === 'usuarios'"
-          (click)="pestana.set('usuarios')"
+          (click)="verPestana('usuarios')"
         >
-          Usuarios ({{ usuarios().length }})
+          Usuarios
+        </button>
+        <button
+          type="button"
+          [class.activa]="pestana() === 'perfiles'"
+          (click)="verPestana('perfiles')"
+        >
+          Roles a medida
         </button>
       </nav>
 
@@ -929,6 +936,9 @@
           </table>
           }
         }
+      } @else if (pestana() === "perfiles") {
+        <!-- Roles a medida del cliente (embebido, sin selector de cliente). -->
+        <app-perfiles [tenantFijo]="t.id" />
       }
     } @else {
       <p class="vacio">Cargando ficha…</p>
