@@ -207,4 +207,26 @@ export class SaasService {
       {},
     );
   }
+
+  subirLogoSucursal(
+    tenantId: string,
+    branchId: string,
+    file: File,
+  ): Observable<{ logoKey: string | null; logoUrl: string | null }> {
+    const form = new FormData();
+    form.append("file", file);
+    return this.http.post<{ logoKey: string | null; logoUrl: string | null }>(
+      `/api/v1/saas/tenants/${tenantId}/branches/${branchId}/logo`,
+      form,
+    );
+  }
+
+  quitarLogoSucursal(
+    tenantId: string,
+    branchId: string,
+  ): Observable<{ logoKey: string | null; logoUrl: string | null }> {
+    return this.http.delete<{ logoKey: string | null; logoUrl: string | null }>(
+      `/api/v1/saas/tenants/${tenantId}/branches/${branchId}/logo`,
+    );
+  }
 }

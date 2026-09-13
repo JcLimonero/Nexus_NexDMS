@@ -8,7 +8,7 @@ import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { StorageService } from '../../common/storage/storage.service';
-import { PdfDoc, PDF_TENUE, PDF_LINEA } from '../../common/pdf/pdf-doc';
+import { PdfDoc, PDF_TENUE, PDF_LINEA, descargarLogo } from '../../common/pdf/pdf-doc';
 
 const TIPO: Record<string, string> = {
   PARTS: 'Refacciones',
@@ -77,15 +77,8 @@ export class CotizacionPdfService {
       ? await this.legalRepo.findOne({ where: { id: sucursal.legalEntityId } })
       : null;
 
-    // Logotipo del tenant para el encabezado (best-effort).
-    let logo: Buffer | null = null;
-    if (t?.logoKey) {
-      try {
-        logo = await this.storage.download(t.logoKey);
-      } catch {
-        logo = null;
-      }
-    }
+    // Logotipo del encabezado: primero el de la sucursal, luego el del tenant.
+    const logo = await descargarLogo(this.storage, sucursal?.logoKey, t?.logoKey);
 
     const pdf = new PdfDoc({ paletteId: t?.palette });
     const { doc, M, ancho } = pdf;

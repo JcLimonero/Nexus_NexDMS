@@ -18,6 +18,27 @@ import { paletaPorId } from '../../modules/tenants/branding.paletas';
 export const PDF_TENUE = '#5A6B78';
 export const PDF_LINEA = '#DDE3E9';
 
+/**
+ * Descarga el primer logotipo disponible, en orden de prioridad. Las impresiones
+ * varían por sucursal: primero el logo de la sucursal, luego el del tenant, y si
+ * no hay ninguno, el encabezado cae al nombre/razón social. Best-effort: si una
+ * llave no baja, se prueba la siguiente.
+ */
+export async function descargarLogo(
+  storage: { download(key: string): Promise<Buffer> },
+  ...keys: (string | null | undefined)[]
+): Promise<Buffer | null> {
+  for (const k of keys) {
+    if (!k) continue;
+    try {
+      return await storage.download(k);
+    } catch {
+      // sigue con la siguiente
+    }
+  }
+  return null;
+}
+
 export interface EncabezadoPdf {
   /** Rótulo del tipo de documento, arriba a la derecha. Ej. "ORDEN DE SERVICIO". */
   titulo: string;
@@ -145,6 +166,7 @@ export class PdfDoc {
     if (e.senas) {
       doc.fontSize(8).font('Helvetica').fillColor(PDF_TENUE);
       doc.text(e.senas, M, yIzq, { width: colIzq });
+      yIzq = doc.y; // tras las señas, para que el divisor no las pise
     }
 
     // Bloque derecho: tipo de documento + folio + estatus.

@@ -248,6 +248,8 @@ export interface Sucursal {
   email: string;
   isPrimary: boolean;
   isActive: boolean;
+  logoKey?: string | null;
+  logoUrl?: string | null;
 }
 
 /** Alta/edición de una sucursal desde la administración. */

@@ -35,6 +35,10 @@ export class FichaSucursales {
   guardando = signal(false);
   form = signal<NuevaSucursal>(this.formVacio());
 
+  /** Logotipo de la sucursal que se está editando (opcional). */
+  logoUrl = signal<string | null>(null);
+  subiendoLogo = signal(false);
+
   constructor() {
     effect(() => {
       const id = this.tenantId();
@@ -89,7 +93,44 @@ export class FichaSucursales {
     f.isPrimary = this.sucursales().length === 0;
     this.form.set(f);
     this.editandoId.set(null);
+    this.logoUrl.set(null);
     this.formAbierto.set(true);
+  }
+
+  /** Sube el logotipo de la sucursal en edición (solo existe con id). */
+  subirLogo(input: HTMLInputElement): void {
+    const file = input.files?.[0];
+    const id = this.editandoId();
+    if (!file || !id) return;
+    this.subiendoLogo.set(true);
+    this.saas.subirLogoSucursal(this.tenantId(), id, file).subscribe({
+      next: (r) => {
+        this.subiendoLogo.set(false);
+        this.logoUrl.set(r.logoUrl);
+        input.value = "";
+        this.noti.ok("Logotipo de la sucursal actualizado");
+        this.cargar(this.tenantId());
+      },
+      error: (e) => {
+        this.subiendoLogo.set(false);
+        this.noti.error(e?.error?.message || "No se pudo subir el logotipo");
+      },
+    });
+  }
+
+  /** Quita el logotipo propio: la sucursal vuelve a imprimir con el del tenant. */
+  quitarLogo(): void {
+    const id = this.editandoId();
+    if (!id) return;
+    this.saas.quitarLogoSucursal(this.tenantId(), id).subscribe({
+      next: () => {
+        this.logoUrl.set(null);
+        this.noti.ok("Se quitó el logotipo de la sucursal");
+        this.cargar(this.tenantId());
+      },
+      error: (e) =>
+        this.noti.error(e?.error?.message || "No se pudo quitar el logotipo"),
+    });
   }
 
   editar(s: Sucursal): void {
@@ -108,6 +149,7 @@ export class FichaSucursales {
       isPrimary: s.isPrimary,
     });
     this.editandoId.set(s.id);
+    this.logoUrl.set(s.logoUrl ?? null);
     this.formAbierto.set(true);
   }
 

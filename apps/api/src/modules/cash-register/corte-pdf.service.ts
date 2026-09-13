@@ -10,7 +10,7 @@ import {
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { StorageService } from '../../common/storage/storage.service';
-import { PdfDoc, PDF_TENUE, PDF_LINEA } from '../../common/pdf/pdf-doc';
+import { PdfDoc, PDF_TENUE, PDF_LINEA, descargarLogo } from '../../common/pdf/pdf-doc';
 
 const MOVIMIENTO: Record<string, string> = {
   DEPOSIT: 'Depósito',
@@ -61,14 +61,7 @@ export class CortePdfService {
     const razon = s.branch?.legalEntityId
       ? await this.legalRepo.findOne({ where: { id: s.branch.legalEntityId } })
       : null;
-    let logo: Buffer | null = null;
-    if (t?.logoKey) {
-      try {
-        logo = await this.storage.download(t.logoKey);
-      } catch {
-        logo = null;
-      }
-    }
+    const logo = await descargarLogo(this.storage, s.branch?.logoKey, t?.logoKey);
 
     // Media carta vertical: el corte va en la gaveta con el efectivo.
     const pdf = new PdfDoc({ size: [396, 612], paletteId: t?.palette });

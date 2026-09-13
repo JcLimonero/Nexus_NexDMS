@@ -150,6 +150,24 @@ export class SaasController {
     return this.saas.subirIcono(id, file);
   }
 
+  @Post('tenants/:id/branches/:branchId/logo')
+  @UseInterceptors(FileInterceptor('file'))
+  subirLogoSucursal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.saas.subirLogoSucursal(id, branchId, file);
+  }
+
+  @Delete('tenants/:id/branches/:branchId/logo')
+  quitarLogoSucursal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+  ) {
+    return this.saas.quitarLogoSucursal(id, branchId);
+  }
+
   /** Todo lo del cliente: ficha, cobro mensual, módulos e historial. */
   @Get('tenants/:id')
   ficha(@Param('id', ParseUUIDPipe) id: string) {

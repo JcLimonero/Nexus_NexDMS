@@ -73,6 +73,42 @@
       <button type="button" class="btn-cerrar" (click)="cerrar()">×</button>
     </header>
 
+    @if (editandoId()) {
+      <div class="logo-sucursal">
+        <div class="logo-mini" [class.vacio]="!logoUrl()">
+          @if (logoUrl(); as url) {
+            <img [src]="url" alt="Logotipo de la sucursal" />
+          } @else {
+            <span>Sin logotipo propio</span>
+          }
+        </div>
+        <div class="logo-texto">
+          <strong>Logotipo de la sucursal</strong>
+          <p>
+            Aparece en las impresiones de esta sucursal (cotización, orden,
+            corte). Si no defines uno, se usa el logotipo de la empresa.
+          </p>
+          <div class="logo-btns">
+            <label class="btn-chico">
+              {{ subiendoLogo() ? "Subiendo…" : "Subir logotipo" }}
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                hidden
+                [disabled]="subiendoLogo()"
+                (change)="subirLogo($any($event.target))"
+              />
+            </label>
+            @if (logoUrl()) {
+              <button type="button" class="btn-chico ghost" (click)="quitarLogo()">
+                Usar el de la empresa
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
     <div class="rejilla">
       <label class="campo ancho-total">
         <span>Razón social</span>

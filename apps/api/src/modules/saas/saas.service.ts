@@ -150,23 +150,27 @@ export class SaasService {
       relations: { legalEntity: true },
       order: { isPrimary: 'DESC', name: 'ASC' },
     });
-    return sucursales.map((b) => ({
-      id: b.id,
-      name: b.name,
-      slug: b.slug,
-      legalEntityId: b.legalEntityId,
-      legalEntityName: b.legalEntity?.name ?? null,
-      address: b.address,
-      city: b.city,
-      state: b.state,
-      counterPhone: b.counterPhone,
-      partsPhone: b.partsPhone,
-      appointmentsPhone: b.appointmentsPhone,
-      aftersalesPhone: b.aftersalesPhone,
-      email: b.email,
-      isPrimary: b.isPrimary,
-      isActive: b.isActive,
-    }));
+    return Promise.all(
+      sucursales.map(async (b) => ({
+        id: b.id,
+        name: b.name,
+        slug: b.slug,
+        legalEntityId: b.legalEntityId,
+        legalEntityName: b.legalEntity?.name ?? null,
+        address: b.address,
+        city: b.city,
+        state: b.state,
+        counterPhone: b.counterPhone,
+        partsPhone: b.partsPhone,
+        appointmentsPhone: b.appointmentsPhone,
+        aftersalesPhone: b.aftersalesPhone,
+        email: b.email,
+        isPrimary: b.isPrimary,
+        isActive: b.isActive,
+        logoKey: b.logoKey,
+        logoUrl: b.logoKey ? await this.ligaDeLogo(b.logoKey) : null,
+      })),
+    );
   }
 
   /** Alta de una sucursal del cliente desde la administración. */
@@ -663,6 +667,45 @@ export class SaasService {
   async subirIcono(tenantId: string, file: Express.Multer.File) {
     const key = await this.subirImagenBranding(tenantId, file, 'icon');
     return this.guardarBranding(tenantId, { iconKey: key });
+  }
+
+  /**
+   * Sube el logotipo de una SUCURSAL y lo deja asignado. Las impresiones usan
+   * este logo antes que el del tenant, así que una sucursal con marca propia
+   * (otra razón social, otro giro) imprime con la suya.
+   */
+  async subirLogoSucursal(
+    tenantId: string,
+    branchId: string,
+    file: Express.Multer.File,
+  ) {
+    const sucursal = await this.branchRepo.findOne({
+      where: { id: branchId, tenantId },
+    });
+    if (!sucursal) throw new NotFoundException('Sucursal no encontrada');
+    validateLogoFile(file);
+    const key = await this.storage.upload(
+      file.buffer,
+      `branding/branch/${branchId}/logo-${Date.now()}`,
+      file.mimetype,
+    );
+    sucursal.logoKey = key;
+    await this.branchRepo.save(sucursal);
+    return {
+      logoKey: key,
+      logoUrl: await this.storage.getSignedUrl(key, 24 * 3600),
+    };
+  }
+
+  /** Quita el logotipo de la sucursal (vuelve a usar el del tenant). */
+  async quitarLogoSucursal(tenantId: string, branchId: string) {
+    const sucursal = await this.branchRepo.findOne({
+      where: { id: branchId, tenantId },
+    });
+    if (!sucursal) throw new NotFoundException('Sucursal no encontrada');
+    sucursal.logoKey = null;
+    await this.branchRepo.save(sucursal);
+    return { logoKey: null, logoUrl: null };
   }
 
   private async subirImagenBranding(

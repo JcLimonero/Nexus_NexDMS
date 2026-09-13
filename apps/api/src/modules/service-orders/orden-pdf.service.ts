@@ -16,6 +16,7 @@ import { Branch } from '../branches/entities/branch.entity';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { Tenant } from '../tenants/entities/tenant.entity';
 import { paletaPorId } from '../tenants/branding.paletas';
+import { descargarLogo } from '../../common/pdf/pdf-doc';
 import { Part } from '../parts/entities/part.entity';
 import { StorageService } from '../../common/storage/storage.service';
 
@@ -192,23 +193,16 @@ export class OrdenPdfService {
     const paleta = paletaPorId(t?.palette);
     const c: ColoresMarca = { tinta: paleta.tinta, marca: paleta.primary };
 
-    // Logotipo del tenant para el encabezado (best-effort: si no baja, se usa
-    // el nombre en grande como siempre).
-    let logo: Buffer | null = null;
-    if (t?.logoKey) {
-      try {
-        logo = await this.storage.download(t.logoKey);
-      } catch {
-        logo = null;
-      }
-    }
-
     const sucursal = await this.branchRepo.findOne({
       where: { id: so.branchId },
     });
     const razon = sucursal?.legalEntityId
       ? await this.legalRepo.findOne({ where: { id: sucursal.legalEntityId } })
       : null;
+
+    // Logotipo del encabezado: primero el de la sucursal, luego el del tenant;
+    // si no baja ninguno, el encabezado usa el nombre en grande como siempre.
+    const logo = await descargarLogo(this.storage, sucursal?.logoKey, t?.logoKey);
 
     const operaciones = await this.opRepo.find({
       where: { serviceOrderId },
