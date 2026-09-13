@@ -29,6 +29,7 @@ Hoy existe: `leads` (etapas, actividades, convertir a cliente), `surveys`/`sale-
 
 **Módulo cobrable aparte (costo marginal o valor avanzado opcional):**
 - [ ] **Comunicación / WhatsApp** — bandeja unificada de conversaciones + plantillas, ligada al cliente/lead/orden. **Mover WhatsApp de Taller a CRM** (hoy son 3 complementos opt-in de Taller). Cobro por sesión/mensaje como ya se maneja.
+  - **UI: dos áreas.** (1) **Conversaciones** — una sola bandeja (lista de chats + panel del chat) con **tabs por tipo/departamento** (Citas · Servicio · Ventas · Hojalatería · Sin asignar · Míos) que son **filtros/colas**, no datos separados: en WhatsApp hay **un hilo por cliente**. El agente etiqueta cada conversación y la manda a su cola; se puede **transferir** entre tabs sin perder historial; los tabs visibles = módulos contratados. (2) **Configuración** — las habilidades del agente por separado (ver bloque del agente abajo).
 - [ ] **Campañas y marketing** — difusión segmentada (WhatsApp/correo) a segmentos guardados. Cobrable por el costo de envío.
 - [ ] **Retención / posventa automatizada** — recordatorios por km/tiempo, fin de garantía, aniversario, recompra (ya hay piezas en el WhatsApp de Taller). Add-on.
 - [ ] **Encuestas / NPS** — ya existe `surveys`; ofrecerlo como módulo y mostrar resultados en la ficha 360.
