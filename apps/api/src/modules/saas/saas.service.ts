@@ -139,7 +139,8 @@ export class SaasService {
          (SELECT count(*) FROM users WHERE is_active AND deleted_at IS NULL)::int AS usuarios`,
     );
     const planes = await this.tenantRepo.manager.query(
-      `SELECT plan, count(*)::int AS total FROM tenants GROUP BY plan ORDER BY plan`,
+      `SELECT plan, count(*)::int AS total FROM tenants
+       WHERE is_template = false GROUP BY plan ORDER BY plan`,
     );
     return {
       ops: {
