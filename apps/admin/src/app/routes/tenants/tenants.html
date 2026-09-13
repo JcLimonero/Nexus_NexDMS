@@ -162,7 +162,7 @@
 <!-- Alta de un cliente nuevo (la edición vive en la ficha) -->
 @if (formAbierto()) {
   <div class="fondo" (click)="cerrarForm()"></div>
-  <div class="dialogo" role="dialog" aria-modal="true">
+  <div class="dialogo" role="dialog" aria-modal="true" appEsc (esc)="cerrarForm()">
     <header class="dialogo-top">
       <div>
         <h2>Nuevo cliente</h2>
@@ -224,7 +224,7 @@
      (`sobre`) para no quedar detrás de ella. -->
 @if (moduloDe(); as t) {
   <div class="fondo sobre" (click)="cerrarModulos()"></div>
-  <div class="dialogo sobre" role="dialog" aria-modal="true">
+  <div class="dialogo sobre" role="dialog" aria-modal="true" appEsc (esc)="cerrarModulos()">
     <header class="dialogo-top">
       <div>
         <h2>Módulos de {{ t.name }}</h2>
@@ -302,7 +302,7 @@
 <!-- Ficha del cliente: quién es, qué paga y qué ha pagado -->
 @if (fichaDe(); as t) {
   <div class="fondo" (click)="cerrarFicha()"></div>
-  <div class="dialogo pantalla" role="dialog" aria-modal="true">
+  <div class="dialogo pantalla" role="dialog" aria-modal="true" appEsc (esc)="cerrarFicha()">
     <header class="dialogo-top ficha-header">
       <div class="ficha-ident">
         <h2>{{ t.name }}</h2>

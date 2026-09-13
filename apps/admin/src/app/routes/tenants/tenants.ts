@@ -3,6 +3,8 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
 import { Perfiles } from "../perfiles/perfiles";
+import { ConfirmService } from "../../shared/services/confirm.service";
+import { EscDirective } from "../../shared/directives/esc.directive";
 import {
   CambioEstatus,
   Ficha,
@@ -33,13 +35,14 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra, Perfiles],
+  imports: [CommonModule, FormsModule, Barra, Perfiles, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
 export class Tenants implements OnInit {
   private srv = inject(TenantsService);
   private saas = inject(SaasService);
+  private confirm = inject(ConfirmService);
 
   readonly planes = PLANES;
 
@@ -866,9 +869,16 @@ export class Tenants implements OnInit {
       });
   }
 
-  eliminarPago(p: Pago): void {
+  async eliminarPago(p: Pago): Promise<void> {
     const t = this.fichaDe();
-    if (!t || !confirm(`¿Borrar el cobro de ${p.period}?`)) return;
+    if (!t) return;
+    const ok = await this.confirm.pedir({
+      titulo: "Borrar cobro",
+      mensaje: `¿Borrar el cobro de ${p.period}?`,
+      confirmar: "Borrar",
+      peligro: true,
+    });
+    if (!ok) return;
     this.saas.eliminarPago(p.id).subscribe({
       next: () => {
         this.avisar("Cobro eliminado");

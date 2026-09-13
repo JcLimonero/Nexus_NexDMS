@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
+import { ConfirmService } from "../../shared/services/confirm.service";
 import {
   Modulo,
   PLANES,
@@ -30,6 +31,7 @@ import {
 export class Precios implements OnInit {
   private srv = inject(SaasService);
   private tenantsSrv = inject(TenantsService);
+  private confirm = inject(ConfirmService);
 
   readonly niveles = PLANES;
 
@@ -185,8 +187,14 @@ export class Precios implements OnInit {
       });
   }
 
-  eliminar(p: PlanPrecio): void {
-    if (!confirm(`¿Borrar el plan ${p.name}?`)) return;
+  async eliminar(p: PlanPrecio): Promise<void> {
+    const ok = await this.confirm.pedir({
+      titulo: "Borrar plan",
+      mensaje: `¿Borrar el plan ${p.name}?`,
+      confirmar: "Borrar",
+      peligro: true,
+    });
+    if (!ok) return;
     this.srv.eliminarPlan(p.id).subscribe({
       next: () => {
         this.avisar(`Plan ${p.name} borrado`);

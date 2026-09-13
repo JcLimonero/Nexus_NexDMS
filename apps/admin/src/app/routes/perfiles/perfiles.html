@@ -67,7 +67,7 @@
   <!-- Formulario de perfil en diálogo (por encima de la ficha) -->
   @if (formAbierto()) {
     <div class="fondo sobre" (click)="cancelar()"></div>
-    <div class="dialogo sobre" role="dialog" aria-modal="true">
+    <div class="dialogo sobre" role="dialog" aria-modal="true" appEsc (esc)="cancelar()">
       <header class="dialogo-top">
         <h2>{{ editandoId() ? "Editar perfil" : "Nuevo perfil" }}</h2>
         <button type="button" class="btn-cerrar" (click)="cancelar()">×</button>

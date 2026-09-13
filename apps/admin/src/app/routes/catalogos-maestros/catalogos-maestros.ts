@@ -2,6 +2,7 @@ import { Component, OnInit, computed, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
+import { ConfirmService } from "../../shared/services/confirm.service";
 import {
   CampoDef,
   CatalogoMaestro,
@@ -23,6 +24,7 @@ import {
 })
 export class CatalogosMaestros implements OnInit {
   private srv = inject(CatalogosMaestrosService);
+  private confirm = inject(ConfirmService);
 
   catalogos = signal<CatalogoMaestro[]>([]);
   seleccionKey = signal<string>("");
@@ -126,11 +128,16 @@ export class CatalogosMaestros implements OnInit {
     });
   }
 
-  eliminar(e: EntradaCatalogo): void {
+  async eliminar(e: EntradaCatalogo): Promise<void> {
     const key = this.seleccionKey();
     if (!key) return;
-    if (!confirm(`¿Eliminar "${e["name"] ?? e.id}" del catálogo maestro?`))
-      return;
+    const ok = await this.confirm.pedir({
+      titulo: "Eliminar entrada",
+      mensaje: `¿Eliminar "${e["name"] ?? e.id}" del catálogo maestro?`,
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     this.srv.eliminar(key, e.id).subscribe({
       next: () => {
         this.cargarEntradas();

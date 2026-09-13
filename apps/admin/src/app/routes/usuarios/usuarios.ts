@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
 import { Barra } from "../../shared/barra/barra";
 import { AdminUsuario, NuevoAdminUsuario, UsuariosService } from "./usuarios.service";
+import { ConfirmService } from "../../shared/services/confirm.service";
 
 /**
  * Usuarios del portal de administración del SaaS (tabla admin_users, aparte de
@@ -41,6 +42,7 @@ import { AdminUsuario, NuevoAdminUsuario, UsuariosService } from "./usuarios.ser
 })
 export class Usuarios implements OnInit {
   private srv = inject(UsuariosService);
+  private confirm = inject(ConfirmService);
 
   usuarios = signal<AdminUsuario[]>([]);
   cargando = signal(true);
@@ -138,8 +140,14 @@ export class Usuarios implements OnInit {
     });
   }
 
-  eliminar(u: AdminUsuario): void {
-    if (!confirm(`¿Eliminar a ${u.email}?`)) return;
+  async eliminar(u: AdminUsuario): Promise<void> {
+    const ok = await this.confirm.pedir({
+      titulo: "Eliminar usuario",
+      mensaje: `¿Eliminar a ${u.email}?`,
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     this.srv.eliminar(u.id).subscribe({
       next: () => {
         this.aviso("Usuario eliminado");

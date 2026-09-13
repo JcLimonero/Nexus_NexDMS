@@ -5,6 +5,8 @@ import { Barra } from "../../shared/barra/barra";
 import { TenantsService, Tenant } from "../tenants/tenants.service";
 import { RoleMap, RolesService } from "../roles/roles.service";
 import { CustomRole, PerfilesService } from "./perfiles.service";
+import { ConfirmService } from "../../shared/services/confirm.service";
+import { EscDirective } from "../../shared/directives/esc.directive";
 
 /**
  * Roles a medida por cliente. Cada tenant arma perfiles con nombre propio a
@@ -15,7 +17,7 @@ import { CustomRole, PerfilesService } from "./perfiles.service";
 @Component({
   selector: "app-perfiles",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra],
+  imports: [CommonModule, FormsModule, Barra, EscDirective],
   templateUrl: "./perfiles.html",
   styleUrls: ["./perfiles.scss"],
 })
@@ -23,6 +25,7 @@ export class Perfiles implements OnInit {
   private tenantsSrv = inject(TenantsService);
   private rolesSrv = inject(RolesService);
   private srv = inject(PerfilesService);
+  private confirm = inject(ConfirmService);
 
   /** Cuando se embebe en la ficha del cliente: el tenant viene fijo y se
    *  ocultan la barra y el selector de cliente. */
@@ -188,8 +191,14 @@ export class Perfiles implements OnInit {
     });
   }
 
-  eliminar(p: CustomRole): void {
-    if (!confirm(`¿Eliminar el perfil "${p.name}"?`)) return;
+  async eliminar(p: CustomRole): Promise<void> {
+    const ok = await this.confirm.pedir({
+      titulo: "Eliminar perfil",
+      mensaje: `¿Eliminar el perfil "${p.name}"?`,
+      confirmar: "Eliminar",
+      peligro: true,
+    });
+    if (!ok) return;
     this.srv.remove(p.id).subscribe({
       next: () => {
         this.aviso.set({ texto: "Perfil eliminado", tono: "bien" });
