@@ -7,6 +7,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { isUUID } from 'class-validator';
 import { DashboardService } from './dashboard.service';
 import { ModuleDashboardService } from './module-dashboard.service';
 import { ModulesService } from '../modules/modules.module';
@@ -27,13 +28,23 @@ export class DashboardController {
     private readonly modulesService: ModulesService,
   ) {}
 
+  /**
+   * Normaliza el filtro de sucursal: solo un UUID válido pasa; vacío, espacios
+   * o cualquier valor inválido (p. ej. "Todas las sucursales" → "") se ignora,
+   * evitando el error de Postgres `invalid input syntax for type uuid`.
+   */
+  private branchFiltro(branchId?: string): string | undefined {
+    const v = branchId?.trim();
+    return v && isUUID(v) ? v : undefined;
+  }
+
   @Get('summary')
   @Roles('SUPERADMIN', 'ADMIN', 'MANAGER', 'CASHIER')
   getSummary(
     @CurrentUser() user: UserPayload,
     @Query('branchId') branchId?: string,
   ) {
-    return this.dashboardService.getSummary(user, branchId || undefined);
+    return this.dashboardService.getSummary(user, this.branchFiltro(branchId));
   }
 
   /**
@@ -56,6 +67,6 @@ export class DashboardController {
         `El módulo "${key}" no está incluido en tu licencia.`,
       );
     }
-    return this.moduleDashboardService.get(user, key, branchId || undefined);
+    return this.moduleDashboardService.get(user, key, this.branchFiltro(branchId));
   }
 }
