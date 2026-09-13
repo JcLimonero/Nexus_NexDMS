@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="NexQSystem — la plataforma para concesionarios de autos y motos en México: ventas, taller, refacciones, CRM y facturación CFDI 4.0 en un solo lugar.">
+<meta name="description" content="NexQSystem — la plataforma automotriz para concesionarios y talleres (mecánica, hojalatería y pintura) de autos y motos en México: ventas, taller, refacciones, CRM y facturación CFDI 4.0 en un solo lugar.">
 <meta name="theme-color" content="#105078">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='6' fill='%23105078'/%3E%3Cg fill='none' stroke='%23fff' stroke-width='1.6' stroke-linecap='round'%3E%3Ccircle cx='12' cy='12' r='6.6'/%3E%3Cpath d='M15.4 15.4 18.4 18.4'/%3E%3Cpath d='M12 7v3.2M13.1 12.9l3 1.7M10.9 12.9l-3 1.7'/%3E%3C/g%3E%3Cg fill='%23fff'%3E%3Ccircle cx='12' cy='12' r='1.5'/%3E%3Ccircle cx='12' cy='5.4' r='1.3'/%3E%3Ccircle cx='6.3' cy='15.6' r='1.3'/%3E%3Ccircle cx='17.7' cy='15.6' r='1.3'/%3E%3C/g%3E%3C/svg%3E">
-<title>NexQSystem · Plataforma para concesionarios en México</title>
+<title>NexQSystem · Plataforma para agencias y talleres en México</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
@@ -431,6 +431,20 @@
   .chat-in .send { margin-left: auto; color: #9fd0e6; }
   .chat-in .send svg { width: 17px; height: 17px; display: block; }
 
+  /* ── Banda de monitores (citas) ── */
+  .mon-band {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 56px;
+    align-items: center;
+  }
+  .mon-copy .eyebrow { color: var(--accent-ink); }
+  .mon-copy h2 { font-size: clamp(28px, 3.6vw, 42px); font-weight: 700; margin-top: 12px; }
+  .mon-copy p { font-size: 18px; color: var(--body); margin: 16px 0 0; max-width: 34em; }
+  .mon-list { margin: 22px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 12px; }
+  .mon-list li { display: flex; gap: 11px; align-items: flex-start; font-size: 15px; color: var(--body); }
+  .mon-list svg { width: 19px; height: 19px; color: var(--navy); flex-shrink: 0; margin-top: 3px; }
+
   /* ── Section scaffolding ── */
   section { padding: clamp(56px, 8vw, 92px) 0; }
   .sec-head { max-width: 40em; margin-bottom: 44px; }
@@ -562,7 +576,7 @@
   .cumpl li svg { width: 17px; height: 17px; color: var(--ok); flex-shrink: 0; margin-top: 3px; }
 
   /* ── Beneficios ── */
-  .benes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px 40px; }
+  .benes { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 30px 40px; }
   .bene { border-top: 2px solid var(--navy); padding-top: 18px; }
   .bene h3 { font-size: 18px; font-weight: 600; color: var(--ink); }
   .bene p { font-size: 14.5px; color: var(--body); margin: 8px 0 0; }
@@ -663,6 +677,7 @@
     .steps { grid-template-columns: repeat(2, 1fr); }
     .benes { grid-template-columns: 1fr 1fr; }
     .cumpl-grid { grid-template-columns: 1fr; }
+    .mon-band { grid-template-columns: 1fr; gap: 36px; }
     .nav-links { display: none; }
   }
   @media (max-width: 560px) {
@@ -682,7 +697,7 @@
       <span class="glyph" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.6" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 15.4 18.4 18.4M12 7v3.2M13.1 12.9l3 1.7M10.9 12.9l-3 1.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><g fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.4" r="1.3"/><circle cx="6.3" cy="15.6" r="1.3"/><circle cx="17.7" cy="15.6" r="1.3"/></g></svg>
       </span>
-      <span>NexQSystem<small>Plataforma para agencias</small></span>
+      <span>NexQSystem<small>Plataforma automotriz</small></span>
     </a>
     <nav class="nav-links" aria-label="Secciones">
       <a href="#flujo">El flujo</a>
@@ -707,13 +722,13 @@
   <section class="hero">
     <div class="wrap hero-grid">
       <div class="hero-copy">
-        <p class="eyebrow">Plataforma para concesionarios · autos y motos</p>
-        <h1>Todo tu concesionario en <span class="hl">un solo sistema.</span></h1>
+        <p class="eyebrow">Plataforma automotriz · agencias y talleres</p>
+        <h1>Todo tu negocio automotriz en <span class="hl">un solo sistema.</span></h1>
         <p class="lead">
           NexQSystem conecta ventas, taller, refacciones y facturación en una sola
           plataforma — con <strong>CFDI&nbsp;4.0</strong> y cumplimiento
-          <strong>PLD</strong> listos para el SAT. Hecho para agencias de autos
-          y motos en México.
+          <strong>PLD</strong> listos para el SAT. Para concesionarios y talleres
+          —mecánica, hojalatería y pintura— de autos y motos en México.
         </p>
         <div class="hero-cta">
           <a class="btn btn-accent" href="#demo">Solicitar una demo</a>
@@ -770,7 +785,7 @@
   <section class="flujo" id="flujo">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">El proceso completo de tu agencia</p>
+        <p class="eyebrow">El proceso completo de tu negocio</p>
         <h2>De la pre-venta al posventa, sin cambiar de sistema.</h2>
         <p>NexQSystem sigue el flujo real de una agencia. Cada etapa hereda los datos
            de la anterior: el prospecto se vuelve venta, la venta abre expediente,
@@ -792,9 +807,11 @@
     <div class="wrap">
       <div class="sec-head">
         <p class="eyebrow">Módulos</p>
-        <h2>Una caja de herramientas para toda la agencia.</h2>
-        <p>Contrata el plan y enciende solo lo que tu concesionario necesita.
-           Cada módulo comparte clientes, unidades e inventario con los demás.</p>
+        <h2>Una caja de herramientas para todo tu negocio.</h2>
+        <p>Enciende solo los módulos que tu negocio necesita: una agencia
+           completa, un taller mecánico o uno de hojalatería y pintura. El
+           tipo de negocio lo defines con lo que activas — y todo comparte
+           clientes, unidades e inventario.</p>
       </div>
       <div class="mods">
         <div class="mod">
@@ -899,6 +916,61 @@
     </div>
   </section>
 
+  <!-- ══════════════════ MONITOR DE CITAS ══════════════════ -->
+  <section class="mon-band-sec">
+    <div class="wrap mon-band">
+      <div class="mon-copy">
+        <p class="eyebrow">Pantallas en la nave</p>
+        <h2>La agenda del día, en la pared.</h2>
+        <p>Junto al monitor de taller, el <strong>monitor de citas</strong> pone
+           las citas de hoy en una pantalla a la vista de recepción y del taller:
+           quién llega, a qué hora y para qué — sin preguntar ni buscar en papel.</p>
+        <ul class="mon-list">
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> Citas del día por sucursal, ordenadas por hora.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Estado de cada cita: confirmada o pendiente de confirmar.</li>
+          <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 2"/><circle cx="12" cy="12" r="9"/></svg> Se actualiza sola; pensada para una pantalla siempre encendida.</li>
+        </ul>
+      </div>
+
+      <!-- Mock del monitor de citas -->
+      <div class="monitor" role="img" aria-label="Monitor de citas del día con horarios, cliente, servicio y estado (confirmada o pendiente).">
+        <div class="monitor-top">
+          <div>
+            <div class="m-title">Monitor de citas</div>
+            <div class="m-sub">Hoy · Sucursal Centro</div>
+          </div>
+          <span class="m-clock" id="clock-citas">08:42</span>
+        </div>
+
+        <div class="m-row">
+          <span class="m-dot ok" aria-hidden="true"></span>
+          <div class="m-info"><span class="os">09:00</span><div class="veh">Familia García · Servicio 20,000 km</div></div>
+          <span class="m-tag ok">Confirmada</span>
+        </div>
+        <div class="m-row">
+          <span class="m-dot ok" aria-hidden="true"></span>
+          <div class="m-info"><span class="os">10:30</span><div class="veh">Motos del Valle · Afinación</div></div>
+          <span class="m-tag ok">Confirmada</span>
+        </div>
+        <div class="m-row">
+          <span class="m-dot warn" aria-hidden="true"></span>
+          <div class="m-info"><span class="os">12:00</span><div class="veh">Laura Ríos · Diagnóstico eléctrico</div></div>
+          <span class="m-tag warn">Pendiente</span>
+        </div>
+        <div class="m-row">
+          <span class="m-dot ok" aria-hidden="true"></span>
+          <div class="m-info"><span class="os">13:30</span><div class="veh">Flotillas Norte · Verificación</div></div>
+          <span class="m-tag ok">Confirmada</span>
+        </div>
+
+        <div class="monitor-foot">
+          <span>4 citas hoy</span>
+          <span><b>3</b> confirmadas · <b>1</b> pendiente</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ══════════════════ ASISTENTE IA ══════════════════ -->
   <section id="ia">
     <div class="wrap ia-grid">
@@ -938,7 +1010,7 @@
           esperar refacciones.
         </div>
         <div class="chat-in">
-          <span>Pregunta lo que quieras de tu agencia…</span>
+          <span>Pregunta lo que quieras de tu negocio…</span>
           <span class="cursor" aria-hidden="true"></span>
           <span class="send" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg></span>
         </div>
@@ -996,8 +1068,9 @@
         <div class="bene"><h3>Tiempos a la vista</h3><p>El semáforo del taller muestra qué está en tiempo, por vencer o retrasado — para actuar antes de que el cliente reclame.</p></div>
         <div class="bene"><h3>Multi-sucursal</h3><p>Varias sucursales y razones sociales bajo un mismo grupo, cada una con su inventario, su serie y sus permisos.</p></div>
         <div class="bene"><h3>Cobro y factura juntos</h3><p>Registrar el pago y timbrar el CFDI son el mismo paso, no dos sistemas que alguien tiene que conciliar.</p></div>
-        <div class="bene"><h3>Con tu marca</h3><p>Logotipo y colores del concesionario en el portal, el mostrador, los monitores y lo que imprime.</p></div>
-        <div class="bene"><h3>Contrata lo que usas</h3><p>Enciende módulos por plan y agrega extras cuando crezcas. Pagas por lo que opera tu agencia.</p></div>
+        <div class="bene"><h3>Con tu marca</h3><p>Logotipo y colores del negocio en el portal, el mostrador, los monitores y lo que imprime.</p></div>
+        <div class="bene"><h3>Contrata lo que usas</h3><p>Enciende módulos por plan y agrega extras cuando crezcas. Pagas por lo que opera tu negocio.</p></div>
+        <div class="bene"><h3>Tu plataforma de pago</h3><p>Elige la pasarela de cobro que prefieras y configúrala tú mismo desde tu panel — sin depender de nadie para empezar a cobrar en línea.</p></div>
       </div>
     </div>
   </section>
@@ -1007,8 +1080,8 @@
     <div class="wrap cta-grid">
       <div>
         <p class="eyebrow">Solicita una demostración</p>
-        <h2>Veamos NexQSystem con los datos de tu agencia.</h2>
-        <p class="lead">Te mostramos cómo se vería tu concesionario dentro del
+        <h2>Veamos NexQSystem con los datos de tu negocio.</h2>
+        <p class="lead">Te mostramos cómo se vería tu negocio dentro del
            sistema y armamos el plan a la medida de tus sucursales.</p>
         <ul class="cta-points">
           <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> Recorrido guiado por los módulos que usas</li>
@@ -1019,14 +1092,14 @@
 
       <form class="demo" id="demoForm" novalidate>
         <div class="demo-fields">
-          <h3>Cuéntanos de tu concesionario</h3>
+          <h3>Cuéntanos de tu negocio</h3>
           <p class="small">Te contactamos en menos de 24&nbsp;horas hábiles.</p>
           <div class="field">
             <label for="f-nombre">Nombre</label>
             <input id="f-nombre" name="nombre" type="text" autocomplete="name" required>
           </div>
           <div class="field">
-            <label for="f-agencia">Concesionario</label>
+            <label for="f-agencia">Negocio (agencia o taller)</label>
             <input id="f-agencia" name="agencia" type="text" autocomplete="organization" required>
           </div>
           <div class="row-2">
@@ -1069,10 +1142,11 @@
           <span class="glyph" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="6.6" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 15.4 18.4 18.4M12 7v3.2M13.1 12.9l3 1.7M10.9 12.9l-3 1.7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><g fill="currentColor"><circle cx="12" cy="12" r="1.5"/><circle cx="12" cy="5.4" r="1.3"/><circle cx="6.3" cy="15.6" r="1.3"/><circle cx="17.7" cy="15.6" r="1.3"/></g></svg>
           </span>
-          <span>NexQSystem<small>Plataforma para agencias</small></span>
+          <span>NexQSystem<small>Plataforma automotriz</small></span>
         </a>
-        <p>La plataforma para concesionarios de autos y motos en México:
-           ventas, taller, refacciones y facturación en una sola plataforma.</p>
+        <p>La plataforma automotriz para concesionarios y talleres —mecánica,
+           hojalatería y pintura— de autos y motos en México: ventas, taller,
+           refacciones y facturación en un solo lugar.</p>
       </div>
       <div class="foot-cols">
         <div class="foot-col">
@@ -1117,13 +1191,14 @@
     });
   })();
 
-  // Reloj del monitor (detalle vivo, no dato del usuario).
+  // Reloj de los monitores (detalle vivo, no dato del usuario).
   (function () {
-    var el = document.getElementById("clock");
-    if (!el) return;
+    var els = [document.getElementById("clock"), document.getElementById("clock-citas")].filter(Boolean);
+    if (!els.length) return;
     function tick() {
       var d = new Date();
-      el.textContent = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      var t = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      els.forEach(function (el) { el.textContent = t; });
     }
     tick(); setInterval(tick, 20000);
   })();
