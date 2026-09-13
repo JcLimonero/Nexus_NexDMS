@@ -983,7 +983,7 @@
 <!-- Alta guiada de empresa (wizard) en diálogo -->
 @if (wizardAbierto()) {
   <div class="fondo" (click)="cerrarWizard()"></div>
-  <div class="dialogo pantalla" role="dialog" aria-modal="true" appEsc (esc)="cerrarWizard()">
+  <div class="dialogo ancho" role="dialog" aria-modal="true" appEsc (esc)="cerrarWizard()">
     <header class="dialogo-top">
       <h2>Nueva empresa</h2>
       <button type="button" class="btn-cerrar" (click)="cerrarWizard()">×</button>
