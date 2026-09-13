@@ -30,8 +30,14 @@ import { EmailjsService } from '../../common/email/emailjs.service';
 import { statusPill, wrapAdminEmail } from '../../common/email/templates';
 import { UsersService } from '../users/users.service';
 import { Branch } from '../branches/entities/branch.entity';
+import { BranchConfig } from '../branches/entities/branch-config.entity';
+import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { ScopeEnum } from '../users/entities/user.entity';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import {
+  CreateSaasBranchDto,
+  UpdateSaasBranchDto,
+} from './dto/saas-branch.dto';
 
 export interface ResumenCobroCliente {
   tenantId: string;
@@ -60,6 +66,10 @@ export class SaasService {
     private readonly tenantRepo: Repository<Tenant>,
     @InjectRepository(Branch)
     private readonly branchRepo: Repository<Branch>,
+    @InjectRepository(BranchConfig)
+    private readonly branchConfigRepo: Repository<BranchConfig>,
+    @InjectRepository(LegalEntity)
+    private readonly legalEntityRepo: Repository<LegalEntity>,
     private readonly storage: StorageService,
     private readonly config: ConfigService,
     private readonly billing: BillingStatusService,
@@ -115,6 +125,162 @@ export class SaasService {
   async alternarUsuario(tenantId: string, userId: string) {
     await this.tenantOrFail(tenantId);
     return this.users.alternarActivo(tenantId, userId);
+  }
+
+  // ─── Sucursales del cliente ──────────────────────────────────────────
+  //
+  // Desde la administración se ven y se gestionan las sucursales del cliente,
+  // sin tener que entrar a su DMS. La razón social (datos fiscales) y el
+  // horario/config fino los ajusta el cliente en su propio sistema.
+
+  /** Razones sociales del cliente, para elegir de cuál cuelga cada sucursal. */
+  async listarRazonesSociales(tenantId: string) {
+    await this.tenantOrFail(tenantId);
+    return this.legalEntityRepo.find({
+      where: { tenantId },
+      order: { isActive: 'DESC', name: 'ASC' },
+    });
+  }
+
+  /** Sucursales del cliente, con el nombre de su razón social. */
+  async listarSucursales(tenantId: string) {
+    await this.tenantOrFail(tenantId);
+    const sucursales = await this.branchRepo.find({
+      where: { tenantId },
+      relations: { legalEntity: true },
+      order: { isPrimary: 'DESC', name: 'ASC' },
+    });
+    return sucursales.map((b) => ({
+      id: b.id,
+      name: b.name,
+      slug: b.slug,
+      legalEntityId: b.legalEntityId,
+      legalEntityName: b.legalEntity?.name ?? null,
+      address: b.address,
+      city: b.city,
+      state: b.state,
+      counterPhone: b.counterPhone,
+      partsPhone: b.partsPhone,
+      appointmentsPhone: b.appointmentsPhone,
+      aftersalesPhone: b.aftersalesPhone,
+      email: b.email,
+      isPrimary: b.isPrimary,
+      isActive: b.isActive,
+    }));
+  }
+
+  /** Alta de una sucursal del cliente desde la administración. */
+  async crearSucursal(tenantId: string, dto: CreateSaasBranchDto) {
+    await this.tenantOrFail(tenantId);
+    const razon = await this.legalEntityRepo.findOne({
+      where: { id: dto.legalEntityId, tenantId },
+    });
+    if (!razon) {
+      throw new BadRequestException(
+        'La razón social indicada no pertenece a este cliente.',
+      );
+    }
+    const repetido = await this.branchRepo.findOne({
+      where: { tenantId, slug: dto.slug.trim() },
+    });
+    if (repetido) {
+      throw new BadRequestException(
+        `Ya existe una sucursal con el identificador "${dto.slug.trim()}".`,
+      );
+    }
+    // La primera sucursal del cliente es la matriz aunque no lo marquen.
+    const esPrimera = (await this.branchRepo.count({ where: { tenantId } })) === 0;
+    const sucursal = this.branchRepo.create({
+      tenantId,
+      legalEntityId: dto.legalEntityId,
+      name: dto.name.trim(),
+      slug: dto.slug.trim(),
+      address: dto.address.trim(),
+      city: dto.city.trim(),
+      state: dto.state.trim(),
+      counterPhone: dto.counterPhone.trim(),
+      partsPhone: dto.partsPhone?.trim() || null,
+      appointmentsPhone: dto.appointmentsPhone?.trim() || null,
+      aftersalesPhone: dto.aftersalesPhone?.trim() || null,
+      email: dto.email.trim(),
+      schedule: dto.schedule ?? {},
+      isPrimary: dto.isPrimary ?? esPrimera,
+      isActive: dto.isActive ?? true,
+    });
+    if (sucursal.isPrimary) await this.desmarcarMatriz(tenantId);
+    const guardada = await this.branchRepo.save(sucursal);
+    // Cada sucursal necesita su fila de configuración (como en su propio DMS).
+    await this.branchConfigRepo.save(
+      this.branchConfigRepo.create({ branchId: guardada.id }),
+    );
+    return guardada;
+  }
+
+  /** Edición de los datos de una sucursal del cliente. */
+  async actualizarSucursal(
+    tenantId: string,
+    branchId: string,
+    dto: UpdateSaasBranchDto,
+  ) {
+    await this.tenantOrFail(tenantId);
+    const sucursal = await this.branchRepo.findOne({
+      where: { id: branchId, tenantId },
+    });
+    if (!sucursal) throw new NotFoundException('Sucursal no encontrada');
+    if (dto.legalEntityId && dto.legalEntityId !== sucursal.legalEntityId) {
+      const razon = await this.legalEntityRepo.findOne({
+        where: { id: dto.legalEntityId, tenantId },
+      });
+      if (!razon) {
+        throw new BadRequestException(
+          'La razón social indicada no pertenece a este cliente.',
+        );
+      }
+      sucursal.legalEntityId = dto.legalEntityId;
+    }
+    if (dto.name !== undefined) sucursal.name = dto.name.trim();
+    if (dto.address !== undefined) sucursal.address = dto.address.trim();
+    if (dto.city !== undefined) sucursal.city = dto.city.trim();
+    if (dto.state !== undefined) sucursal.state = dto.state.trim();
+    if (dto.counterPhone !== undefined)
+      sucursal.counterPhone = dto.counterPhone.trim();
+    if (dto.partsPhone !== undefined)
+      sucursal.partsPhone = dto.partsPhone?.trim() || null;
+    if (dto.appointmentsPhone !== undefined)
+      sucursal.appointmentsPhone = dto.appointmentsPhone?.trim() || null;
+    if (dto.aftersalesPhone !== undefined)
+      sucursal.aftersalesPhone = dto.aftersalesPhone?.trim() || null;
+    if (dto.email !== undefined) sucursal.email = dto.email.trim();
+    if (dto.isActive !== undefined) sucursal.isActive = dto.isActive;
+    // Marcar una nueva matriz desmarca la anterior: solo puede haber una.
+    if (dto.isPrimary === true && !sucursal.isPrimary) {
+      await this.desmarcarMatriz(tenantId);
+      sucursal.isPrimary = true;
+    }
+    return this.branchRepo.save(sucursal);
+  }
+
+  /** Activa o desactiva una sucursal. La matriz no se puede desactivar. */
+  async alternarSucursal(tenantId: string, branchId: string) {
+    await this.tenantOrFail(tenantId);
+    const sucursal = await this.branchRepo.findOne({
+      where: { id: branchId, tenantId },
+    });
+    if (!sucursal) throw new NotFoundException('Sucursal no encontrada');
+    if (sucursal.isActive && sucursal.isPrimary) {
+      throw new BadRequestException(
+        'No se puede desactivar la matriz. Marca otra como matriz primero.',
+      );
+    }
+    sucursal.isActive = !sucursal.isActive;
+    return this.branchRepo.save(sucursal);
+  }
+
+  /** Quita la marca de matriz a la sucursal que la tuviera (solo una a la vez). */
+  private async desmarcarMatriz(tenantId: string): Promise<void> {
+    await this.branchRepo.update({ tenantId, isPrimary: true }, {
+      isPrimary: false,
+    });
   }
 
   private async tenantOrFail(tenantId: string): Promise<Tenant> {

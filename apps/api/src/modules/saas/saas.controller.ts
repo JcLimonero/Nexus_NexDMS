@@ -24,6 +24,10 @@ import { SaasService } from './saas.service';
 import { PALETAS } from '../tenants/branding.paletas';
 import { SaasPayment, SaasPlan } from './entities/saas.entities';
 import { CreateUserDto } from '../users/dto/create-user.dto';
+import {
+  CreateSaasBranchDto,
+  UpdateSaasBranchDto,
+} from './dto/saas-branch.dto';
 
 class CambiarContrasenaDto {
   @IsString()
@@ -208,5 +212,42 @@ export class SaasController {
     @Param('userId', ParseUUIDPipe) userId: string,
   ) {
     return this.saas.alternarUsuario(id, userId);
+  }
+
+  // ─── Sucursales del cliente ──────────────────────────────────────────
+
+  @Get('tenants/:id/legal-entities')
+  razonesSociales(@Param('id', ParseUUIDPipe) id: string) {
+    return this.saas.listarRazonesSociales(id);
+  }
+
+  @Get('tenants/:id/branches')
+  sucursales(@Param('id', ParseUUIDPipe) id: string) {
+    return this.saas.listarSucursales(id);
+  }
+
+  @Post('tenants/:id/branches')
+  crearSucursal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: CreateSaasBranchDto,
+  ) {
+    return this.saas.crearSucursal(id, dto);
+  }
+
+  @Patch('tenants/:id/branches/:branchId')
+  actualizarSucursal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+    @Body() dto: UpdateSaasBranchDto,
+  ) {
+    return this.saas.actualizarSucursal(id, branchId, dto);
+  }
+
+  @Patch('tenants/:id/branches/:branchId/active')
+  alternarSucursal(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Param('branchId', ParseUUIDPipe) branchId: string,
+  ) {
+    return this.saas.alternarSucursal(id, branchId);
   }
 }

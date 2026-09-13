@@ -221,3 +221,48 @@ export interface Branding {
   iconKey: string | null;
   iconUrl: string | null;
 }
+
+/** Razón social (persona moral) de la empresa; de ella cuelgan las sucursales. */
+export interface RazonSocial {
+  id: string;
+  name: string;
+  type: string;
+  rfc: string | null;
+  isActive: boolean;
+}
+
+/** Sucursal (punto de atención) de la empresa. */
+export interface Sucursal {
+  id: string;
+  name: string;
+  slug: string;
+  legalEntityId: string;
+  legalEntityName: string | null;
+  address: string;
+  city: string;
+  state: string;
+  counterPhone: string;
+  partsPhone: string | null;
+  appointmentsPhone: string | null;
+  aftersalesPhone: string | null;
+  email: string;
+  isPrimary: boolean;
+  isActive: boolean;
+}
+
+/** Alta/edición de una sucursal desde la administración. */
+export interface NuevaSucursal {
+  legalEntityId: string;
+  name: string;
+  slug: string;
+  address: string;
+  city: string;
+  state: string;
+  counterPhone: string;
+  partsPhone?: string;
+  appointmentsPhone?: string;
+  aftersalesPhone?: string;
+  email: string;
+  isPrimary?: boolean;
+  isActive?: boolean;
+}

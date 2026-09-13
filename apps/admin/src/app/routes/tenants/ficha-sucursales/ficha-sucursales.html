@@ -1,0 +1,183 @@
+<!-- ── Sucursales de la empresa ── -->
+<div class="suc-intro">
+  <p>
+    Puntos de atención de la empresa. Cada sucursal cuelga de una razón social
+    (sus datos fiscales) y tiene su propio identificador, dirección y teléfonos.
+  </p>
+  <button type="button" class="btn-principal" (click)="nueva()">
+    Nueva sucursal
+  </button>
+</div>
+
+@if (cargando()) {
+  <p class="vacio">Cargando sucursales…</p>
+} @else if (sucursales().length === 0) {
+  <p class="vacio">La empresa aún no tiene sucursales. Crea la primera arriba.</p>
+} @else {
+  <table class="tabla">
+    <thead>
+      <tr>
+        <th>Sucursal</th>
+        <th>Razón social</th>
+        <th>Ubicación</th>
+        <th>Mostrador</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (s of sucursales(); track s.id) {
+        <tr>
+          <td>
+            <strong>{{ s.name }}</strong>
+            @if (s.isPrimary) {
+              <span class="pill pill-matriz">Matriz</span>
+            }
+            <div class="sub mono">{{ s.slug }}</div>
+          </td>
+          <td>{{ s.legalEntityName ?? "—" }}</td>
+          <td>
+            {{ s.city }}, {{ s.state }}
+            <div class="sub">{{ s.address }}</div>
+          </td>
+          <td class="mono">{{ s.counterPhone }}</td>
+          <td>
+            @if (s.isActive) {
+              <span class="pill pill-ok">Activa</span>
+            } @else {
+              <span class="pill">Inactiva</span>
+            }
+          </td>
+          <td>
+            <div class="acciones-fila">
+              <button type="button" class="btn-secundario" (click)="editar(s)">
+                Editar
+              </button>
+              <button type="button" class="btn-secundario" (click)="alternar(s)">
+                {{ s.isActive ? "Desactivar" : "Activar" }}
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+}
+
+<!-- Alta/edición de sucursal en diálogo (por encima de la ficha) -->
+@if (formAbierto()) {
+  <div class="fondo sobre" (click)="cerrar()"></div>
+  <div class="dialogo sobre" role="dialog" aria-modal="true" appEsc (esc)="cerrar()">
+    <header class="dialogo-top">
+      <h2>{{ editandoId() ? "Editar sucursal" : "Nueva sucursal" }}</h2>
+      <button type="button" class="btn-cerrar" (click)="cerrar()">×</button>
+    </header>
+
+    <div class="rejilla">
+      <label class="campo ancho-total">
+        <span>Razón social</span>
+        <select
+          [ngModel]="form().legalEntityId"
+          (ngModelChange)="campo('legalEntityId', $event)"
+        >
+          <option value="" disabled>Elige una razón social…</option>
+          @for (r of razones(); track r.id) {
+            <option [value]="r.id">{{ r.name }}{{ r.rfc ? " · " + r.rfc : "" }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="campo">
+        <span>Nombre</span>
+        <input
+          [ngModel]="form().name"
+          (ngModelChange)="campo('name', $event)"
+          placeholder="p. ej. Matriz Centro"
+        />
+      </label>
+      <label class="campo">
+        <span>Identificador (slug)</span>
+        <input
+          [ngModel]="form().slug"
+          (ngModelChange)="campo('slug', $event)"
+          placeholder="matriz-centro"
+          [disabled]="!!editandoId()"
+        />
+      </label>
+
+      <label class="campo ancho-total">
+        <span>Dirección</span>
+        <input
+          [ngModel]="form().address"
+          (ngModelChange)="campo('address', $event)"
+          placeholder="Calle, número, colonia"
+        />
+      </label>
+      <label class="campo">
+        <span>Ciudad</span>
+        <input
+          [ngModel]="form().city"
+          (ngModelChange)="campo('city', $event)"
+        />
+      </label>
+      <label class="campo">
+        <span>Estado</span>
+        <input
+          [ngModel]="form().state"
+          (ngModelChange)="campo('state', $event)"
+        />
+      </label>
+
+      <label class="campo">
+        <span>Tel. mostrador</span>
+        <input
+          [ngModel]="form().counterPhone"
+          (ngModelChange)="campo('counterPhone', $event)"
+        />
+      </label>
+      <label class="campo">
+        <span>Correo</span>
+        <input
+          type="email"
+          [ngModel]="form().email"
+          (ngModelChange)="campo('email', $event)"
+        />
+      </label>
+      <label class="campo">
+        <span>Tel. refacciones (opcional)</span>
+        <input
+          [ngModel]="form().partsPhone"
+          (ngModelChange)="campo('partsPhone', $event)"
+        />
+      </label>
+      <label class="campo">
+        <span>Tel. citas (opcional)</span>
+        <input
+          [ngModel]="form().appointmentsPhone"
+          (ngModelChange)="campo('appointmentsPhone', $event)"
+        />
+      </label>
+
+      <label class="campo-check ancho-total">
+        <input
+          type="checkbox"
+          [ngModel]="form().isPrimary"
+          (ngModelChange)="campo('isPrimary', $event)"
+        />
+        <span>Es la matriz (sucursal principal de la empresa)</span>
+      </label>
+    </div>
+
+    <div class="dialogo-pie">
+      <button type="button" class="btn-secundario" (click)="cerrar()">Cancelar</button>
+      <button
+        type="button"
+        class="btn-principal"
+        [disabled]="guardando()"
+        (click)="guardar()"
+      >
+        {{ guardando() ? "Guardando…" : editandoId() ? "Guardar cambios" : "Crear sucursal" }}
+      </button>
+    </div>
+  </div>
+}

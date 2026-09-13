@@ -16,6 +16,8 @@ import { StorageModule } from '../../common/storage/storage.module';
 import { EmailModule } from '../../common/email/email.module';
 import { UsersModule } from '../users/users.module';
 import { Branch } from '../branches/entities/branch.entity';
+import { BranchConfig } from '../branches/entities/branch-config.entity';
+import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 
 @Module({
   imports: [
@@ -25,6 +27,8 @@ import { Branch } from '../branches/entities/branch.entity';
       SaasPayment,
       Tenant,
       Branch,
+      BranchConfig,
+      LegalEntity,
     ]),
     StorageModule,
     EmailModule,

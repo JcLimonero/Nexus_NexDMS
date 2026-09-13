@@ -6,6 +6,7 @@ import { Perfiles } from "../perfiles/perfiles";
 import { WizardAlta } from "../wizard-alta/wizard-alta";
 import { FichaUsuarios } from "./ficha-usuarios/ficha-usuarios";
 import { FichaMarca } from "./ficha-marca/ficha-marca";
+import { FichaSucursales } from "./ficha-sucursales/ficha-sucursales";
 import { ConfirmService } from "../../shared/services/confirm.service";
 import { EscDirective } from "../../shared/directives/esc.directive";
 import {
@@ -35,7 +36,7 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, FichaUsuarios, FichaMarca, EscDirective],
+  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, FichaUsuarios, FichaMarca, FichaSucursales, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
@@ -460,7 +461,7 @@ export class Tenants implements OnInit {
   ficha = signal<Ficha | null>(null);
   /** Qué se ve dentro de la ficha: sus datos, sus cobros o su marca. */
   pestana = signal<
-    "datos" | "pagos" | "marca" | "usuarios" | "perfiles"
+    "datos" | "sucursales" | "pagos" | "marca" | "usuarios" | "perfiles"
   >("datos");
 
   // Los tabs Usuarios y Marca viven en <app-ficha-usuarios> y <app-ficha-marca>
@@ -505,7 +506,9 @@ export class Tenants implements OnInit {
   private tabsCargados = new Set<string>();
 
   /** Cambia de pestaña y carga sus datos la primera vez que se visualiza. */
-  verPestana(tab: "datos" | "pagos" | "marca" | "usuarios" | "perfiles"): void {
+  verPestana(
+    tab: "datos" | "sucursales" | "pagos" | "marca" | "usuarios" | "perfiles",
+  ): void {
     this.pestana.set(tab);
     const t = this.fichaDe();
     if (!t || this.tabsCargados.has(tab)) return;

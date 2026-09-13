@@ -405,6 +405,13 @@
         </button>
         <button
           type="button"
+          [class.activa]="pestana() === 'sucursales'"
+          (click)="verPestana('sucursales')"
+        >
+          Sucursales
+        </button>
+        <button
+          type="button"
           [class.activa]="pestana() === 'pagos'"
           (click)="verPestana('pagos')"
         >
@@ -576,6 +583,8 @@
             Guardar datos
           </button>
         </footer>
+      } @else if (pestana() === "sucursales") {
+        <app-ficha-sucursales [tenantId]="t.id" />
       } @else if (pestana() === "pagos") {
         <!-- Registrar el cobro del mes, propuesto con lo que le toca pagar -->
         <div class="rejilla cobro">

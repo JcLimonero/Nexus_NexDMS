@@ -6,13 +6,16 @@ import {
   DashboardOps,
   Ficha,
   FichaComercial,
+  NuevaSucursal,
   Pago,
   PaletaMarca,
   Panorama,
   PlanPrecio,
   PrecioModulo,
   NuevoUsuarioTenant,
+  RazonSocial,
   ResumenCobro,
+  Sucursal,
   Tenant,
   UsuarioTenant,
 } from "./models";
@@ -157,6 +160,50 @@ export class SaasService {
   ): Observable<{ id: string; isActive: boolean }> {
     return this.http.patch<{ id: string; isActive: boolean }>(
       `/api/v1/saas/tenants/${tenantId}/users/${userId}/active`,
+      {},
+    );
+  }
+
+  // ─── Sucursales del cliente ───────────────────────
+  razonesSociales(tenantId: string): Observable<RazonSocial[]> {
+    return this.http.get<RazonSocial[]>(
+      `/api/v1/saas/tenants/${tenantId}/legal-entities`,
+    );
+  }
+
+  sucursales(tenantId: string): Observable<Sucursal[]> {
+    return this.http.get<Sucursal[]>(
+      `/api/v1/saas/tenants/${tenantId}/branches`,
+    );
+  }
+
+  crearSucursal(
+    tenantId: string,
+    dto: NuevaSucursal,
+  ): Observable<Sucursal> {
+    return this.http.post<Sucursal>(
+      `/api/v1/saas/tenants/${tenantId}/branches`,
+      dto,
+    );
+  }
+
+  actualizarSucursal(
+    tenantId: string,
+    branchId: string,
+    dto: Partial<NuevaSucursal>,
+  ): Observable<Sucursal> {
+    return this.http.patch<Sucursal>(
+      `/api/v1/saas/tenants/${tenantId}/branches/${branchId}`,
+      dto,
+    );
+  }
+
+  alternarSucursal(
+    tenantId: string,
+    branchId: string,
+  ): Observable<Sucursal> {
+    return this.http.patch<Sucursal>(
+      `/api/v1/saas/tenants/${tenantId}/branches/${branchId}/active`,
       {},
     );
   }
