@@ -196,7 +196,7 @@ export class CartaGarantiaPdfService {
 
     return {
       buffer: await pdf.finalizar(),
-      filename: `garantia-${folio}.pdf`,
+      filename: `${folio}.pdf`,
       folio,
       negocio: razon?.name ?? sucursal?.name ?? 'Negocio',
       clientEmail: cli?.email ?? null,

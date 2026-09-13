@@ -190,7 +190,7 @@ export class ComprobanteEntregaPdfService {
 
     return {
       buffer: await pdf.finalizar(),
-      filename: `entrega-${d.folio}.pdf`,
+      filename: `${d.folio}.pdf`,
       folio: d.folio,
       negocio: razon?.name ?? sucursal?.name ?? 'Negocio',
       clientEmail: cli?.email ?? null,

@@ -90,7 +90,7 @@ export class GarantiaDetail implements OnInit {
     const w = this.garantia();
     if (!w) return;
     abrirPdf(this.http, `/api/v1/warranties/${w.id}/pdf`, {
-      filename: `garantia-${w.folio ?? w.id.slice(0, 8)}.pdf`,
+      filename: `${w.folio ?? w.id.slice(0, 8)}.pdf`,
       onError: () => this.toastr.error("No se pudo generar la carta"),
     });
   }

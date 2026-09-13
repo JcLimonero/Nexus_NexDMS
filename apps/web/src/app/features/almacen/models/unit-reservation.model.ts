@@ -7,6 +7,7 @@ export enum UnitReservationStatus {
 export interface UnitReservation {
   id: string;
   tenantId: string;
+  folio: string | null;
   catalogUnitId: string;
   clientId: string;
   advanceAmount: number;

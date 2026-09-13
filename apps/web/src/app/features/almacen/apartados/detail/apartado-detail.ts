@@ -1,9 +1,11 @@
 import { Component, OnInit, inject, signal } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { FormsModule } from "@angular/forms";
+import { HttpClient } from "@angular/common/http";
 import { Router, ActivatedRoute, RouterModule } from "@angular/router";
 import { ToastrService } from "ngx-toastr";
 
+import { abrirPdf } from "../../../../shared/utils/abrir-pdf";
 import { AlmacenService } from "../../almacen.service";
 import {
   UnitReservation,
@@ -23,6 +25,7 @@ export class ApartadoDetail implements OnInit {
   private router = inject(Router);
   private route = inject(ActivatedRoute);
   private toastr = inject(ToastrService);
+  private http = inject(HttpClient);
 
   apartado = signal<UnitReservation | null>(null);
   loading = signal(true);
@@ -90,6 +93,34 @@ export class ApartadoDetail implements OnInit {
   canRelease(): boolean {
     const a = this.apartado();
     return !!a && a.status === UnitReservationStatus.ACTIVE;
+  }
+
+  /** Abre el comprobante de apartado en PDF (blob, para imprimir o entregar). */
+  verComprobante(): void {
+    const a = this.apartado();
+    if (!a) return;
+    abrirPdf(this.http, `/api/v1/unit-reservations/${a.id}/pdf`, {
+      filename: `${a.folio ?? a.id.slice(0, 8)}.pdf`,
+      onError: () => this.toastr.error("No se pudo generar el comprobante"),
+    });
+  }
+
+  /** Envía el comprobante de apartado por correo (PDF adjunto) al cliente. */
+  enviarComprobante(): void {
+    const a = this.apartado();
+    if (!a) return;
+    const email = window.prompt(
+      "Enviar el comprobante por correo a (vacío = correo del cliente):",
+      "",
+    );
+    if (email === null) return;
+    const body = email.trim() ? { email: email.trim() } : {};
+    this.toastr.info("Enviando…");
+    this.http.post(`/api/v1/unit-reservations/${a.id}/email`, body).subscribe({
+      next: () => this.toastr.success("Comprobante enviado por correo"),
+      error: (e) =>
+        this.toastr.error(e?.error?.message || "No se pudo enviar el correo"),
+    });
   }
 
   getStatusLabel(status: string): string {

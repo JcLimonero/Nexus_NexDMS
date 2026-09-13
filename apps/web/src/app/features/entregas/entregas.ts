@@ -143,7 +143,7 @@ export class Entregas implements OnInit {
   /** Abre el comprobante de entrega en PDF (blob, para imprimir o firmar). */
   verComprobante(d: Delivery): void {
     abrirPdf(this.http, `/api/v1/deliveries/${d.id}/pdf`, {
-      filename: `entrega-${d.folio}.pdf`,
+      filename: `${d.folio}.pdf`,
       onError: () => this.toastr.error("No se pudo generar el comprobante"),
     });
   }
