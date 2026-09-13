@@ -4,14 +4,32 @@ import { catchError, throwError } from "rxjs";
 import { AuthService } from "./auth.service";
 import { NotificacionService } from "../../shared/services/notificacion.service";
 
-/** Adjunta la llave del portal, cierra sesión en 401 y avisa en errores de red/servidor. */
+/** Lee una cookie legible (no httpOnly) del documento. */
+function leerCookie(nombre: string): string | null {
+  const par = document.cookie
+    .split("; ")
+    .find((c) => c.startsWith(`${nombre}=`));
+  return par ? decodeURIComponent(par.slice(nombre.length + 1)) : null;
+}
+
+const METODOS_MUTANTES = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+
+/**
+ * La sesión viaja en cookie httpOnly, así que:
+ * - `withCredentials` para que el navegador mande la cookie en cada petición;
+ * - en métodos que mutan se reenvía el token CSRF (cookie legible → header).
+ * Además cierra sesión en 401 y avisa en errores de red/servidor.
+ */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const noti = inject(NotificacionService);
-  const token = auth.token();
-  const peticion = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
+
+  const headers: Record<string, string> = {};
+  if (METODOS_MUTANTES.has(req.method.toUpperCase())) {
+    const csrf = leerCookie("nex_csrf");
+    if (csrf) headers["X-CSRF-Token"] = csrf;
+  }
+  const peticion = req.clone({ withCredentials: true, setHeaders: headers });
 
   return next(peticion).pipe(
     catchError((error) => {
