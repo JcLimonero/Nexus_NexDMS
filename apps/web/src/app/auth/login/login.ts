@@ -31,6 +31,17 @@ export class Login implements OnInit {
   public logoCliente: string | null = null;
   private tenantId: string | null = null;
 
+  /** Edición activa (la marca el script de index.html por dominio/puerto). */
+  public readonly edicion =
+    document.documentElement.getAttribute("data-edition") === "total-one"
+      ? "total-one"
+      : "nexqs";
+  /** Logo por defecto cuando el tenant no trae el suyo, según la edición. */
+  public readonly logoDefault =
+    this.edicion === "total-one"
+      ? "brand-totalone/total-one-horizontal-blanco.svg"
+      : "assets/nexus_images/logo/logo_white.png";
+
   /**
    * A dónde ir tras entrar. Lo pone el guard cuando alguien abre un enlace
    * directo sin sesión —el portal de recepción, por ejemplo— para no dejarlo

@@ -95,7 +95,8 @@ services:
       - ./apps/web:/app
       - /app/node_modules
     ports:
-      - '4200:4200'
+      - '4200:4200'   # NexQS
+      - '4210:4200'   # Total One (misma app; se distingue por puerto en runtime)
     environment:
       - CHOKIDAR_USEPOLLING=true
       - PROXY_API_TARGET=http://api:3000

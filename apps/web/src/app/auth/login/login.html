@@ -6,8 +6,8 @@
           <img [src]="logoCliente" [alt]="clienteNombre || 'Logotipo'" class="login-logo login-logo-cliente" />
         } @else {
           <img
-            src="assets/nexus_images/logo/logo_white.png"
-            alt="NexQS"
+            [src]="logoDefault"
+            [alt]="edicion === 'total-one' ? 'Total One' : 'NexQS'"
             loading="lazy"
             class="login-logo"
           />

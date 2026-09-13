@@ -39,6 +39,14 @@ export const PALETAS: PaletaMarca[] = [
     tinta: '#203848',
   },
   {
+    id: 'total-one',
+    nombre: 'Total One',
+    primary: '#EA4B17',
+    primaryHover: '#C43C10',
+    primarySoft: '#FDECE6',
+    tinta: '#2B4149',
+  },
+  {
     id: 'acero',
     nombre: 'Acero',
     primary: '#37546B',
