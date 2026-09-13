@@ -5,6 +5,7 @@ import { Barra } from "../../shared/barra/barra";
 import { Perfiles } from "../perfiles/perfiles";
 import { WizardAlta } from "../wizard-alta/wizard-alta";
 import { FichaUsuarios } from "./ficha-usuarios/ficha-usuarios";
+import { FichaMarca } from "./ficha-marca/ficha-marca";
 import { ConfirmService } from "../../shared/services/confirm.service";
 import { EscDirective } from "../../shared/directives/esc.directive";
 import {
@@ -22,8 +23,6 @@ import {
   SaasService,
   Tenant,
   TenantsService,
-  PaletaMarca,
-  Branding,
 } from "./tenants.service";
 
 /**
@@ -36,7 +35,7 @@ import {
 @Component({
   selector: "app-tenants",
   standalone: true,
-  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, FichaUsuarios, EscDirective],
+  imports: [CommonModule, FormsModule, Barra, Perfiles, WizardAlta, FichaUsuarios, FichaMarca, EscDirective],
   templateUrl: "./tenants.html",
   styleUrls: ["./tenants.scss"],
 })
@@ -99,7 +98,6 @@ export class Tenants implements OnInit {
   });
 
   ngOnInit(): void {
-    this.saas.paletas().subscribe({ next: (p) => this.paletas.set(p) });
     this.cargar();
     this.srv.catalogo().subscribe({
       next: (c) => this.catalogo.set(c.modules ?? []),
@@ -465,14 +463,8 @@ export class Tenants implements OnInit {
     "datos" | "pagos" | "marca" | "usuarios" | "perfiles"
   >("datos");
 
-  // El tab de Usuarios vive en <app-ficha-usuarios> (autocontenido).
-
-  // ── Marca del cliente ──
-  paletas = signal<PaletaMarca[]>([]);
-  branding = signal<Branding | null>(null);
-  paletaElegida = signal<string>("nexus");
-  subiendoLogo = signal(false);
-  subiendoIcono = signal(false);
+  // Los tabs Usuarios y Marca viven en <app-ficha-usuarios> y <app-ficha-marca>
+  // (autocontenidos): reciben el id de la empresa y se cargan solos.
 
   datos = {
     name: "",
@@ -519,23 +511,14 @@ export class Tenants implements OnInit {
     if (!t || this.tabsCargados.has(tab)) return;
     this.tabsCargados.add(tab);
     if (tab === "datos") this.cargarHistorial(t.id);
-    // El tab 'usuarios' se autocarga dentro de <app-ficha-usuarios>.
-    else if (tab === "marca") {
-      this.saas.branding(t.id).subscribe({
-        next: (b) => {
-          this.branding.set(b);
-          this.paletaElegida.set(b.paletaId);
-        },
-      });
-    }
-    // 'perfiles' se carga solo (componente embebido); 'pagos' viene en ficha().
+    // 'usuarios' y 'marca' se autocargan en sus componentes; 'perfiles' también
+    // (embebido); 'pagos' viene en ficha().
   }
 
   abrirFicha(t: Tenant): void {
     this.fichaDe.set(t);
     this.ficha.set(null);
     this.pestana.set("datos");
-    this.branding.set(null);
     this.historial.set([]);
     this.tabsCargados.clear();
     // El tab por defecto (datos) carga su historial de una vez.
@@ -612,86 +595,6 @@ export class Tenants implements OnInit {
           this.avisar(e?.error?.message || "No se pudo guardar", "error");
         },
       });
-  }
-
-  /** Aplica la paleta elegida al cliente. */
-  guardarPaleta(): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    this.guardando.set(true);
-    this.saas.guardarBranding(t.id, { paletaId: this.paletaElegida() }).subscribe({
-      next: (b) => {
-        this.branding.set(b);
-        this.guardando.set(false);
-        this.avisar("Paleta guardada", "ok");
-      },
-      error: () => {
-        this.guardando.set(false);
-        this.avisar("No se pudo guardar la paleta", "error");
-      },
-    });
-  }
-
-  subirLogo(ev: Event): void {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    const t = this.fichaDe();
-    if (!file || !t) return;
-    this.subiendoLogo.set(true);
-    this.saas.subirLogo(t.id, file).subscribe({
-      next: (b) => {
-        this.branding.set(b);
-        this.subiendoLogo.set(false);
-        this.avisar("Logotipo actualizado", "ok");
-      },
-      error: (e) => {
-        this.subiendoLogo.set(false);
-        this.avisar(e?.error?.message || "No se pudo subir el logotipo", "error");
-      },
-    });
-    input.value = "";
-  }
-
-  quitarLogo(): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    this.saas.guardarBranding(t.id, { logoKey: null }).subscribe({
-      next: (b) => {
-        this.branding.set(b);
-        this.avisar("Logotipo quitado", "ok");
-      },
-    });
-  }
-
-  subirIcono(ev: Event): void {
-    const input = ev.target as HTMLInputElement;
-    const file = input.files?.[0];
-    const t = this.fichaDe();
-    if (!file || !t) return;
-    this.subiendoIcono.set(true);
-    this.saas.subirIcono(t.id, file).subscribe({
-      next: (b) => {
-        this.branding.set(b);
-        this.subiendoIcono.set(false);
-        this.avisar("Isotipo actualizado", "ok");
-      },
-      error: (e) => {
-        this.subiendoIcono.set(false);
-        this.avisar(e?.error?.message || "No se pudo subir el isotipo", "error");
-      },
-    });
-    input.value = "";
-  }
-
-  quitarIcono(): void {
-    const t = this.fichaDe();
-    if (!t) return;
-    this.saas.guardarBranding(t.id, { iconKey: null }).subscribe({
-      next: (b) => {
-        this.branding.set(b);
-        this.avisar("Isotipo quitado", "ok");
-      },
-    });
   }
 
   registrarPago(): void {
