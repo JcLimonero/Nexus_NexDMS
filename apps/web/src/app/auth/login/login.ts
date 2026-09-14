@@ -233,10 +233,13 @@ export class Login implements OnInit {
     if (port && port !== "80" && port !== "443") {
       return `${protocol}//${hostname}:4202`;
     }
-    if (hostname.startsWith("app.")) {
-      return `${protocol}//admin.${hostname.slice(4)}`;
-    }
-    return `${protocol}//admin.${hostname}`;
+    // Se quita el prefijo del portal público (app. o www.) antes de anteponer
+    // admin., para no generar hosts dobles como admin.www.totalone.com.mx:
+    //   app.nexusqsystem.com → admin.nexusqsystem.com
+    //   www.totalone.com.mx  → admin.totalone.com.mx
+    //   totalone.com.mx      → admin.totalone.com.mx
+    const base = hostname.replace(/^(app|www)\./, "");
+    return `${protocol}//admin.${base}`;
   }
 
   ngOnInit(): void {
