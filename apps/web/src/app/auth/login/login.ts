@@ -31,17 +31,6 @@ export class Login implements OnInit {
   public logoCliente: string | null = null;
   private tenantId: string | null = null;
 
-  /** Edición activa (la marca el script de index.html por dominio/puerto). */
-  public readonly edicion =
-    document.documentElement.getAttribute("data-edition") === "total-one"
-      ? "total-one"
-      : "nexqs";
-  /** Logo por defecto cuando el tenant no trae el suyo, según la edición. */
-  public readonly logoDefault =
-    this.edicion === "total-one"
-      ? "brand-totalone/total-one-horizontal-blanco.svg"
-      : "assets/nexus_images/logo/logo_white.png";
-
   /**
    * A dónde ir tras entrar. Lo pone el guard cuando alguien abre un enlace
    * directo sin sesión —el portal de recepción, por ejemplo— para no dejarlo
@@ -233,13 +222,10 @@ export class Login implements OnInit {
     if (port && port !== "80" && port !== "443") {
       return `${protocol}//${hostname}:4202`;
     }
-    // Se quita el prefijo del portal público (app. o www.) antes de anteponer
-    // admin., para no generar hosts dobles como admin.www.totalone.com.mx:
-    //   app.nexusqsystem.com → admin.nexusqsystem.com
-    //   www.totalone.com.mx  → admin.totalone.com.mx
-    //   totalone.com.mx      → admin.totalone.com.mx
-    const base = hostname.replace(/^(app|www)\./, "");
-    return `${protocol}//admin.${base}`;
+    if (hostname.startsWith("app.")) {
+      return `${protocol}//admin.${hostname.slice(4)}`;
+    }
+    return `${protocol}//admin.${hostname}`;
   }
 
   ngOnInit(): void {

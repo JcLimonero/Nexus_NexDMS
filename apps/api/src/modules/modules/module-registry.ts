@@ -328,58 +328,6 @@ export const MODULE_REGISTRY: ModuleDef[] = [
 
 export const MODULE_KEYS = MODULE_REGISTRY.map((m) => m.key);
 
-/** Ediciones del producto sobre la misma base de código. */
-export type Edition = 'total-one' | 'nexqs';
-
-/**
- * Módulos de la edición **Total One** (DMS Lite de Total Dealer).
- *
- * Regla acordada de clasificación por edición:
- * - estos 20 están en **ambas** ediciones (Total One y NexQS);
- * - **todo lo demás del registro es exclusivo de NexQS** (bodywork, fleets,
- *   los complementos WhatsApp, finance, billing);
- * - **no hay módulos exclusivos de Total One** (su set es un subconjunto de NexQS).
- *
- * Total One es el subconjunto operativo (talleres/loteros/maquinaria); NexQS es
- * el superset. Ver `PLAN-TOTALONE.md` y `DMS-LITE-TOTALDEALER.md`.
- */
-export const TOTAL_ONE_MODULES: ModuleKey[] = [
-  'dashboard',
-  'clients',
-  'settings',
-  'cash-register',
-  'parts-inventory',
-  'quotes',
-  'workshop',
-  'reception',
-  'warranties',
-  'catalog',
-  'units-inventory',
-  'sales',
-  'sale-documents',
-  'purchases',
-  'warehouse',
-  'leads',
-  'used-units',
-  'cfdi',
-  'pld',
-  'reports',
-];
-
-/**
- * Módulos que ofrece una edición. NexQS = todo el registro (superset);
- * Total One = el subconjunto de `TOTAL_ONE_MODULES`. Base para el preset del
- * tenant (`enabled_modules`) al dar de alta según la edición.
- */
-export function modulesForEdition(edition: Edition): ModuleKey[] {
-  return edition === 'total-one' ? [...TOTAL_ONE_MODULES] : [...MODULE_KEYS];
-}
-
-/** ¿La key pertenece a la edición Total One? */
-export function isTotalOneModule(key: string): boolean {
-  return TOTAL_ONE_MODULES.includes(key as ModuleKey);
-}
-
 export function getModule(key: string): ModuleDef | undefined {
   return MODULE_REGISTRY.find((m) => m.key === key);
 }

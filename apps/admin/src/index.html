@@ -9,58 +9,6 @@
   <link rel="icon" type="image/png" sizes="32x32" href="brand/nexqs-favicon-color-32.png" />
   <link rel="icon" type="image/png" sizes="16x16" href="brand/nexqs-favicon-color-16.png" />
   <link rel="apple-touch-icon" href="brand/nexqs-favicon-color-180.png" />
-
-  <!-- Edición por dominio: admin.totalone.com.mx = Total One, resto = NexQS.
-       Forzable con ?edition=total-one|nexqs. Igual que el portal web. -->
-  <script>
-    (function () {
-      var TOTAL_ONE_HOSTS = ["admin.totalone.com.mx"];
-      var loc = window.location;
-      var q = new URLSearchParams(loc.search).get("edition");
-      var esTotalOne =
-        q === "total-one" ||
-        (q !== "nexqs" && TOTAL_ONE_HOSTS.indexOf(loc.hostname) !== -1);
-      if (!esTotalOne) return;
-      var html = document.documentElement;
-      html.setAttribute("data-edition", "total-one");
-      document.title = "Administración Total One";
-      // Paleta Total One inline (gana cualquier cascada de :root).
-      // Tomada de la marca Total Dealer (totaldealer.com.mx): naranja
-      // #F04A1A y navy azul profundo (#173247 texto → #08243A fondos).
-      var vars = {
-        "--nexus-50": "#FEEDE7", "--nexus-100": "#FCD4C7", "--nexus-200": "#F9B29C",
-        "--nexus-300": "#F58B6B", "--nexus-400": "#F26A41", "--nexus-500": "#F04A1A",
-        "--nexus-600": "#DC4114", "--nexus-700": "#B4340F", "--nexus-800": "#8E280B",
-        "--nexus-900": "#6D1E07",
-        "--navy-500": "#2B4A61", "--navy-600": "#173247", "--navy-700": "#0F2A3E",
-        "--navy-800": "#08243A", "--navy-900": "#051A2C",
-        "--bg": "#F6F9FB",
-        "--primary": "#F04A1A", "--primary-hover": "#DC4114", "--primary-soft": "#FEEDE7",
-        "--accent": "#F04A1A", "--info": "#F04A1A", "--info-bg": "#FEEDE7",
-        "--sidebar-active-glow": "0 6px 14px -4px rgba(240, 74, 26, 0.5)"
-      };
-      for (var k in vars) html.style.setProperty(k, vars[k]);
-      var viejos = document.querySelectorAll(
-        'link[rel~="icon"], link[rel="apple-touch-icon"]'
-      );
-      viejos.forEach(function (l) {
-        l.parentNode.removeChild(l);
-      });
-      [
-        ["icon", "brand-totalone/favicon-color.ico", "image/x-icon", null],
-        ["icon", "brand-totalone/favicon-color-32.png", "image/png", "32x32"],
-        ["icon", "brand-totalone/favicon-color-16.png", "image/png", "16x16"],
-        ["apple-touch-icon", "brand-totalone/favicon-color-180.png", null, null],
-      ].forEach(function (d) {
-        var l = document.createElement("link");
-        l.rel = d[0];
-        l.href = d[1];
-        if (d[2]) l.type = d[2];
-        if (d[3]) l.setAttribute("sizes", d[3]);
-        document.head.appendChild(l);
-      });
-    })();
-  </script>
 </head>
 <body>
   <app-root></app-root>

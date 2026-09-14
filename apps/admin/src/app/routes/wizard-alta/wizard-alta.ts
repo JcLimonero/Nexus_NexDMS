@@ -252,15 +252,8 @@ export class WizardAlta implements OnInit {
       }
     }
 
-    // La edición la marca el dominio del admin (admin.totalone.com.mx →
-    // total-one): el backend acota el tenant al preset Total One.
-    const edition =
-      document.documentElement.getAttribute("data-edition") === "total-one"
-        ? "total-one"
-        : "nexqs";
     const dto: ProvisionTenantDto = {
       ...this.form(),
-      edition,
       enabledModules: this.modulosSel().size
         ? [...this.modulosSel()]
         : null,

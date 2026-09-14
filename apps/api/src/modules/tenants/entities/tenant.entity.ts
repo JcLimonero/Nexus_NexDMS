@@ -44,14 +44,6 @@ export class Tenant {
   @Column({ name: 'plan', type: 'enum', enum: TenantPlanEnum })
   plan: TenantPlanEnum;
 
-  /**
-   * Edición del producto a la que pertenece el tenant. Acota qué módulos puede
-   * tener: 'total-one' solo los del alcance DMS Lite; 'nexqs' (default) todos.
-   * La marca el admin desde el que se creó (admin.totalone.com.mx → total-one).
-   */
-  @Column({ name: 'edition', type: 'varchar', length: 20, default: 'nexqs' })
-  edition: string;
-
   /** Módulos habilitados para el tenant; null = todos (sin restricción). */
   @Column({ name: 'enabled_modules', type: 'jsonb', nullable: true })
   enabledModules: string[] | null;

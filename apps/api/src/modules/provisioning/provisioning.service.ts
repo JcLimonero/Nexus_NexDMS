@@ -5,8 +5,7 @@ import { ConfigService } from '@nestjs/config';
 import { Repository } from 'typeorm';
 import type { UserPayload } from '../auth/strategies/jwt.strategy';
 import { TenantsService } from '../tenants/tenants.service';
-import { Tenant, TenantPlanEnum } from '../tenants/entities/tenant.entity';
-import { modulesForEdition } from '../modules/module-registry';
+import { Tenant } from '../tenants/entities/tenant.entity';
 import { LegalEntitiesService } from '../legal-entities/legal-entities.service';
 import { LegalEntity } from '../legal-entities/entities/legal-entity.entity';
 import { BranchesService } from '../branches/branches.service';
@@ -62,21 +61,12 @@ export class ProvisioningService {
     user: UserPayload,
     dto: ProvisionTenantDto,
   ): Promise<ResultadoProvisioning> {
-    // Edición: si el alta viene del admin Total One, el tenant queda acotado a
-    // esa edición. Total One necesita plan ENTERPRISE (techo) para incluir sus
-    // módulos de nivel alto (pld, reports), y su preset fijo de módulos.
-    const esTotalOne = dto.edition === 'total-one';
-    const planEfectivo = esTotalOne ? TenantPlanEnum.ENTERPRISE : dto.plan;
-    const modulosEfectivos = esTotalOne
-      ? modulesForEdition('total-one')
-      : dto.enabledModules;
-
     // 1) Empresa (tenant) con su prefijo, plan y módulos.
     const tenant = await this.tenantsService.create(user, {
       name: dto.name,
       slug: dto.slug,
       codePrefix: dto.codePrefix,
-      plan: planEfectivo,
+      plan: dto.plan,
       isActive: true,
     });
 
@@ -92,9 +82,8 @@ export class ProvisioningService {
       // Ajustes del tenant que create() no cubre.
       const patch: Partial<Tenant> = {};
       if (dto.saasPlanId) patch.saasPlanId = dto.saasPlanId;
-      if (esTotalOne) patch.edition = 'total-one';
-      if (modulosEfectivos !== undefined)
-        patch.enabledModules = modulosEfectivos;
+      if (dto.enabledModules !== undefined)
+        patch.enabledModules = dto.enabledModules;
       if (dto.palette) patch.palette = dto.palette;
       if (Object.keys(patch).length) {
         await this.tenantRepo.update(tenant.id, patch);

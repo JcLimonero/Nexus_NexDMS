@@ -28,18 +28,6 @@ export class Acceso {
   entrando = signal(false);
   error = signal<string | null>(null);
 
-  /** Edición activa (la marca el script de index.html por dominio). */
-  readonly edicion =
-    document.documentElement.getAttribute("data-edition") === "total-one"
-      ? "total-one"
-      : "nexqs";
-  /** Logo del login según la edición (tarjeta blanca → versión a color). */
-  readonly logo =
-    this.edicion === "total-one"
-      ? "brand-totalone/total-one-horizontal-color.svg"
-      : "brand/nexqs-logo-completo-color.svg";
-  readonly marca = this.edicion === "total-one" ? "Total One" : "NexQS";
-
   readonly modoDemo = isDevMode();
   readonly cuentaDemo = {
     nombre: "Superadministrador",

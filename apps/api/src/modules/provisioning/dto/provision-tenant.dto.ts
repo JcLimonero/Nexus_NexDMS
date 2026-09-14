@@ -35,12 +35,6 @@ export class ProvisionTenantDto {
   @IsOptional() @IsUUID() saasPlanId?: string;
   @IsOptional() @IsArray() @IsString({ each: true }) enabledModules?: string[];
   @IsOptional() @IsString() palette?: string;
-  /**
-   * Edición desde la que se da de alta ('total-one' | 'nexqs'). La manda el
-   * admin según su dominio (admin.totalone.com.mx → total-one). Si es
-   * 'total-one', el tenant queda acotado al preset Total One.
-   */
-  @IsOptional() @IsString() edition?: string;
 
   // Paso 3a · Fiscal / entidad legal
   @IsOptional() @IsString() razonSocial?: string;
