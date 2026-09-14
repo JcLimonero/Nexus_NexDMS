@@ -83,11 +83,17 @@ WHERE id = '<TENANT_ID>';
 ### Opción B — desde el portal admin
 Admin (superadmin) → ficha del tenant → **Módulos**: plan `ENTERPRISE` y encender exactamente los 20 de la lista (dejar apagados bodywork, fleets, WhatsApp, finance, billing).
 
-### Opción C — preset en código (recomendado para nuevos tenants)
-Ya existe la constante `TOTAL_ONE_MODULES` (+ `modulesForEdition`) en `module-registry.ts`.
-**Falta** conectarla al provisioning/alta de clientes: cuando la edición sea Total One, sembrar
-`plan = ENTERPRISE` y `enabled_modules = modulesForEdition('total-one')` para que cada tenant
-nuevo nazca con el preset sin configurarlo a mano. (Avisar para cablearlo en el wizard de alta.)
+### Opción C — automático por edición (IMPLEMENTADO)
+Un cliente **creado desde `admin.totalone.com.mx` queda acotado a Total One**, de punta a punta:
+- **Columna `tenants.edition`** (`'total-one' | 'nexqs'`, default `nexqs`; migración `1792900000000`).
+- **Wizard de alta** (admin) manda `edition` según su dominio (`data-edition`).
+- **Provisioning**: si `edition = total-one` → fuerza `plan = ENTERPRISE` y
+  `enabled_modules = modulesForEdition('total-one')` y guarda `edition = 'total-one'`.
+- **Toggle de módulos** (`setModules`): rechaza keys fuera de la edición del tenant
+  (un Total One no puede encender `bodywork`, `fleets`, etc.).
+- **Menú/API** (`myModules`, `isActive`, guard): filtran por edición, no solo por plan.
+- **Catálogo de módulos** (`GET /modules/catalog`): cada módulo trae `totalOne`,
+  `edition` (`ambos` | `nexqs`) y `availableInEdition` para marcarlo en el admin.
 
 ## Notas de afinación (del análisis DMS Lite)
 - **Vertical maquinaria agrícola:** ajustar catálogo de unidades (serie/horas en vez de VIN/km) — trabajo de datos en `catalog`/`units-inventory`, no de módulos.

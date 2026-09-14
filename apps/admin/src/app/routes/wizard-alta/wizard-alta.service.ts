@@ -8,6 +8,8 @@ export interface ProvisionTenantDto {
   codePrefix?: string;
   plan: "BASIC" | "PRO" | "ENTERPRISE";
   enabledModules?: string[] | null;
+  /** Edición desde la que se da de alta (la marca el dominio del admin). */
+  edition?: "total-one" | "nexqs";
   palette?: string;
   razonSocial?: string;
   giro: "MOTO" | "AUTO" | "BOTH";

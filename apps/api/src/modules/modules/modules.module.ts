@@ -28,6 +28,8 @@ import {
   MODULE_REGISTRY,
   ModuleKey,
   modulesForPlan,
+  modulesForEdition,
+  isTotalOneModule,
   resolveModules,
 } from './module-registry';
 
@@ -61,6 +63,8 @@ export class ModulesService {
           minPlan: m.minPlan,
           core: !!m.core,
           hasDashboard: !!m.hasDashboard,
+          totalOne: isTotalOneModule(m.key),
+          edition: isTotalOneModule(m.key) ? 'ambos' : 'nexqs',
           includedInPlan: false,
           active: false,
         })),
@@ -69,8 +73,12 @@ export class ModulesService {
     const t = await this.tenant(tenantId);
     const inPlan = new Set(modulesForPlan(t.plan));
     const active = new Set(resolveModules(t.plan, t.enabledModules));
+    // Total One solo puede tener los módulos de su edición; el resto ni se
+    // ofrece para este tenant.
+    const enEdicion = new Set(modulesForEdition(this.edicion(t)));
     return {
       plan: t.plan,
+      edition: this.edicion(t),
       modules: MODULE_REGISTRY.map((m) => ({
         key: m.key,
         name: m.name,
@@ -80,16 +88,27 @@ export class ModulesService {
         minPlan: m.minPlan,
         core: !!m.core,
         hasDashboard: !!m.hasDashboard,
-        includedInPlan: inPlan.has(m.key),
-        active: active.has(m.key),
+        totalOne: isTotalOneModule(m.key),
+        edition: isTotalOneModule(m.key) ? 'ambos' : 'nexqs',
+        availableInEdition: enEdicion.has(m.key),
+        includedInPlan: inPlan.has(m.key) && enEdicion.has(m.key),
+        active: active.has(m.key) && enEdicion.has(m.key),
       })),
     };
+  }
+
+  /** Edición del tenant, normalizada ('total-one' | 'nexqs'). */
+  private edicion(t: Tenant): 'total-one' | 'nexqs' {
+    return t.edition === 'total-one' ? 'total-one' : 'nexqs';
   }
 
   /** Módulos efectivos: lo que el web usa para armar menú y rutas. */
   async myModules(tenantId: string) {
     const t = await this.tenant(tenantId);
-    const active = resolveModules(t.plan, t.enabledModules);
+    const enEdicion = new Set(modulesForEdition(this.edicion(t)));
+    const active = resolveModules(t.plan, t.enabledModules).filter((k) =>
+      enEdicion.has(k),
+    );
     const byKey = new Map(MODULE_REGISTRY.map((m) => [m.key, m]));
     return {
       plan: t.plan,
@@ -124,6 +143,16 @@ export class ModulesService {
       );
     }
 
+    // La edición acota qué existe para el tenant: Total One no puede encender
+    // módulos exclusivos de NexQS aunque el plan los incluya.
+    const enEdicion = new Set(modulesForEdition(this.edicion(t)));
+    const fueraEdicion = keys.filter((k) => !enEdicion.has(k as ModuleKey));
+    if (fueraEdicion.length) {
+      throw new BadRequestException(
+        `Estos módulos no pertenecen a la edición ${this.edicion(t)}: ${fueraEdicion.join(', ')}.`,
+      );
+    }
+
     // El plan es el tope: no se puede encender algo fuera de lo contratado
     const allowed = new Set(modulesForPlan(t.plan));
     const outOfPlan = keys.filter((k) => !allowed.has(k as ModuleKey));
@@ -140,7 +169,11 @@ export class ModulesService {
 
   async isActive(tenantId: string, key: string): Promise<boolean> {
     const t = await this.tenant(tenantId);
-    return resolveModules(t.plan, t.enabledModules).includes(key as ModuleKey);
+    const enEdicion = new Set(modulesForEdition(this.edicion(t)));
+    return (
+      enEdicion.has(key as ModuleKey) &&
+      resolveModules(t.plan, t.enabledModules).includes(key as ModuleKey)
+    );
   }
 }
 
