@@ -366,4 +366,61 @@ export const DEMO_CONVERSATIONS: Conversation[] = [
       },
     ],
   },
+
+  // ── 7. Still going — the bot is handling it fine so far ────────
+  // No `reason`: nobody has had to step in. This is the case the "Tomar
+  // conversación" button is for — an advisor jumping in on their own,
+  // not a rescue.
+  {
+    id: "wa-007",
+    name: "Verónica Castillo",
+    phone: "+52 81 **** 5521",
+    state: "BOT",
+    lastActivity: "hace 1 min",
+    messages: [
+      {
+        author: "customer",
+        text: "hola buenas, cuanto sale servicio para una cbr250",
+        time: "16:40",
+      },
+      {
+        author: "bot",
+        text: "¡Hola! 👋 Con gusto te ayudo. ¿Me dices en cuántos kilómetros va tu CBR250?",
+        time: "16:40",
+      },
+      { author: "customer", text: "como en 12 mil kms", time: "16:42" },
+      {
+        author: "bot",
+        text: "Perfecto, le toca el *servicio de 10,000 km*: aceite, filtros, bujía y kit de arrastre. Son unas 2 horas y sale en *$3,450* con IVA.\n\n¿Quieres que te busque un horario?",
+        time: "16:42",
+      },
+      {
+        author: "customer",
+        text: "si porfa, en la tarde si se puede",
+        time: "16:44",
+      },
+    ],
+  },
+
+  // ── 8. Just started, one message in ─────────────────────────────
+  {
+    id: "wa-008",
+    name: "Luis Ángel Peña",
+    phone: "+52 81 **** 3390",
+    state: "BOT",
+    lastActivity: "justo ahora",
+    messages: [
+      { author: "customer", text: "buenas tardes", time: "17:05" },
+      {
+        author: "bot",
+        text: "¡Buenas tardes! 👋 Soy el asistente del taller. ¿En qué te ayudo hoy: agendar servicio, cotizar una refacción o algo de tu unidad?",
+        time: "17:05",
+      },
+      {
+        author: "customer",
+        text: "quiero saber si tienen refaccion de escape para una cb190",
+        time: "17:06",
+      },
+    ],
+  },
 ];
